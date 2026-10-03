@@ -72,6 +72,10 @@
     'madonna-litta': ['Madonna Lita', 'ap. 1490'], 'last-supper': ['Svētais vakarēdiens', '1495–1498'],
     'annunciation': ['Pasludināšana', 'ap. 1472–1476']
   };
+  // the hall's own monument: two of the team's cats in marble, in Michelangelo's manner
+  // (posed from the Nakts cats' rig by scripts/blender/cat_statue.py): in the hall a real
+  // 3D mesh with its light baked in (mesh + tex), the picture for the close look
+  var CAT_STATUE = { title: 'Špricētājs un Klibais', src: 'cut/cat-statue.webp?v=20261003s1', mesh: 'cat-statue-mesh.json?v=20261003s2', tex: 'cat-statue-tex.webp?v=20261003s2', caption: 'Špricētājs un Klibais. Marmors, Mikelandželo Buonaroti manierē (non finito bluķis), 2026' };
   var VENUS = { title: 'Mīlo Venēra', caption: 'Mīlo Venēra (Afrodīte no Mēlas), ap. 130–100 p.m.ē., Luvra. Foto: Jastrow, publiskais domēns' };
   // "Vairāk par darbu": the work's page (as DOOM: The Gallery Experience links to The Met)
   var WIKI = 'https://en.wikipedia.org/wiki/';
@@ -1627,6 +1631,7 @@
       case 'gramophone': return ['E', st.musicOn ? 'Izslēgt mūziku' : 'Ieslēgt mūziku'];
       case 'easel': return ['E', 'Zīmēt'];
       case 'statue': return ['E', 'Apskatīt: ' + VENUS.title];
+      case 'catstatue': return ['E', 'Apskatīt: ' + CAT_STATUE.title];
       case 'cat': return ['E', 'Paglaudīt: ' + a.name];
       case 'aquarium': return ['E', 'Pabarot zivtiņas'];
       case 'monster': return ['E', 'Paņemt White Monster'];
@@ -1810,15 +1815,33 @@
      dots are worked out a few rows a frame while the work stands. Skipped for
      reduced motion. */
   var INTRO_IN = 1800, INTRO_HOLD = 1200, INTRO_TURN = 2000, INTRO_MAXW = 1280;
-  var INTRO_ART = ['venus-milo', 'mona-lisa', 'vitruvian', 'lady-ermine', 'last-supper'], introNext = 0, introImgs = {};
+  // only cut-out figures, no frame and no ground round them (as the statue in the
+  // reference): Venus de Milo's photo, and Leonardo's sitters lifted from their
+  // paintings with the Mac's Vision (scripts/cutout.swift) into assets/gallery/cut, and
+  // Michelangelo's two hands from the Creation of Adam reaching for each other
+  var INTRO_ART = ['venus-milo', 'adam', 'cut/cat-statue', 'cut/mona-lisa', 'cut/lady-ermine', 'cut/madonna-litta', 'cut/ginevra', 'cut/benois-madonna', 'cut/belle-ferronniere'], introNext = 0, introImgs = {};
   var B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   var INK_MID = [150, 162, 255], INK_HI = [244, 246, 255];
   function hash2(x, y) { var h = Math.imul(x, 374761393) + Math.imul(y, 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
   function introImage() {
     var id = INTRO_ART[introNext++ % INTRO_ART.length];
+    if (id === 'adam') {
+      var l = introLoad('adam-left'), r = introLoad('adam-right');
+      return { pair: [l, r], get complete() { return l.complete && r.complete; }, get naturalWidth() { return l.naturalWidth && r.naturalWidth; } };
+    }
+    return introLoad(id);
+  }
+  function introLoad(id) {
     if (!introImgs[id]) { introImgs[id] = new Image(); introImgs[id].decoding = 'async'; introImgs[id].src = ART + id + '.webp' + ART_V; }
     return introImgs[id];
   }
+  // the next opening's work fetched ahead: the first already as this file loads, so after a
+  // reload it is in by the time the hall is built
+  function introPreload() {
+    var id = INTRO_ART[introNext % INTRO_ART.length];
+    if (id === 'adam') { introLoad('adam-left'); introLoad('adam-right'); } else introLoad(id);
+  }
+  introPreload();
   // the sky: blue from top to bottom with a few soft lighter patches
   function introSky(IW, IH) {
     var c = canvas(IW, IH), g = c.getContext('2d', { willReadFrequently: true });
@@ -1829,6 +1852,13 @@
       gr.addColorStop(0, 'rgba(70,90,250,.55)'); gr.addColorStop(1, 'rgba(70,90,250,0)');
       g.fillStyle = gr; g.fillRect(0, 0, IW, IH);
     });
+    // a few fields of dots in a grid over the open sky
+    var r = rnd(7 + introNext), sp = Math.max(9, Math.round(IW / 110));
+    g.fillStyle = 'rgba(240,244,255,.85)';
+    for (var f = 0; f < 6; f++) {
+      var fx = IW * (0.5 + r() * 0.42), fy = IH * (0.06 + r() * 0.8), cols = 4 + (r() * 9 | 0), rows = 2 + (r() * 4 | 0);
+      for (var a = 0; a < rows; a++) for (var b = 0; b < cols; b++) if (r() > 0.18) g.fillRect(Math.round(fx + b * sp), Math.round(fy + a * sp), 2.2, 2.2);
+    }
     return new Uint32Array(g.getImageData(0, 0, IW, IH).data.buffer.slice(0));
   }
   // three inks by error diffusion (Floyd–Steinberg, serpentine): 0 sky, 1 pale blue, 2 white
@@ -1861,16 +1891,45 @@
     for (i = 0; i < n; i++) order[fill[at[i]]++] = i;
     return { order: order, start: counts, N: N, done: 0 };
   }
+  var it_center = [0.3, 0.45];                                      // where the figure stands: its dots come out from there
   function lumOf(img, IW, IH) {                                     // the work fitted in, its light 0..1 (outside: -1)
     var c = canvas(IW, IH), g = c.getContext('2d', { willReadFrequently: true });
-    var k = Math.min(IW / img.naturalWidth, IH / img.naturalHeight) * 0.96, w = img.naturalWidth * k, h = img.naturalHeight * k;
-    g.drawImage(img, (IW - w) / 2, (IH - h) / 2, w, h);
-    var d = g.getImageData(0, 0, IW, IH).data, out = new Float32Array(IW * IH);
+    g.imageSmoothingQuality = 'high';
+    if (img.pair) {
+      // Adam's hand from the left edge, God's from the right a little higher, the fingertips
+      // nearly touching in the middle
+      var L = img.pair[0], R = img.pair[1], wl = IW * 0.5, hl = L.naturalHeight * wl / L.naturalWidth, wr = IW * 0.5, hr = R.naturalHeight * wr / R.naturalWidth;
+      g.drawImage(L, IW * 0.005, IH * 0.58 - hl / 2, wl, hl);
+      g.drawImage(R, IW * 0.5, IH * 0.42 - hr / 2, wr, hr);
+      it_center = [0.5, 0.5];
+      return levelsOf(g, IW, IH);
+    }
+    // large, at the left, the head well inside (a little sky above it), only its very foot
+    // cut by the bottom edge, the sky open to its right
+    var k = Math.min(IH * 1.0 / img.naturalHeight, IW * 0.58 / img.naturalWidth), w = img.naturalWidth * k, h = img.naturalHeight * k;
+    var top = Math.max(IH * 0.05, IH - h * 0.95);
+    g.drawImage(img, IW * 0.07, top, w, h);
+    it_center = [(IW * 0.07 + w / 2) / IW, Math.min(0.6, (top + h * 0.4) / IH)];
+    return levelsOf(g, IW, IH);
+  }
+  function levelsOf(g, IW, IH) {
+    var d = g.getImageData(0, 0, IW, IH).data, out = new Float32Array(IW * IH), hist = new Uint32Array(256), n = 0;
     for (var i = 0, j = 0; i < out.length; i++, j += 4) {
       if (d[j + 3] < 100) { out[i] = -1; continue; }
-      var l = (d[j] * 0.3 + d[j + 1] * 0.59 + d[j + 2] * 0.11) / 255;
-      // contrast round the middle: white marble keeps its texture, dark old paint still shows in dots
-      out[i] = Math.max(0, Math.min(1, (Math.pow(l, 1.15) - 0.5) * 1.25 + 0.5));
+      var l = (d[j] * 77 + d[j + 1] * 150 + d[j + 2] * 29) >> 8;
+      out[i] = l; hist[l]++; n++;
+    }
+    // each work stretched to the full range (a dark old painting reads as bright as the marble):
+    // its 4th and 98th percentile become dark and light, then a gentle curve keeps the texture
+    var lo = 0, hi = 255, acc = 0;
+    for (var v = 0; v < 256; v++) { acc += hist[v]; if (acc >= n * 0.04) { lo = v; break; } }
+    acc = 0;
+    for (v = 255; v >= 0; v--) { acc += hist[v]; if (acc >= n * 0.02) { hi = v; break; } }
+    var span = Math.max(24, hi - lo);
+    for (i = 0; i < out.length; i++) {
+      if (out[i] < 0) continue;
+      var t = Math.max(0, Math.min(1, (out[i] - lo) / span));
+      out[i] = Math.max(0, Math.min(1, 0.08 + Math.pow(t, 0.9) * 0.95));
     }
     return out;
   }
@@ -1894,11 +1953,11 @@
     // made while the sky stands still, one piece a frame: the work's dots, then the order they come in
     if (it.pic && !it.art) {
       if (it.pic.complete && it.pic.naturalWidth) { var lum = lumOf(it.pic, IW, IH), e = errState(IW, IH); diffuse(lum, IW, IH, 0, IH, e); it.art = e.levels; return; }
-      if (now - it.t0 > 1500) { it.pic = null; it.t0 = now - INTRO_IN; }   // not in time: straight to the hall
+      if (now - it.t0 > 6000) { it.pic = null; it.t0 = now - INTRO_IN; }   // never came (offline): straight to the hall
       else return;
     }
     if (it.art && !it.inOrder) {
-      it.inOrder = byMoment(IW, IH, function (x, y) { var dx = x / IW - 0.5, dy = (y / IH - 0.5) * IH / IW; return Math.min(0.999, Math.hypot(dx, dy) * 1.16 + hash2(x >> 1, y >> 1) * 0.2); });
+      it.inOrder = byMoment(IW, IH, function (x, y) { var dx = x / IW - it_center[0], dy = (y / IH - it_center[1]) * IH / IW; return Math.min(0.999, Math.hypot(dx, dy) * 1.05 + hash2(x >> 1, y >> 1) * 0.2); });
       it.t0 = now;
       return;
     }
@@ -1947,6 +2006,7 @@
   }
   function introEnd(st) {
     st.intro = null; st.dirty = true;
+    introPreload();
     var layer = root && root.querySelector('.mx-doom-intro');
     if (layer) { layer.hidden = true; layer.width = layer.height = 1; }
   }
@@ -2363,6 +2423,7 @@
       case 'gramophone': setMusic(st, !st.musicOn); return;
       case 'machine': if (!st.brew) menu(true); return;
       case 'statue': look({ src: ART + 'venus-milo.webp' + ART_V, caption: VENUS.caption, more: WIKI + MORE.venus }); earn(st, 'venus'); return;
+      case 'catstatue': look({ src: ART + CAT_STATUE.src, caption: CAT_STATUE.caption }); return;
       case 'aquarium': feedFish(st, ref.at); return;
       case 'monster': case 'monsterbox': takeCan(st); return;
       case 'cat':
@@ -2822,7 +2883,7 @@
     window.addEventListener('keydown', function (e) {
       var st = state;
       if (!st || st.closed || root.hidden) return;
-      if (document.querySelector('.mk-draw-overlay') || st.paused) return;      // the editor or the hall of fame is on top
+      if (document.querySelector('.mk-draw-overlay, .gp-root') || st.paused) return;      // the editor or the hall of fame is on top
       if (st.musicBlocked && st.musicOn) { st.musicBlocked = false; musicStart(); }
       var menuOpen = !root.querySelector('.mx-doom-menu').hidden;
       // Esc lets the mouse go and closes what is open inside; the gallery itself
@@ -2872,7 +2933,7 @@
     var mine = st.items.some(function (o) { return o.parent && o.parent === it.key; });
     return {
       src: it.url,
-      caption: (it.authorEmoji ? it.authorEmoji + ' ' : '') + (it.authorName || 'Anonīms') + ', ' + st.dayTitle(it.day).toLowerCase() + (mine ? ' (pārzīmēts, rāmī ir jaunais)' : ''),
+      caption: (it.name ? '„' + it.name + '”, ' : '') + (it.authorEmoji ? it.authorEmoji + ' ' : '') + (it.authorName || 'Anonīms') + ', ' + st.dayTitle(it.day).toLowerCase() + (mine ? ' (pārzīmēts, rāmī ir jaunais)' : ''),
       chat: true,
       redraw: it.key && it.url && !/^data:/.test(it.url) ? { over: it.key, base: it.url, slot: ref ? ref.key : '', day: it.day } : null
     };
@@ -2981,7 +3042,24 @@
     st.dirty = true;
   }
   // cats and the statue: loaded once, kept for the next visit
-  var catImg = null, bustImg = null;
+  var catImg = null, bustImg = null, catStatue = null;
+  // the statue's mesh in the parts' triangles (local a, b, z; its front +a), once both files are in
+  function catStatueMesh(m, img) {
+    var tex = texOf(imgCanvas(img)), q = 1 / m.q, uq = 1 / m.uq, tris = [];
+    for (var i = 0; i < m.f.length; i += 3) {
+      var v = [], uv = [];
+      for (var k = 0; k < 3; k++) { var j = m.f[i + k]; v.push([m.v[j * 3] * q, m.v[j * 3 + 1] * q, m.v[j * 3 + 2] * q]); uv.push([m.t[j * 2] * uq, m.t[j * 2 + 1] * uq]); }
+      var n = [m.n[i] / 127, m.n[i + 1] / 127, m.n[i + 2] / 127], l = Math.hypot(n[0], n[1], n[2]) || 1;
+      tris.push({ v: v, uv: uv, tex: tex, col: 0, n: [n[0] / l, n[1] / l, n[2] / l], soft: 0.12, two: false });
+    }
+    return { tris: tris, bills: [] };
+  }
+  function catStatueOn(p) {
+    p.facing = -Math.PI / 2;                                         // its front to the lobby
+    p.radius = 0.4;
+    if (catStatue && catStatue.mesh) p.mesh = catStatue.mesh;
+    return SHADOW_ONLY;
+  }
   function imgCanvas(img) { var c = canvas(img.naturalWidth, img.naturalHeight); c.getContext('2d').drawImage(img, 0, 0); return c; }
   function loadImage(src, done) { var img = new Image(); img.decoding = 'async'; img.onload = function () { done(img); }; img.src = src; return img; }
   function open(opts, keep) {
@@ -3011,6 +3089,8 @@
     props.push({ kind: 'machine', x: 1.32, y: 2.55, h: 0.74, solid: 0.3, reach: 2.4, shade: 0.24 });
     props.push({ kind: 'easel', x: 1.5, y: 5.3, h: 0.62, solid: 0.34, reach: 2.6, shade: 0.18 });
     props.push({ kind: 'statue', x: 3.0, y: (LEO_Y0 + LEO_Y1) / 2 + 0.5, h: 0.82, solid: 0.38, reach: 2.8, shade: 0.2 });
+    // the cats' monument in the middle of the hall, between the pillars at the Leonardo hall's end
+    props.push({ kind: 'catstatue', x: 3.5, y: LEO_Y1 + 1.5, h: 0.62, solid: 0.36, reach: 2.6, shade: 0.24 });
     var cats = CATS.map(function (c, i) {
       var way = CAT_WAYS[c[2]][(i * 3) % CAT_WAYS[c[2]].length];
       return { kind: 'cat', name: c[0], coat: c[1], room: c[2], x: way[0], y: way[1], h: CAT_H, reach: 2.2, shade: 0.07, vx: 1, vy: 0, mode: 'sit', until: performance.now() + 800 + i * 900, t: i, flip: i === 1 };
@@ -3061,6 +3141,7 @@
           : p.kind === 'machine' ? machineSprite(!!st.brew)
           : p.kind === 'monsterbox' ? (held.monsterBox ? makeSprite(imgCanvas(held.monsterBox)) : monsterBoxSprite())
           : p.kind === 'monster' ? (held.monsterCan ? makeSprite(imgCanvas(held.monsterCan)) : monsterCanSprite())
+          : p.kind === 'catstatue' ? catStatueOn(p)
           : statueSprite(bustImg && bustImg.complete ? bustImg : null);
       });
     };
@@ -3103,6 +3184,14 @@
     if (catImg && catImg.complete && catImg.naturalWidth) withCats(catImg); else catImg = loadImage(ART + 'cats.webp' + CAT_V, withCats);
     var withBust = function (img) { if (state !== st) return; var p = props.find(function (q) { return q.kind === 'statue'; }); p.spr = statueSprite(img); st.dirty = true; };
     if (!(bustImg && bustImg.complete && bustImg.naturalWidth)) bustImg = loadImage(ART + 'venus-milo.webp' + ART_V, withBust);
+    if (!catStatue) {
+      catStatue = {};
+      Promise.all([fetch(ART + CAT_STATUE.mesh).then(function (r) { return r.json(); }), new Promise(function (ok, no) { var im = loadImage(ART + CAT_STATUE.tex, ok); im.onerror = no; })])
+        .then(function (got) {
+          catStatue.mesh = catStatueMesh(got[0], got[1]);
+          if (state) { var p = state.props.find(function (q) { return q.kind === 'catstatue'; }); if (p) { catStatueOn(p); state.dirty = true; } }
+        }, function () { catStatue = null; });
+    }
     // the drinks in hand and the Monster corner
     [['coffee', 'hand-coffee'], ['can', 'hand-can'], ['monsterCan', 'monster-can'], ['monsterBox', 'monster-box']].forEach(function (pair) {
       if (held[pair[0]]) return;

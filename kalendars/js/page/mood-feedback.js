@@ -2524,8 +2524,15 @@
   // A day's chat and drawings (not the mood markers), newest first.
   // A drawing is an ordinary chat message whose whole text is this marker.
   // [[rgdraw;art=ID]] or [[rgdraw;art=ID;f=N]]: N is the gallery frame it was drawn in
-  // (the frame's number on that day's wall), so it hangs there for everyone
-  var DRAW_MARK = /^\[\[rgdraw;art=([a-f0-9]{32})(?:;f=(\d{1,2}))?\]\]\s*$/;
+  // (the frame's number on that day's wall), so it hangs there for everyone;
+  // ;t=… the drawing's name given in the gallery's Paint (URI-encoded, at most 40 letters)
+  var DRAW_MARK = /^\[\[rgdraw;art=([a-f0-9]{32})(?:;f=(\d{1,2}))?(?:;t=([^\]\s;]{1,240}))?\]\]\s*$/;
+  function cleanDrawTitle(text) { return String(text || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40); }
+  function drawTitle(body) {
+    var match = String(body || '').trim().match(DRAW_MARK);
+    if (!match || !match[3]) return '';
+    try { return cleanDrawTitle(decodeURIComponent(match[3])); } catch (_e) { return ''; }
+  }
   function drawArt(body) {
     var match = String(body || '').trim().match(DRAW_MARK);
     return match ? match[1] : '';
@@ -2541,7 +2548,7 @@
       var mood = parseMoodMessage(item);
       if (mood) { if (mood.note) out.push({ type: 'note', emoji: mood.emoji, body: mood.note, author: '', at: mood.at }); return; }
       var at = Number(item.createdAt) || 0, message = communityDecode(item), art = drawArt(message.body);
-      if (art) { out.push({ type: 'art', art: art, author: message.author, at: at, key: message.key, parent: message.parent }); return; }
+      if (art) { out.push({ type: 'art', art: art, author: message.author, at: at, key: message.key, parent: message.parent, title: drawTitle(message.body) }); return; }
       var body = String(message.body || '').replace(/\s+/g, ' ').trim();
       if (body) out.push({ type: 'chat', author: message.author, body: body.slice(0, 160), at: at });
     });
@@ -2826,7 +2833,7 @@
       onSave: function (blob) { return mxSkyUpload(blob, day, fromComments === true); }
     });
   }
-  async function mxSkyUpload(blob, day, fromComments, overKey, frame) {
+  async function mxSkyUpload(blob, day, fromComments, overKey, frame, title) {
     var api = mxApi();
     if (!api) throw new Error('Nav savienojuma ar mākoni');
     var form = new FormData();
@@ -2834,8 +2841,9 @@
     var response = await api.apiFetch('/api/sky-art', { method: 'POST', body: form });
     var data = await response.json().catch(function () { return {}; });
     if (!response.ok || !/^[a-f0-9]{32}$/.test(String(data.artId || ''))) throw new Error(data.error || 'Neizdevās saglabāt zīmējumu');
-    var author = await postDrawing(data.artId, day, fromComments === true, overKey, frame);
-    var item = { type: 'art', art: data.artId, author: author, at: Date.now(), parent: overKey || '', frame: frame >= 0 ? frame : -1 };
+    title = cleanDrawTitle(title);
+    var author = await postDrawing(data.artId, day, fromComments === true, overKey, frame, title);
+    var item = { type: 'art', art: data.artId, author: author, at: Date.now(), parent: overKey || '', frame: frame >= 0 ? frame : -1, title: title };
     (commentFeed[day] = commentFeed[day] || []).unshift(item);
     mxPaintDrawCount(list.querySelector('.rg-feedback-card'));
     // no picture over the curve: the cat shows it in its bubble, once the editor has closed
@@ -2932,13 +2940,13 @@
       var art = drawArt(item.body);
       if (!art || byKey[art]) return;
       byKey[art] = true;
-      out.push({ day: item.date || item.shiftDay || shiftDayKey(), art: art, author: item.author, at: Number(item.createdAt) || 0, key: item.key || '', parent: item.parent || '', frame: drawFrame(item.body) });
+      out.push({ day: item.date || item.shiftDay || shiftDayKey(), art: art, author: item.author, at: Number(item.createdAt) || 0, key: item.key || '', parent: item.parent || '', frame: drawFrame(item.body), title: drawTitle(item.body) });
     });
     Object.keys(commentFeed).forEach(function (day) {
       (commentFeed[day] || []).forEach(function (c) {
         if (c.type !== 'art' || byKey[c.art]) return;
         byKey[c.art] = true;
-        out.push({ day: day, art: c.art, author: c.author, at: c.at, key: c.key || '', parent: c.parent || '', frame: c.frame >= 0 ? c.frame : -1 });
+        out.push({ day: day, art: c.art, author: c.author, at: c.at, key: c.key || '', parent: c.parent || '', frame: c.frame >= 0 ? c.frame : -1, title: c.title || '' });
       });
     });
     return out;
@@ -2991,26 +2999,52 @@
         if (gallery && !gallery.hidden) renderGallery();
       });
   }
+  // a drawing gone: out of the comments, the hall of fame and the hall
+  function artGone(art) {
+    Object.keys(commentFeed).forEach(function (day) { commentFeed[day] = (commentFeed[day] || []).filter(function (c) { return c.art !== art; }); });
+    return loadCommunity().then(function () {
+      renderGallery();
+      if (window.MinkaGallery3D && window.MinkaGallery3D.isOpen()) window.MinkaGallery3D.refresh(gallery3dOptions(null));
+    });
+  }
+  // The gallery's administrator (Paint's Start menu): minka-api checks the password
+  // (its ADMIN_PASSWORD secret), deletes the picture and gives a ticket with which
+  // the feedback API deletes the drawing's messages; for good, for everyone.
+  function adminPost(path, body) {
+    var api = mxApi();
+    if (!api) return Promise.reject(new Error('Nav pieteikšanās'));
+    return api.apiFetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (d) {
+        if (!r.ok || !d || !d.ok) throw new Error(d && d.error || 'Neizdevās (' + r.status + ')');
+        return d;
+      });
+    });
+  }
+  var galleryAdmin = {
+    check: function (password) { return adminPost('/api/admin/check', { password: password }); },
+    remove: function (pic, password) {
+      var art = pic && pic.item && pic.item.art;
+      if (!art) return Promise.reject(new Error('Zīmējums nav atrasts'));
+      return adminPost('/api/admin/art-delete', { password: password, artId: art }).then(function (d) {
+        return fetchFeedback('/api/feedback/admin', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ artId: art, ticket: d.ticket }) });
+      }).then(function () { return artGone(art); });
+    }
+  };
+  // returns a promise (the Paint desktop's folder waits on it); the hall of fame only fires it
   function hofDelete(it) {
     var msg = communityMessages.find(function (m) { return m.clientId === it.clientId; });
-    if (!msg) return;
-    var done = function () {
-      Object.keys(commentFeed).forEach(function (day) { commentFeed[day] = (commentFeed[day] || []).filter(function (c) { return c.art !== it.art; }); });
-      return loadCommunity().then(function () {
-        renderGallery();
-        if (window.MinkaGallery3D && window.MinkaGallery3D.isOpen()) window.MinkaGallery3D.refresh(gallery3dOptions(null));
-      });
-    };
-    if (msg.pending) { removePendingMessage(msg.clientId); done(); return; }
+    if (!msg) return Promise.reject(new Error('Zīmējums nav atrasts'));
+    var done = function () { return artGone(it.art); };
+    if (msg.pending) { removePendingMessage(msg.clientId); return done(); }
     var editToken = communityEditToken(msg.clientId);
-    if (!editToken) return;
-    fetchFeedback('/api/feedback/message', {
+    if (!editToken) return Promise.reject(new Error('Dzēst var tikai savus zīmējumus'));
+    return fetchFeedback('/api/feedback/message', {
       method: 'DELETE', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ clientId: msg.clientId, editToken: editToken })
     }).then(function () {
       forgetCommunityOwnership(msg.clientId);
       return loadGlobalEntryCount('comment', true);
-    }).then(done).catch(function () { var s = gallery && gallery.querySelector('.mx-hof-status'); if (s) s.textContent = 'Neizdevās izdzēst'; });
+    }).then(done).catch(function (err) { var s = gallery && gallery.querySelector('.mx-hof-status'); if (s) s.textContent = 'Neizdevās izdzēst'; throw err; });
   }
   function hofDraw(it) {
     var day = shiftDayKey();
@@ -3124,7 +3158,7 @@
       if (event.target.closest('.mx-hof-chat')) { mxCloseGallery(); if (window.MinkaGallery3D && window.MinkaGallery3D.isOpen()) window.MinkaGallery3D.close(); mxOpenComments(null); return; }
       if (event.target.closest('.mx-hof-redraw')) { hofDraw(cur); return; }
       if (event.target.closest('.mx-hof-del')) {
-        if (hof.confirm === cur.art) { hof.confirm = ''; hofDelete(cur); }
+        if (hof.confirm === cur.art) { hof.confirm = ''; hofDelete(cur).catch(function () {}); }
         else { hof.confirm = cur.art; renderGallery(); setTimeout(function () { if (hof.confirm === cur.art) { hof.confirm = ''; renderGallery(); } }, 3500); }
       }
     });
@@ -3170,8 +3204,25 @@
   /* Galerija kā Doom (js/page/mood-gallery-3d.js, ielādējas tikai pirmajā
      reizē): pastaiga pa zāli ar zīmējumiem uz sienām. Ja tā neielādējas,
      paliek parastā galerija (režģis augstāk). */
-  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261003g3d48';
+  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261003g3d75';
   var gallery3dLoad = null;
+  // the gallery's own paint window (js/page/mood-gallery-paint.js): only for the
+  // gallery's frames; everywhere else the usual editor (js/skin-draw.js)
+  var GALLERY_PAINT_SRC = 'js/page/mood-gallery-paint.js?v=20261003gp18';
+  var galleryPaintLoad = null;
+  function galleryPaint() {
+    if (window.MinkaGalleryPaint) return Promise.resolve(window.MinkaGalleryPaint);
+    if (!galleryPaintLoad) {
+      galleryPaintLoad = new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
+        script.src = GALLERY_PAINT_SRC;
+        script.onload = function () { window.MinkaGalleryPaint ? resolve(window.MinkaGalleryPaint) : reject(new Error('paint')); };
+        script.onerror = function () { galleryPaintLoad = null; reject(new Error('paint')); };
+        document.head.appendChild(script);
+      });
+    }
+    return galleryPaintLoad;
+  }
   function gallery3d() {
     if (window.MinkaGallery3D) return Promise.resolve(window.MinkaGallery3D);
     if (!gallery3dLoad) {
@@ -3219,7 +3270,7 @@
       origin: origin,
       items: items.map(function (it) {
         var index = animalIndex(it.author);
-        return { day: it.day, art: it.art, url: skyArtUrl(it.art), at: it.at, key: it.key || '', parent: it.parent || '', frame: it.frame, authorName: it.author || '', authorEmoji: index >= 0 ? ANIMALS[index][1] : '' };
+        return { day: it.day, art: it.art, url: skyArtUrl(it.art), at: it.at, key: it.key || '', parent: it.parent || '', frame: it.frame, name: it.title || '', authorName: it.author || '', authorEmoji: index >= 0 ? ANIMALS[index][1] : '' };
       }),
       sleepers: gallerySleepers(),
       today: selected,
@@ -3239,13 +3290,22 @@
       // pen, the new one takes its frame, the old one stays in the chat
       onDraw: function (info) {
         var day = shiftDayKey();
-        if (!window.MinkaSkinDraw || futureDay(day)) return;
-        window.MinkaSkinDraw.open({
+        if (futureDay(day)) return;
+        var editor = function (paint) {
+          var draw = paint || window.MinkaSkinDraw;
+          if (draw) draw.open(drawOptions);
+        };
+        var drawOptions = {
           mode: 'sky',
           initialUrl: info && info.base || '',
+          // the gallery's drawings for the Paint desktop's "Mani attēli" folder, newest first
+          pictures: hofItems().slice().sort(function (a, b) { return (b.at || 0) - (a.at || 0); }).map(function (it) { return { url: skyArtUrl(it.art), author: it.author || '', day: it.day || '', at: it.at || 0, own: !!it.own, title: it.title || '', item: it }; }),
+          // only one's own drawings (the device's edit token, as in the hall of fame); gone from the gallery for everyone
+          onDelete: function (pic) { return hofDelete(pic.item); },
+          admin: galleryAdmin,
           name: info && info.over ? 'Zīmē pa virsu: jaunais būs rāmī, vecais paliks čatā' : 'Visi to redzēs galerijā un komentāros',
-          onSave: function (blob) {
-            return mxSkyUpload(blob, day, 'gallery', info && info.over, info && info.frame >= 0 && !info.over && (!info.day || info.day === day) ? info.frame : -1).then(function (item) {
+          onSave: function (blob, title) {
+            return mxSkyUpload(blob, day, 'gallery', info && info.over, info && info.frame >= 0 && !info.over && (!info.day || info.day === day) ? info.frame : -1, title).then(function (item) {
               if (item && info && info.slot) {
                 var map = readJson(GALLERY_SLOTS_KEY, {});
                 map[item.art] = info.slot;
@@ -3256,7 +3316,8 @@
               if (window.MinkaGallery3D && window.MinkaGallery3D.isOpen()) window.MinkaGallery3D.refresh(gallery3dOptions(null));
             });
           }
-        });
+        };
+        galleryPaint().then(editor, function () { editor(null); });
       }
     };
   }
@@ -5066,7 +5127,7 @@
   // the topic and reply open in the composer (from the comments window).
   // overKey: drawn over another drawing in the gallery; posted as an answer to
   // it (older versions show it so in the chat), the gallery hangs it in that frame
-  async function postDrawing(artId, day, fromComments, overKey, frame) {
+  async function postDrawing(artId, day, fromComments, overKey, frame, title) {
     var open = fromComments && !modal.hidden;
     var topic = open ? (commsTopicInput.value.trim() || (communityView === 'topic' ? communityTopic : 'Vispārīgi')) : 'Vispārīgi';
     var parent = overKey ? String(overKey) : open && communityReply ? (communityReply.key || '') : '';
@@ -5076,7 +5137,7 @@
     rememberCommunityId(clientId);
     var items = readJson(TEXT_KEY, []);
     if (!Array.isArray(items)) items = [];
-    items.unshift({ clientId: clientId, editToken: editToken, type: 'comment', text: communityEncode(topic, parent, authorName, '[[rgdraw;art=' + artId + (frame >= 0 && frame < 100 ? ';f=' + frame : '') + ']]'), shiftDay: day, createdAt: Date.now(), pending: true });
+    items.unshift({ clientId: clientId, editToken: editToken, type: 'comment', text: communityEncode(topic, parent, authorName, '[[rgdraw;art=' + artId + (frame >= 0 && frame < 100 ? ';f=' + frame : '') + (title ? ';t=' + encodeURIComponent(cleanDrawTitle(title)) : '') + ']]'), shiftDay: day, createdAt: Date.now(), pending: true });
     writeJson(TEXT_KEY, items.slice(0, 500));
     await postPendingMessages(day, 'comment');
     if (open) {

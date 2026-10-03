@@ -5,6 +5,7 @@ const FEEDBACK_PATHS = new Set([
   "/api/feedback/days",
   "/api/feedback/rating",
   "/api/feedback/message",
+  "/api/feedback/admin",
   "/api/radio"
 ]);
 
@@ -405,6 +406,29 @@ async function deleteMessage(request, env) {
   return json(request, { ok: true, deleted: true });
 }
 
+// DELETE /api/feedback/admin { artId, ticket } — the gallery's administrator removes
+// any drawing: minka-api checked the password and deleted the picture, and its
+// ticket (checked there again through the service binding) lets this remove every
+// message that shows that drawing.
+async function adminDeleteArt(request, env) {
+  const body = await readLimitedJson(request);
+  const artId = String(body?.artId || "");
+  const ticket = String(body?.ticket || "").slice(0, 120);
+  if (!/^[a-f0-9]{32}$/.test(artId) || !ticket) return json(request, { ok: false, error: "artId and ticket required" }, 400);
+  if (!env.AUTH) return json(request, { ok: false, error: "no auth service" }, 503);
+  const check = await env.AUTH.fetch("https://minka-api/api/admin/ticket", {
+    method: "POST",
+    headers: { authorization: request.headers.get("authorization") || "", "content-type": "application/json" },
+    body: JSON.stringify({ artId, ticket })
+  });
+  const verdict = await check.json().catch(() => null);
+  if (!verdict || verdict.ok !== true) return json(request, { ok: false, error: "ticket not valid" }, 403);
+  const result = await env.DB.prepare(
+    "DELETE FROM feedback_messages WHERE instr(body, ?1) > 0 RETURNING id"
+  ).bind("art=" + artId).all();
+  return json(request, { ok: true, deleted: (result.results || []).length });
+}
+
 function cleanStation(value) {
   const text = String(value || "").normalize("NFC").replace(/\s+/g, " ").trim();
   if (!text || text.length > 120 || /[<>]/.test(text)) return "";
@@ -473,6 +497,7 @@ export default {
       if (url.pathname === "/api/feedback/message" && request.method === "POST") return await addMessage(request, env);
       if (url.pathname === "/api/feedback/message" && request.method === "PATCH") return await editMessage(request, env);
       if (url.pathname === "/api/feedback/message" && request.method === "DELETE") return await deleteMessage(request, env);
+      if (url.pathname === "/api/feedback/admin" && request.method === "DELETE") return await adminDeleteArt(request, env);
       if (url.pathname === "/api/radio" && request.method === "GET") return await getRadioDays(request, env, url);
       if (url.pathname === "/api/radio" && request.method === "POST") return await addRadioDay(request, env);
       if (FEEDBACK_PATHS.has(url.pathname)) return json(request, { ok: false, error: "Method not allowed" }, 405);

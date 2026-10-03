@@ -611,6 +611,26 @@ async function sameSecret(a, b) {
   return diff === 0;
 }
 
+// The gallery's administrator (Paint's Start menu → Administrators): the password is
+// the ADMIN_PASSWORD secret, never in the page. A drawing deleted here gets a short
+// ticket (its id and an expiry, signed with that secret) with which the feedback API
+// removes the drawing's message; the feedback API checks it here (service binding).
+const ADMIN_TICKET_MS = 2 * 60 * 1000;
+async function adminSign(env, text) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode("admin-ticket:" + env.ADMIN_PASSWORD), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(sig), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+async function adminTicket(env, artId) {
+  const until = Date.now() + ADMIN_TICKET_MS;
+  return until + "." + await adminSign(env, artId + "." + until);
+}
+async function adminTicketValid(env, artId, ticket) {
+  const m = /^(\d{13})\.([a-f0-9]{64})$/.exec(String(ticket || ""));
+  if (!env.ADMIN_PASSWORD || !SKIN_ART_ID_RE.test(artId) || !m || Number(m[1]) < Date.now()) return false;
+  return sameSecret(m[2], await adminSign(env, artId + "." + m[1]));
+}
+
 async function createSession(env, kind) {
   if (!env.DB) return env.APP_PASSWORD;
   const token = randomToken();
@@ -800,6 +820,36 @@ const worker = {
     const auth = await authKind(request, env);
     if (!auth) {
       return json(request, { ok: false, error: "Unauthorized" }, 401);
+    }
+
+    // Administrator: /check only answers whether the password is right; /art-delete
+    // removes a gallery drawing's picture for good (a mood-sky drawing only, never a
+    // card's own) and its hearts, and answers with the ticket for the feedback API.
+    // Wrong passwords count like the login's (10 per 10 minutes, a counter of their own).
+    if ((url.pathname === "/api/admin/check" || url.pathname === "/api/admin/art-delete") && method === "POST") {
+      if (!env.ADMIN_PASSWORD) return json(request, { ok: false, error: "Administrators nav iestatīts" }, 503);
+      const ip = "admin:" + await clientIp(request);
+      if (await loginBlocked(env, ip)) return json(request, { ok: false, error: "Pārāk daudz mēģinājumu, pamēģini pēc 10 minūtēm" }, 429);
+      const body = await readJson(request);
+      if (!await sameSecret(String(body?.password || ""), env.ADMIN_PASSWORD)) {
+        await noteLoginFailure(env, ip);
+        return json(request, { ok: false, error: "Nepareiza parole" }, 403);
+      }
+      if (url.pathname === "/api/admin/check") return json(request, { ok: true });
+      const artId = String(body?.artId || "");
+      if (!SKIN_ART_ID_RE.test(artId)) return json(request, { ok: false, error: "artId required" }, 400);
+      const key = SKIN_ART_PREFIX + artId;
+      const found = await env.MINKA_EMOJI.getWithMetadata(key, { type: "arrayBuffer" });
+      if (found && found.value) {
+        if (!(found.metadata && found.metadata.sky)) return json(request, { ok: false, error: "Tā nav galerijas zīmējuma bilde" }, 400);
+        await env.MINKA_EMOJI.delete(key);
+      }
+      if (env.DB) await env.DB.prepare("DELETE FROM art_likes WHERE art_id = ?1").bind(artId).run().catch(() => {});
+      return json(request, { ok: true, ticket: await adminTicket(env, artId) });
+    }
+    if (url.pathname === "/api/admin/ticket" && method === "POST") {
+      const body = await readJson(request);
+      return json(request, { ok: await adminTicketValid(env, String(body?.artId || ""), String(body?.ticket || "")) });
     }
 
     if (url.pathname === "/api/weather" && method === "GET") {
