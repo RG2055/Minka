@@ -115,7 +115,7 @@
   var MUSIC_CREDIT = 'Ieraksti: PM Music, diriģents Philip Milman (pmmusic.pro), CC BY 3.0';
   var CREDITS = 'Mūzika: PM Music, diriģents Philip Milman, CC BY 3.0. Roka: WebXR rokas modelis (webxr-input-profiles, MIT). '
     + 'White Monster: TurnOnTheNight, CC0. Leonardo, Mikelandželo, Frīdrihs, Mīlo Venēra (foto Jastrow): publiskais domēns.';
-  var MUSIC_VOL = 0.3, MUSIC_KEY = 'minkaGalleryMusicV1', QUALITY_KEY = 'minkaGalleryWidthV1';
+  var MUSIC_VOL = 0.3, MUSIC_KEY = 'minkaGalleryMusicV1', QUALITY_KEY = 'minkaGalleryWidthV2';
   var root = null, state = null;
 
   /* ── Palīgi ───────────────────────────────────────────────────────────── */
@@ -1303,23 +1303,8 @@
     for (var j = 0; j < Hl; j++) for (var i = 0; i < Wl; i++) {
       var cx = (i / 4) | 0, cy = (j / 4) | 0, ci = cy * map.w + cx;
       if (map.zone[ci]) { var room = roomAt(map, cx + 0.5, cy + 0.5); f[j * Wl + i] = room && off[room === NMP ? 'nmp' : 'main'] ? 24 : -2; }
-      else if (map.grid[ci] === EMPTY) {
-        var walls = 0;
-        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { var g = map.grid[(cy + d[1]) * map.w + cx + d[0]]; if (g === WALL || g === PILLAR) walls++; });
-        if (walls >= 2) f[j * Wl + i] = 3;                         // a corner, a little darker
-      }
     }
-    map.slots.forEach(function (sl) {
-      if (sl.night) return;
-      var n = { e: [1, 0], w: [-1, 0], s: [0, 1], n: [0, -1] }[sl.face];
-      pool(sl.x + 0.5 + n[0] * 1.05, sl.y + 0.5 + n[1] * 1.05, 1.35, -12);
-    });
-    var aq = map.aquarium, now = performance.now();
-    pool((aq.x0 + aq.x1) / 2, aq.y - 0.45, 1.7, -8 + Math.sin(now / 700) * 3);       // the tank's light pulses (Doom's glow)
-    // the lamp over the White Monster corner flickers (Doom's flicker): mostly on, now and then a short drop
-    var tick = (now / 90) | 0, hsh = Math.imul(tick ^ 0x5bd1e995, 2654435761) >>> 0;
-    pool(1.6, map.h - 1.7, 1.5, (hsh % 100) < 14 ? -2 : -11);
-    pool(1.75, 2.55, 0.8, -5);                                     // the Löfbergs machine's light
+    // the hall's floor has no pools of light: they came out as pale squares that moved as you walked
     st.props.forEach(function (p) {
       if (p.kind !== 'bed') return;
       var room = p.bed === 3 ? 'nmp' : 'main';
@@ -1351,9 +1336,6 @@
     g.fillStyle = '#ffffff'; g.fillRect(x + 10, on ? y + 9 : y + 21, 10, 12);
     return wallTex(c);
   }
-  // light off the aquarium's water on the floor in front of it: a few cells of
-  // a small wave table, moved on with the fish (so it costs nothing extra)
-  var SHIM = (function () { var t = new Uint8Array(64); for (var i = 0; i < 64; i++) { var v = Math.sin(i * 0.61) + Math.sin(i * 1.37 + 1); t[i] = v > 1.3 ? 3 : v > 1.0 ? 2 : v > 0.75 ? 1 : 0; } return t; })();
   function px(c, lut) { return (255 << 24 | lut.b[(c >> 16) & 255] << 16 | lut.g[(c >> 8) & 255] << 8 | lut.r[c & 255]) >>> 0; }
   // mip level for how many texels one pixel covers: from 1.5 on the next level
   // (from 2 on, the walls just past 1:1 still shimmered)
@@ -1454,7 +1436,6 @@
     // fits how much floor one pixel covers there, so far rows do not sparkle;
     // past a window or a door the other room's texture
     var wt = st.wallTop, wb = st.wallBot, cr = st.cross;
-    var aqOn = st.aquaSeen && !!st.aqua, aqY = map.aquarium.y, aqX0 = map.aquarium.x0 - 0.3, aqX1 = map.aquarium.x1 + 0.3, tq = (performance.now() / 110) | 0;
     for (y = 0; y < H; y++) {
       if (Math.abs(y - half) < 0.5) continue;
       var fl = y > half, eyeH = fl ? z : 1 - z, rd = (eyeH * P) / Math.abs(y - half);
@@ -1462,7 +1443,7 @@
       var foot = Math.max(rd * 2 * FOV / W, rd * rd / (eyeH * P)) * TEX, Lf = mipOf(foot, MIPS);
       var own = fl ? (pz ? T.nightFloor : T.floor) : (pz ? T.nightCeil : T.ceil), oth = fl ? (pz ? T.floor : T.nightFloor) : (pz ? T.ceil : T.nightCeil);
       var ol = own.mips[Lf], al = oth.mips[Lf], opx = ol.px, apx = al.px, S = ol.w, m = S - 1, sbf = TB - Lf;
-      var lutf = shade(rd, 0, pz), luta = shade(rd, 0, !pz), o = y * W, shim = fl && aqOn;
+      var lutf = shade(rd, 0, pz), luta = shade(rd, 0, !pz), o = y * W;
       var lvO = shadeLevel(rd, 0) + (pz ? lampOff : 0), lvA = shadeLevel(rd, 0) + (pz ? 0 : lampOff), LG = st.light, LWd = st.lightW;
       for (x = 0; x < W; x++) {
         if (y >= wt[x] && y <= wb[x]) continue;
@@ -1470,10 +1451,6 @@
         var ti = ((((wy * S) | 0) & m) << sbf) | (((wx * S) | 0) & m);
         var other = cr[x] >= 0 && rd > cr[x], lg = LG ? LG[((wy * 4) | 0) * LWd + ((wx * 4) | 0)] | 0 : 0;
         buf[o + x] = lg ? (other ? px(apx[ti], lutAt(lvA + lg, !pz)) : px(opx[ti], lutAt(lvO + lg, pz))) : other ? px(apx[ti], luta) : px(opx[ti], lutf);
-        if (shim && wy > aqY - 1.7 && wy < aqY && wx > aqX0 && wx < aqX1) {
-          var wv = SHIM[(((wx * 11) | 0) + ((wy * 7) | 0) * 5 + tq) & 63];
-          if (wv) { var cc = buf[o + x]; buf[o + x] = (0xff000000 | Math.min(255, ((cc >> 16) & 255) + wv * 16) << 16 | Math.min(255, ((cc >> 8) & 255) + wv * 11) << 8 | Math.min(255, (cc & 255) + wv * 6)) >>> 0; }
-        }
       }
     }
     // things: behind the glass first, then the glass, then the rest
@@ -2209,8 +2186,6 @@
         if (lo !== lampOff) { lampOff = lo; moved = true; }
       }
     } else if (lampOff) { lampOff = 0; moved = true; }
-    // near the hall's end the tank's light and the flickering lamp move: the light is worked out again 10 times a second
-    if (st.y > st.map.h - 10 && now - (st.dynAt || 0) > 100) { st.dynAt = now; buildLight(st); moved = true; }
     var aq = st.aqua, aquaTick = aq && st.aquaSeen && !st.viewing && now - aq.at >= (aq.food.length ? 32 : 48);
     if (aquaTick) { stepAquarium(aq, Math.min(0.1, (now - (aq.at || now)) / 1000)); paintAquarium(aq); aq.at = now; }
     // eye height eases to sitting or standing
@@ -2494,9 +2469,9 @@
     // the window's own layout box (not its on-screen one: it may be scaling in)
     var map = st.map, sec = root.querySelector('.mx-doom');
     var box = { left: sec.offsetLeft, top: sec.offsetTop, right: sec.offsetLeft + sec.offsetWidth, height: sec.offsetHeight };
-    var side = Math.min(box.left, window.innerWidth - box.right) - 56;   // its frame and some sky round it
-    var cs = Math.min(12, Math.floor(side / map.w), Math.floor((window.innerHeight - 96 - KEYS_H) / map.h));
-    return { cs: cs, box: box, outside: cs >= 5 };
+    var side = Math.min(box.left, window.innerWidth - box.right) - (root.classList.contains('is-slim') ? 18 : 34);   // its frame and a little sky round it
+    var cs = Math.min(12, Math.floor(side / map.w), Math.floor((window.innerHeight - 96 - KEYS_H * 0.5) / map.h));
+    return { cs: cs, box: box, outside: cs >= 3 };
   }
   function toggleMap(st) {
     st.mapOn = root.querySelector('.mx-doom-minimap').hidden;
@@ -2615,10 +2590,22 @@
   function placeSide() {
     var side = root.querySelector('.mx-doom-side'), sec = root.querySelector('.mx-doom');
     if (!side || !sec) return;
-    var outside = sec.offsetLeft - 32 >= side.offsetWidth;
+    // the picture keeps its size; the column of buttons is scaled down to the room beside it
+    // (and above the bottom edge), and goes over the picture only when even small it does not fit
+    side.style.transform = '';
+    // a narrow margin (an installed app's window): small keycaps, icons only (the word on hover), a small map
+    root.classList.remove('is-slim');
+    var roomFor = function () { return Math.min(1, (sec.offsetLeft - 12) / side.offsetWidth, (window.innerHeight - sec.offsetTop - 10) / side.offsetHeight); };
+    var fit = roomFor();
+    if (fit < 0.8 && sec.offsetLeft >= 50) { root.classList.add('is-slim'); fit = roomFor(); }
+    var outside = fit >= 0.45;
     side.classList.toggle('is-inside', !outside);
-    side.style.left = Math.round(outside ? (sec.offsetLeft - side.offsetWidth) / 2 : sec.offsetLeft + 14) + 'px';
-    side.style.top = Math.round(outside ? sec.offsetTop : sec.offsetTop + 12) + 'px';
+    var top = outside ? sec.offsetTop : sec.offsetTop + 12;
+    var k = outside ? fit : 1;
+    side.style.transformOrigin = '0 0';
+    side.style.transform = k < 1 ? 'scale(' + k.toFixed(3) + ')' : '';
+    side.style.left = Math.round(outside ? (sec.offsetLeft - side.offsetWidth * k) / 2 : sec.offsetLeft + 14) + 'px';
+    side.style.top = Math.round(top) + 'px';
   }
   /* stats.js (mrdoob, MIT) made over in the gallery's one ink: the same three
      panels, a click switches them. FPS: pictures drawn a second (a still
@@ -2664,7 +2651,12 @@
     if (!k) return;
     k.hidden = !room.outside;
     if (!room.outside) return;
-    var left = Math.min(window.innerWidth - k.offsetWidth - 8, room.box.right + (window.innerWidth - room.box.right - k.offsetWidth) / 2);
+    // scaled down when the window is too short for it under the map
+    k.style.transform = '';
+    var sc = Math.min(1, (window.innerHeight - under - 10) / k.offsetHeight, (window.innerWidth - room.box.right - 12) / k.offsetWidth), w = k.offsetWidth * sc;
+    if (sc < 0.4) { k.hidden = true; return; }
+    k.style.transformOrigin = '0 0'; k.style.transform = sc < 1 ? 'scale(' + sc.toFixed(3) + ')' : '';
+    var left = Math.min(window.innerWidth - w - 8, room.box.right + (window.innerWidth - room.box.right - w) / 2);
     k.style.left = Math.round(left) + 'px'; k.style.top = Math.round(under) + 'px';
   }
   function drawMinimap(st) {
@@ -2680,7 +2672,7 @@
       c.width = st.mmBase.canvas.width; c.height = st.mmBase.canvas.height;
       c.classList.toggle('is-inside', !room.outside);
       // beside the window on the right, its middle at the window's middle; or over the picture
-      var frame = room.outside ? 24 : 18;                     // its padding and border round the plan
+      var frame = room.outside ? (root.classList.contains('is-slim') ? 10 : 24) : 18;   // its padding and border round the plan
       var left = room.outside ? room.box.right + (window.innerWidth - room.box.right - c.width - frame) / 2 : room.box.right - c.width - frame - 14;
       var top = room.outside ? room.box.top : room.box.top + 64;
       c.style.left = Math.round(left) + 'px'; c.style.top = Math.round(top) + 'px';
@@ -2740,7 +2732,7 @@
     var side = document.createElement('div');
     side.className = 'mx-doom-side';
     // the buttons as small pictures in the same one ink, a word under each
-    var pic = function (cls, kind, label) { return '<button type="button" class="mx-doom-pic ' + cls + '"><i class="mx-doom-ico" style="' + iconMask(kind) + '"></i><span>' + label + '</span></button>'; };
+    var pic = function (cls, kind, label) { return '<button type="button" class="mx-doom-pic ' + cls + '" title="' + label.charAt(0) + label.slice(1).toLowerCase() + '"><i class="mx-doom-ico" style="' + iconMask(kind) + '"></i><span>' + label + '</span></button>'; };
     side.innerHTML = pic('mx-doom-close', 'close', 'Iziet')
       + '<canvas class="mx-doom-stats" width="80" height="48" aria-label="FPS, MS, MB"></canvas>'
       + pic('mx-doom-draw', 'draw', 'Zīmēt')
@@ -3002,7 +2994,9 @@
   // check lowers it further, and raises it again when frames are cheap).
   function maxWidth() {
     var p = window.__mkPerfProfile || {}, cores = +(p.hardwareConcurrency || navigator.hardwareConcurrency || 0), mem = +(p.deviceMemory || navigator.deviceMemory || 0);
-    return cores >= 8 && (!mem || mem >= 8) ? 800 : 640;
+    // a strong computer: up to 1280 columns (2× on a retina screen at most); a weak one stays at 640.
+    // The frame's cost still lowers it on its own (14 ms and up), so a slow moment never sticks.
+    return cores >= 8 && (!mem || mem >= 8) ? 1280 : 640;
   }
   function savedCap() {
     var cap = 0;

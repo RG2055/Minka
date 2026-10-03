@@ -987,6 +987,12 @@
   background: linear-gradient(180deg, #1222d8 0%, #1d30e6 55%, #3246ee 100%);
 }
 #mxDoom[hidden] { display: none; }
+/* a narrow picture: the status bar's words a little smaller, so they are not cut */
+#mxDoom .mx-doom { container-type: inline-size; }
+@container (max-width: 860px) {
+  .mx-doom .mx-doom-hud .mx-hud-num span { font-size: 8.5px; letter-spacing: .03em; }
+  .mx-doom .mx-doom-hud .mx-hud-coffee .mx-hud-num b { font-size: 13px; }
+}
 .mx-doom {
   --mx-hud-h: 60px;
   position: relative;
@@ -1204,6 +1210,15 @@
 .mx-doom-side.is-inside .mx-doom-stats { display: none; }
 .mx-doom-side.is-inside .mx-doom-pic { width: 60px; height: 52px; }
 .mx-doom-side.is-inside .mx-doom-ico { width: 32px; height: 32px; -webkit-mask-size: 32px 32px; mask-size: 32px 32px; }
+/* a narrow margin beside the window (an installed app): small keycaps with only their pictures
+   (the word shows on hover), no meter, a small map without the keys' list */
+#mxDoom.is-slim .mx-doom-side:not(.is-inside) { gap: 9px; padding: 5px; border-width: 2px; }
+#mxDoom.is-slim .mx-doom-side:not(.is-inside) .mx-doom-stats { display: none; }
+#mxDoom.is-slim .mx-doom-side:not(.is-inside) .mx-doom-pic { width: 40px; height: 38px; margin-bottom: 3px; border-radius: 8px; }
+#mxDoom.is-slim .mx-doom-side:not(.is-inside) .mx-doom-pic span { display: none; }
+#mxDoom.is-slim .mx-doom-side:not(.is-inside) .mx-doom-ico { width: 28px; height: 28px; -webkit-mask-size: 28px 28px; mask-size: 28px 28px; }
+#mxDoom.is-slim .mx-doom-side:not(.is-inside) .mx-doom-badges-btn b { right: -7px; top: -8px; padding: 0 3px; font-size: 9px; }
+#mxDoom.is-slim .mx-doom-minimap:not(.is-inside) { padding: 3px; border-width: 2px; box-shadow: 2px 2px 0 rgba(255, 255, 255, .35); }
 /* the status bar: the dock's cells (icon, number, label), nothing faded */
 .mx-doom-hud {
   display: grid;
