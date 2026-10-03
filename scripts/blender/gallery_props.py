@@ -301,7 +301,78 @@ def bed():
     return parts, 0.5
 
 
-BUILD = {'machine': machine, 'chair': chair, 'table': table, 'easel': easel, 'gramophone': gramophone, 'monsterbox': monsterbox, 'bed': bed}
+def oldpc():
+    """a beige 1998 computer on a small desk: CRT monitor, tower, keyboard, mouse (the screen's picture is the game's)"""
+    beige = mat('beige', hexc('#d8cfb8'), rough=0.55, coat=0.15)
+    beige2 = mat('beige2', hexc('#c4baa0'), rough=0.6)
+    darkp = mat('darkp', hexc('#2b2b2e'), rough=0.5)
+    glass = mat('glass', hexc('#10141c'), rough=0.08, coat=1.0)
+    keys = mat('keys', hexc('#e8e2d0'), rough=0.6)
+    led = mat('led', hexc('#3fd060'), rough=0.3, emit=hexc('#20a040'))
+    wood = mat('wood', hexc('#8a6440'), rough=0.4, coat=0.4)
+    wood2 = mat('wood2', hexc('#6b4a2c'), rough=0.45)
+    parts = []
+    # the desk: 0.62 wide (b), 0.42 deep (a), top at 0.36
+    parts.append(gbox('desktop', -0.21, 0.21, -0.31, 0.31, 0.33, 0.36, wood, bevel=0.006))
+    for a0 in (-0.19, 0.17):
+        for b0 in (-0.29, 0.27):
+            parts.append(gbox('leg', a0, a0 + 0.025, b0, b0 + 0.025, 0, 0.33, wood2, bevel=0.003))
+    parts.append(gbox('shelf', -0.18, 0.18, -0.28, 0.28, 0.08, 0.1, wood2, bevel=0.003))
+    # the monitor: a bezel box, the tube's back narrowing behind it, a foot
+    z0 = 0.375
+    parts.append(gbox('foot', -0.1, 0.04, -0.07, 0.07, 0.36, z0, beige2, bevel=0.004))
+    parts.append(gbox('bezel', -0.02, 0.06, -0.13, 0.13, z0, z0 + 0.22, beige, bevel=0.01))
+    parts.append(gbox('tube', -0.17, -0.02, -0.1, 0.1, z0 + 0.02, z0 + 0.19, beige2, bevel=0.03, seg=4))
+    parts.append(gbox('glass', 0.059, 0.062, -0.105, 0.105, z0 + 0.04, z0 + 0.2, glass, bevel=0.002, seg=2))
+    parts.append(gbox('chin', 0.058, 0.064, 0.07, 0.1, z0 + 0.012, z0 + 0.03, darkp, bevel=0.002, seg=2))
+    parts.append(gbox('mled', 0.06, 0.066, 0.105, 0.113, z0 + 0.018, z0 + 0.026, led))
+    # the tower beside it on the desk
+    parts.append(gbox('tower', -0.17, 0.07, -0.29, -0.17, 0.36, 0.66, beige, bevel=0.008))
+    parts.append(gbox('cdrom', 0.069, 0.074, -0.28, -0.18, 0.6, 0.625, beige2, bevel=0.002, seg=2))
+    parts.append(gbox('floppy', 0.069, 0.074, -0.27, -0.19, 0.57, 0.582, beige2, bevel=0.002, seg=2))
+    parts.append(gbox('fslot', 0.073, 0.076, -0.255, -0.205, 0.574, 0.578, darkp))
+    parts.append(gbox('power', 0.069, 0.076, -0.245, -0.215, 0.42, 0.44, beige2, bevel=0.003, seg=2))
+    parts.append(gbox('tled', 0.07, 0.077, -0.205, -0.195, 0.46, 0.468, led))
+    # the keyboard and the mouse
+    parts.append(gbox('keyboard', 0.08, 0.2, -0.15, 0.13, 0.36, 0.38, beige2, bevel=0.006))
+    for r in range(4):
+        for c in range(12):
+            parts.append(gbox('key', 0.09 + r * 0.026, 0.11 + r * 0.026, -0.14 + c * 0.0225, -0.122 + c * 0.0225, 0.38, 0.388, keys, bevel=0.002, seg=1))
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=8, radius=0.03, location=G(0.15, 0.2, 0.37))
+    m = bpy.context.object; m.scale = (0.8, 1.2, 0.45); m.data.materials.append(beige); parts.append(m)
+    return parts, 0.66
+
+
+def arcade():
+    """a Konfektes 98 arcade cabinet: lilac body, a slanted screen (its picture is the game's), a lit marquee, buttons"""
+    body = mat('body', hexc('#8f6ad8'), rough=0.35, coat=0.5)
+    side = mat('side', hexc('#4a2fb0'), rough=0.4, coat=0.4)
+    black = mat('black', hexc('#141018'), rough=0.3, coat=0.8)
+    trim = mat('trim', hexc('#ff5fb0'), rough=0.3, emit=hexc('#802050'))
+    btnr = mat('btnr', hexc('#ff4f7a'), rough=0.25, coat=0.8)
+    btny = mat('btny', hexc('#ffd23f'), rough=0.25, coat=0.8)
+    btnb = mat('btnb', hexc('#5aa8ff'), rough=0.25, coat=0.8)
+    stick = mat('stick', hexc('#1d1a22'), rough=0.3)
+    parts = []
+    W, D = 0.42, 0.4
+    parts.append(gbox('base', -D / 2, D / 2, -W / 2, W / 2, 0, 0.5, body, bevel=0.01))
+    parts.append(gbox('panel', 0.0, D / 2 + 0.08, -W / 2, W / 2, 0.5, 0.56, side, bevel=0.01))
+    parts.append(gbox('screenbox', -D / 2, 0.06, -W / 2, W / 2, 0.56, 1.02, body, bevel=0.01))
+    parts.append(gbox('top', -D / 2, 0.14, -W / 2, W / 2, 1.02, 1.18, side, bevel=0.012))
+    parts.append(gbox('marquee', 0.139, 0.146, -W / 2 + 0.03, W / 2 - 0.03, 1.04, 1.16, trim, bevel=0.004, seg=2))
+    parts.append(gbox('bezel', 0.059, 0.064, -W / 2 + 0.03, W / 2 - 0.03, 0.6, 0.98, black, bevel=0.004, seg=2))
+    for sx in (-1, 1):
+        parts.append(gbox('sidepanel', -D / 2 - 0.004, D / 2 + 0.08, sx * W / 2 - (0.012 if sx > 0 else 0), sx * W / 2 + (0.012 if sx < 0 else 0), 0, 1.18, side, bevel=0.006))
+    parts.append(rod('stick', (0.14, 0.09, 0.56), (0.14, 0.09, 0.62), 0.008, stick, verts=10))
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=0.018, location=G(0.14, 0.09, 0.625)); b = bpy.context.object; b.data.materials.append(btnr); parts.append(b)
+    for i, m in enumerate((btnr, btny, btnb)):
+        parts.append(disc('btn%d' % i, 0.13 + (i % 2) * 0.03, -0.02 - i * 0.045, 0.56, 0.572, 0.016, m, verts=16))
+    parts.append(gbox('coin', D / 2 - 0.003, D / 2 + 0.002, -0.03, 0.03, 0.3, 0.36, black, bevel=0.003, seg=2))
+    parts.append(gbox('coinslot', D / 2 + 0.002, D / 2 + 0.004, -0.004, 0.004, 0.315, 0.345, trim))
+    return parts, 1.18
+
+
+BUILD = {'arcade': arcade, 'oldpc': oldpc, 'machine': machine, 'chair': chair, 'table': table, 'easel': easel, 'gramophone': gramophone, 'monsterbox': monsterbox, 'bed': bed}
 TILE_MIN = {}
 
 

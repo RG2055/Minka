@@ -1087,6 +1087,30 @@ const worker = {
     // Hearts for the gallery's drawings: GET ?ids=a,b,c gives each one's count
     // and which this device has hearted; POST { artId, like } sets this
     // device's heart. The device is a hash of its bearer token (no names).
+    // Konfektes 98 (the gallery's old computer): GET ?day= the day's ten best; POST { day, score, name }
+    // keeps this device's best for the day. Only today or yesterday (Riga), a sane score, a plain name.
+    if (url.pathname === "/api/candy" && (method === "GET" || method === "POST")) {
+      if (!env.DB) return json(request, { ok: false, error: "no database" }, 503);
+      const riga = (ms) => new Date(ms + 3 * 3600000).toISOString().slice(0, 10);
+      const okDay = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && (d === riga(Date.now()) || d === riga(Date.now() - 86400000));
+      const voter = (await sha256Hex("candy:" + (request.headers.get("authorization") || ""))).slice(0, 32);
+      if (method === "GET") {
+        const day = String(url.searchParams.get("day") || "");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json(request, { ok: false, error: "day required" }, 400);
+        const rows = await env.DB.prepare("SELECT name, score, voter FROM candy_scores WHERE day = ?1 ORDER BY score DESC, created_at ASC LIMIT 10").bind(day).all();
+        return json(request, { ok: true, day, top: (rows.results || []).map((r) => ({ name: r.name, score: Number(r.score) || 0, me: r.voter === voter })) });
+      }
+      const body = await readJson(request);
+      const day = String(body?.day || ""), score = Math.floor(Number(body?.score));
+      const name = String(body?.name || "").normalize("NFC").replace(/[\u0000-\u001f<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 40) || "Anonīms";
+      if (!okDay(day)) return json(request, { ok: false, error: "day not open" }, 400);
+      if (!Number.isFinite(score) || score < 0 || score > 500000) return json(request, { ok: false, error: "bad score" }, 400);
+      await env.DB.prepare(`INSERT INTO candy_scores (day, voter, name, score, created_at) VALUES (?1, ?2, ?3, ?4, ?5)
+        ON CONFLICT(day, voter) DO UPDATE SET name = excluded.name, score = MAX(candy_scores.score, excluded.score),
+        created_at = CASE WHEN excluded.score > candy_scores.score THEN excluded.created_at ELSE candy_scores.created_at END`).bind(day, voter, name, score, Date.now()).run();
+      return json(request, { ok: true });
+    }
+
     if (url.pathname === "/api/art-likes" && (method === "GET" || method === "POST")) {
       if (!env.DB) return json(request, { ok: false, error: "no database" }, 503);
       const voter = (await sha256Hex("art-like:" + (request.headers.get("authorization") || ""))).slice(0, 32);

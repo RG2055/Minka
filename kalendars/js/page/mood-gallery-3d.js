@@ -89,7 +89,7 @@
   var BADGES = [
     ['leo', 'Visi 9 Leonardo darbi'], ['venus', 'Mīlo Venēra'], ['plan', 'Nakts plāns'], ['sit', 'Pie galda'],
     ['fish', 'Pabarotas zivtiņas'], ['cats', 'Visi 3 kaķi noglaudīti'], ['coffee', '3 kafijas izdzertas'],
-    ['monster', 'White Monster izdzerts'], ['end', 'Zāles gals']
+    ['monster', 'White Monster izdzerts'], ['pc', 'Vecais dators ieslēgts'], ['end', 'Zāles gals']
   ];
   var BADGE_KEY = 'minkaGalleryBadgesV1';
   // each drink its own little cup (pixel art as the dock's icons), 1,50 € as at the machine
@@ -761,7 +761,7 @@
   /* Props made in Blender with their light baked in (scripts/blender/gallery_props.py), as the cats'
      statue: once their mesh and texture are in, they replace the simple boxes; the model's own parts
      (a cup brewing in the machine) are drawn with them. Loaded once, kept for the next visit. */
-  var BAKED_V = '?v=20261003p3', BAKED_KINDS = { machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
+  var BAKED_V = '?v=20261003p3', BAKED_KINDS = { arcade: 1, oldpc: 1, machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
   function isBaked(kind) { return !!(baked[kind] && baked[kind].tris); }
   function bakedMesh(m, img) {
     var tex = texOf(imgCanvas(img)), q = 1 / m.q, uq = 1 / m.uq, tris = [];
@@ -875,6 +875,85 @@
       } });
     }
     return parts;
+  }
+  // the old computer: its screen shows the Windows 98 desktop (drawn here), the rest is the model
+  var pcScreen = null;
+  function oldpcModel() {
+    pcScreen = pcScreen || paint(96, 72, function (ctx) {
+      var bg = ctx.createLinearGradient(0, 0, 0, 72); bg.addColorStop(0, '#2a3a9a'); bg.addColorStop(1, '#5a4fb8');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, 96, 72);
+      [['#ff5fb0', 6], ['#ffffff', 22], ['#d8cfb8', 38]].forEach(function (d) { ctx.fillStyle = d[0]; ctx.fillRect(5, d[1], 9, 9); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillRect(3, d[1] + 11, 13, 2); });
+      ctx.fillStyle = '#d8c8f0'; ctx.fillRect(26, 12, 56, 40); ctx.fillStyle = '#6a3fd0'; ctx.fillRect(27, 13, 54, 5);
+      var cols = ['#ff4f7a', '#ffd23f', '#5aa8ff', '#f5efe6', '#1d1a22', '#eef0ee'];
+      for (var y = 0; y < 4; y++) for (var x = 0; x < 6; x++) { ctx.fillStyle = cols[(x * 7 + y * 3) % 6]; ctx.fillRect(30 + x * 8, 21 + y * 7, 6, 5); }
+      ctx.fillStyle = '#d8c8f0'; ctx.fillRect(0, 64, 96, 8); ctx.fillStyle = '#6a3fd0'; ctx.fillRect(2, 65, 14, 6);
+    });
+    var screen = { quad: [[0.0635, 0.103, 0.573], [0.0635, -0.103, 0.573], [0.0635, -0.103, 0.417], [0.0635, 0.103, 0.417]], n: [1, 0, 0], tex: pcScreen, soft: 0 };
+    if (isBaked('oldpc')) return [screen];
+    return box(-0.17, 0.06, -0.13, 0.13, 0.36, 0.6, { all: { color: '#d8cfb8' } }).concat(box(-0.21, 0.21, -0.31, 0.31, 0.33, 0.36, { all: { color: '#8a6440' } }), [screen]);
+  }
+  // the Konfektes 98 arcade machine: its screen and its lit sign drawn here, the cabinet is the model
+  var arcadeTex = null;
+  function arcadeModel() {
+    if (!arcadeTex) {
+      var cols = ['#ff4f7a', '#ffd23f', '#5aa8ff', '#f5efe6', '#1d1a22', '#eef0ee'];
+      arcadeTex = {
+        screen: paint(96, 112, function (ctx) {
+          ctx.fillStyle = '#efe6fb'; ctx.fillRect(0, 0, 96, 112);
+          ctx.fillStyle = '#6a3fd0'; ctx.fillRect(0, 0, 96, 14);
+          ctx.fillStyle = '#fff'; ctx.font = '700 9px Tahoma, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('KONFEKTES 98', 48, 7);
+          for (var y = 0; y < 8; y++) for (var x = 0; x < 8; x++) {
+            ctx.fillStyle = (x + y) & 1 ? '#e4d8f6' : '#efe6fb'; ctx.fillRect(4 + x * 11, 18 + y * 11, 11, 11);
+            ctx.fillStyle = cols[(x * 5 + y * 3 + ((x * y) % 4)) % 6]; ctx.fillRect(6 + x * 11, 20 + y * 11, 7, 7);
+          }
+          ctx.fillStyle = '#6a3fd0'; ctx.font = '700 8px Tahoma, sans-serif'; ctx.fillText('NOSPIED E', 48, 106);
+        }),
+        sign: paint(128, 36, function (ctx) {
+          var g = ctx.createLinearGradient(0, 0, 128, 0); g.addColorStop(0, '#ff5fb0'); g.addColorStop(1, '#b07ae0');
+          ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 36);
+          ctx.fillStyle = '#fff'; ctx.font = '900 15px Tahoma, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#2a1d48'; ctx.fillText('KONFEKTES 98', 65, 20); ctx.fillStyle = '#ffffff'; ctx.fillText('KONFEKTES 98', 64, 18);
+        })
+      };
+    }
+    var out = [
+      { quad: [[0.0655, 0.16, 0.965], [0.0655, -0.16, 0.965], [0.0655, -0.16, 0.615], [0.0655, 0.16, 0.615]], n: [1, 0, 0], tex: arcadeTex.screen, soft: 0 },
+      { quad: [[0.1475, 0.18, 1.155], [0.1475, -0.18, 1.155], [0.1475, -0.18, 1.045], [0.1475, 0.18, 1.045]], n: [1, 0, 0], tex: arcadeTex.sign, soft: 0 }
+    ];
+    return isBaked('arcade') ? out : box(-0.2, 0.2, -0.21, 0.21, 0, 1.18, { all: { color: '#8f6ad8' } }).concat(out);
+  }
+  /* The day's golden cup: hidden somewhere in the hall (the same place for everyone that day,
+     another place tomorrow), a reason to walk the whole hall; found, it is gone till tomorrow. */
+  var GOLD_KEY = 'minkaGoldCupV1';
+  function goldStore() { try { return JSON.parse(localStorage.getItem(GOLD_KEY) || '{}') || {}; } catch (_e) { return {}; } }
+  function goldSpot(map, props, day) {
+    if (!day || goldStore().last === day) return null;
+    var h = 2166136261; for (var i = 0; i < day.length; i++) { h ^= day.charCodeAt(i); h = Math.imul(h, 16777619); }
+    var r = function () { h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+    for (var guard = 0; guard < 200; guard++) {
+      var cx = 1 + ((r() * HALL) | 0), cy = LEO_Y0 + 1 + ((r() * (map.h - LEO_Y0 - 3)) | 0), ci = cy * map.w + cx;
+      if (map.grid[ci] !== EMPTY || map.zone[ci]) continue;
+      var x = cx + 0.25 + r() * 0.5, y = cy + 0.25 + r() * 0.5;
+      if (props.some(function (p) { return Math.hypot(p.x - x, p.y - y) < 1.0; })) continue;
+      return [x, y];
+    }
+    return null;
+  }
+  function goldcupModel() {
+    return [
+      { disk: [0, 0, 0.004], r: 0.075, color: '#c9a227' },
+      { cyl: [0, 0, 0.006], r: 0.045, h: 0.075, color: '#f2c94c', top: '#7a4a24' },
+      { line: [[0, 0.045, 0.06], [0, 0.07, 0.045]], w: 0.014, color: '#e0b43c' },
+      { line: [[0, 0.07, 0.045], [0, 0.045, 0.022]], w: 0.014, color: '#e0b43c' }
+    ];
+  }
+  function takeGold(st, p) {
+    var g = goldStore(), today = st.today || '';
+    g.count = (g.count || 0) + 1; g.last = today;
+    try { localStorage.setItem(GOLD_KEY, JSON.stringify(g)); } catch (_e) {}
+    p.hidden = true; st.dirty = true;
+    flash(); sfx(st, 'badge');
+    say(st, 'Atradi dienas zelta krūzīti! Tā ir tava ' + g.count + '. Rīt tā būs citur.');
   }
   function chairModel() {
     if (isBaked('chair')) return [];
@@ -1670,6 +1749,9 @@
       case 'easel': return ['E', 'Zīmēt'];
       case 'statue': return ['E', 'Apskatīt: ' + VENUS.title];
       case 'catstatue': return ['E', 'Apskatīt: ' + CAT_STATUE.title];
+      case 'oldpc': return ['E', 'Ieslēgt veco datoru'];
+      case 'goldcup': return ['E', 'Paņemt zelta krūzīti'];
+      case 'arcade': return ['E', 'Spēlēt Konfektes 98'];
       case 'cat': return ['E', 'Paglaudīt: ' + a.name];
       case 'aquarium': return ['E', 'Pabarot zivtiņas'];
       case 'monster': return ['E', 'Paņemt White Monster'];
@@ -1816,6 +1898,7 @@
     return actx;
   }
   function tone(a, t, type, f0, f1, dur, vol) {
+    var v = 0.96 + Math.random() * 0.08; f0 *= v; f1 *= v;          // a little different each time (not robotic)
     var o = a.createOscillator(), g = a.createGain();
     o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -2213,7 +2296,7 @@
     }
     if (st.goal) { st.vx = st.vy = 0; moved = walkGoal(st, dt) || moved; }
     else {
-      var acc = Math.min(1, dt * (fwd || strafe ? 13 : 17));
+      var acc = 1 - Math.exp(-dt * (fwd || strafe ? 13 : 17));   // the same feel at 30 and at 144 frames a second
       st.vx += (tvx - st.vx) * acc; st.vy += (tvy - st.vy) * acc;
       if (Math.abs(st.vx) + Math.abs(st.vy) > 0.03) {
         var hit = tryMove(st, st.x + st.vx * dt, st.y + st.vy * dt);
@@ -2239,14 +2322,8 @@
       }
     });
     updateCats(st, dt, now);
-    // in a night room the light breathes (10 times a second, a level or two)
-    if (zoneAt(st.map, st.x, st.y)) {
-      if (now - (st.lampAt || 0) > 100) {
-        st.lampAt = now;
-        var lo = Math.round(Math.sin(now / 1100) * 0.8 + Math.sin(now / 430) * 0.45);
-        if (lo !== lampOff) { lampOff = lo; moved = true; }
-      }
-    } else if (lampOff) { lampOff = 0; moved = true; }
+    // the night rooms' light is steady (a breathing light read as flicker)
+    if (lampOff) { lampOff = 0; moved = true; }
     var aq = st.aqua, aquaTick = aq && st.aquaSeen && !st.viewing && now - aq.at >= (aq.food.length ? 32 : 48);
     if (aquaTick) { stepAquarium(aq, Math.min(0.1, (now - (aq.at || now)) / 1000)); paintAquarium(aq); aq.at = now; }
     // eye height eases to sitting or standing
@@ -2350,7 +2427,8 @@
     var list = navigator.getGamepads(), gp = null;
     for (var i = 0; i < list.length; i++) if (list[i] && list[i].connected) { gp = list[i]; break; }
     if (!gp) return null;
-    var dz = function (v) { v = v || 0; return Math.abs(v) < 0.18 ? 0 : (v - Math.sign(v) * 0.18) / 0.82; };
+    // a round deadzone on each stick (per axis it snapped diagonals to the axes)
+    var stick = function (x, y) { x = x || 0; y = y || 0; var m = Math.hypot(x, y); if (m < 0.18) return [0, 0]; var k = Math.min(1, (m - 0.18) / 0.82) / m; return [x * k, y * k]; };
     var b = gp.buttons.map(function (x) { return x.pressed; }), prev = st.padPrev || [];
     var hit = function (n) { return b[n] && !prev[n]; };
     st.padPrev = b;
@@ -2359,7 +2437,8 @@
     if (hit(2)) sip(st);
     if (hit(3)) toggleMap(st);
     if (hit(9)) setMusic(st, !st.musicOn);
-    return { lx: dz(gp.axes[0]), ly: dz(gp.axes[1]), rx: dz(gp.axes[2]), ry: dz(gp.axes[3]), run: !!(b[7] || b[10]) };
+    var L = stick(gp.axes[0], gp.axes[1]), Rs = stick(gp.axes[2], gp.axes[3]);
+    return { lx: L[0], ly: L[1], rx: Rs[0], ry: Rs[1], run: !!(b[7] || b[10]) };
   }
 
   /* ── Darbības ─────────────────────────────────────────────────────────── */
@@ -2460,6 +2539,9 @@
       case 'machine': if (!st.brew) menu(true); return;
       case 'statue': look({ src: ART + 'venus-milo.webp' + ART_V, caption: VENUS.caption, more: WIKI + MORE.venus }); earn(st, 'venus'); return;
       case 'catstatue': look({ src: ART + CAT_STATUE.src, caption: CAT_STATUE.caption }); return;
+      case 'oldpc': openPC(st); return;
+      case 'goldcup': takeGold(st, ref); return;
+      case 'arcade': openPC(st, 'candy'); return;
       case 'aquarium': feedFish(st, ref.at); return;
       case 'monster': case 'monsterbox': takeCan(st); return;
       case 'cat':
@@ -2937,7 +3019,7 @@
     window.addEventListener('keydown', function (e) {
       var st = state;
       if (!st || st.closed || root.hidden) return;
-      if (document.querySelector('.mk-draw-overlay, .gp-root') || st.paused) return;      // the editor or the hall of fame is on top
+      if (document.querySelector('.mk-draw-overlay, .gp-root, .pc98-root') || st.paused) return;      // the editor or the hall of fame is on top
       if (st.musicBlocked && st.musicOn) { st.musicBlocked = false; musicStart(); }
       var menuOpen = !root.querySelector('.mx-doom-menu').hidden;
       // Esc lets the mouse go and closes what is open inside; the gallery itself
@@ -3107,6 +3189,25 @@
     }
     return { tris: tris, bills: [] };
   }
+  // the old computer's Windows 98 (js/page/mood-gallery-pc.js), loaded the first time it is switched on
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261003pc8', pcLoad = null;
+  function openPC(st, app) {
+    freeMouse();
+    if (!pcLoad) pcLoad = new Promise(function (ok, no) {
+      if (window.MinkaGalleryPC) { ok(); return; }
+      var sc = document.createElement('script'); sc.src = PC_SRC; sc.onload = ok; sc.onerror = function () { pcLoad = null; no(); }; document.head.appendChild(sc);
+    });
+    pcLoad.then(function () {
+      if (state !== st || !window.MinkaGalleryPC) return;
+      // the hall's music stops while the computer is on (it has its own sounds), and comes back after
+      var wasOn = !!(audio && !audio.paused);
+      if (wasOn) audio.pause();
+      window.MinkaGalleryPC.open({ me: st.me, app: app || '', music: MUSIC.map(function (m) { return { title: m.title, src: ART + 'music/' + m.file + MUSIC_V }; }), onClose: function () {
+        if (wasOn && state === st && st.musicOn && audio) { var pl = audio.play(); if (pl && pl.catch) pl.catch(function () {}); }
+      } });
+      earn(st, 'pc');
+    }, function () { say(st, 'Dators neieslēdzās. Pamēģini vēlreiz.'); });
+  }
   function catStatueOn(p) {
     p.facing = -Math.PI / 2;                                         // its front to the lobby
     p.radius = 0.4;
@@ -3132,6 +3233,10 @@
     var props = BED_SPOTS.map(function (s, i) {
       return { kind: 'bed', bed: i, x: s[0], y: s[1], h: 0.5, solid: 0.42, reach: 2.8, shade: 0.3, person: bedPeople[i] };
     });
+    // the Konfektes 98 arcade machine at the Leonardo hall's start, seen as you come in from the lobby
+    props.push({ kind: 'arcade', x: 1.42, y: LEO_Y0 + 0.62, h: 1.18, solid: 0.36, reach: 2.6, shade: 0.24 });
+    // the old computer on its desk in the lobby's corner, turned to the room
+    props.push({ kind: 'oldpc', x: 4.62, y: 1.42, h: 0.66, solid: 0.38, reach: 2.6, shade: 0.22 });
     props.push({ kind: 'table', x: 3.1, y: 2.7, h: 0.34, solid: 0.42, reach: 2.6, shade: 0.22 });
     props.push({ kind: 'chair', x: 2.42, y: 2.7, h: 0.42, reach: 2.6, shade: 0.12 });
     props.push({ kind: 'chair', x: 3.78, y: 2.7, h: 0.42, reach: 2.6, shade: 0.12 });
@@ -3144,6 +3249,8 @@
     props.push({ kind: 'statue', x: 3.0, y: (LEO_Y0 + LEO_Y1) / 2 + 0.5, h: 0.82, solid: 0.38, reach: 2.8, shade: 0.2 });
     // the cats' monument in the middle of the hall, between the pillars at the Leonardo hall's end
     props.push({ kind: 'catstatue', x: 3.5, y: LEO_Y1 + 1.5, h: 0.62, solid: 0.36, reach: 2.6, shade: 0.24 });
+    var gold = goldSpot(map, props, opts.today);
+    if (gold) props.push({ kind: 'goldcup', x: gold[0], y: gold[1], h: 0.14, reach: 1.8, shade: 0.06 });
     var cats = CATS.map(function (c, i) {
       var way = CAT_WAYS[c[2]][(i * 3) % CAT_WAYS[c[2]].length];
       return { kind: 'cat', name: c[0], coat: c[1], room: c[2], x: way[0], y: way[1], h: CAT_H, reach: 2.2, shade: 0.07, vx: 1, vy: 0, mode: 'sit', until: performance.now() + 800 + i * 900, t: i, flip: i === 1 };
@@ -3172,7 +3279,7 @@
     };
     // which way each thing faces (the map runs y down): the chairs the table, the
     // machine, the easel and the gramophone the room, the beds their foot to the room
-    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4, table: 0 };
+    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4, table: 0, oldpc: Math.PI * 0.72, goldcup: 0.6, arcade: 0 };
     var bedFacing = [Math.PI / 2, Math.PI / 2, -Math.PI / 2, Math.PI];
     var makeSprites = function () {
       props.forEach(function (p) {
@@ -3180,7 +3287,8 @@
         var model = p.kind === 'machine' ? function () { return machineModel(!!st.brew); }
           : p.kind === 'gramophone' ? function () { return gramophoneModel(st.musicOn); }
           : p.kind === 'easel' ? easelModel : p.kind === 'chair' ? chairModel : p.kind === 'monsterbox' ? monsterBoxModel
-          : p.kind === 'bed' ? function () { return bedModel(p.person); } : p.kind === 'table' && isBaked('table') ? function () { return []; } : null;
+          : p.kind === 'bed' ? function () { return bedModel(p.person); } : p.kind === 'table' && isBaked('table') ? function () { return []; }
+          : p.kind === 'oldpc' ? oldpcModel : p.kind === 'goldcup' ? goldcupModel : p.kind === 'arcade' ? arcadeModel : null;
         if (model) {
           p.facing = p.kind === 'chair' ? (p.x < 3.1 ? 0 : Math.PI) : p.kind === 'bed' ? bedFacing[p.bed] : FACING[p.kind];
           p.parts = model();
@@ -3231,7 +3339,9 @@
     paintBadges();
     drawHud(st);
     if (keep && keep.catFrames) st.catFrames = keep.catFrames;
-    if (!keep) say(st, 'Laipni lūgti galerijā! Pa kreisi Löfbergs kafija, pa labi durvis uz Nakts istabu');
+    if (!keep) say(st, props.some(function (p) { return p.kind === 'goldcup'; })
+      ? 'Laipni lūgti galerijā! Šodien kaut kur zālē paslēpta zelta krūzīte'
+      : 'Laipni lūgti galerijā! Pa kreisi Löfbergs kafija, pa labi durvis uz Nakts istabu');
     // the cats and the statue (cached by the browser and kept here after the first visit)
     var withCats = function (img) { if (state !== st) return; st.catFrames = catFrames(img); updateCats(st, 0, performance.now()); st.dirty = true; };
     if (catImg && catImg.complete && catImg.naturalWidth) withCats(catImg); else catImg = loadImage(ART + 'cats.webp' + CAT_V, withCats);
@@ -3241,7 +3351,7 @@
       loadBaked(kind, function () {
         if (state !== st) return;
         var make = { machine: function () { return machineModel(!!st.brew); }, chair: chairModel, easel: easelModel, gramophone: function () { return gramophoneModel(st.musicOn); },
-          monsterbox: monsterBoxModel, table: function () { return []; } };
+          monsterbox: monsterBoxModel, table: function () { return []; }, oldpc: oldpcModel, arcade: arcadeModel };
         st.props.forEach(function (p) {
           if (p.kind !== kind) return;
           if (kind === 'bed') { var pp = p; remodel(p, function () { return bedModel(pp.person); }); return; }
@@ -3345,7 +3455,8 @@
     if (what === 'sip') sip(st);
     else if (typeof what === 'number') brew(st, what);
     else if (what !== 'status' && st.aim) interact(st.aim);
-    return { seated: st.seated, music: st.musicOn, z: +st.z.toFixed(2), cup: st.cup && st.cup.kind.name, left: st.cup && st.cup.left, brewing: !!st.brew, viewing: !!st.viewing };
+    var gold = st.props.find(function (p) { return p.kind === 'goldcup' && !p.hidden; });
+    return { seated: st.seated, music: st.musicOn, z: +st.z.toFixed(2), cup: st.cup && st.cup.kind.name, left: st.cup && st.cup.left, brewing: !!st.brew, viewing: !!st.viewing, gold: gold ? [+gold.x.toFixed(2), +gold.y.toFixed(2)] : null };
   }
   window.MinkaGallery3D = {
     open: function (opts) { open(opts, null); }, close: function () { close(); }, refresh: refresh, bench: bench, pose: pose, act: act,
