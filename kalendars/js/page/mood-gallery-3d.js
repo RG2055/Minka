@@ -757,11 +757,44 @@
   }
   // what is drawn where: a picture on one side, flat colour on the others
   // a thing changed (the music, the coffee brewing): its sides are drawn anew when seen
-  function remodel(p, make) { p.parts = make(); p.mesh = meshOf(p, p.parts); if (state) state.dirty = true; }
+  function remodel(p, make) { p.parts = make(); p.mesh = propMesh(p, p.parts); if (state) state.dirty = true; }
+  /* Props made in Blender with their light baked in (scripts/blender/gallery_props.py), as the cats'
+     statue: once their mesh and texture are in, they replace the simple boxes; the model's own parts
+     (a cup brewing in the machine) are drawn with them. Loaded once, kept for the next visit. */
+  var BAKED_V = '?v=20261003p2', BAKED_KINDS = { machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
+  function isBaked(kind) { return !!(baked[kind] && baked[kind].tris); }
+  function bakedMesh(m, img) {
+    var tex = texOf(imgCanvas(img)), q = 1 / m.q, uq = 1 / m.uq, tris = [];
+    for (var i = 0; i < m.f.length; i += 3) {
+      var v = [], uv = [];
+      for (var k = 0; k < 3; k++) { var j = m.f[i + k]; v.push([m.v[j * 3] * q, m.v[j * 3 + 1] * q, m.v[j * 3 + 2] * q]); uv.push([m.t[j * 2] * uq, m.t[j * 2 + 1] * uq]); }
+      var n = [m.n[i] / 127, m.n[i + 1] / 127, m.n[i + 2] / 127], l = Math.hypot(n[0], n[1], n[2]) || 1;
+      tris.push({ v: v, uv: uv, tex: tex, col: 0, n: [n[0] / l, n[1] / l, n[2] / l], soft: 0.1, two: false });
+    }
+    return tris;
+  }
+  function propMesh(p, parts) {
+    var own = meshOf(p, parts), b = baked[p.kind];
+    return b && b.tris ? { tris: b.tris.concat(own.tris), bills: own.bills } : own;
+  }
+  function loadBaked(kind, done) {
+    if (baked[kind]) { if (baked[kind].tris) done(); return; }
+    baked[kind] = {};
+    var base = ART + 'props/' + kind;
+    Promise.all([fetch(base + '-mesh.json' + BAKED_V).then(function (r) { return r.json(); }), new Promise(function (ok, no) { var im = loadImage(base + '-tex.webp' + BAKED_V, ok); im.onerror = no; })])
+      .then(function (got) { baked[kind].tris = bakedMesh(got[0], got[1]); done(); }, function () { delete baked[kind]; });
+  }
   // the sprite path still lays the thing's shadow on the floor; its picture is the 3D parts
   var SHADOW_ONLY = { w: 1, h: 1, levels: [{ w: 1, h: 1, px: new Uint32Array(1) }] };
 
   function machineModel(brewing) {
+    if (baked.machine && baked.machine.tris) {
+      // the model has its own bay (0.10 deep, its tray 0.066 up): only the cup and the coffee's stream are added
+      return brewing ? [
+        { cyl: [0.06, 0, 0.066], r: 0.024, h: 0.05, color: '#eef2f8', top: '#7a4a24' },
+        { line: [[0.06, 0, 0.21], [0.06, 0, 0.116]], w: 0.006, color: '#6b3d1e' }
+      ] : [];
+    }
     // the front drawing edge to edge on its face (the flat sprite's 4 px margins and
     // rounded corners left a gap at the side and see-through corners)
     var front = paint(88, 144, function (ctx) {
@@ -782,6 +815,30 @@
   }
   function bedModel(person) {
     var rgb = person ? rgbOf(person.color) : [96, 106, 122];
+    if (isBaked('bed')) {
+      // the model is the frame, the mattress and the pillow; the blanket in the sleeper's colour, the name on the footboard
+      var L0 = 1.0, W0 = 0.66, plate = paint(160, 48, function (ctx) {
+        ctx.fillStyle = tint(rgb, -0.45); rr(ctx, 0, 0, 160, 48, 10); ctx.fill();
+        if (person) {
+          ctx.font = '800 17px Inter, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#ffffff'; ctx.fillText(String(person.first || '').toUpperCase().slice(0, 11), 80, 25);
+        }
+      });
+      var out = box(-0.2, L0 / 2 - 0.03, -W0 / 2 + 0.015, W0 / 2 - 0.015, 0.235, 0.29, { top: { color: tint(rgb, 0.05), soft: 0.25 }, all: { color: tint(rgb, -0.22) } });
+      out = out.concat(box(-0.22, -0.13, -W0 / 2 + 0.01, W0 / 2 - 0.01, 0.24, 0.3, { top: { color: tint(rgb, 0.3), soft: 0.25 }, all: { color: tint(rgb, 0.12) } }));
+      if (person) {
+        out.push({ quad: [[L0 / 2 + 0.042, 0.17, 0.26], [L0 / 2 + 0.042, -0.17, 0.26], [L0 / 2 + 0.042, -0.17, 0.15], [L0 / 2 + 0.042, 0.17, 0.15]], n: [1, 0, 0], tex: plate, soft: 0.2 });
+        out.push({ bill: [-L0 / 2 + 0.19, 0, 0.42], w: 0.2, h: 0.2, draw: function (ctx, w, hh) {
+          if (person.emoji) { ctx.font = Math.round(hh * 0.9) + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(person.emoji, w / 2, hh / 2); }
+          else { ctx.fillStyle = '#f0c7a6'; ctx.beginPath(); ctx.arc(w / 2, hh / 2, w * 0.36, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#4a3324'; ctx.beginPath(); ctx.arc(w / 2, hh / 2 - w * 0.1, w * 0.36, Math.PI, 0); ctx.fill(); }
+        } });
+        if (person.now) out.push({ bill: [-L0 / 2, 0, 0.62], w: 0.12, h: 0.12, draw: function (ctx, w) {
+          ctx.fillStyle = '#ffe28a'; ctx.beginPath(); ctx.arc(w / 2, w / 2, w * 0.45, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = tint(rgb, -0.45); ctx.beginPath(); ctx.arc(w * 0.68, w * 0.36, w * 0.4, 0, Math.PI * 2); ctx.fill();
+        } });
+      }
+      return out;
+    }
     var L = 1.0, Wd = 0.66, h = 0.2;                              // its foot towards +a
     var foot = paint(160, 48, function (ctx) {
       ctx.fillStyle = tint(rgb, -0.5); rr(ctx, 0, 0, 160, 48, 10); ctx.fill();
@@ -820,6 +877,7 @@
     return parts;
   }
   function chairModel() {
+    if (isBaked('chair')) return [];
     var wood = '#4a2f1b', seat = 0.26, r = 0.13, parts = [];
     [[0.09, 0.09], [0.09, -0.09], [-0.09, 0.09], [-0.09, -0.09]].forEach(function (l) { parts.push({ line: [[l[0] * 0.85, l[1] * 0.85, seat], [l[0] * 1.15, l[1] * 1.15, 0]], w: 0.022, color: wood }); });
     // the bentwood back: a hoop behind the seat, two rails
@@ -830,6 +888,7 @@
     return parts;
   }
   function easelModel() {
+    if (isBaked('easel')) return [];
     var wood = '#7a5130', apex = [0.02, 0, 0.66], parts = [];
     var canvasF = paint(76, 74, function (ctx) { ctx.fillStyle = '#efe8d8'; ctx.fillRect(0, 0, 76, 74); ctx.strokeStyle = '#c9bea8'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, 74, 72); ctx.fillStyle = 'rgba(70,60,45,.35)'; ctx.fillRect(36.5, 25, 3, 24); ctx.fillRect(26, 35.5, 24, 3); });
     var canvasB = paint(76, 74, function (ctx) { ctx.fillStyle = '#d8ccb2'; ctx.fillRect(0, 0, 76, 74); ctx.fillStyle = '#8a6440'; ctx.fillRect(0, 0, 76, 5); ctx.fillRect(0, 69, 76, 5); ctx.fillRect(0, 0, 5, 74); ctx.fillRect(71, 0, 5, 74); ctx.fillRect(35, 0, 5, 74); });
@@ -845,6 +904,7 @@
     return parts;
   }
   function gramophoneModel(playing) {
+    if (isBaked('gramophone')) return playing ? [{ bill: [0.1, 0.05, 0.75], w: 0.16, h: 0.12, draw: function (ctx, w, h) { ctx.fillStyle = '#ffe28a'; ctx.font = '700 ' + Math.round(h * 0.8) + 'px Inter, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('\u266a \u266b', w / 2, h / 2); } }] : [];
     var wood = paint(70, 52, function (ctx) { ctx.fillStyle = '#5a3a1e'; ctx.fillRect(0, 0, 70, 52); ctx.fillStyle = '#7b5230'; rr(ctx, 6, 6, 58, 40, 4); ctx.fill(); });
     var parts = box(-0.14, 0.14, -0.16, 0.16, 0, 0.2, { all: { tex: wood }, top: { color: '#4a2f17' } });
     parts.push({ cyl: [0, 0.02, 0.2], r: 0.13, h: 0.012, color: '#1b1b1b', top: '#232323' });
@@ -855,6 +915,7 @@
     return parts;
   }
   function monsterBoxModel() {
+    if (isBaked('monsterbox')) return [];
     var parts = [], front = paint(112, 30, function (ctx) {
       ctx.fillStyle = '#f4f5f4'; ctx.fillRect(0, 0, 112, 30); ctx.fillStyle = '#c4c9c4'; ctx.fillRect(0, 0, 112, 2); ctx.fillRect(0, 28, 112, 2);
       ctx.fillStyle = '#3a3f3a'; ctx.font = '900 11px Inter, system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('ULTRA', 30, 16);
@@ -2362,7 +2423,7 @@
     st.seated = false;
     st.props.forEach(function (p) {
       if (p.kind === 'chair') p.hidden = false;
-      if (p.kind === 'table') p.spr = tableSprite(false);
+      if (p.kind === 'table' && !p.mesh) p.spr = tableSprite(false);
     });
     st.dirty = true;
   }
@@ -2376,7 +2437,7 @@
     st.a = Math.atan2(table.y - chair.y, table.x - chair.x);
     st.seated = true;
     st.goal = null;
-    table.spr = tableSprite(true);
+    if (!table.mesh) table.spr = tableSprite(true);
     earn(st, 'sit');
     say(st, st.cup ? 'Tu apsēdies. C: malks, W: piecelties' : 'Tu apsēdies. W: piecelties');
   }
@@ -3114,7 +3175,7 @@
     };
     // which way each thing faces (the map runs y down): the chairs the table, the
     // machine, the easel and the gramophone the room, the beds their foot to the room
-    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4 };
+    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4, table: 0 };
     var bedFacing = [Math.PI / 2, Math.PI / 2, -Math.PI / 2, Math.PI];
     var makeSprites = function () {
       props.forEach(function (p) {
@@ -3122,11 +3183,11 @@
         var model = p.kind === 'machine' ? function () { return machineModel(!!st.brew); }
           : p.kind === 'gramophone' ? function () { return gramophoneModel(st.musicOn); }
           : p.kind === 'easel' ? easelModel : p.kind === 'chair' ? chairModel : p.kind === 'monsterbox' ? monsterBoxModel
-          : p.kind === 'bed' ? function () { return bedModel(p.person); } : null;
+          : p.kind === 'bed' ? function () { return bedModel(p.person); } : p.kind === 'table' && isBaked('table') ? function () { return []; } : null;
         if (model) {
           p.facing = p.kind === 'chair' ? (p.x < 3.1 ? 0 : Math.PI) : p.kind === 'bed' ? bedFacing[p.bed] : FACING[p.kind];
           p.parts = model();
-          p.mesh = meshOf(p, p.parts);
+          p.mesh = propMesh(p, p.parts);
           p.spr = SHADOW_ONLY;
           p.radius = p.kind === 'bed' ? 0.6 : p.kind === 'chair' ? 0.25 : 0.45;
           return;
@@ -3179,6 +3240,21 @@
     if (catImg && catImg.complete && catImg.naturalWidth) withCats(catImg); else catImg = loadImage(ART + 'cats.webp' + CAT_V, withCats);
     var withBust = function (img) { if (state !== st) return; var p = props.find(function (q) { return q.kind === 'statue'; }); p.spr = statueSprite(img); st.dirty = true; };
     if (!(bustImg && bustImg.complete && bustImg.naturalWidth)) bustImg = loadImage(ART + 'venus-milo.webp' + ART_V, withBust);
+    Object.keys(BAKED_KINDS).forEach(function (kind) {
+      loadBaked(kind, function () {
+        if (state !== st) return;
+        var make = { machine: function () { return machineModel(!!st.brew); }, chair: chairModel, easel: easelModel, gramophone: function () { return gramophoneModel(st.musicOn); },
+          monsterbox: monsterBoxModel, table: function () { return []; } };
+        st.props.forEach(function (p) {
+          if (p.kind !== kind) return;
+          if (kind === 'bed') { var pp = p; remodel(p, function () { return bedModel(pp.person); }); return; }
+          if (p.facing == null) p.facing = 0;
+          if (!p.radius) p.radius = kind === 'table' ? 0.3 : 0.45;
+          p.spr = SHADOW_ONLY;
+          remodel(p, make[kind]);
+        });
+      });
+    });
     if (!catStatue) {
       catStatue = {};
       Promise.all([fetch(ART + CAT_STATUE.mesh).then(function (r) { return r.json(); }), new Promise(function (ok, no) { var im = loadImage(ART + CAT_STATUE.tex, ok); im.onerror = no; })])
