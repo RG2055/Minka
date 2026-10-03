@@ -115,7 +115,7 @@
   var MUSIC_CREDIT = 'Ieraksti: PM Music, diriģents Philip Milman (pmmusic.pro), CC BY 3.0';
   var CREDITS = 'Mūzika: PM Music, diriģents Philip Milman, CC BY 3.0. Roka: WebXR rokas modelis (webxr-input-profiles, MIT). '
     + 'White Monster: TurnOnTheNight, CC0. Leonardo, Mikelandželo, Frīdrihs, Mīlo Venēra (foto Jastrow): publiskais domēns.';
-  var MUSIC_VOL = 0.3, MUSIC_KEY = 'minkaGalleryMusicV1', QUALITY_KEY = 'minkaGalleryWidthV2';
+  var MUSIC_VOL = 0.3, MUSIC_KEY = 'minkaGalleryMusicV1', QUALITY_KEY = 'minkaGalleryWidthV3';
   var root = null, state = null;
 
   /* ── Palīgi ───────────────────────────────────────────────────────────── */
@@ -761,7 +761,7 @@
   /* Props made in Blender with their light baked in (scripts/blender/gallery_props.py), as the cats'
      statue: once their mesh and texture are in, they replace the simple boxes; the model's own parts
      (a cup brewing in the machine) are drawn with them. Loaded once, kept for the next visit. */
-  var BAKED_V = '?v=20261003p2', BAKED_KINDS = { machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
+  var BAKED_V = '?v=20261003p3', BAKED_KINDS = { machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
   function isBaked(kind) { return !!(baked[kind] && baked[kind].tris); }
   function bakedMesh(m, img) {
     var tex = texOf(imgCanvas(img)), q = 1 / m.q, uq = 1 / m.uq, tris = [];
@@ -3053,12 +3053,9 @@
   }
   // The widest picture: 800 on a strong computer, else 640 (the slow-machine
   // check lowers it further, and raises it again when frames are cheap).
-  function maxWidth() {
-    var p = window.__mkPerfProfile || {}, cores = +(p.hardwareConcurrency || navigator.hardwareConcurrency || 0), mem = +(p.deviceMemory || navigator.deviceMemory || 0);
-    // a strong computer: up to 1280 columns (2× on a retina screen at most); a weak one stays at 640.
-    // The frame's cost still lowers it on its own (14 ms and up), so a slow moment never sticks.
-    return cores >= 8 && (!mem || mem >= 8) ? 1280 : 640;
-  }
+  // one width for every computer (the same picture everywhere, fast on the weak work PCs too);
+  // only a frame over 14 ms lowers it for that computer, so a slow moment never sticks
+  function maxWidth() { return 800; }
   function savedCap() {
     var cap = 0;
     try { cap = +localStorage.getItem(QUALITY_KEY) || 0; } catch (_e) {}

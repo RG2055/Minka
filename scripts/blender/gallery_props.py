@@ -237,22 +237,47 @@ def gramophone():
     return parts, 0.66
 
 
+CAN_IMG = __import__('os').path.abspath('kalendars/assets/gallery/monster-can.webp')   # run from the repo's root
+
+
+def can_mesh(name, a, b, z0, r, h, m):
+    """a White Monster can: the real can's picture wrapped round it (front and back), a slim neck and lid"""
+    bm = bmesh.new(); uv = bm.loops.layers.uv.new('UVMap')
+    N, rings = 28, [(0.0, r * 0.92), (0.03, r), (0.88, r), (0.95, r * 0.86), (1.0, r * 0.84)]
+    vs = [[bm.verts.new(G(a + math.cos(k / N * 2 * math.pi) * rr, b + math.sin(k / N * 2 * math.pi) * rr, z0 + f * h)) for k in range(N)] for f, rr in rings]
+    for ri in range(len(rings) - 1):
+        for k in range(N):
+            k2 = (k + 1) % N
+            f = bm.faces.new((vs[ri][k], vs[ri][k2], vs[ri + 1][k2], vs[ri + 1][k]))
+            for l, (kk, rr) in zip(f.loops, ((k, ri), (k + 1, ri), (k + 1, ri + 1), (k, ri + 1))):
+                # u: twice round (the picture on the front and on the back), its middle facing +a (the front)
+                u = ((kk / N) * 2 + 0.5) % 2.0
+                l[uv].uv = (min(u, 2 - u) if False else (u if u <= 1 else u - 1), rings[rr][0])
+    top = bm.faces.new(vs[-1])
+    for l in top.loops: l[uv].uv = (0.5, 0.995)
+    bmesh.ops.reverse_faces(bm, faces=bm.faces[:])                 # outward (the side faces were wound inward: they baked black)
+    me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
+    o = bpy.data.objects.new(name, me); bpy.context.scene.collection.objects.link(o); me.materials.append(m)
+    for f in me.polygons: f.use_smooth = True
+    return o
+
+
 def monsterbox():
     card = mat('card', hexc('#f4f5f4'), rough=0.7)
-    can = mat('can', hexc('#eef0ee'), rough=0.2, metal=0.6)
-    lid = mat('lid', hexc('#c8ccc8'), rough=0.25, metal=1.0)
-    claw = mat('claw', hexc('#8f978f'), rough=0.4)
     ink = mat('ink', hexc('#3a3f3a'), rough=0.5)
+    claw = mat('claw', hexc('#8f978f'), rough=0.4)
+    can = bpy.data.materials.new('can'); can.use_nodes = True
+    nt = can.node_tree; p = nt.nodes['Principled BSDF']
+    tex = nt.nodes.new('ShaderNodeTexImage'); tex.image = bpy.data.images.load(CAN_IMG); tex.extension = 'EXTEND'
+    uvn = nt.nodes.new('ShaderNodeUVMap'); uvn.uv_map = 'UVMap'; nt.links.new(uvn.outputs['UV'], tex.inputs['Vector'])
+    nt.links.new(tex.outputs['Color'], p.inputs['Base Color'])
+    p.inputs['Metallic'].default_value = 0.35; p.inputs['Roughness'].default_value = 0.28
     Wd, D, h = 0.5, 0.27, 0.09
     parts = [gbox('tray', -D / 2, D / 2, -Wd / 2, Wd / 2, 0, h, card, bevel=0.003)]
     for row in range(3):
         for c in range(6):
             ca, cb = -D / 2 + 0.045 + row * 0.09, -Wd / 2 + 0.042 + c * 0.083
-            parts.append(disc('can', ca, cb, h * 0.4, h * 0.4 + 0.165, 0.036, can, verts=18))
-            parts.append(disc('lid', ca, cb, h * 0.4 + 0.165, h * 0.4 + 0.169, 0.03, lid, verts=14))
-            if row == 2:                                           # the front row shows its claw marks
-                for o in (-0.014, 0, 0.014):
-                    parts.append(gbox('claw', ca + 0.034, ca + 0.0375, cb + o - 0.004, cb + o + 0.004, h * 0.4 + 0.05, h * 0.4 + 0.13, claw))
+            parts.append(can_mesh('can', ca, cb, h * 0.35, 0.036, 0.17, can))
     parts.append(text('ULTRA', 0.02, -(D / 2 + 0.0008), h / 2 + 0.003, 0.034, ink, depth=0.0006))   # Blender's axes: the front is -y
     for x in (0.004, 0.011, 0.018):
         parts.append(gbox('mark', D / 2, D / 2 + 0.002, -0.2 + x, -0.2 + x + 0.004, 0.02, 0.07, claw))
@@ -301,6 +326,8 @@ def bake_export(name, objs, H):
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0002)
     bmesh.ops.triangulate(bm, faces=bm.faces[:])
     bm.to_mesh(low.data); bm.free()
+    # the bake's own unwrap in its own layer (a part's picture mapping, the can's, stays as it is)
+    bl = low.data.uv_layers.new(name='BakeUV'); low.data.uv_layers.active = bl
     bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.uv.smart_project(angle_limit=math.radians(50), island_margin=0.006, area_weight=1.0)
     bpy.ops.object.mode_set(mode='OBJECT')
