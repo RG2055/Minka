@@ -528,7 +528,7 @@
 #worker-modal#worker-modal #modal-emoji-view .mkp-footer {flex:none !important;}
 
 /* The emoji picker (Emoji tab and the pop-up) draws with the app's own Fluent font, like the cards. */
-:is(#worker-modal,#mk-emoji-picker) :is(.mkp-emoji-btn,.mkp-tab,.mkp-prev-side-emoji,.mkp-prev-bg-emoji,#mkp-modal-picked-big,.mkp-picked-big,.mkp-lock-emoji) {
+#worker-modal :is(.mkp-emoji-btn,.mkp-tab,.mkp-prev-side-emoji,.mkp-prev-bg-emoji,#mkp-modal-picked-big,.mkp-picked-big,.mkp-lock-emoji) {
   font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif !important;
 }
 /* Emoji tab footer: Noņemt … Likt kā fonu, Saglabāt on one line */

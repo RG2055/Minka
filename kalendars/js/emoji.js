@@ -315,9 +315,7 @@
 
   // ── STATE ────────────────────────────────────────────────────────────────────
   var _data = {};
-  var _pickerEl = null;
   var _activeWorker = null;
-  var _activeCard = null;
   var _selectedEmoji = null;
   var _activeTab = 'all';
   var _emojiQuery = '';
@@ -670,10 +668,6 @@
     // Context menu close
     var cm = document.getElementById('mk-ctx-menu');
     if (cm && !cm.contains(e.target)) closeCtxMenu();
-    // Picker close
-    if (_pickerEl && _pickerEl.style.display !== 'none') {
-      if (!_pickerEl.contains(e.target)) closePicker();
-    }
   }, true);
 
   // Right-click OR long-press on card → context menu
@@ -727,138 +721,6 @@
     cm._closing = true;
     cm.style.pointerEvents = 'none';
     window.MinkaMotion.closeSurface(cm, { key: 'ctx-menu', origin: cm._origin }, function () { cm.remove(); });
-  }
-
-  // ── PICKER ───────────────────────────────────────────────────────────────────
-  function buildPicker() {
-    var el = document.createElement('div');
-    el.id = 'mk-emoji-picker';
-    el.innerHTML = '<div class="mkp-inner"></div>';
-    document.body.appendChild(el);
-    return el;
-  }
-
-  function renderPicker() {
-    if (!_pickerEl) return;
-    var inner = _pickerEl.querySelector('.mkp-inner');
-    var workerLvl = window.MinkaDaybook ? 10 : getWorkerLvl(_activeWorker || '');
-    var currentEmoji = _selectedEmoji;
-
-    // ── Live preview ──
-    var previewEmoji = safeEmoji(currentEmoji) || '';
-    var workerFirst = (_activeWorker || '').split(' ')[0] || '';
-    var workerSur   = (_activeWorker || '').split(' ').slice(1).join(' ') || '';
-    var initials    = ((workerFirst[0] || '') + (workerSur[0] || '')).toUpperCase() || '??';
-    var emojiCat = getEmojiSection(previewEmoji);
-    var previewHtml =
-      '<div class="mkp-preview-wrap">' +
-        '<div class="mkp-preview-label">Dzīvais priekšskatījums</div>' +
-        '<div class="mkp-preview-card" id="mkp-preview-card">' +
-          '<div class="mkp-prev-top">' +
-            '<div><div class="mkp-prev-init">' + escapeHtml(initials) + '</div><div class="mkp-prev-side-emoji" id="mkp-preview-emoji">' + escapeHtml(previewEmoji) + '</div></div>' +
-            '<div class="mkp-prev-month"><span>132h</span><em>Mēnesī</em></div>' +
-          '</div>' +
-          '<div class="mkp-prev-center">' +
-            '<span class="mkp-prev-bg-emoji" id="mkp-preview-bg-emoji">' + escapeHtml(previewEmoji) + '</span>' +
-            '<div class="mkp-prev-shift" id="mkp-preview-shift">24</div>' +
-            '<div class="mkp-prev-name">' + escapeHtml(workerFirst) + '</div>' +
-            '<div class="mkp-prev-sub">' + escapeHtml(workerSur) + '</div>' +
-          '</div>' +
-          '<div class="mkp-prev-segs"><span class="on"></span><span class="on"></span><span class="on-s"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>' +
-        '</div>' +
-        '<div class="mkp-picked-meta"><div class="mkp-picked-big" id="mkp-picked-big">' + escapeHtml(previewEmoji || '—') + '</div><div><div id="mkp-picked-name">' + escapeHtml(previewEmoji ? getEmojiName(previewEmoji) : 'Nav izvēlēts') + '</div><span id="mkp-picked-cat">' + escapeHtml(previewEmoji ? (SECTION_TITLES[emojiCat] || '') : '') + '</span></div></div>' +
-      '</div>';
-
-    // ── Footer ──
-    var syncMode = getSyncMode();
-    var dotClass = syncMode === 'local' ? ' mkp-local' : (syncMode === 'github-read' ? ' mkp-github-read' : '');
-    var footerHtml =
-      '<div class="mkp-footer">' +
-        '<button class="mkp-btn mkp-clear" data-mk-clear="1">Noņemt</button>' +
-        '<div></div>' +
-        '<button class="mkp-btn mkp-save" id="mkp-save">Saglabāt</button>' +
-      '</div>';
-
-    inner.innerHTML =
-      '<div class="mkp-title"><span>Izvēlies savu emoji</span><button class="mkp-close" data-mk-close="1">×</button></div>' +
-      '<div class="mkp-toolbar">' +
-        '<label class="mkp-search"><span>⌕</span><input id="mkp-search-input" value="' + String(_emojiQuery || '').replace(/"/g, '&quot;') + '" placeholder="Meklēt emoji..." autocomplete="off"></label>' +
-        '<div class="mkp-tabs">' + buildCategoryButtons('mkp-tab') + '</div>' +
-      '</div>' +
-      '<div class="mkp-body">' +
-        '<div class="mkp-left"></div>' +
-        previewHtml +
-      '</div>' +
-      footerHtml;
-
-    var left = inner.querySelector('.mkp-left');
-    showGridPage(left, workerLvl);
-    warmPickerFont();
-    bindGrid(left, previewPickerEmoji, function (e) { selectEmoji(e); });
-
-    // Tab click: only the grid changes
-    inner.querySelectorAll('.mkp-tab').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        _activeTab = btn.getAttribute('data-tab');
-        inner.querySelectorAll('.mkp-tab').forEach(function (b) { b.classList.toggle('mkp-tab-active', b === btn); });
-        showGridPage(left, workerLvl);
-      });
-    });
-
-    var searchInput = inner.querySelector('#mkp-search-input');
-    if (searchInput) {
-      searchInput.addEventListener('input', function(e) {
-        _emojiQuery = e.target.value || '';
-        clearTimeout(_emojiSearchTimer);
-        _emojiSearchTimer = setTimeout(function () { showGridPage(left, workerLvl); }, 90);
-      });
-      if (_emojiQuery) {
-        searchInput.focus();
-        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-      }
-    }
-
-    inner.addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (e.target.closest('[data-mk-clear]')) { selectEmoji(null); return; }
-      if (e.target.closest('[data-mk-close]')) { closePicker(); return; }
-      if (e.target.closest('#mkp-save'))       { doSave(); return; }
-    });
-  }
-
-  function selectEmoji(e) {
-    _selectedEmoji = e;
-    // Update preview immediately
-    var pe = document.getElementById('mkp-preview-emoji');
-    if (pe) paintEmoji(pe, e || '', true);
-    var bg = document.getElementById('mkp-preview-bg-emoji');
-    if (bg) paintEmoji(bg, e || '', true);
-    var big = document.getElementById('mkp-picked-big');
-    if (big) paintEmoji(big, e || '—', true);
-    var name = document.getElementById('mkp-picked-name');
-    if (name) name.textContent = e ? getEmojiName(e) : 'Nav izvēlēts';
-    var cat = document.getElementById('mkp-picked-cat');
-    if (cat) cat.textContent = e ? (SECTION_TITLES[getEmojiSection(e)] || '') : '';
-    // Update selected state in grid
-    if (_pickerEl) {
-      _pickerEl.querySelectorAll('.mkp-emoji-btn').forEach(function(b) {
-        b.classList.toggle('mkp-selected', b.getAttribute('data-emoji') === e);
-      });
-    }
-  }
-
-  function previewPickerEmoji(e) {
-    var pe = document.getElementById('mkp-preview-emoji');
-    if (pe) paintEmoji(pe, e || '', true);
-    var bg = document.getElementById('mkp-preview-bg-emoji');
-    if (bg) paintEmoji(bg, e || '', true);
-    var big = document.getElementById('mkp-picked-big');
-    if (big) paintEmoji(big, e || '—', true);
-    var name = document.getElementById('mkp-picked-name');
-    if (name) name.textContent = e ? getEmojiName(e) : 'Nav izvēlēts';
-    var cat = document.getElementById('mkp-picked-cat');
-    if (cat) cat.textContent = e ? (SECTION_TITLES[getEmojiSection(e)] || '') : '';
   }
 
   /* The Emoji tab's preview: a still copy of the person's own card (its look, layout and
@@ -995,27 +857,6 @@
     if (cat) cat.textContent = e ? (SECTION_TITLES[getEmojiSection(e)] || '') : '';
   }
 
-  async function doSave() {
-    if (!_activeWorker) return;
-    var saveBtn = document.getElementById('mkp-save');
-    var dot = document.getElementById('mkp-dot');
-    var text = document.getElementById('mkp-sync-text');
-    if (_selectedEmoji) _data[_activeWorker] = _selectedEmoji;
-    else delete _data[_activeWorker];
-    refreshAllCards();
-    if (dot) dot.className = 'mkp-sync-dot mkp-syncing';
-    var state = await savingMotion(saveBtn, saveToGist(_activeWorker));
-    if (dot) dot.className = 'mkp-sync-dot ' + (
-      state === 'github' ? 'mkp-ok' :
-      state === 'local' ? 'mkp-local' :
-      state === 'github-read' ? 'mkp-github-read' : 'mkp-err'
-    );
-    if (text) text.textContent =
-      state === 'error' ? 'Kļūda' : 'Saglabāts';
-    if (saveBtn && state === 'error') saveBtn.textContent = 'Kļūda';
-    setTimeout(closePicker, 700);
-  }
-
   // Save button: label → spinner → check (MinkaMotion.pending); an error
   // state gets no check. Resolves with the save state.
   function savingMotion(btn, work) {
@@ -1054,70 +895,12 @@
   }
   function flushSelection() { if (_autoTimer && _autoWorker) commitSelection(_autoWorker, null); }
 
+  /* An emoji on a card opens the person's own window on the Emoji tab: one place to
+     choose it, with the real card as the preview (the old separate picker is gone). */
   function openPicker(workerName, anchorEl) {
-    _activeWorker = workerName;
-    _activeCard   = anchorEl;
-    _selectedEmoji = _data[workerName] || null;
-    if (!_pickerEl) _pickerEl = buildPicker();
-
-    var isMobileShell = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 640;
-    var wasOpen = _pickerEl.style.display === 'block' && !_pickerEl.classList.contains('is-closing');
-    _pickerEl.classList.remove('is-closing');
-    _pickerEl.classList.toggle('mkp-mobile', !!isMobileShell);
-    _pickerEl.style.display = 'block';
-    renderPicker();
-
-    if (isMobileShell) {
-      _pickerEl.style.left = '6px';
-      _pickerEl.style.right = '6px';
-      _pickerEl.style.top = 'auto';
-      _pickerEl.style.bottom = 'max(8px, env(safe-area-inset-bottom, 0px))';
-      // Phone: a bottom sheet that rises into place.
-      if (!wasOpen && window.MinkaMotion) window.MinkaMotion.openSurface(_pickerEl, { key: 'emoji-picker', from: 'bottom' });
-      return;
-    }
-
-    // Center on screen
-    var PW = Math.min(1080, Math.max(720, window.innerWidth - 32)), M = 8;
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var scrollY = window.pageYOffset || 0;
-
-    // Measure actual height after render
-    var PH = Math.min(_pickerEl.offsetHeight || 420, vh * 0.88);
-
-    var left = (vw - PW) / 2;
-    if (left < M) left = M;
-
-    // Prefer below anchor, else center vertically
-    var rect = anchorEl.getBoundingClientRect();
-    var top = rect.bottom + scrollY + 8;
-    if (top + PH > scrollY + vh - M) {
-      // Try above
-      top = rect.top + scrollY - PH - 8;
-    }
-    if (top < scrollY + M) {
-      // Center vertically
-      top = scrollY + (vh - PH) / 2;
-    }
-
-    _pickerEl.style.left = left + 'px';
-    _pickerEl.style.top  = top  + 'px';
-    // Grows out of the card it belongs to (js/mk-motion.js).
-    if (!wasOpen && window.MinkaMotion) window.MinkaMotion.openSurface(_pickerEl, { key: 'emoji-picker', origin: anchorEl });
-  }
-
-  function closePicker() {
-    var el = _pickerEl, card = _activeCard, MM = window.MinkaMotion;
-    _activeWorker = null;
-    _activeCard   = null;
-    if (!el || el.style.display === 'none' || el.classList.contains('is-closing')) return;
-    if (!MM) { el.style.display = 'none'; return; }
-    el.classList.add('is-closing');
-    var mobile = el.classList.contains('mkp-mobile');
-    MM.closeSurface(el, mobile ? { key: 'emoji-picker', from: 'bottom' } : { key: 'emoji-picker', origin: card }, function () {
-      el.classList.remove('is-closing');
-      el.style.display = 'none';
-    });
+    if (!workerName || typeof window.showWorkerSchedule !== 'function') return;
+    var shift = anchorEl && anchorEl.getAttribute && (anchorEl.getAttribute('data-shift') || '') || '';
+    window.showWorkerSchedule(workerName, shift, { view: 'emoji', origin: anchorEl || null });
   }
 
   // ── CSS ───────────────────────────────────────────────────────────────────────
@@ -1242,14 +1025,7 @@
       .card { position:relative; }
 
       /* ── Picker shell ── */
-      #mk-emoji-picker {
-        position:fixed; z-index:99999;
-        width:560px; display:none;
-      }
-      #mk-emoji-picker.mkp-mobile {
-        width:calc(100vw - 12px);
-        max-width:none;
-      }
+
       .mkp-inner {
         background:rgba(10,7,24,0.99);
         border:1px solid rgba(139,92,246,0.45);
@@ -1403,88 +1179,6 @@
       .mkp-sync-dot.mkp-err    { background:#f87171;box-shadow:0 0 5px #f87171; }
       @keyframes mkPulse{from{opacity:.4}to{opacity:1}}
 
-      #mk-emoji-picker.mkp-mobile .mkp-inner {
-        border-radius:18px 18px 16px 16px;
-        max-height:min(76vh, 620px);
-        box-shadow:0 20px 60px rgba(0,0,0,0.88);
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-title {
-        font-size:8px;
-        letter-spacing:2px;
-        padding:10px 36px 8px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-body {
-        flex-direction:column;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-left {
-        border-right:none;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-tabs {
-        padding:8px 8px 6px;
-        gap:4px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-tab {
-        font-size:18px;
-        padding:6px 8px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-grid {
-        grid-template-columns:repeat(6,1fr);
-        gap:4px;
-        padding:6px 8px 8px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-emoji-btn {
-        font-size:26px;
-        min-height:42px;
-        border-radius:10px;
-        background:rgba(255,255,255,0.03);
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-emoji-btn:hover:not(.mkp-locked) {
-        transform:none;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-preview-wrap {
-        width:100%;
-        padding:0 8px 8px;
-        flex-direction:row;
-        align-items:stretch;
-        gap:8px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-preview-label {
-        display:none;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-preview-card {
-        width:100%;
-        max-width:none;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        padding:8px 10px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-prev-top {
-        margin-bottom:0;
-        gap:8px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-prev-shift {
-        font-size:22px;
-        margin:0;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-prev-name {
-        font-size:10px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-prev-sub {
-        font-size:8px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-footer {
-        padding:8px;
-        gap:8px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-btn {
-        min-height:38px;
-        font-size:11px;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-sync-meta {
-        min-width:96px;
-      }
-
       /* Modal inline preview panel */
       .mkp-modal-preview {
         width: 110px;
@@ -1560,10 +1254,6 @@
         filter:none !important;
       }
       .card:hover .mk-emoji-edit-btn { background:rgba(255,255,255,.08) !important; }
-      #mk-emoji-picker {
-        width:min(1080px, calc(100vw - 32px)) !important;
-        max-width:1080px !important;
-      }
       .mkp-inner {
         background:#14141d !important;
         border:1px solid #23232f !important;
@@ -1684,17 +1374,7 @@
       .mkp-tab:hover .mkp-cat-name { opacity:1 !important; }
       /* "Jaunums" on the 3D sets: a small pill on the tab, the picture under it (the
          worker window has its own, the same look) */
-      #mk-emoji-picker .mkp-tab-new {
-        position:absolute !important; top:3px !important; left:50% !important; translate:-50% 0;
-        padding:1px 5px !important; border-radius:6px !important;
-        background:#6dd58c !important; color:#06341b !important;
-        font:700 8px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
-        font-style:normal !important; letter-spacing:.02em !important; white-space:nowrap !important;
-        pointer-events:none !important;
-      }
-      #mk-emoji-picker .mkp-tab.mkp-tab-isnew .mkp-tab-ico { margin-top:12px !important; line-height:1 !important; }
-      #mk-emoji-picker .mkp-tab.mkp-tab-isnew .mkp-tab-pic { width:18px !important; height:18px !important; }
-      #mk-emoji-picker .mkp-group h5 .mkp-tab-new { position:static !important; display:inline-block !important; translate:none; margin-left:8px !important; vertical-align:1px !important; text-transform:none !important; }
+
       .mkp-body {
         display:grid !important;
         grid-template-columns:minmax(0, 1fr) 280px !important;
@@ -1995,26 +1675,23 @@
         padding:14px 0 0 !important;
         border-top:1px solid #1f1f2a !important;
       }
-      #mk-emoji-picker.mkp-mobile .mkp-inner {
-        max-height:min(78vh, 680px) !important;
-      }
-      #mk-emoji-picker.mkp-mobile .mkp-toolbar,
+      
       #modal-emoji-view .mkp-toolbar {
         grid-template-columns:1fr !important;
       }
-      #mk-emoji-picker.mkp-mobile .mkp-tabs,
+      
       #modal-emoji-view .mkp-tabs {
         grid-template-columns:repeat(8, minmax(34px, 1fr)) !important;
       }
-      #mk-emoji-picker.mkp-mobile .mkp-body,
+      
       #modal-emoji-view .mkp-modal-body {
         grid-template-columns:1fr !important;
       }
-      #mk-emoji-picker.mkp-mobile .mkp-preview-wrap,
+      
       #modal-emoji-view .mkp-preview-wrap {
         display:none !important;
       }
-      #mk-emoji-picker.mkp-mobile .mkp-grid,
+      
       #modal-emoji-view .mkp-grid {
         grid-template-columns:repeat(8, minmax(0, 1fr)) !important;
       }

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../">
+<title>Galerijas pārbaude</title>
+<!-- Only for scripts/check-gallery.mjs: the gallery on its own, with made-up
+     drawings, so a headless browser can walk it without a login. -->
+<link rel="stylesheet" href="css/page/mk-mood-x.css">
+<style>body { margin: 0; background: #000; }</style>
+</head>
+<body>
+<script src="js/page/mood-gallery-3d.js"></script>
+<script>
+(function () {
+  function art(hue) {
+    var c = document.createElement('canvas'); c.width = c.height = 64;
+    var g = c.getContext('2d'); g.fillStyle = 'hsl(' + hue + ' 60% 55%)'; g.fillRect(0, 0, 64, 64);
+    g.fillStyle = '#fff'; g.fillRect(16, 16, 32, 32);
+    return c.toDataURL('image/png');
+  }
+  var today = '2026-10-03', items = [];
+  for (var i = 0; i < 5; i++) items.push({ day: i < 2 ? today : '2026-10-0' + (i - 1), art: 'a' + i, url: art(i * 60), at: Date.now() - i * 1000, key: 'k' + i, parent: '', frame: i === 0 ? 3 : -1, authorName: 'Lapsa', authorEmoji: '<img src=x onerror=window.__xss=1>' });
+  window.__harness = {
+    items: items,
+    open: function () {
+      window.MinkaGallery3D.open({ items: items, today: today, sleepers: [{ name: 'Testa Persona', first: 'Testa', emoji: '', from: '00:00', to: '01:50', now: false, bed: 0, color: '#5b7fd1' }], me: { name: 'Lapsa', emoji: '🦊' }, stats: {}, slotMap: {}, dayTitle: function (d) { return d; }, onDraw: function (info) { window.__drawn = info; } });
+    }
+  };
+})();
+</script>
+</body>
+</html>

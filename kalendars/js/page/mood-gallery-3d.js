@@ -14,10 +14,15 @@
    cynicconn/RaycastEngineTechDemo): grīda un griesti katrs vienā tonī ar
    ēnu pēc attāluma (bez graudainas tekstūras, pagriežoties nekas nemirgo),
    sienas ar 256 px tekstūrām un mip līmeņiem, priekšmeti kā Doom spraiti
-   ar ēnu uz grīdas. Izšķirtspēja pēc loga (480–960 px platumā); ja dators
-   nevelk, galerija pati zīmē mazāku. Kadru zīmē tikai, ja kaut kas mainās
-   (iet, durvis, redzams kaķis), ne biežāk kā 35 reizes sekundē; paslēptā
-   cilnē nedarbojas nekas. Fails, kaķi, statuja un mūzika ielādējas tikai,
+   ar ēnu uz grīdas; tālums izgaist siltā muzeja krēslā (Nakts istabās
+   zilganā), ne melnumā. Izšķirtspēja pēc loga (līdz 640 px, jaudīgā datorā
+   800), ekrānā izstiepta vesela skaitļa reizes, lai pikseļi ir vienādi; ja
+   dators nevelk, galerija pati zīmē mazāku un, kad atkal velk, lielāku.
+   Pele kā spēlē (Pointer Lock): klikšķis to noķer, skats arī augšā un lejā
+   (horizonta nobīde, kā Doom), Esc atlaiž. Kadru zīmē tikai, ja kaut kas
+   mainās (iet, durvis, redzams kaķis), ne biežāk kā 35 reizes sekundē, bet
+   katrā kadrā, kamēr groza skatu ar noķertu peli; paslēptā cilnē nedarbojas
+   nekas. Tab: minikarte. Fails, kaķi, statuja un mūzika ielādējas tikai,
    kad galeriju atver; aizverot mūzika apstājas un viss tiek atlaists.
 
    Mūzika ir tā pati, kas DOOM: The Gallery Experience: PM Music (diriģents
@@ -37,6 +42,10 @@
   var W = 640, VIEW_H = 336, P = 356;
   var TB = 8, TEX = 1 << TB, TM = TEX - 1, MIPS = 6;     // 256 px wall textures, 6 mip levels
   var FOV = 0.9, MOVE = 2.6, RUN = 4.4, TURN = 2.4, RADIUS = 0.22, EYE = 0.5, EYE_SEATED = 0.36;
+  // looking up and down as in CS / Half-Life: the horizon moves up to this
+  // share of the picture (a raycaster shears the view, it cannot tilt it);
+  // LOOK: radians a mouse pixel turns, the same across and up
+  var PITCH_MAX = 0.62, LOOK = 0.0024;
   var HALL = 5;                                            // the hall's inner width, cells
   var MAIN = { x0: 7, x1: 11, y0: 1, y1: 5, name: 'Galvenā istaba' };
   var NMP = { x0: 7, x1: 9, y0: 7, y1: 9, name: 'Jaunais NMP' };
@@ -64,6 +73,21 @@
     'annunciation': ['Pasludināšana', 'ap. 1472–1476']
   };
   var VENUS = { title: 'Mīlo Venēra', caption: 'Mīlo Venēra (Afrodīte no Mēlas), ap. 130–100 p.m.ē., Luvra. Foto: Jastrow, publiskais domēns' };
+  // "Vairāk par darbu": the work's page (as DOOM: The Gallery Experience links to The Met)
+  var WIKI = 'https://en.wikipedia.org/wiki/';
+  var MORE = {
+    'mona-lisa': 'Mona_Lisa', 'vitruvian': 'Vitruvian_Man', 'ginevra': "Ginevra_de'_Benci", 'lady-ermine': 'Lady_with_an_Ermine',
+    'belle-ferronniere': 'La_Belle_Ferronni%C3%A8re', 'benois-madonna': 'Benois_Madonna', 'madonna-litta': 'Madonna_Litta',
+    'last-supper': 'The_Last_Supper_(Leonardo)', 'annunciation': 'Annunciation_(Leonardo)', venus: 'Venus_de_Milo'
+  };
+  /* Ieskati (as DOOM TGE's medals): things to find by walking the whole place,
+     kept on this computer. Each says once, at the top, when it is got. */
+  var BADGES = [
+    ['leo', 'Visi 9 Leonardo darbi'], ['venus', 'Mīlo Venēra'], ['plan', 'Nakts plāns'], ['sit', 'Pie galda'],
+    ['fish', 'Pabarotas zivtiņas'], ['cats', 'Visi 3 kaķi noglaudīti'], ['coffee', '3 kafijas izdzertas'],
+    ['monster', 'White Monster izdzerts'], ['end', 'Zāles gals']
+  ];
+  var BADGE_KEY = 'minkaGalleryBadgesV1';
   // each drink its own little cup (pixel art as the dock's icons), 1,50 € as at the machine
   var COFFEES = [
     { name: 'Espresso', label: 'Espresso', small: true, cup: ['.........', '.........', '..w.w....', '.........', '.cccccc..', '.cbbbbcc.', '.cbbbbc.c', '..cccccc.', '.dddddddd'] },
@@ -173,6 +197,20 @@
       for (var y = 0; y < HALF; y++) for (var x = 0; x < HALF; x++) {
         var joint = y % 32 === 0 || (x + (((y / 32) | 0) % 2 ? 32 : 0)) % 64 === 0, n = (r() - 0.5) * 8;
         if (joint) set(x, y, 96, 92, 86); else set(x, y, 160 + n, 154 + n, 144 + n);
+      }
+    });
+  }
+  // round marble columns (where the walls break between the halls): white stone,
+  // soft grey veins running up and round
+  var PILLAR_R = 0.34;
+  function marbleCanvas() {
+    var r = rnd(41);
+    return pixels(function (set) {
+      for (var y = 0; y < HALF; y++) for (var x = 0; x < HALF; x++) {
+        var v = Math.sin(x * 0.19 + Math.sin(y * 0.07) * 3.1 + Math.sin(y * 0.031 + x * 0.05) * 2.2);
+        var vein = Math.max(0, 1 - Math.abs(v) * 7) * 38, n = (r() - 0.5) * 6;
+        var flute = (x % 16 === 0) ? 18 : 0;                 // the fluting's shadow lines
+        set(x, y, 226 - vein - flute + n, 222 - vein - flute + n, 214 - vein * 0.8 - flute + n);
       }
     });
   }
@@ -461,12 +499,13 @@
   // coffeeIcon): a tall purple vending machine, a lighter head, the white
   // wordmark, a column of cream buttons, a side screen, the cup niche below.
   // Brewing: a paper cup in the niche and the coffee pouring.
-  function machineSprite(brewing) {
-    return sprite(96, 144, function (ctx) {
+  function machineSprite(brewing) { return sprite(96, 144, function (ctx) { machineFront(ctx, brewing); }); }
+  function machineFront(ctx, brewing, square) {
+    {
       var body = ctx.createLinearGradient(4, 0, 92, 0);
       body.addColorStop(0, '#3a1658'); body.addColorStop(0.35, '#4d1f73'); body.addColorStop(1, '#3c175c');
-      ctx.fillStyle = body; rr(ctx, 4, 0, 88, 144, 6); ctx.fill();
-      ctx.fillStyle = '#5a2880'; rr(ctx, 4, 0, 88, 22, 6); ctx.fill(); ctx.fillRect(4, 14, 88, 8);
+      ctx.fillStyle = body; rr(ctx, 4, 0, 88, 144, square ? 0 : 6); ctx.fill();
+      ctx.fillStyle = '#5a2880'; rr(ctx, 4, 0, 88, 22, square ? 0 : 6); ctx.fill(); ctx.fillRect(4, 14, 88, 8);
       ctx.fillStyle = '#c79fe0'; ctx.fillRect(70, 6, 10, 10);
       ctx.fillStyle = '#f1ecf6'; ctx.fillRect(12, 28, 72, 14);
       ctx.fillStyle = '#461c69'; ctx.font = 'italic 700 12px Georgia, "Times New Roman", serif';
@@ -485,7 +524,7 @@
         ctx.fillStyle = '#7a4a24'; ctx.fillRect(39, 110, 18, 3);
       }
       ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(4, 138, 88, 6);
-    });
+    }
   }
   // a tray of White Monster cans in the corner, one can standing beside it
   function canSide(ctx, x, y, w, h) {
@@ -537,6 +576,299 @@
       }
     });
   }
+  /* ── 3D priekšmeti ─────────────────────────────────────────────────────────
+     The furniture stands in the room as real 3D: built from a few simple parts
+     (faces with the drawings on them, discs, cylinders, bars, a horn) turned into
+     triangles once, and every frame drawn straight into the picture's pixels with
+     a depth for every pixel (as Ray's full depth buffer): an easel's legs and its
+     board hide each other right, and the statue, the cats and the furniture hide
+     one another by how far they are. Upright pictures on them (a sleeper's face,
+     the notes) are small sprites standing at their height. Local coordinates: a
+     forward (its front faces +a), b to its left, z up. */
+  var LIGHT3 = (function () { var v = [0.5, -0.55, 0.67], l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; })();
+  var CYL_N = 10, NEAR = 0.05, BILL_K = 240;
+  function paint(w, h, draw) {
+    var c = canvas(w * SS, h * SS), ctx = c.getContext('2d');
+    ctx.scale(SS, SS);
+    draw(ctx, w, h);
+    return c;
+  }
+  function dot3(p, v) { return p[0] * v[0] + p[1] * v[1] + p[2] * v[2]; }
+  function abgr(css) { var c = rgbOf(css, [128, 128, 128]); return (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0; }
+  var texCache = new Map();
+  function texOf(c) { var t = texCache.get(c); if (!t) { t = { levels: mipChain(data(c), c.width, c.height, 5) }; texCache.set(c, t); } return t; }
+  // the parts as triangles: corners (local), their place on the picture (0..1), a picture or a colour
+  function meshOf(p, parts) {
+    var tris = [], bills = [];
+    var tri = function (a, b, c, ua, ub, uc, look, n) { tris.push({ v: [a, b, c], uv: [ua, ub, uc], tex: look.tex ? texOf(look.tex) : null, col: look.tex ? 0 : abgr(look.color || '#808080'), n: n, soft: look.soft == null ? 0.5 : look.soft, two: !!look.two }); };
+    var quad = function (q, look, n) {
+      tri(q[0], q[1], q[3], [0, 0], [1, 0], [0, 1], look, n);
+      tri(q[1], q[2], q[3], [1, 0], [1, 1], [0, 1], look, n);
+    };
+    var ringPts = function (c, r, u, v, n) { var out = []; for (var i = 0; i < n; i++) { var t = i / n * Math.PI * 2; out.push([c[0] + (u[0] * Math.cos(t) + v[0] * Math.sin(t)) * r, c[1] + (u[1] * Math.cos(t) + v[1] * Math.sin(t)) * r, c[2] + (u[2] * Math.cos(t) + v[2] * Math.sin(t)) * r]); } return out; };
+    var frame = function (ax) {                                     // two directions across an axis
+      var l = Math.hypot(ax[0], ax[1], ax[2]) || 1; ax = [ax[0] / l, ax[1] / l, ax[2] / l];
+      var up = Math.abs(ax[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+      var u = [ax[1] * up[2] - ax[2] * up[1], ax[2] * up[0] - ax[0] * up[2], ax[0] * up[1] - ax[1] * up[0]], ul = Math.hypot(u[0], u[1], u[2]);
+      u = [u[0] / ul, u[1] / ul, u[2] / ul];
+      return [u, [ax[1] * u[2] - ax[2] * u[1], ax[2] * u[0] - ax[0] * u[2], ax[0] * u[1] - ax[1] * u[0]]];
+    };
+    var tube = function (a, b, r0, r1, n, look, look2) {           // a bar, a cylinder's side, a horn
+      var fr = frame([b[0] - a[0], b[1] - a[1], b[2] - a[2]]), ra = ringPts(a, r0, fr[0], fr[1], n), rb = ringPts(b, r1, fr[0], fr[1], n);
+      for (var i = 0; i < n; i++) {
+        var j = (i + 1) % n, t = (i + 0.5) / n * Math.PI * 2, nn = [fr[0][0] * Math.cos(t) + fr[1][0] * Math.sin(t), fr[0][1] * Math.cos(t) + fr[1][1] * Math.sin(t), fr[0][2] * Math.cos(t) + fr[1][2] * Math.sin(t)];
+        quad([rb[i], rb[j], ra[j], ra[i]], (i % 2 && look2) ? look2 : look, nn);
+      }
+      return rb;
+    };
+    var fan = function (pts, look, n) { for (var i = 1; i < pts.length - 1; i++) tri(pts[0], pts[i], pts[i + 1], [0, 0], [0, 0], [0, 0], look, n); };
+    parts.forEach(function (pt) {
+      if (pt.quad) quad(pt.quad, pt, pt.n);
+      else if (pt.disk) fan(ringPts(pt.disk, pt.r, [1, 0, 0], [0, 1, 0], 14), { color: pt.color, soft: 0 }, [0, 0, 1]);
+      else if (pt.cyl) {
+        var top = [pt.cyl[0], pt.cyl[1], pt.cyl[2] + pt.h];
+        var rimTop = tube(pt.cyl, top, pt.r, pt.r, CYL_N, { color: pt.color, soft: 0.45 });
+        fan(rimTop.slice().reverse(), { color: pt.top || pt.color, soft: 0 }, [0, 0, 1]);
+        if (pt.stripes) pt.stripes.forEach(function (sp) { quad(sp.quad, { color: sp.color, soft: 0.3 }, sp.n); });
+      } else if (pt.line) tube(pt.line[0], pt.line[1], pt.w / 2, pt.w / 2, 6, { color: pt.color, soft: 0.4 });
+      else if (pt.horn) {
+        var mouth = tube(pt.horn[0], pt.horn[1], pt.r0, pt.r1, 14, { color: pt.color, soft: 0.45, two: true }, { color: pt.color2 || pt.color, soft: 0.45, two: true });
+        var ax = [pt.horn[1][0] - pt.horn[0][0], pt.horn[1][1] - pt.horn[0][1], pt.horn[1][2] - pt.horn[0][2]];
+        fan(mouth, { color: pt.inside || '#7a5418', soft: 0.2, two: true }, ax);
+      } else if (pt.bill) {
+        var cos = Math.cos(p.facing), sin = Math.sin(p.facing), q = pt.bill;
+        var bw = Math.max(2, Math.round(pt.w * BILL_K)), bh = Math.max(2, Math.round(pt.h * BILL_K));
+        bills.push({ owner: p, x: p.x + q[0] * cos - q[1] * sin, y: p.y + q[0] * sin + q[1] * cos, lift: q[2] - pt.h / 2, h: pt.h, shade: 0,
+          spr: sprite(bw, bh, function (ctx) { pt.draw(ctx, bw, bh); }) });
+      }
+    });
+    return { tris: tris, bills: bills };
+  }
+  // one triangle into the pixels: depth tested against the walls (per column) and
+  // against everything 3D already there (per pixel); its picture corrected for perspective
+  function rasterTri(st, A, B, C, t, lut, pp) {
+    var buf = st.buf, pd = st.pdepth, zb = st.zbuf, H = VIEW_H;
+    var minX = Math.max(0, Math.floor(Math.min(A[0], B[0], C[0]))), maxX = Math.min(W - 1, Math.ceil(Math.max(A[0], B[0], C[0])));
+    var minY = Math.max(0, Math.floor(Math.min(A[1], B[1], C[1]))), maxY = Math.min(H - 1, Math.ceil(Math.max(A[1], B[1], C[1])));
+    if (minX > maxX || minY > maxY) return;
+    var area = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
+    if (Math.abs(area) < 1e-6) return;
+    var ia = 1 / area, lv = null, lw = 0, lh = 0, lpx = null;
+    if (t.tex) {                                                    // the texture level for how many texels fall on a pixel
+      var L0 = t.tex.levels[0], uvA = Math.abs((B[3] / B[2] - A[3] / A[2]) * (C[4] / C[2] - A[4] / A[2]) - (B[4] / B[2] - A[4] / A[2]) * (C[3] / C[2] - A[3] / A[2])) * L0.w * L0.h;
+      var L = Math.max(0, Math.min(t.tex.levels.length - 1, Math.floor(0.5 * Math.log2(Math.max(1, uvA / Math.max(1, Math.abs(area)))))));
+      lv = t.tex.levels[L]; lw = lv.w; lh = lv.h; lpx = lv.px;
+    }
+    var col = t.col ? px(t.col, lut) : 0;
+    for (var y = minY; y <= maxY; y++) {
+      var py = y + 0.5, row = y * W;
+      for (var x = minX; x <= maxX; x++) {
+        var qx = x + 0.5;
+        var w0 = ((B[0] - qx) * (C[1] - py) - (B[1] - py) * (C[0] - qx)) * ia;
+        if (w0 < -1e-5) continue;
+        var w1 = ((C[0] - qx) * (A[1] - py) - (C[1] - py) * (A[0] - qx)) * ia;
+        if (w1 < -1e-5) continue;
+        var w2 = 1 - w0 - w1;
+        if (w2 < -1e-5) continue;
+        var iz = w0 * A[2] + w1 * B[2] + w2 * C[2], d = 1 / iz, i = row + x;
+        if (d >= zb[x] || d >= pd[i]) continue;
+        var c = col;
+        if (lpx) {
+          var u = (w0 * A[3] + w1 * B[3] + w2 * C[3]) * d, v = (w0 * A[4] + w1 * B[4] + w2 * C[4]) * d;
+          var tx = (u * lw) | 0, ty = (v * lh) | 0;
+          if (tx < 0) tx = 0; else if (tx >= lw) tx = lw - 1;
+          if (ty < 0) ty = 0; else if (ty >= lh) ty = lh - 1;
+          var s = lpx[ty * lw + tx];
+          if ((s >>> 24) < 128) continue;
+          c = px(s, lut);
+        }
+        buf[i] = c; pd[i] = d;
+        if (y < pp.top[x]) pp.top[x] = y;
+        if (y > pp.bot[x]) pp.bot[x] = y;
+      }
+    }
+  }
+  // a polygon cut at the near plane (so a face you stand right at does not tear)
+  function clipNear(poly) {
+    var out = [];
+    for (var i = 0; i < poly.length; i++) {
+      var a = poly[i], b = poly[(i + 1) % poly.length], ina = a[1] >= NEAR, inb = b[1] >= NEAR;
+      if (ina) out.push(a);
+      if (ina !== inb) { var k = (NEAR - a[1]) / (b[1] - a[1]); out.push(a.map(function (v, j) { return v + (b[j] - v) * k; })); }
+    }
+    return out;
+  }
+  var PROP_SPAN = { top: null, bot: null };
+  function drawProps3D(st, dirX, dirY, plX, plY) {
+    var inv = 1 / (plX * dirY - dirX * plY), half = VIEW_H / 2 + st.pitch, z = st.z;
+    if (!PROP_SPAN.top || PROP_SPAN.top.length !== W) { PROP_SPAN.top = new Int16Array(W); PROP_SPAN.bot = new Int16Array(W); }
+    st.props.forEach(function (p) {
+      if (p.hidden || !p.mesh) return;
+      var dx = p.x - st.x, dy = p.y - st.y, tYc = inv * (-plY * dx + plX * dy), rad = p.radius || 0.55;
+      if (tYc < -rad || tYc > 24) return;
+      var cosF = Math.cos(p.facing), sinF = Math.sin(p.facing);
+      var night = !!zoneAt(st.map, p.x, p.y), base = (night ? lampOff : 0) + lightAt(st, p.x, p.y);
+      var pp = PROP_SPAN; pp.top.fill(32767); pp.bot.fill(-1);
+      p.mesh.tris.forEach(function (t) {
+        // to the camera: across (tX), ahead (tY), height over the eye; the picture's place
+        var cam = t.v.map(function (q, k) {
+          var wx = p.x + q[0] * cosF - q[1] * sinF - st.x, wy = p.y + q[0] * sinF + q[1] * cosF - st.y;
+          return [inv * (dirY * wx - dirX * wy), inv * (-plY * wx + plX * wy), q[2] - z, t.uv[k][0], t.uv[k][1], wx, wy];
+        });
+        var n = [t.n[0] * cosF - t.n[1] * sinF, t.n[0] * sinF + t.n[1] * cosF, t.n[2]];
+        var toward = n[0] * (cam[0][5] + cam[1][5] + cam[2][5]) + n[1] * (cam[0][6] + cam[1][6] + cam[2][6]) + n[2] * (cam[0][2] + cam[1][2] + cam[2][2]);
+        if (toward >= 0 && !t.two) return;                          // its back to us
+        var poly = clipNear(cam);
+        if (poly.length < 3) return;
+        var dAvg = (cam[0][1] + cam[1][1] + cam[2][1]) / 3;
+        var lit = Math.max(0, Math.abs(dot3(n, LIGHT3)) * (toward < 0 ? 1 : 0.7));
+        var lut = lutAt(shadeLevel(Math.max(0, dAvg), 0) + base + Math.round((1 - lit) * t.soft * 60), night);
+        var scr = poly.map(function (c) { var iz = 1 / c[1]; return [(W / 2) * (1 + c[0] * iz), half - c[2] * P * iz, iz, c[3] * iz, c[4] * iz]; });
+        for (var k = 1; k < scr.length - 1; k++) rasterTri(st, scr[0], scr[k], scr[k + 1], t, lut, pp);
+      });
+      // what the crosshair and a click find: the columns it covers, nearer than what is there
+      for (var x = 0; x < W; x++) {
+        if (pp.bot[x] < 0) continue;
+        if (!st.pickRef[x] || st.pickDist[x] > tYc) {
+          st.pickRef[x] = p; st.pickDist[x] = Math.max(0.1, tYc); st.pickY0[x] = pp.top[x]; st.pickY1[x] = pp.bot[x]; st.pickWX[x] = p.x; st.pickWY[x] = p.y;
+        }
+      }
+    });
+  }
+  // the parts' helpers: an upright face between two floor corners, a box
+  // (the game's map runs y down: seen from outside, a0,b0 is the face's left edge)
+  function face(a0, b0, a1, b1, z0, z1, look) {
+    var n = [b0 - b1, a1 - a0, 0], l = Math.hypot(n[0], n[1]) || 1;
+    return Object.assign({ quad: [[a0, b0, z1], [a1, b1, z1], [a1, b1, z0], [a0, b0, z0]], n: [n[0] / l, n[1] / l, 0] }, look);
+  }
+  function box(a0, a1, b0, b1, z0, z1, looks) {                   // looks: front, back, left, right, top
+    var L = looks || {}, all = L.all || {};
+    return [
+      face(a1, b1, a1, b0, z0, z1, L.front || all),               // front (+a), its left is +b
+      face(a0, b0, a0, b1, z0, z1, L.back || all),
+      face(a0, b1, a1, b1, z0, z1, L.left || all),                // the +b side
+      face(a1, b0, a0, b0, z0, z1, L.right || all),
+      Object.assign({ quad: [[a0, b1, z1], [a1, b1, z1], [a1, b0, z1], [a0, b0, z1]], n: [0, 0, 1], soft: 0.25 }, L.top || all)
+    ];
+  }
+  // what is drawn where: a picture on one side, flat colour on the others
+  // a thing changed (the music, the coffee brewing): its sides are drawn anew when seen
+  function remodel(p, make) { p.parts = make(); p.mesh = meshOf(p, p.parts); if (state) state.dirty = true; }
+  // the sprite path still lays the thing's shadow on the floor; its picture is the 3D parts
+  var SHADOW_ONLY = { w: 1, h: 1, levels: [{ w: 1, h: 1, px: new Uint32Array(1) }] };
+
+  function machineModel(brewing) {
+    // the front drawing edge to edge on its face (the flat sprite's 4 px margins and
+    // rounded corners left a gap at the side and see-through corners)
+    var front = paint(88, 144, function (ctx) {
+      ctx.fillStyle = '#45196a'; ctx.fillRect(0, 0, 88, 144);
+      ctx.save(); ctx.translate(-4, 0); machineFront(ctx, brewing, true); ctx.restore();
+    });
+    var side = paint(40, 144, function (ctx) {
+      var gr = ctx.createLinearGradient(0, 0, 40, 0); gr.addColorStop(0, '#45196a'); gr.addColorStop(1, '#391559');
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, 40, 144);
+      ctx.fillStyle = '#5a2880'; ctx.fillRect(0, 0, 40, 22);
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(0, 22, 40, 2); ctx.fillRect(0, 138, 40, 6);
+      ctx.fillStyle = 'rgba(255,255,255,.07)'; for (var y = 40; y < 120; y += 8) ctx.fillRect(8, y, 24, 3);   // vents
+    });
+    var back = paint(96, 144, function (ctx) { ctx.fillStyle = '#331451'; ctx.fillRect(0, 0, 96, 144); ctx.fillStyle = '#4a1f6c'; ctx.fillRect(0, 0, 96, 22); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(10, 30, 76, 100); });
+    var h = 0.74, w = h * 88 / 144, d = h * 40 / 144;
+    var parts = box(-d / 2, d / 2, -w / 2, w / 2, 0, h, { front: { tex: front, soft: 0.35 }, back: { tex: back }, left: { tex: side }, right: { tex: side }, top: { color: '#5a2880' } });
+    return parts;
+  }
+  function bedModel(person) {
+    var rgb = person ? rgbOf(person.color) : [96, 106, 122];
+    var L = 1.0, Wd = 0.66, h = 0.2;                              // its foot towards +a
+    var foot = paint(160, 48, function (ctx) {
+      ctx.fillStyle = tint(rgb, -0.5); rr(ctx, 0, 0, 160, 48, 10); ctx.fill();
+      ctx.fillStyle = tint(rgb, -0.3); rr(ctx, 6, 4, 148, 7, 3); ctx.fill();
+      if (person) {
+        ctx.font = '800 15px Inter, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillText(String(person.first || '').toUpperCase().slice(0, 11), 80, 30);
+        ctx.fillStyle = '#ffffff'; ctx.fillText(String(person.first || '').toUpperCase().slice(0, 11), 80, 29);
+      }
+    });
+    var head = paint(160, 80, function (ctx) { ctx.fillStyle = tint(rgb, -0.45); rr(ctx, 0, 0, 160, 80, 16); ctx.fill(); ctx.fillStyle = tint(rgb, -0.22); rr(ctx, 8, 8, 144, 60, 12); ctx.fill(); });
+    var blanket = paint(80, 160, function (ctx) {
+      var b = ctx.createLinearGradient(0, 0, 0, 160); b.addColorStop(0, tint(rgb, 0.1)); b.addColorStop(1, tint(rgb, -0.2));
+      ctx.fillStyle = b; ctx.fillRect(0, 0, 80, 160);
+      ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(0, 0, 80, 10);
+    });
+    var side = paint(160, 40, function (ctx) { ctx.fillStyle = tint(rgb, -0.28); ctx.fillRect(0, 0, 160, 40); ctx.fillStyle = tint(rgb, -0.5); ctx.fillRect(0, 32, 160, 8); });
+    var parts = [];
+    parts = parts.concat(box(-L / 2, L / 2, -Wd / 2, Wd / 2, 0, h, { left: { tex: side }, right: { tex: side }, back: { color: tint(rgb, -0.4) }, front: { color: tint(rgb, -0.4) }, top: { color: tint(rgb, -0.1) } }));
+    // the blanket on top, the pillow at the head, the head- and footboards
+    parts.push({ quad: [[-L / 2 + 0.3, Wd / 2 - 0.03, h + 0.04], [L / 2 - 0.04, Wd / 2 - 0.03, h + 0.04], [L / 2 - 0.04, -Wd / 2 + 0.03, h + 0.04], [-L / 2 + 0.3, -Wd / 2 + 0.03, h + 0.04]], n: [0, 0, 1], tex: blanket, soft: 0.2 });
+    parts = parts.concat(box(-L / 2 + 0.07, -L / 2 + 0.3, -Wd / 2 + 0.1, Wd / 2 - 0.1, h, h + 0.09, { all: { color: '#eef1f5', soft: 0.3 } }));
+    parts = parts.concat(box(-L / 2 - 0.04, -L / 2 + 0.02, -Wd / 2 - 0.03, Wd / 2 + 0.03, 0, 0.5, { back: { tex: head }, front: { tex: head }, all: { color: tint(rgb, -0.45) } }));
+    parts = parts.concat(box(L / 2 - 0.02, L / 2 + 0.04, -Wd / 2 - 0.03, Wd / 2 + 0.03, 0, 0.3, { front: { tex: foot }, back: { color: tint(rgb, -0.5) }, all: { color: tint(rgb, -0.5) } }));
+    if (person) {
+      // the sleeper's face on the pillow (it looks at you from any side, as a sprite), the moon over the head
+      parts.push({ bill: [-L / 2 + 0.19, 0, h + 0.17], w: 0.2, h: 0.2, draw: function (ctx, w, hh) {
+        if (person.emoji) { ctx.font = Math.round(hh * 0.9) + 'px ' + EMOJI_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(person.emoji, w / 2, hh / 2); }
+        else { ctx.fillStyle = '#f0c7a6'; ctx.beginPath(); ctx.arc(w / 2, hh / 2, w * 0.36, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#4a3324'; ctx.beginPath(); ctx.arc(w / 2, hh / 2 - w * 0.1, w * 0.36, Math.PI, 0); ctx.fill(); }
+      } });
+      if (person.now) parts.push({ bill: [-L / 2, 0, 0.62], w: 0.12, h: 0.12, draw: function (ctx, w) {
+        ctx.fillStyle = '#ffe28a'; ctx.beginPath(); ctx.arc(w / 2, w / 2, w * 0.45, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = tint(rgb, -0.45); ctx.beginPath(); ctx.arc(w * 0.68, w * 0.36, w * 0.4, 0, Math.PI * 2); ctx.fill();
+      } });
+    }
+    return parts;
+  }
+  function chairModel() {
+    var wood = '#4a2f1b', seat = 0.26, r = 0.13, parts = [];
+    [[0.09, 0.09], [0.09, -0.09], [-0.09, 0.09], [-0.09, -0.09]].forEach(function (l) { parts.push({ line: [[l[0] * 0.85, l[1] * 0.85, seat], [l[0] * 1.15, l[1] * 1.15, 0]], w: 0.022, color: wood }); });
+    // the bentwood back: a hoop behind the seat, two rails
+    var hoop = []; for (var i = 0; i <= 10; i++) { var t = i / 10 * Math.PI; hoop.push([-0.12, Math.cos(t) * 0.12, seat + Math.sin(t) * 0.24]); }
+    for (i = 0; i < 10; i++) parts.push({ line: [hoop[i], hoop[i + 1]], w: 0.028, color: '#3b2616' });
+    parts.push({ line: [[-0.12, 0.09, seat + 0.12], [-0.12, -0.09, seat + 0.12]], w: 0.018, color: '#3b2616' });
+    parts.push({ cyl: [0, 0, seat - 0.03], r: r, h: 0.03, color: '#5a3a22', top: '#6e4a2c' });
+    return parts;
+  }
+  function easelModel() {
+    var wood = '#7a5130', apex = [0.02, 0, 0.66], parts = [];
+    var canvasF = paint(76, 74, function (ctx) { ctx.fillStyle = '#efe8d8'; ctx.fillRect(0, 0, 76, 74); ctx.strokeStyle = '#c9bea8'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, 74, 72); ctx.fillStyle = 'rgba(70,60,45,.35)'; ctx.fillRect(36.5, 25, 3, 24); ctx.fillRect(26, 35.5, 24, 3); });
+    var canvasB = paint(76, 74, function (ctx) { ctx.fillStyle = '#d8ccb2'; ctx.fillRect(0, 0, 76, 74); ctx.fillStyle = '#8a6440'; ctx.fillRect(0, 0, 76, 5); ctx.fillRect(0, 69, 76, 5); ctx.fillRect(0, 0, 5, 74); ctx.fillRect(71, 0, 5, 74); ctx.fillRect(35, 0, 5, 74); });
+    parts.push({ line: [apex, [0.08, 0.2, 0]], w: 0.03, color: wood });
+    parts.push({ line: [apex, [0.08, -0.2, 0]], w: 0.03, color: wood });
+    parts.push({ line: [[0, 0, 0.6], [-0.28, 0, 0]], w: 0.03, color: tint(rgbOf(wood), -0.2) });
+    var cw = 0.38, ch = 0.37, z0 = 0.23, ac = 0.07;
+    parts.push({ quad: [[ac, cw / 2, z0 + ch], [ac, -cw / 2, z0 + ch], [ac, -cw / 2, z0], [ac, cw / 2, z0]], n: [1, 0, 0], tex: canvasF, soft: 0.3 });
+    parts.push({ quad: [[ac - 0.01, -cw / 2, z0 + ch], [ac - 0.01, cw / 2, z0 + ch], [ac - 0.01, cw / 2, z0], [ac - 0.01, -cw / 2, z0]], n: [-1, 0, 0], tex: canvasB });
+    parts = parts.concat(box(ac - 0.02, ac + 0.06, -0.24, 0.24, z0 - 0.04, z0, { all: { color: '#6b4424' } }));
+    parts.push({ disk: [ac + 0.03, 0.08, z0 + 0.005], r: 0.07, color: '#c8a26a' });
+    ['#d64541', '#f2c94c', '#3a7bd5', '#4c8a44'].forEach(function (c, i) { parts.push({ disk: [ac + 0.03 + (i % 2) * 0.02, 0.05 + i * 0.022, z0 + 0.007], r: 0.011, color: c }); });
+    return parts;
+  }
+  function gramophoneModel(playing) {
+    var wood = paint(70, 52, function (ctx) { ctx.fillStyle = '#5a3a1e'; ctx.fillRect(0, 0, 70, 52); ctx.fillStyle = '#7b5230'; rr(ctx, 6, 6, 58, 40, 4); ctx.fill(); });
+    var parts = box(-0.14, 0.14, -0.16, 0.16, 0, 0.2, { all: { tex: wood }, top: { color: '#4a2f17' } });
+    parts.push({ cyl: [0, 0.02, 0.2], r: 0.13, h: 0.012, color: '#1b1b1b', top: '#232323' });
+    parts.push({ disk: [0, 0.02, 0.2135], r: 0.032, color: '#c0392b' });          // the record's label
+    parts.push({ line: [[-0.1, -0.12, 0.2], [-0.1, -0.12, 0.42]], w: 0.025, color: '#b8892b' });
+    parts.push({ horn: [[-0.1, -0.12, 0.42], [0.12, -0.02, 0.62]], r0: 0.02, r1: 0.13, color: '#f2cf6a', color2: '#a8761e', inside: '#7a5418' });
+    if (playing) parts.push({ bill: [0.1, 0.05, 0.75], w: 0.16, h: 0.12, draw: function (ctx, w, h) { ctx.fillStyle = '#ffe28a'; ctx.font = '700 ' + Math.round(h * 0.8) + 'px Inter, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('♪ ♫', w / 2, h / 2); } });
+    return parts;
+  }
+  function monsterBoxModel() {
+    var parts = [], front = paint(112, 30, function (ctx) {
+      ctx.fillStyle = '#f4f5f4'; ctx.fillRect(0, 0, 112, 30); ctx.fillStyle = '#c4c9c4'; ctx.fillRect(0, 0, 112, 2); ctx.fillRect(0, 28, 112, 2);
+      ctx.fillStyle = '#3a3f3a'; ctx.font = '900 11px Inter, system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('ULTRA', 30, 16);
+      ctx.fillStyle = '#8f978f'; [8, 13, 18].forEach(function (x) { ctx.fillRect(x, 7, 3, 16); }); ctx.fillRect(8, 7, 13, 3);
+    });
+    var side = paint(60, 30, function (ctx) { ctx.fillStyle = '#e9ebe9'; ctx.fillRect(0, 0, 60, 30); ctx.fillStyle = '#c4c9c4'; ctx.fillRect(0, 0, 60, 2); ctx.fillRect(0, 28, 60, 2); });
+    var Wd = 0.5, D = 0.27, h = 0.09;
+    for (var row = 0; row < 3; row++) for (var c = 0; c < 6; c++) {          // 3 rows of 6 white cans
+      var ca = -D / 2 + 0.045 + row * 0.09, cb = -Wd / 2 + 0.042 + c * 0.083, cz = h * 0.4;
+      parts.push({ cyl: [ca, cb, cz], r: 0.036, h: 0.165, color: '#eef0ee', top: '#d6dbd6' });
+      // the claw marks on the front of each can: three grey bars just off its side
+      [-0.014, 0, 0.014].forEach(function (o) {
+        parts.push({ quad: [[ca + 0.0365, cb + o + 0.004, cz + 0.13], [ca + 0.0365, cb + o - 0.004, cz + 0.13], [ca + 0.0365, cb + o - 0.004, cz + 0.05], [ca + 0.0365, cb + o + 0.004, cz + 0.05]], n: [1, 0, 0], color: '#9aa39a', soft: 0.3 });
+      });
+    }
+    return parts.concat(box(-D / 2, D / 2, -Wd / 2, Wd / 2, 0, h, { front: { tex: front }, back: { tex: front }, left: { tex: side }, right: { tex: side }, top: { color: '#dfe3df' } }));
+  }
+
   // the cats' frames, cut from the atlas (rows per coat: walk, sit, groom)
   function catFrames(img) {
     var c = canvas(img.naturalWidth || img.width, img.naturalHeight || img.height);
@@ -796,6 +1128,8 @@
     if (!(c >= 0 && c < AQ_TW)) c = AQ_TW / 2;
     for (var i = 0; i < 8; i++) aq.food.push({ x: Math.max(4, Math.min(AQ_TW - 4, c + (Math.random() - 0.5) * 30)), y: 3 + Math.random() * 3, k: Math.random(), life: 8 });
     say(st, 'Zivtiņas peld ēst');
+    sfx(st, 'plop');
+    earn(st, 'fish');
   }
   function inTank(st, wx) { var a = st.map.aquarium; return wx >= a.x0 && wx <= a.x1; }
 
@@ -804,15 +1138,16 @@
   // cup or a White Monster in your right hand, the thumb across the front.
   // Sprites from a posed 3D hand (scripts/pixel-art/held/build.mjs): one sprite
   // pixel is one picture pixel at 640 wide. HELD_SHOW: two rows above the
-  // drink's bottom (build.mjs prints it); the rows below are forearm kept under
-  // the bottom edge, so a step or a sip never shows where the arm ends.
-  var HELD_SHOW = { coffee: 114, can: 112 };
+  // drink's bottom (build.mjs prints it) and a hand's width more, so the hand
+  // holding it shows (it sat too low); the rest of the forearm (~50 rows) stays
+  // under the bottom edge, so a step or a sip never shows where the arm ends.
+  var HELD_SHOW = { coffee: 146, can: 146 };
   var held = { coffee: null, can: null, monsterCan: null, monsterBox: null };
   function handCanvas(kind) {
     var name = kind.can ? 'can' : 'coffee', img = held[name];
     if (!img) return null;
     var k = W / 640, pw = Math.round(img.naturalWidth * k), ph = Math.round(img.naturalHeight * k), pc = canvas(pw, ph), pctx = pc.getContext('2d');
-    if (k === 1) pctx.imageSmoothingEnabled = false; else pctx.imageSmoothingQuality = 'high';
+    pctx.imageSmoothingEnabled = false;                     // pixel art: never blurred, at any width
     pctx.drawImage(img, 0, 0, pw, ph);
     pc.show = Math.round(HELD_SHOW[name] * k);
     return pc;
@@ -842,7 +1177,7 @@
       if (it.parent && over[it.parent] === it) return;
       var cur = it, guard = 0;
       while (cur.key && over[cur.key] && guard++ < 12) cur = over[cur.key];
-      wall.push(cur === it ? it : Object.assign({}, cur, { day: it.day, slotOf: it.art }));
+      wall.push(cur === it ? it : Object.assign({}, cur, { day: it.day, slotOf: it.art, frame: it.frame }));
     });
     // the team's walls: this dežūra first, with empty frames to draw on
     var days = [], byDay = {};
@@ -850,22 +1185,31 @@
     if (today && days.indexOf(today) < 0) days.unshift(today);
     days.sort(function (a, b) { return a === today ? -1 : b === today ? 1 : (a < b ? 1 : -1); });
     var y = LEO_Y1 + 2;
+    // A drawing remembers its frame on its day's wall (its number, from the message),
+    // so it hangs there for everyone and on later days too; older ones without a
+    // number: the frame chosen on this computer, else the next free one.
     days.forEach(function (day) {
-      var list = byDay[day] || [], isToday = day === today;
-      var n = isToday ? Math.max(6, list.length + 2) : list.length;
-      if (n % 2) n++;
-      var len = Math.max(4, n + 1);
+      var list = byDay[day] || [], isToday = day === today, top = -1;
+      list.forEach(function (it) { if (it.frame > top) top = it.frame; });
+      var n = isToday ? Math.max(6, list.length + 2, top + 2) : Math.max(list.length, top + 1);
+      if (isToday && n % 2) n++;
+      var len = Math.max(4, n + (n % 2) + 1);
       segs.push({ day: day, y0: y, y1: y + len, count: list.length, today: isToday });
       var spots = [];
-      for (var i = 0; i < n; i++) spots.push({ x: i % 2 ? HALL + 1 : 0, y: y + 1 + Math.floor(i / 2) * 2, face: i % 2 ? 'w' : 'e', day: day });
+      for (var i = 0; i < n; i++) spots.push({ idx: i, x: i % 2 ? HALL + 1 : 0, y: y + 1 + Math.floor(i / 2) * 2, face: i % 2 ? 'w' : 'e', day: day });
       var free = spots.slice(), left = [];
-      list.forEach(function (it) {                              // a drawing made in a chosen frame keeps it
-        var want = slotMap && (slotMap[it.art] || (it.slotOf && slotMap[it.slotOf])), at = -1;
-        if (want) at = free.findIndex(function (s) { return s.x + ',' + s.y + ',' + s.face === want; });
+      list.forEach(function (it) {
+        var at = -1;
+        if (it.frame >= 0) at = free.findIndex(function (s) { return s.idx === it.frame; });
+        if (at < 0) {
+          var want = slotMap && (slotMap[it.art] || (it.slotOf && slotMap[it.slotOf]));
+          if (want) at = free.findIndex(function (s) { return s.x + ',' + s.y + ',' + s.face === want; });
+        }
         if (at >= 0) { free[at].item = it; free.splice(at, 1); } else left.push(it);
       });
       left.slice().reverse().forEach(function (it) { var s = free.shift(); if (s) s.item = it; });
-      spots.forEach(function (s) { if (!s.item) s.empty = true; slots.push(s); });
+      // empty frames only on this dežūra's wall (a past day's wall is not drawn on)
+      spots.forEach(function (s) { if (s.item) slots.push(s); else if (isToday) { s.empty = true; slots.push(s); } });
       y += len + 1;
     });
     var H = Math.max(y + 2, LEO_Y1 + 6, NMP.y1 + 2), Wm = MAIN.x1 + 2;
@@ -908,22 +1252,109 @@
   }
 
   /* ── Zīmēšana ─────────────────────────────────────────────────────────── */
-  var SHADES = 64, luts = null;
-  function makeLuts() {
-    luts = [];
-    for (var l = 0; l < SHADES; l++) {
-      var f = 1 - 0.76 * l / (SHADES - 1), lut = new Uint8Array(256);
-      for (var i = 0; i < 256; i++) lut[i] = Math.min(255, Math.round(i * f));
-      luts.push(lut);
+  // Distance fades into a colour, not into black: the hall's warm museum dusk,
+  // the night rooms' blue. One table per channel and level, so it costs the same.
+  // LIGHT_UP: levels brighter than the drawing itself (under a lamp, in front of a picture)
+  var SHADES = 64, LIGHT_UP = 16, luts = null, lutsNight = null;
+  var FOG = [58, 44, 31], FOG_NIGHT = [8, 13, 30];
+  function lutSet(fog) {
+    var set = [];
+    for (var l = -LIGHT_UP; l < SHADES; l++) {
+      // the fog starts a few steps away (as untrustedlife's FOG_START_FRAC): near, only a
+      // little darker in its own colour; the colour of the fog takes over further off
+      var f = l < 0 ? 1 - 0.022 * l : 1 - 0.76 * l / (SHADES - 1), w = l < 10 ? 0 : l > 30 ? 1 : (l - 10) / 20;
+      var k = l < 0 ? 0 : (1 - f) * w, t = { r: new Uint8Array(256), g: new Uint8Array(256), b: new Uint8Array(256) };
+      for (var i = 0; i < 256; i++) {
+        t.r[i] = Math.min(255, Math.round(i * f + fog[0] * k));
+        t.g[i] = Math.min(255, Math.round(i * f + fog[1] * k));
+        t.b[i] = Math.min(255, Math.round(i * f + fog[2] * k));
+      }
+      set.push(t);
     }
+    return set;
   }
+  function makeLuts() { luts = lutSet(FOG); lutsNight = lutSet(FOG_NIGHT); }
   // distance falloff; the walls running along x get a darker side (directional light)
   function shadeLevel(dist, side) { return Math.min(SHADES - 1, ((dist * 5.6) | 0) + (side ? 8 : 0)); }
-  function px(c, lut) { return (255 << 24 | lut[(c >> 16) & 255] << 16 | lut[(c >> 8) & 255] << 8 | lut[c & 255]) >>> 0; }
+  // lampOff: the night rooms' light breathes a little (one or two levels, slowly)
+  var lampOff = 0;
+  function lutAt(l, night) { return (night ? lutsNight : luts)[(l < -LIGHT_UP ? -LIGHT_UP : l > SHADES - 1 ? SHADES - 1 : l) + LIGHT_UP]; }
+  // light: the tile light where the surface is (negative brighter, positive darker)
+  function shade(dist, side, night, light) { return lutAt(shadeLevel(dist, side) + (night ? lampOff : 0) + (light | 0), night); }
+  /* Gaisma pa rūtiņām (as Ray's tile lighting): a light level for every quarter
+     of a cell, worked out once (and when a light is switched): a pool of light
+     in front of every picture, the aquarium's and the machine's glow, darker
+     corners; the night rooms dim, a small lamp by each bed, their own switch by
+     the door. Smoothed, so it reads as light, not as tiles. */
+  function lightAt(st, x, y) { var L = st.light; return L ? L[((y * 4) | 0) * st.lightW + ((x * 4) | 0)] | 0 : 0; }
+  function buildLight(st) {
+    var map = st.map, Wl = map.w * 4, Hl = map.h * 4, f = new Float32Array(Wl * Hl), off = st.lightsOff || {};
+    var pool = function (cx, cy, r, s) {
+      for (var j = Math.max(0, ((cy - r) * 4) | 0); j < Math.min(Hl, Math.ceil((cy + r) * 4)); j++)
+        for (var i = Math.max(0, ((cx - r) * 4) | 0); i < Math.min(Wl, Math.ceil((cx + r) * 4)); i++) {
+          var d = Math.hypot((i + 0.5) / 4 - cx, (j + 0.5) / 4 - cy);
+          if (d < r) f[j * Wl + i] += s * (1 - d / r) * (1 - d / r);
+        }
+    };
+    for (var j = 0; j < Hl; j++) for (var i = 0; i < Wl; i++) {
+      var cx = (i / 4) | 0, cy = (j / 4) | 0, ci = cy * map.w + cx;
+      if (map.zone[ci]) { var room = roomAt(map, cx + 0.5, cy + 0.5); f[j * Wl + i] = room && off[room === NMP ? 'nmp' : 'main'] ? 24 : -2; }
+      else if (map.grid[ci] === EMPTY) {
+        var walls = 0;
+        [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { var g = map.grid[(cy + d[1]) * map.w + cx + d[0]]; if (g === WALL || g === PILLAR) walls++; });
+        if (walls >= 2) f[j * Wl + i] = 3;                         // a corner, a little darker
+      }
+    }
+    map.slots.forEach(function (sl) {
+      if (sl.night) return;
+      var n = { e: [1, 0], w: [-1, 0], s: [0, 1], n: [0, -1] }[sl.face];
+      pool(sl.x + 0.5 + n[0] * 1.05, sl.y + 0.5 + n[1] * 1.05, 1.35, -12);
+    });
+    var aq = map.aquarium;
+    pool((aq.x0 + aq.x1) / 2, aq.y - 0.45, 1.7, -8);
+    pool(1.75, 2.55, 0.8, -5);                                     // the Löfbergs machine's light
+    st.props.forEach(function (p) {
+      if (p.kind !== 'bed') return;
+      var room = p.bed === 3 ? 'nmp' : 'main';
+      pool(p.x, p.y, 1.35, off[room] ? -9 : -15);                   // the bedside lamp (a night light when the room is dark)
+    });
+    // smoothed twice, then whole levels
+    for (var pass = 0; pass < 2; pass++) {
+      var g2 = new Float32Array(Wl * Hl);
+      for (j = 0; j < Hl; j++) for (i = 0; i < Wl; i++) {
+        var sum = 0, cnt = 0;
+        for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) { var yy = j + dy, xx = i + dx; if (yy >= 0 && yy < Hl && xx >= 0 && xx < Wl) { sum += f[yy * Wl + xx]; cnt++; } }
+        g2[j * Wl + i] = sum / cnt;
+      }
+      f = g2;
+    }
+    var L = new Int8Array(Wl * Hl);
+    for (i = 0; i < L.length; i++) L[i] = Math.max(-LIGHT_UP, Math.min(40, Math.round(f[i])));
+    st.light = L; st.lightW = Wl;
+    st.dirty = true;
+  }
+  // the light switch by a night room's door: a white plate on the wall, the rocker up or down
+  function switchTex(st, on) {
+    var c = canvas(TEX), g = c.getContext('2d');
+    g.drawImage(st.tex.nightWallCanvas, 0, 0);
+    var x = TEX / 2 - 15, y = TEX * 0.44;
+    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x + 2, y + 3, 30, 42);
+    g.fillStyle = '#f2f1ec'; g.fillRect(x, y, 30, 42);
+    g.fillStyle = '#d8d6cf'; g.fillRect(x + 9, y + 8, 12, 26);
+    g.fillStyle = '#ffffff'; g.fillRect(x + 10, on ? y + 9 : y + 21, 10, 12);
+    return wallTex(c);
+  }
+  // light off the aquarium's water on the floor in front of it: a few cells of
+  // a small wave table, moved on with the fish (so it costs nothing extra)
+  var SHIM = (function () { var t = new Uint8Array(64); for (var i = 0; i < 64; i++) { var v = Math.sin(i * 0.61) + Math.sin(i * 1.37 + 1); t[i] = v > 1.3 ? 3 : v > 1.0 ? 2 : v > 0.75 ? 1 : 0; } return t; })();
+  function px(c, lut) { return (255 << 24 | lut.b[(c >> 16) & 255] << 16 | lut.g[(c >> 8) & 255] << 8 | lut.r[c & 255]) >>> 0; }
+  // mip level for how many texels one pixel covers: from 1.5 on the next level
+  // (from 2 on, the walls just past 1:1 still shimmered)
+  function mipOf(step, max) { if (step < 1.5) return 0; var L = 31 - Math.clz32((step * 1.34) | 0); return L >= max ? max - 1 : L; }
 
   function render(st) {
     var t0 = performance.now();
-    var buf = st.buf, H = VIEW_H, half = H / 2, map = st.map, mw = map.w, mh = map.h, grid = map.grid, zone = map.zone, T = st.tex;
+    var buf = st.buf, H = VIEW_H, half = H / 2 + st.pitch, map = st.map, mw = map.w, mh = map.h, grid = map.grid, zone = map.zone, T = st.tex;
     var z = st.z + (st.seated ? 0 : Math.sin(st.walk * 2) * 0.006);
     var dirX = Math.cos(st.a), dirY = Math.sin(st.a), plX = -dirY * FOV, plY = dirX * FOV;
     var pz = zoneAt(map, st.x, st.y), x, y, lut;
@@ -935,7 +1366,7 @@
       var cam = 2 * x / W - 1, rx = dirX + plX * cam, ry = dirY + plY * cam;
       var mx = st.x | 0, my = st.y | 0, pmx = mx, pmy = my, ci = 0;
       var ddx = Math.abs(1 / rx), ddy = Math.abs(1 / ry), stepX, stepY, sdx, sdy, side = 0, cell = 0;
-      var glass = -1, gside = 0, gwall = 0, cross = -1, door = null, doorT = 0, doorU = 0;
+      var glass = -1, gside = 0, gwall = 0, cross = -1, door = null, doorT = 0, doorU = 0, col = -1, colX = 0, colY = 0;
       if (rx < 0) { stepX = -1; sdx = (st.x - mx) * ddx; } else { stepX = 1; sdx = (mx + 1 - st.x) * ddx; }
       if (ry < 0) { stepY = -1; sdy = (st.y - my) * ddy; } else { stepY = 1; sdy = (my + 1 - st.y) * ddy; }
       for (var guard = 0; guard < 200; guard++) {
@@ -959,6 +1390,13 @@
           if (glass < 0) { glass = side ? sdy - ddy : sdx - ddx; gside = side; gwall = side === 0 ? st.y + glass * ry : st.x + glass * rx; }
           continue;
         }
+        if (cell === PILLAR) {
+          // a round column: the ray meets its circle, or passes beside it
+          var pox = st.x - mx - 0.5, poy = st.y - my - 0.5, pb = pox * rx + poy * ry, pa = rx * rx + ry * ry;
+          var pdisc = pb * pb - pa * (pox * pox + poy * poy - PILLAR_R * PILLAR_R);
+          if (pdisc >= 0) { var pt = (-pb - Math.sqrt(pdisc)) / pa; if (pt > 0) { col = pt; colX = pox + pt * rx; colY = poy + pt * ry; break; } }
+          continue;
+        }
         if (cell) break;
       }
       var perp, tex, tx, art = null;
@@ -966,6 +1404,9 @@
         perp = doorT; tex = door.tex;
         tx = (doorU * TEX) | 0;
         if (door.axis === 0 ? st.x > door.x + 0.5 : st.y < door.y + 0.5) tx = TM - tx;   // the plate reads from both sides
+      } else if (col >= 0) {
+        perp = col; tex = T.marble;
+        tx = ((Math.atan2(colY, colX) / (2 * Math.PI) + 0.5) * 2 * TEX) & TM;   // the stone twice round
       } else {
         perp = side ? sdy - ddy : sdx - ddx;
         var wallX = side === 0 ? st.y + perp * ry : st.x + perp * rx;
@@ -987,10 +1428,12 @@
       var lineH = P / perp, top = half - (1 - z) * lineH;
       var y0 = Math.max(0, Math.ceil(top)), y1 = Math.min(H - 1, Math.floor(half + z * lineH));
       st.wallTop[x] = y0; st.wallBot[x] = y1;
-      var step = TEX / lineH, L = 0;
-      if (step >= 2) { L = 31 - Math.clz32(step | 0); if (L >= MIPS) L = MIPS - 1; }
+      var step = TEX / lineH, L = mipOf(step, MIPS);
       var lv = tex.mips[L], tpx = lv.px, sb = TB - L, sm = lv.w - 1, txl = tx >> L, tpos = (y0 - top) * step;
-      lut = luts[shadeLevel(perp, door ? 0 : side)];
+      // a column is lit from one side, round: darker the further its face turns away
+      var lgt = lightAt(st, st.x + (perp - 0.04) * rx, st.y + (perp - 0.04) * ry);    // the light just in front of the wall
+      lut = col >= 0 ? lutAt(shadeLevel(perp, 0) + Math.round((1 - Math.max(0, (colX * 0.55 - colY * 0.83) / PILLAR_R)) * 9) + lgt, pz)
+        : shade(perp, door ? 0 : side, door ? pz : zone[pmy * mw + pmx], lgt);
       for (y = y0; y <= y1; y++) {
         buf[y * W + x] = px(tpx[((((tpos | 0) >> L) & sm) << sb) | txl], lut);
         tpos += step;
@@ -1004,20 +1447,26 @@
     // fits how much floor one pixel covers there, so far rows do not sparkle;
     // past a window or a door the other room's texture
     var wt = st.wallTop, wb = st.wallBot, cr = st.cross;
+    var aqOn = st.aquaSeen && !!st.aqua, aqY = map.aquarium.y, aqX0 = map.aquarium.x0 - 0.3, aqX1 = map.aquarium.x1 + 0.3, tq = (performance.now() / 110) | 0;
     for (y = 0; y < H; y++) {
       if (Math.abs(y - half) < 0.5) continue;
       var fl = y > half, eyeH = fl ? z : 1 - z, rd = (eyeH * P) / Math.abs(y - half);
       var fx0 = st.x + rd * (dirX - plX), fy0 = st.y + rd * (dirY - plY), sx = rd * 2 * plX / W, sy = rd * 2 * plY / W;
-      var foot = Math.max(rd * 2 * FOV / W, rd * rd / (eyeH * P)) * TEX, Lf = 0;
-      if (foot >= 2) { Lf = 31 - Math.clz32(foot | 0); if (Lf >= MIPS) Lf = MIPS - 1; }
+      var foot = Math.max(rd * 2 * FOV / W, rd * rd / (eyeH * P)) * TEX, Lf = mipOf(foot, MIPS);
       var own = fl ? (pz ? T.nightFloor : T.floor) : (pz ? T.nightCeil : T.ceil), oth = fl ? (pz ? T.floor : T.nightFloor) : (pz ? T.ceil : T.nightCeil);
       var ol = own.mips[Lf], al = oth.mips[Lf], opx = ol.px, apx = al.px, S = ol.w, m = S - 1, sbf = TB - Lf;
-      var lutf = luts[shadeLevel(rd, 0)], o = y * W;
+      var lutf = shade(rd, 0, pz), luta = shade(rd, 0, !pz), o = y * W, shim = fl && aqOn;
+      var lvO = shadeLevel(rd, 0) + (pz ? lampOff : 0), lvA = shadeLevel(rd, 0) + (pz ? 0 : lampOff), LG = st.light, LWd = st.lightW;
       for (x = 0; x < W; x++) {
         if (y >= wt[x] && y <= wb[x]) continue;
         var wx = fx0 + x * sx, wy = fy0 + x * sy;
         var ti = ((((wy * S) | 0) & m) << sbf) | (((wx * S) | 0) & m);
-        buf[o + x] = px(cr[x] >= 0 && rd > cr[x] ? apx[ti] : opx[ti], lutf);
+        var other = cr[x] >= 0 && rd > cr[x], lg = LG ? LG[((wy * 4) | 0) * LWd + ((wx * 4) | 0)] | 0 : 0;
+        buf[o + x] = lg ? (other ? px(apx[ti], lutAt(lvA + lg, !pz)) : px(opx[ti], lutAt(lvO + lg, pz))) : other ? px(apx[ti], luta) : px(opx[ti], lutf);
+        if (shim && wy > aqY - 1.7 && wy < aqY && wx > aqX0 && wx < aqX1) {
+          var wv = SHIM[(((wx * 11) | 0) + ((wy * 7) | 0) * 5 + tq) & 63];
+          if (wv) { var cc = buf[o + x]; buf[o + x] = (0xff000000 | Math.min(255, ((cc >> 16) & 255) + wv * 16) << 16 | Math.min(255, ((cc >> 8) & 255) + wv * 11) << 8 | Math.min(255, (cc & 255) + wv * 6)) >>> 0; }
+        }
       }
     }
     // things: behind the glass first, then the glass, then the rest
@@ -1031,8 +1480,11 @@
       }
       var dx = p.x - st.x, dy = p.y - st.y;
       list.push({ p: p, d: dx * dx + dy * dy });
+      if (p.mesh) p.mesh.bills.forEach(function (b) { var bx = b.x - st.x, by = b.y - st.y; list.push({ p: b, d: bx * bx + by * by }); });
     });
     list.sort(function (a, b) { return b.d - a.d; });
+    st.pdepth.fill(1e9);
+    drawProps3D(st, dirX, dirY, plX, plY);
     drawSprites(st, list, dirX, dirY, plX, plY, 0);
     drawGlass(st);
     drawSprites(st, list, dirX, dirY, plX, plY, 1);
@@ -1041,36 +1493,32 @@
     var c = st.ctx, mid = VIEW_H / 2, s = W / 512;
     var cx = W >> 1, ref = st.pickRef[cx];
     st.aim = ref && st.pickDist[cx] <= (ref.isArt ? 3.4 : ref.reach || 2.4) ? ref : null;
+    // looking up or down: only what the crosshair is on (straight ahead, its column, as before)
+    if (st.aim && Math.abs(st.pitch) > VIEW_H * 0.06 && (mid < st.pickY0[cx] - 6 || mid > st.pickY1[cx] + 6)) st.aim = null;
     if (st.aim && st.aim.aquarium) { if (inTank(st, st.pickWX[cx])) st.aim.at = st.pickWX[cx]; else st.aim = null; }
     c.fillStyle = st.aim ? '#ffd166' : 'rgba(255,255,255,.6)';
     c.fillRect(W / 2 - s, mid - 6 * s, 2 * s, 4 * s); c.fillRect(W / 2 - s, mid + 2 * s, 2 * s, 4 * s);
     c.fillRect(W / 2 - 6 * s, mid - s, 4 * s, 2 * s); c.fillRect(W / 2 + 2 * s, mid - s, 4 * s, 2 * s);
-    if (st.msg && performance.now() < st.msgUntil) {
-      var fs = Math.max(8, Math.round(W / 64));
-      c.font = '800 ' + fs + 'px Inter, system-ui, sans-serif';
-      c.textBaseline = 'top'; c.textAlign = 'left';
-      c.fillStyle = 'rgba(0,0,0,.8)'; c.fillText(st.msg.toUpperCase(), fs * 0.6 + 1, fs * 0.6 + 1);
-      c.fillStyle = '#f0d77e'; c.fillText(st.msg.toUpperCase(), fs * 0.6, fs * 0.6);
-      st.msgDrawn = true;
-    } else st.msgDrawn = false;
     paintPrompt(st);
+    drawMinimap(st);
     var ms = performance.now() - t0;
+    st.lastMs = ms;
     st.cost = st.cost ? st.cost * 0.9 + ms * 0.1 : ms;
     st.frames++;
   }
   // Doom sprites with a soft shadow on the floor; pass 0 draws what lies
   // behind a window (in those columns), pass 1 everything else.
   function drawSprites(st, list, dirX, dirY, plX, plY, pass) {
-    var inv = 1 / (plX * dirY - dirX * plY), H = VIEW_H, half = H / 2, buf = st.buf, z = st.z;
+    var inv = 1 / (plX * dirY - dirX * plY), H = VIEW_H, half = H / 2 + st.pitch, buf = st.buf, z = st.z, pd = st.pdepth;
     for (var n = 0; n < list.length; n++) {
       var p = list[n].p, spr = p.spr, sx = p.x - st.x, sy = p.y - st.y;
       var tX = inv * (dirY * sx - dirX * sy), tY = inv * (-plY * sx + plX * sy);
       if (tY <= 0.12) continue;
-      var screenX = (W / 2) * (1 + tX / tY), sh = (P / tY) * p.h, sw = sh * spr.w / spr.h;
-      var floorY = half + (z * P) / tY, top = floorY - sh, left = screenX - sw / 2;
+      var screenX = (W / 2) * (1 + tX / tY), sh = (P / tY) * (spr.hu || p.h), sw = sh * spr.w / spr.h;
+      var floorY = half + ((z - (p.lift || 0)) * P) / tY, foot = floorY + (spr.drop ? spr.drop * P / tY : 0), top = foot - sh, left = screenX - sw * (spr.cx == null ? 0.5 : spr.cx);
       var x0 = Math.max(0, Math.ceil(left)), x1 = Math.min(W - 1, Math.floor(left + sw)), x;
       if (x1 < x0) continue;
-      var lut = luts[shadeLevel(tY, 0)];
+      var lut = shade(tY, 0, zoneAt(st.map, p.x, p.y), lightAt(st, p.x, p.y));
       // the shadow: an ellipse on the floor round the foot
       var r = p.shade || 0;
       if (r) {
@@ -1083,13 +1531,13 @@
           if (k <= 0) continue;
           k = Math.sqrt(k);
           var ya = Math.max(st.wallBot[x] + 1, Math.ceil(cy - hy * k)), yb = Math.min(H - 1, Math.floor(cy + hy * k));
-          for (var yy = ya; yy <= yb; yy++) { var i = yy * W + x, c0 = buf[i]; buf[i] = (0xff000000 | ((c0 >> 1) & 0x7f7f7f) + ((c0 >> 2) & 0x3f3f3f) + ((c0 >> 3) & 0x1f1f1f)) >>> 0; }
+          for (var yy = ya; yy <= yb; yy++) { var i = yy * W + x, c0 = buf[i]; if (pd[i] < 1e8) continue; buf[i] = (0xff000000 | ((c0 >> 1) & 0x7f7f7f) + ((c0 >> 2) & 0x3f3f3f) + ((c0 >> 3) & 0x1f1f1f)) >>> 0; }
         }
       }
-      var ratio = spr.h / sh, L = 0;
-      if (ratio >= 2 && spr.levels.length > 1) L = Math.min(spr.levels.length - 1, 31 - Math.clz32(ratio | 0));
+      if (p.parts) continue;                                      // built of 3D parts: drawn after (drawProps3D)
+      var ratio = spr.h / sh, L = spr.levels.length > 1 ? mipOf(ratio, spr.levels.length) : 0;
       var lv = spr.levels[L], lw = lv.w, lh = lv.h, lpx = lv.px, vStep = lh / sh;
-      var y0 = Math.max(0, Math.ceil(top)), y1 = Math.min(H - 1, Math.floor(floorY));
+      var y0 = Math.max(0, Math.ceil(top)), y1 = Math.min(H - 1, Math.floor(foot));
       for (x = x0; x <= x1; x++) {
         if (tY >= st.zbuf[x]) continue;
         if ((pass === 0) !== (st.glassCols[x] >= 0 && tY > st.glassCols[x])) continue;
@@ -1102,40 +1550,40 @@
           v += vStep;
           if (vi >= lh) break;
           var col = lpx[vi * lw + uu];
-          if ((col >>> 24) < 128) continue;
+          if ((col >>> 24) < 128 || pd[y * W + x] < tY) continue;    // behind a 3D thing there
           buf[y * W + x] = px(col, lut);
           drew = true;
         }
         if (!drew) continue;
         if (p.kind === 'cat') st.catsSeen = true;
         if (!st.pickRef[x] || st.pickDist[x] > tY) {
-          st.pickRef[x] = p; st.pickDist[x] = tY; st.pickY0[x] = y0; st.pickY1[x] = y1; st.pickWX[x] = p.x; st.pickWY[x] = p.y;
+          st.pickRef[x] = p.owner || p; st.pickDist[x] = tY; st.pickY0[x] = y0; st.pickY1[x] = y1; st.pickWX[x] = p.x; st.pickWY[x] = p.y;
         }
       }
     }
   }
   // the glass over whatever lies behind it: frame opaque, pane tinted
   function drawGlass(st) {
-    var H = VIEW_H, half = H / 2, buf = st.buf, g = st.tex.glass, z = st.z;
+    var H = VIEW_H, half = H / 2 + st.pitch, buf = st.buf, g = st.tex.glass, z = st.z, pz = zoneAt(st.map, st.x, st.y);
     for (var x = 0; x < W; x++) {
       var d = st.glassCols[x];
       if (d < 0) continue;
       var lineH = P / d, top = half - (1 - z) * lineH;
       var y0 = Math.max(0, Math.ceil(top)), y1 = Math.min(H - 1, Math.floor(half + z * lineH));
-      var step = TEX / lineH, L = 0;
-      if (step >= 2) { L = 31 - Math.clz32(step | 0); if (L >= MIPS) L = MIPS - 1; }
+      var step = TEX / lineH, L = mipOf(step, MIPS);
       var lv = g.mips[L], gp = lv.px, sb = TB - L, sm = lv.w - 1, txl = ((st.glassX[x] * TEX) | 0) >> L, tpos = (y0 - top) * step;
-      var lut = luts[shadeLevel(d, st.glassSide[x])];
+      var lut = shade(d, st.glassSide[x], pz);
       for (var y = y0; y <= y1; y++) {
         var c = gp[((((tpos | 0) >> L) & sm) << sb) | txl];
         tpos += step;
         var a = c >>> 24;
         if (!a) continue;
         var i = y * W + x, o = buf[i];
+        if (st.pdepth[i] < d) continue;
         if (a > 250) { buf[i] = px(c, lut); continue; }
-        var r = ((o & 255) * (255 - a) + lut[c & 255] * a) >> 8;
-        var gg = (((o >> 8) & 255) * (255 - a) + lut[(c >> 8) & 255] * a) >> 8;
-        var bb = (((o >> 16) & 255) * (255 - a) + lut[(c >> 16) & 255] * a) >> 8;
+        var r = ((o & 255) * (255 - a) + lut.r[c & 255] * a) >> 8;
+        var gg = (((o >> 8) & 255) * (255 - a) + lut.g[(c >> 8) & 255] * a) >> 8;
+        var bb = (((o >> 16) & 255) * (255 - a) + lut.b[(c >> 16) & 255] * a) >> 8;
         buf[i] = (255 << 24 | bb << 16 | gg << 8 | r) >>> 0;
       }
     }
@@ -1180,6 +1628,7 @@
       case 'aquarium': return ['E', 'Pabarot zivtiņas'];
       case 'monster': return ['E', 'Paņemt White Monster'];
       case 'monsterbox': return ['E', 'Paņemt bundžu no kastes'];
+      case 'switch': return ['E', st.lightsOff[a.room] ? 'Ieslēgt gaismu' : 'Izslēgt gaismu'];
       case 'bed': return ['E', a.person ? a.person.first + (a.person.from ? ' guļ ' + a.person.from + '–' + a.person.to : '') : 'Tukša gulta'];
     }
     return null;
@@ -1297,9 +1746,89 @@
     musicRemember(on);
     if (on) musicStart(); else musicStop(false);
     var g = st.props.find(function (p) { return p.kind === 'gramophone'; });
-    if (g) g.spr = gramophoneSprite(on);
+    if (g) remodel(g, function () { return gramophoneModel(on); });
     say(st, on ? 'Skan ' + MUSIC[musicIdx].title : 'Mūzika izslēgta. M: ieslēgt');
     paintMusic();
+  }
+
+  /* ── Skaņas ───────────────────────────────────────────────────────────── */
+  // Short, dry, made right here (Web Audio, no files): the doors, the
+  // coffee machine, a sip, the fish food, an Ieskats. Only while the sound is on
+  // (the speaker button, M): the same switch as the music.
+  var actx = null, noiseBuf = null;
+  function audioCtx() {
+    if (actx) return actx.state === 'closed' ? null : actx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    // made as the gallery opens, with the output's own rate: made later (the first door)
+    // it reset the Mac's sound output for a moment and the music stuttered
+    try { actx = new AC({ latencyHint: 'playback' }); } catch (_e) { try { actx = new AC(); } catch (_e2) { return null; } }
+    noiseBuf = actx.createBuffer(1, actx.sampleRate * 0.6, actx.sampleRate);
+    var d = noiseBuf.getChannelData(0);
+    for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return actx;
+  }
+  function tone(a, t, type, f0, f1, dur, vol) {
+    var o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function noise(a, t, dur, vol, type, f0, f1) {
+    var n = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    n.buffer = noiseBuf; f.type = type; f.frequency.setValueAtTime(f0, t); if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    n.connect(f).connect(g).connect(a.destination); n.start(t, Math.random() * 0.3); n.stop(t + dur + 0.02);
+  }
+  function sfx(st, kind) {
+    if (!st || !st.musicOn || document.hidden) return;
+    var a = audioCtx();
+    if (!a) return;
+    if (a.state === 'suspended') { a.resume().catch(function () {}); return; }
+    var t = a.currentTime + 0.005;
+    if (kind === 'door') noise(a, t, 0.38, 0.045, 'lowpass', 500, 1800);
+    else if (kind === 'brew') { tone(a, t, 'square', 92, 92, BREW_MS / 1000, 0.012); noise(a, t + 0.25, 1.1, 0.025, 'bandpass', 600, 1400); }
+    else if (kind === 'sip') tone(a, t, 'sine', 230, 120, 0.09, 0.09);
+    else if (kind === 'plop') { tone(a, t, 'sine', 720, 240, 0.06, 0.06); tone(a, t + 0.09, 'sine', 640, 220, 0.05, 0.04); }
+    else if (kind === 'click') { tone(a, t, 'square', 2200, 1800, 0.018, 0.03); noise(a, t, 0.025, 0.03, 'highpass', 3000, 3000); }
+    else if (kind === 'badge') { tone(a, t, 'square', 880, 880, 0.07, 0.035); tone(a, t + 0.08, 'square', 1320, 1320, 0.09, 0.035); }
+  }
+
+  /* ── Ieskati ──────────────────────────────────────────────────────────── */
+  function badgeStore() { try { return JSON.parse(localStorage.getItem(BADGE_KEY) || '{}') || {}; } catch (_e) { return {}; } }
+  function badgeSave(b) { try { localStorage.setItem(BADGE_KEY, JSON.stringify(b)); } catch (_e) {} }
+  function earn(st, id) {
+    var b = badgeStore();
+    if (b[id]) return;
+    b[id] = Date.now();
+    badgeSave(b);
+    var label = (BADGES.find(function (x) { return x[0] === id; }) || [id, id])[1];
+    say(st, 'Ieskats: ' + label + ' (' + BADGES.filter(function (x) { return b[x[0]]; }).length + '/' + BADGES.length + ')');
+    sfx(st, 'badge');
+    paintBadges();
+  }
+  // a step towards one that needs several (the Leonardo works seen, the cats stroked)
+  function earnPart(st, id, part, need) {
+    var b = badgeStore(), key = id + 'Seen', list = Array.isArray(b[key]) ? b[key] : [];
+    if (list.indexOf(part) < 0) { list.push(part); b[key] = list; badgeSave(b); }
+    if (list.length >= need) earn(st, id);
+  }
+  function paintBadges() {
+    var b = badgeStore(), n = BADGES.filter(function (x) { return b[x[0]]; }).length, btn = root && root.querySelector('.mx-doom-badges-btn');
+    if (btn) btn.querySelector('b').textContent = n + '/' + BADGES.length;
+    var box = root && root.querySelector('.mx-doom-badges-list');
+    if (box) box.innerHTML = BADGES.map(function (x) {
+      return '<li class="' + (b[x[0]] ? 'is-got' : '') + '"><i aria-hidden="true">' + (b[x[0]] ? '★' : '☆') + '</i><span>' + esc(x[1]) + '</span></li>';
+    }).join('');
+  }
+  function showBadges(show) {
+    var st = state, box = root.querySelector('.mx-doom-badges');
+    if (!st) return;
+    if (show) { freeMouse(); paintBadges(); }
+    box.hidden = !show;
+    st.viewing = show || !root.querySelector('.mx-doom-look').hidden || !root.querySelector('.mx-doom-all').hidden;
+    st.keys = {};
+    st.dirty = true;
   }
 
   /* ── Kustība ──────────────────────────────────────────────────────────── */
@@ -1308,6 +1837,7 @@
     if (mx < 0 || my < 0 || mx >= map.w || my >= map.h) return false;
     var ci = my * map.w + mx, cell = map.grid[ci];
     if (cell === DOOR) { if (map.doors[map.doorAt[ci]].open < 0.9) return false; }
+    else if (cell === PILLAR) { var cdx = x - mx - 0.5, cdy = y - my - 0.5; if (cdx * cdx + cdy * cdy < PILLAR_R * PILLAR_R) return false; }
     else if (cell !== EMPTY) return false;
     for (var i = 0; i < st.props.length; i++) {
       var p = st.props[i];
@@ -1315,10 +1845,15 @@
     }
     return true;
   }
+  // each axis on its own (sliding along walls); the corners too, so a wall's
+  // corner never lets you in to look through it
   function tryMove(st, nx, ny) {
-    var r = RADIUS;
-    if (free(st, nx + (nx > st.x ? r : -r), st.y) && free(st, nx, st.y + r) && free(st, nx, st.y - r)) st.x = nx;
-    if (free(st, st.x, ny + (ny > st.y ? r : -r)) && free(st, st.x + r, ny) && free(st, st.x - r, ny)) st.y = ny;
+    var r = RADIUS, k = r * 0.8, ox = st.x, oy = st.y;
+    var sx = nx > st.x ? r : -r;
+    if (free(st, nx + sx, st.y) && free(st, nx, st.y + r) && free(st, nx, st.y - r) && free(st, nx + sx * 0.8, st.y + k) && free(st, nx + sx * 0.8, st.y - k)) st.x = nx;
+    var sy = ny > st.y ? r : -r;
+    if (free(st, st.x, ny + sy) && free(st, st.x + r, ny) && free(st, st.x - r, ny) && free(st, st.x + k, ny + sy * 0.8) && free(st, st.x - k, ny + sy * 0.8)) st.y = ny;
+    return { x: st.x !== ox, y: st.y !== oy };
   }
   function segmentAt(st) {
     var room = roomAt(st.map, st.x, st.y);
@@ -1371,25 +1906,68 @@
     var st = state;
     if (!st || st.closed) return;
     st.raf = requestAnimationFrame(frame);
-    if (document.hidden || st.viewing || st.paused) { st.last = now; return; }
+    statsTick(now);
+    if (document.hidden || st.viewing || st.paused) {
+      st.last = now; st.vx = st.vy = 0; st.dragTurn = st.dPitch = 0;
+      if (st.viewing && !st.paused) padRead(st);               // B on the controller closes the view
+      return;
+    }
     var dt = Math.min(0.05, (now - (st.last || now)) / 1000);
     st.last = now;
     var k = st.keys, moved = false;
     var turn = (k.ArrowLeft ? -1 : 0) + (k.ArrowRight ? 1 : 0);
     var fwd = (k.KeyW || k.ArrowUp ? 1 : 0) - (k.KeyS || k.ArrowDown ? 1 : 0);
     var strafe = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0);
+    var clamp1 = function (v) { return Math.max(-1, Math.min(1, v)); };
+    // a game controller: left stick walks, right stick looks (A uses, X sips, Y the map, B back)
+    var pad = padRead(st);
+    if (pad) {
+      fwd = clamp1(fwd - pad.ly); strafe = clamp1(strafe + pad.lx); st.padRun = pad.run;
+      if (pad.rx) st.dragTurn += pad.rx * TURN * 1.25 * dt;
+      if (pad.ry) st.dPitch -= pad.ry * VIEW_H * 1.1 * dt;
+    }
+    // the thumb's stick on a phone (bottom left of the picture)
+    if (st.joy) { fwd = clamp1(fwd - st.joy.y); strafe = clamp1(strafe + st.joy.x); }
+    // gliding to a picture before it opens big: nothing else moves the view meanwhile
+    if (st.glide) {
+      var gl = st.glide, gt = Math.min(1, (now - gl.t0) / gl.ms), ge = ease(gt), dA = Math.atan2(Math.sin(gl.to.a - gl.from.a), Math.cos(gl.to.a - gl.from.a));
+      st.x = gl.from.x + (gl.to.x - gl.from.x) * ge; st.y = gl.from.y + (gl.to.y - gl.from.y) * ge;
+      st.a = gl.from.a + dA * ge; st.pitch = gl.from.p * (1 - ge);
+      fwd = strafe = 0; st.dragTurn = st.dPitch = 0;
+      moved = true;
+      if (gt >= 1) { st.glide = null; gl.then(); }
+    }
+    var looked = false;
     if (turn || fwd || strafe) st.goal = null;
     if (turn) { st.a += turn * TURN * dt; moved = true; }
-    if (st.dragTurn) { st.a += st.dragTurn; st.dragTurn = 0; moved = true; }
+    if (st.dragTurn) { st.a += st.dragTurn; st.dragTurn = 0; moved = looked = true; }
+    if (st.dPitch) {
+      var lim = VIEW_H * PITCH_MAX, np = Math.max(-lim, Math.min(lim, st.pitch + st.dPitch));
+      st.dPitch = 0;
+      if (np !== st.pitch) { st.pitch = np; moved = looked = true; }
+    }
     if ((fwd || strafe || st.goal) && st.seated) standUp(st);
     st.moving = !!(fwd || strafe || st.goal);
+    // speed builds up and settles over ~0.1 s instead of jumping on and off
+    var tvx = 0, tvy = 0;
     if (fwd || strafe) {
-      var sp = (k.ShiftLeft || k.ShiftRight ? RUN : MOVE) * dt, ca = Math.cos(st.a), sa = Math.sin(st.a);
-      var len = Math.hypot(fwd, strafe) || 1;
-      tryMove(st, st.x + (ca * fwd - sa * strafe) / len * sp, st.y + (sa * fwd + ca * strafe) / len * sp);
-      st.walk += dt * 9;
-      moved = true;
-    } else if (st.goal) moved = walkGoal(st, dt) || moved;
+      var spd = k.ShiftLeft || k.ShiftRight || st.padRun ? RUN : MOVE, ca = Math.cos(st.a), sa = Math.sin(st.a), len = Math.max(1, Math.hypot(fwd, strafe));
+      tvx = (ca * fwd - sa * strafe) / len * spd; tvy = (sa * fwd + ca * strafe) / len * spd;
+    }
+    if (st.goal) { st.vx = st.vy = 0; moved = walkGoal(st, dt) || moved; }
+    else {
+      var acc = Math.min(1, dt * (fwd || strafe ? 13 : 17));
+      st.vx += (tvx - st.vx) * acc; st.vy += (tvy - st.vy) * acc;
+      if (Math.abs(st.vx) + Math.abs(st.vy) > 0.03) {
+        var hit = tryMove(st, st.x + st.vx * dt, st.y + st.vy * dt);
+        if (!hit.x) st.vx = 0;
+        if (!hit.y) st.vy = 0;
+        st.walk += dt * 9 * Math.min(1, Math.hypot(st.vx, st.vy) / MOVE);
+        if (!st.endSeen && st.y > st.map.h - 4) { st.endSeen = true; earn(st, 'end'); }
+        st.moving = true;
+        moved = true;
+      } else st.vx = st.vy = 0;
+    }
     if (moved) {
       var seg = segmentAt(st);
       if (seg !== st.seg) { st.seg = seg; if (seg) say(st, segmentText(st, seg)); }
@@ -1398,9 +1976,20 @@
     st.map.doors.forEach(function (d) {
       var near = Math.hypot(st.x - d.x - 0.5, st.y - d.y - 0.5) < 1.8;
       var want = near ? 1 : 0;
-      if (d.open !== want) { d.open = want ? Math.min(1, d.open + dt * 2.6) : Math.max(0, d.open - dt * 2); moved = true; }
+      if (d.open !== want) {
+        if ((want && d.open === 0) || (!want && d.open === 1)) sfx(st, 'door');
+        d.open = want ? Math.min(1, d.open + dt * 2.6) : Math.max(0, d.open - dt * 2); moved = true;
+      }
     });
     updateCats(st, dt, now);
+    // in a night room the light breathes (10 times a second, a level or two)
+    if (zoneAt(st.map, st.x, st.y)) {
+      if (now - (st.lampAt || 0) > 100) {
+        st.lampAt = now;
+        var lo = Math.round(Math.sin(now / 1100) * 0.8 + Math.sin(now / 430) * 0.45);
+        if (lo !== lampOff) { lampOff = lo; moved = true; }
+      }
+    } else if (lampOff) { lampOff = 0; moved = true; }
     var aq = st.aqua, aquaTick = aq && st.aquaSeen && !st.viewing && now - aq.at >= (aq.food.length ? 32 : 48);
     if (aquaTick) { stepAquarium(aq, Math.min(0.1, (now - (aq.at || now)) / 1000)); paintAquarium(aq); aq.at = now; }
     // eye height eases to sitting or standing
@@ -1416,14 +2005,19 @@
       moved = true;
       if (cup.outAt && now - cup.outAt >= HAND_MS) { st.cup = null; drawHud(st); }
     }
-    if (st.msgDrawn && now >= st.msgUntil) st.dirty = true;     // the message has run out: clear it
+    if (st.msgShown && now >= st.msgUntil) { st.msgShown = false; root.querySelector('.mx-doom-msg').hidden = true; }
     // nothing changed: nothing is drawn; a cat in sight is drawn 30 times a second
     var catTick = st.catsSeen && now - st.drawnAt >= 32;
-    if (!moved && !st.dirty && !catTick && !aquaTick) return;
-    if (now - st.drawnAt < 28 && !st.dirty) return;
+    if (!moved && !st.dirty && !catTick && !aquaTick) {
+      return;
+    }
+    // turning the view with the caught mouse: every frame (30 a second judders there)
+    var smooth = looked || (moved && document.pointerLockElement);
+    if (now - st.drawnAt < 28 && !st.dirty && !smooth) return;
     st.drawnAt = now;
     st.dirty = false;
     render(st);
+    statsFrame(st.lastMs || 0);
     keepUp(st);
   }
   // click-to-walk: turn towards the spot and walk; at a thing, use it on arrival
@@ -1448,21 +2042,72 @@
     }
     return true;
   }
-  // a slow computer: draw a smaller picture (and remember it for next time)
+  // a slow computer: draw a smaller picture; once frames are cheap again (a
+  // busy moment has passed), a bigger one again. Remembered for next time.
   function keepUp(st) {
-    if (st.frames < 24 || st.cost < 14 || W <= 400 || st.loweredAt > st.frames - 24) return;
-    var next = Math.max(400, W - 80);
+    if (st.frames < 24 || st.loweredAt > st.frames - 24) return;
+    var next = 0;
+    if (st.cost >= 14 && st.cap > 320) next = Math.max(320, st.cap - 80);
+    else if (st.cost < 6 && st.cap < maxWidth() && st.frames - st.loweredAt > 240) next = Math.min(maxWidth(), st.cap + 80);
+    if (!next) return;
     try { localStorage.setItem(QUALITY_KEY, String(next)); } catch (_e) {}
-    setSize(st, next);
+    st.cap = next;
+    setSize(st);
     st.loweredAt = st.frames;
     st.cost = 0;
   }
-  function say(st, text) { st.msg = text; st.msgUntil = performance.now() + 3600; st.dirty = true; }
+  function say(st, text) {
+    st.msg = text; st.msgUntil = performance.now() + 3600; st.msgShown = true;
+    var el = root.querySelector('.mx-doom-msg');
+    el.textContent = text; el.hidden = false;
+    st.dirty = true;
+  }
+
+  // Before a picture opens big, the view turns to it and steps up to it (~0.3 s,
+  // as Musewalk): where it stands to look, if that spot is free; else it only turns.
+  function glideTo(st, ref, then) {
+    var m = /^(\d+),(\d+),([nesw])$/.exec(ref.key || ''), still = document.documentElement.dataset.motion === 'reduced';
+    if (!m || still) { then(); return; }
+    var x = +m[1], y = +m[2], f = m[3], nx = f === 'e' ? 1 : f === 'w' ? -1 : 0, ny = f === 's' ? 1 : f === 'n' ? -1 : 0;
+    var cx = x + 0.5 + nx * 0.5, cy = y + 0.5 + ny * 0.5, tx = cx + nx * 1.55, ty = cy + ny * 1.55;
+    if (!free(st, tx, ty)) { tx = st.x; ty = st.y; }
+    var ta = Math.atan2(cy - ty, cx - tx);
+    if (Math.hypot(tx - st.x, ty - st.y) < 0.05 && Math.abs(Math.atan2(Math.sin(ta - st.a), Math.cos(ta - st.a))) < 0.04 && Math.abs(st.pitch) < 2) { then(); return; }
+    st.goal = null; st.vx = st.vy = 0;
+    st.glide = { t0: performance.now(), ms: 320, from: { x: st.x, y: st.y, a: st.a, p: st.pitch }, to: { x: tx, y: ty, a: ta }, then: then };
+  }
+  // what is open inside the game closes: the coffee menu, a picture, all drawings, the Ieskati
+  function closeInside() {
+    if (!root.querySelector('.mx-doom-menu').hidden) menu(false);
+    else if (!root.querySelector('.mx-doom-look').hidden) look(null);
+    else if (!root.querySelector('.mx-doom-all').hidden) showAll(false);
+    else if (!root.querySelector('.mx-doom-badges').hidden) showBadges(false);
+    else return false;
+    return true;
+  }
+  var padSeen = false;
+  window.addEventListener('gamepadconnected', function () { padSeen = true; });
+  function padRead(st) {
+    if (!padSeen || !navigator.getGamepads) return null;
+    var list = navigator.getGamepads(), gp = null;
+    for (var i = 0; i < list.length; i++) if (list[i] && list[i].connected) { gp = list[i]; break; }
+    if (!gp) return null;
+    var dz = function (v) { v = v || 0; return Math.abs(v) < 0.18 ? 0 : (v - Math.sign(v) * 0.18) / 0.82; };
+    var b = gp.buttons.map(function (x) { return x.pressed; }), prev = st.padPrev || [];
+    var hit = function (n) { return b[n] && !prev[n]; };
+    st.padPrev = b;
+    if (st.viewing) { if (hit(1)) closeInside(); return null; }
+    if (hit(0)) { if (st.aim) interact(st.aim); else if (st.seated) standUp(st); }
+    if (hit(2)) sip(st);
+    if (hit(3)) toggleMap(st);
+    if (hit(9)) setMusic(st, !st.musicOn);
+    return { lx: dz(gp.axes[0]), ly: dz(gp.axes[1]), rx: dz(gp.axes[2]), ry: dz(gp.axes[3]), run: !!(b[7] || b[10]) };
+  }
 
   /* ── Darbības ─────────────────────────────────────────────────────────── */
   function sip(st) {
     if (!st.cup || st.cup.outAt) { say(st, st.brew ? 'Kafija vēl top' : 'Vispirms paņem kafiju: Löfbergs aparāts vestibilā'); return; }
-    if (!st.sip) { st.sip = performance.now(); st.dirty = true; }
+    if (!st.sip) { st.sip = performance.now(); st.dirty = true; sfx(st, 'sip'); }
   }
   function finishSip(st) {
     st.sip = 0;
@@ -1476,7 +2121,11 @@
         var can = st.props.find(function (p) { return p.kind === 'monster'; });
         if (can) can.hidden = false;                                     // the next one waits by the box
         say(st, 'Izdzerts! Kastē stūrī ir vēl');
-      } else say(st, 'Izdzerts! Vēl vienu? Löfbergs aparāts ir vestibilā');
+        earn(st, 'monster');
+      } else {
+        say(st, 'Izdzerts! Vēl vienu? Löfbergs aparāts ir vestibilā');
+        earnPart(st, 'coffee', String(Date.now()), 3);
+      }
     }
     drawHud(st);
   }
@@ -1484,7 +2133,7 @@
     var kind = st.brew.kind;
     st.brew = null;
     var m = st.props.find(function (p) { return p.kind === 'machine'; });
-    if (m) m.spr = machineSprite(false);
+    if (m) remodel(m, function () { return machineModel(false); });
     st.cup = { kind: kind, left: SIPS, canvas: handCanvas(kind), inAt: performance.now() };
     drawHud(st);
     say(st, kind.name + ' rokā. C vai klikšķis uz krūzītes: malks');
@@ -1497,8 +2146,9 @@
     st.brew = { kind: kind, at: performance.now() };
     drawHud(st);
     var m = st.props.find(function (p) { return p.kind === 'machine'; });
-    if (m) m.spr = machineSprite(true);
+    if (m) remodel(m, function () { return machineModel(true); });
     say(st, 'Löfbergs gatavo: ' + kind.name + ', ' + PRICE);
+    sfx(st, 'brew');
   }
   function takeCan(st) {
     if (st.cup && st.cup.kind.can && !st.cup.outAt) { say(st, 'Bundža jau ir rokā. C: malks'); return; }
@@ -1528,15 +2178,19 @@
     st.seated = true;
     st.goal = null;
     table.spr = tableSprite(true);
+    earn(st, 'sit');
     say(st, st.cup ? 'Tu apsēdies. C: malks, W: piecelties' : 'Tu apsēdies. W: piecelties');
   }
   function interact(ref) {
     var st = state;
     if (!st || !ref) return;
     if (ref.isArt) {
-      if (ref.plan) { look({ src: st.planUrl || (st.planUrl = planCanvas(st).toDataURL('image/png')), caption: 'Nakts sadalījums: ' + st.dayTitle(st.today || '').toLowerCase() }); return; }
-      if (ref.empty) { if (st.onDraw) st.onDraw({ slot: ref.key, day: ref.day }); return; }
-      look(lookSpecFor(st, ref.item, ref));
+      if (ref.plan) { glideTo(st, ref, function () { look({ src: st.planUrl || (st.planUrl = planCanvas(st).toDataURL('image/png')), caption: 'Nakts sadalījums: ' + st.dayTitle(st.today || '').toLowerCase() }); earn(st, 'plan'); }); return; }
+      if (ref.empty) { if (st.onDraw) st.onDraw({ slot: ref.key, frame: ref.idx, day: ref.day }); return; }
+      glideTo(st, ref, function () {
+        look(lookSpecFor(st, ref.item, ref));
+        if (ref.item.classic) earnPart(st, 'leo', ref.item.id, 9);
+      });
       return;
     }
     switch (ref.kind) {
@@ -1544,12 +2198,20 @@
       case 'table': case 'chair': if (!st.seated) sitDown(st, ref); return;
       case 'gramophone': setMusic(st, !st.musicOn); return;
       case 'machine': if (!st.brew) menu(true); return;
-      case 'statue': look({ src: ART + 'venus-milo.webp' + ART_V, caption: VENUS.caption }); return;
+      case 'statue': look({ src: ART + 'venus-milo.webp' + ART_V, caption: VENUS.caption, more: WIKI + MORE.venus }); earn(st, 'venus'); return;
       case 'aquarium': feedFish(st, ref.at); return;
       case 'monster': case 'monsterbox': takeCan(st); return;
       case 'cat':
         ref.mode = 'sit'; ref.until = performance.now() + 5000; ref.t = 0;
         say(st, ref.name + ': murr!');
+        earnPart(st, 'cats', ref.name, 3);
+        return;
+      case 'switch':
+        st.lightsOff[ref.room] = !st.lightsOff[ref.room];
+        ref.tex = switchTex(st, !st.lightsOff[ref.room]);
+        buildLight(st);
+        sfx(st, 'click');
+        st.promptKey = '';
         return;
       case 'bed':
         say(st, ref.person ? ref.person.name + (ref.person.from ? ' guļ ' + ref.person.from + '–' + ref.person.to : '') + '. Lai labi atpūšas!' : 'Tukša gulta');
@@ -1568,10 +2230,165 @@
       st.goal = { x: st.pickWX[x], y: st.pickWY[x], stop: ref.isArt ? 1.4 : (ref.solid || 0.2) + 0.7, then: ref };
       return;
     }
-    if (cy <= VIEW_H / 2 + 2) return;
-    var dist = (st.z * P) / (cy - VIEW_H / 2), cam = 2 * cx / W - 1;
+    var horizon = VIEW_H / 2 + st.pitch;
+    if (cy <= horizon + 2) return;
+    var dist = (st.z * P) / (cy - horizon), cam = 2 * cx / W - 1;
     var dirX = Math.cos(st.a), dirY = Math.sin(st.a), gx = st.x + dist * (dirX - dirY * FOV * cam), gy = st.y + dist * (dirY + dirX * FOV * cam);
     st.goal = { x: gx, y: gy, stop: 0.2 };
+  }
+
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function mouseCaught() { return !!root && document.pointerLockElement === root.querySelector('.mx-doom-view'); }
+  function freeMouse() { if (mouseCaught() && document.exitPointerLock) document.exitPointerLock(); }
+  // Catch the mouse without a click on the picture: right as the gallery opens
+  // (the click that opened it lets the browser do it) and when a view inside is
+  // closed with a click. Only with a mouse; never without the person's click.
+  function catchMouse() {
+    var st = state, view = root && root.querySelector('.mx-doom-view');
+    if (!st || st.closed || st.noLock || st.viewing || !view || !view.requestPointerLock || mouseCaught()) return;
+    if (!(window.matchMedia && window.matchMedia('(pointer: fine)').matches)) return;
+    if (navigator.userActivation && !navigator.userActivation.isActive) return;
+    try { var asked = view.requestPointerLock(); if (asked && asked.catch) asked.catch(function () {}); } catch (_e) {}
+  }
+
+  /* ── Karte ārpus loga ─────────────────────────────────────────────────── */
+  // The plan of the hall from above (Doom's automap), beside the game on the
+  // dither sky, in its one ink: Bayer dots for the floors (the night rooms
+  // denser), solid walls round them, the frames as bars on their walls (a
+  // drawing solid, an empty one hollow), the aquarium's water, you and where
+  // you look. Shown where there is room beside the window; Tab hides and shows
+  // it (with no room, over the picture). The plan is drawn once.
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function mapRoom(st) {
+    // the window's own layout box (not its on-screen one: it may be scaling in)
+    var map = st.map, sec = root.querySelector('.mx-doom');
+    var box = { left: sec.offsetLeft, top: sec.offsetTop, right: sec.offsetLeft + sec.offsetWidth, height: sec.offsetHeight };
+    var side = Math.min(box.left, window.innerWidth - box.right) - 56;   // its frame and some sky round it
+    var cs = Math.min(12, Math.floor(side / map.w), Math.floor((window.innerHeight - 96) / map.h));
+    return { cs: cs, box: box, outside: cs >= 5 };
+  }
+  function toggleMap(st) {
+    st.mapOn = root.querySelector('.mx-doom-minimap').hidden;
+    st.mmBase = null;
+    drawMinimap(st);
+  }
+  function minimapBase(st, cs) {
+    var map = st.map, W2 = map.w * cs, H2 = map.h * cs, b = canvas(W2, H2), g = b.getContext('2d');
+    var img = g.createImageData(W2, H2), d = new Uint32Array(img.data.buffer), INK = 0xffffffff;
+    var cellAt = function (x, y) { return x < 0 || y < 0 || x >= map.w || y >= map.h ? WALL : map.grid[y * map.w + x]; };
+    var open = function (c) { return c === EMPTY || c === DOOR; };
+    var dot = function (x, y) { if (x >= 0 && y >= 0 && x < W2 && y < H2) d[y * W2 + x] = INK; };
+    for (var cy = 0; cy < map.h; cy++) for (var cx = 0; cx < map.w; cx++) {
+      var c = cellAt(cx, cy), x0 = cx * cs, y0 = cy * cs, i, j;
+      if (c === EMPTY) {
+        var level = map.zone[cy * map.w + cx] ? 6 : 3;          // the night rooms a shade denser
+        for (j = 0; j < cs; j++) for (i = 0; i < cs; i++) if (BAYER[((y0 + j) & 3) * 4 + ((x0 + i) & 3)] < level) dot(x0 + i, y0 + j);
+      } else if (c === DOOR) {
+        for (j = 0; j < cs; j++) dot(x0 + (cs >> 1), y0 + j);
+      } else if (c === GLASS) {
+        for (j = 0; j < cs; j += 2) { dot(x0 + (cs >> 1), y0 + j); }
+      } else if (c === PILLAR) {
+        var q = Math.max(1, cs >> 2);
+        for (j = q; j < cs - q; j++) for (i = q; i < cs - q; i++) dot(x0 + i, y0 + j);
+      } else {
+        // a wall: a line on each side that meets a room
+        if (open(cellAt(cx - 1, cy))) for (j = 0; j < cs; j++) dot(x0, y0 + j);
+        if (open(cellAt(cx + 1, cy))) for (j = 0; j < cs; j++) dot(x0 + cs - 1, y0 + j);
+        if (open(cellAt(cx, cy - 1))) for (i = 0; i < cs; i++) dot(x0 + i, y0);
+        if (open(cellAt(cx, cy + 1))) for (i = 0; i < cs; i++) dot(x0 + i, y0 + cs - 1);
+      }
+    }
+    // the frames: a bar just inside the wall's line, solid with a drawing, hollow when empty
+    map.slots.forEach(function (sl) {
+      var t = Math.max(2, cs >> 2), x0 = sl.x * cs, y0 = sl.y * cs, along = sl.face === 'e' || sl.face === 'w';
+      var bx = sl.face === 'e' ? x0 + cs : sl.face === 'w' ? x0 - t - 1 : x0 + 2;
+      var by = sl.face === 's' ? y0 + cs : sl.face === 'n' ? y0 - t - 1 : y0 + 2;
+      var bw = along ? t : cs - 4, bh = along ? cs - 4 : t;
+      for (var j = 0; j < bh; j++) for (var i = 0; i < bw; i++) {
+        var edge = i === 0 || j === 0 || i === bw - 1 || j === bh - 1;
+        if (sl.item || sl.plan || edge) dot(bx + i, by + j);
+      }
+    });
+    // the aquarium: its water as waves along the end wall
+    var aq = map.aquarium, ay = aq.y * cs - 2;
+    for (var x = (aq.cell1 - 2) * cs + 1; x < (aq.cell1 + 1) * cs - 1; x++) dot(x, ay - ((x >> 1) & 1));
+    g.putImageData(img, 0, 0);
+    return { canvas: b, cs: cs };
+  }
+  function placeSide() {
+    var side = root.querySelector('.mx-doom-side'), sec = root.querySelector('.mx-doom');
+    if (!side || !sec) return;
+    var outside = sec.offsetLeft - 32 >= side.offsetWidth;
+    side.classList.toggle('is-inside', !outside);
+    side.style.left = Math.round(outside ? (sec.offsetLeft - side.offsetWidth) / 2 : sec.offsetLeft + 14) + 'px';
+    side.style.top = Math.round(outside ? sec.offsetTop + 48 : sec.offsetTop + sec.offsetHeight - side.offsetHeight - 76) + 'px';
+  }
+  /* stats.js (mrdoob, MIT) made over in the gallery's one ink: the same three
+     panels, a click switches them. FPS: pictures drawn a second (a still
+     picture is not drawn again: then it falls to 0), MS: how long one took,
+     MB: the page's memory (Chrome). A graph of the last 74 readings, the low and
+     high beside the number; written twice a second. */
+  var STATS = [['FPS', 100], ['MS', 40], ['MB', 0]];
+  var stats = { mode: 0, n: 0, at: 0, ms: 0, msN: 0, hist: [[], [], []], lo: [Infinity, Infinity, Infinity], hi: [0, 0, 0] };
+  function statsFrame(ms) { stats.n++; stats.ms += ms; stats.msN++; }
+  function statsTick(now) {
+    if (!stats.at) { stats.at = now; return; }
+    if (now - stats.at < 500) return;
+    var mem = performance.memory ? performance.memory.usedJSHeapSize / 1048576 : 0;
+    var vals = [stats.n * 1000 / (now - stats.at), stats.msN ? stats.ms / stats.msN : 0, mem];
+    stats.n = 0; stats.ms = 0; stats.msN = 0; stats.at = now;
+    vals.forEach(function (v, i) {
+      stats.hist[i].push(v); if (stats.hist[i].length > 74) stats.hist[i].shift();
+      stats.lo[i] = Math.min(stats.lo[i], v); stats.hi[i] = Math.max(stats.hi[i], v);
+    });
+    drawStats();
+  }
+  function drawStats() {
+    var c = root && root.querySelector('.mx-doom-stats');
+    if (!c) return;
+    var g = c.getContext('2d'), m = stats.mode, h = stats.hist[m], top = STATS[m][1] || Math.max(64, stats.hi[m] * 1.1);
+    var name = STATS[m][0], v = h.length ? h[h.length - 1] : 0, dec = m === 1 ? 1 : 0;
+    g.fillStyle = '#1424d6'; g.fillRect(0, 0, 80, 48);
+    g.fillStyle = '#ffffff';
+    g.font = '700 9px Inter, system-ui, sans-serif'; g.textBaseline = 'top';
+    g.fillText(v.toFixed(dec) + ' ' + name + (h.length ? ' (' + stats.lo[m].toFixed(dec) + '-' + stats.hi[m].toFixed(dec) + ')' : ''), 3, 2);
+    // the graph: one column a reading, solid ink up to the value, dotted above
+    for (var i = 0; i < 74; i++) {
+      var val = h[h.length - 74 + i], x = 3 + i, colH = val == null ? 0 : Math.max(1, Math.round(Math.min(1, val / top) * 30));
+      for (var y = 0; y < 30; y++) if (y >= 30 - colH || ((x + y) & 3) === 0) g.fillRect(x, 15 + y, 1, 1);
+    }
+  }
+  function statsReset() { stats.at = 0; stats.n = 0; }
+
+  function drawMinimap(st) {
+    var c = root.querySelector('.mx-doom-minimap');
+    if (!c) return;
+    var room = mapRoom(st), show = room.outside ? st.mapOn !== false : st.mapOn === true;
+    c.hidden = !show;
+    if (!show) return;
+    var cs = room.outside ? room.cs : Math.max(3, Math.min(8, Math.floor(room.box.height * 0.6 / st.map.h)));
+    if (!st.mmBase || st.mmBase.cs !== cs || st.mmBase.outside !== room.outside) {
+      st.mmBase = minimapBase(st, cs);
+      st.mmBase.outside = room.outside;
+      c.width = st.mmBase.canvas.width; c.height = st.mmBase.canvas.height;
+      c.classList.toggle('is-inside', !room.outside);
+      // beside the window on the right, its middle at the window's middle; or over the picture
+      var frame = room.outside ? 24 : 18;                     // its padding and border round the plan
+      var left = room.outside ? room.box.right + (window.innerWidth - room.box.right - c.width - frame) / 2 : room.box.right - c.width - frame - 14;
+      var top = room.outside ? Math.max(28, room.box.top + (room.box.height - c.height - frame) / 2) : room.box.top + 64;
+      c.style.left = Math.round(left) + 'px'; c.style.top = Math.round(top) + 'px';
+    }
+    var g = c.getContext('2d'), px0 = st.x * cs, py0 = st.y * cs;
+    g.clearRect(0, 0, c.width, c.height);
+    g.drawImage(st.mmBase.canvas, 0, 0);
+    // you: where you look as a dotted cone, then a solid dot
+    g.fillStyle = '#ffffff';
+    var reach = cs * 2.6;
+    for (var k = 1; k <= 6; k++) {
+      var r = reach * k / 6;
+      [-0.42, 0, 0.42].forEach(function (off) { g.fillRect(Math.round(px0 + Math.cos(st.a + off * k / 6) * r), Math.round(py0 + Math.sin(st.a + off * k / 6) * r), 1, 1); });
+    }
+    g.beginPath(); g.arc(px0, py0, Math.max(2, cs * 0.45), 0, Math.PI * 2); g.fill();
   }
 
   /* ── Logs ─────────────────────────────────────────────────────────────── */
@@ -1583,11 +2400,15 @@
     root.hidden = true;
     root.innerHTML = '<section class="mx-doom" role="dialog" aria-modal="true" aria-label="Galerija">'
       + '<div class="mx-doom-bar"><strong>Galerija</strong>'
-      + '<span class="mx-doom-help" title="' + CREDITS + '">W A S D vai bultas: iet, velc ar peli: skaties, klikšķis: iet vai darīt, E: darīt, C: malks, M: mūzika, Esc: iziet</span>'
+      + '<span class="mx-doom-help" title="' + CREDITS + '">Klikšķis: noķert peli, W A S D: iet, pele: skaties, klikšķis vai E: darīt, labais klikšķis vai C: malks, M: mūzika, Tab: karte, Esc: atlaist peli, ×: iziet</span>'
       + '<span class="mx-doom-now" title="' + MUSIC_CREDIT + '"></span>'
       + '<button type="button" class="mx-doom-music" aria-pressed="true"><span class="is-on">' + ICON_ON + '</span><span class="is-off">' + ICON_OFF + '</span></button>'
+      + '<button type="button" class="mx-doom-badges-btn" aria-label="Ieskati"><span aria-hidden="true">★</span><b></b></button>'
+      + '<button type="button" class="mx-doom-full" aria-label="Pilnekrāns"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
       + '<button type="button" class="mx-doom-all-btn">Visi zīmējumi</button><button type="button" class="mx-doom-draw">Uzzīmēt</button><button type="button" class="mx-doom-close" aria-label="Iziet no galerijas">×</button></div>'
       + '<div class="mx-doom-screen"><canvas class="mx-doom-view"></canvas>'
+      + '<div class="mx-doom-msg" hidden></div>'
+
       + '<div class="mx-doom-hud">' + hudCell('draw', 'total', 'ZĪMĒJUMI') + hudCell('today', 'today', 'ŠODIEN')
       + '<div class="mx-hud-face"><b data-hud="face"></b><span>TU</span></div>' + hudCell('night', 'sleeping', 'GUĻ')
       + '<div class="mx-hud-cell mx-hud-coffee"><i class="mx-hud-ico" data-ico="cup"></i><div class="mx-hud-num"><b data-hud="drink"></b><span data-hud="drinkSub"></span></div><span class="mx-hud-meter" hidden></span></div></div>'
@@ -1597,54 +2418,149 @@
       + COFFEES.map(function (c, i) { return '<button type="button" data-coffee="' + i + '"><i class="mx-doom-cup">' + pixelIcon(c.cup, CUP_COLORS) + '</i><span>' + c.name + '<small>' + PRICE + '</small></span><kbd>' + (i + 1) + '</kbd></button>'; }).join('')
       + '</div><button type="button" class="mx-doom-menu-cancel">Atpakaļ</button></div></div>'
       + '<div class="mx-doom-look" hidden><figure><img alt=""><figcaption></figcaption></figure>'
-      + '<div class="mx-doom-look-actions"><button type="button" class="mx-doom-back">Atpakaļ</button><button type="button" class="mx-doom-redraw">Pārzīmēt</button><button type="button" class="mx-doom-chat">Komentāros</button></div></div>'
+      + '<div class="mx-doom-look-actions"><button type="button" class="mx-doom-back">Atpakaļ</button><button type="button" class="mx-doom-redraw">Pārzīmēt</button><button type="button" class="mx-doom-chat">Komentāros</button><a class="mx-doom-more" target="_blank" rel="noopener noreferrer" hidden>Vairāk par darbu</a></div></div>'
+      + '<div class="mx-doom-badges" hidden><div class="mx-doom-all-head"><strong>Ieskati</strong><span></span><button type="button" class="mx-doom-badges-close">Atpakaļ</button></div><ul class="mx-doom-badges-list"></ul></div>'
+      + '<div class="mx-doom-joy" hidden aria-hidden="true"><i></i></div>'
       + '<div class="mx-doom-all" hidden><div class="mx-doom-all-head"><strong>Visi zīmējumi</strong><span></span><button type="button" class="mx-doom-all-close">Atpakaļ</button></div><div class="mx-doom-all-grid"></div></div>'
       + '</div></section>';
+    var mm = document.createElement('canvas');
+    mm.className = 'mx-doom-minimap'; mm.hidden = true; mm.setAttribute('aria-hidden', 'true');
+    root.appendChild(mm);
+    // left of the window on the dither sky: the Esc key (lit while the mouse is
+    // caught: it lets it go) and how many pictures a second are drawn
+    var side = document.createElement('div');
+    side.className = 'mx-doom-side';
+    side.innerHTML = '<kbd class="mx-doom-esc" title="Esc: atlaist peli">Esc</kbd><canvas class="mx-doom-stats" width="80" height="48" title="FPS / MS / MB: klikšķis pārslēdz"></canvas>';
+    root.appendChild(side);
     document.body.appendChild(root);
     root.addEventListener('click', function (e) {
       var st = state;
+      // a button clicked keeps no focus: Space would press it again (the menu keeps it, for the keys)
+      var btn = e.target.closest && e.target.closest('button');
+      if (btn && !btn.closest('.mx-doom-menu')) setTimeout(function () { btn.blur(); }, 0);
       // only × or Esc leave the game: a click beside it does nothing
       if (e.target.closest('.mx-doom-close')) { close(); return; }
       if (!st) return;
       if (e.target.closest('.mx-doom-draw')) { if (st.onDraw) st.onDraw({}); return; }
       if (e.target.closest('.mx-doom-music')) { setMusic(st, !st.musicOn); return; }
-      if (e.target.closest('.mx-doom-back')) { look(null); return; }
+      if (e.target.closest('.mx-doom-back')) { look(null); catchMouse(); return; }
       if (e.target.closest('.mx-doom-redraw')) { var spec = st.lookSpec; if (spec && spec.redraw && st.onDraw) st.onDraw(spec.redraw); return; }
       if (e.target.closest('.mx-doom-all-btn')) { if (st.onAll) st.onAll(e.target.closest('.mx-doom-all-btn')); else showAll(true); return; }
-      if (e.target.closest('.mx-doom-all-close')) { showAll(false); return; }
+      if (e.target.closest('.mx-doom-all-close')) { showAll(false); catchMouse(); return; }
+      if (e.target.closest('.mx-doom-stats')) { stats.mode = (stats.mode + 1) % STATS.length; drawStats(); return; }
+      if (e.target.closest('.mx-doom-badges-btn')) { showBadges(root.querySelector('.mx-doom-badges').hidden); return; }
+      if (e.target.closest('.mx-doom-badges-close')) { showBadges(false); catchMouse(); return; }
+      if (e.target.closest('.mx-doom-full')) {
+        if (document.fullscreenElement) { if (document.exitFullscreen) document.exitFullscreen().catch(function () {}); }
+        else if (root.requestFullscreen) root.requestFullscreen().then(catchMouse, function () {});
+        return;
+      }
       var tile = e.target.closest('[data-all]');
       if (tile) { var it = st.items[+tile.dataset.all]; if (it) look(lookSpecFor(st, it, null)); return; }
       if (e.target.closest('.mx-doom-chat')) { var cb = st.onComments; close(); if (cb) cb(); return; }
       var pick = e.target.closest('[data-coffee]');
-      if (pick) { brew(st, +pick.dataset.coffee); return; }
-      if (e.target.closest('.mx-doom-menu-cancel') || e.target.classList.contains('mx-doom-menu')) { menu(false); return; }
+      if (pick) { brew(st, +pick.dataset.coffee); catchMouse(); return; }
+      if (e.target.closest('.mx-doom-menu-cancel') || e.target.classList.contains('mx-doom-menu')) { menu(false); catchMouse(); return; }
       if (e.target.closest('.mx-doom-prompt')) { if (st.aim) interact(st.aim); else if (st.seated) standUp(st); }
     });
     var view = root.querySelector('.mx-doom-view');
     var drag = null;
     var toCanvas = function (e) { var r = view.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * VIEW_H]; };
+    /* The mouse as in a game (Pointer Lock): a click on the picture catches it,
+       moving it turns the view and looks up and down, a click uses what the
+       crosshair rests on; Esc lets it go. Touch, and a browser that refuses
+       the lock, keep the old way: drag to look, tap to walk or use. */
+    view.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    // a phone: a thumb on the bottom left of the picture is a stick to walk with
+    var joyEl = root.querySelector('.mx-doom-joy');
+    var joyMove = function (e) {
+      var st = state, j = st && st.joy;
+      if (!j) return;
+      var dx = (e.clientX - j.cx) / 48, dy = (e.clientY - j.cy) / 48, l = Math.hypot(dx, dy);
+      if (l > 1) { dx /= l; dy /= l; }
+      j.x = dx; j.y = dy;
+      joyEl.firstChild.style.transform = 'translate(' + (dx * 30).toFixed(1) + 'px,' + (dy * 30).toFixed(1) + 'px)';
+    };
+    var joyEnd = function (e) {
+      var st = state;
+      if (!st || !st.joy || e.pointerId !== st.joy.id) return false;
+      st.joy = null; joyEl.hidden = true; joyEl.firstChild.style.transform = '';
+      return true;
+    };
     view.addEventListener('pointerdown', function (e) {
-      drag = { x: e.clientX, moved: false };
+      var st = state;
+      if (st && st.musicBlocked && st.musicOn) { st.musicBlocked = false; musicStart(); }
+      // the mouse caught (as in a shooter): the left button uses what the crosshair is on, or
+      // with nothing there takes a sip of what is in your hand; the right button always sips
+      if (mouseCaught() && st) {
+        if (e.button === 2) { sip(st); return; }
+        if (e.button) return;
+        if (st.aim) interact(st.aim); else if (st.cup && !st.cup.outAt) sip(st); else if (st.seated) standUp(st);
+        return;
+      }
+      if (e.button) return;                                      // only the main button
+      if (e.pointerType === 'touch' && st && !st.joy) {
+        var vr = view.getBoundingClientRect(), sr = root.querySelector('.mx-doom-screen').getBoundingClientRect();
+        if (e.clientX - vr.left < vr.width * 0.4 && e.clientY - vr.top > vr.height * 0.45) {
+          st.joy = { id: e.pointerId, cx: e.clientX, cy: e.clientY, x: 0, y: 0 };
+          joyEl.style.left = (e.clientX - sr.left) + 'px'; joyEl.style.top = (e.clientY - sr.top) + 'px';
+          joyEl.hidden = false;
+          view.setPointerCapture(e.pointerId);
+          return;
+        }
+      }
+      // Dragging always turns the view; with a mouse the press also asks to catch
+      // it. A browser that says no (or not yet: right after Esc Chrome waits a
+      // second) leaves the drag working, so the view never stands still.
+      drag = { x: e.clientX, y: e.clientY, moved: false, catching: false };
       view.setPointerCapture(e.pointerId);
-      if (state && state.musicBlocked && state.musicOn) { state.musicBlocked = false; musicStart(); }
+      if (e.pointerType === 'mouse' && st && !st.noLock && view.requestPointerLock) {
+        drag.catching = true;
+        try {
+          var asked = view.requestPointerLock();
+          if (asked && asked.catch) asked.catch(function () { if (drag) drag.catching = false; });
+        } catch (_e) { drag.catching = false; }
+      }
+    });
+    document.addEventListener('pointerlockerror', function () { if (drag) drag.catching = false; if (state) state.lockFails = (state.lockFails || 0) + 1; if (state && state.lockFails >= 3) state.noLock = true; });
+    ['pointercancel', 'lostpointercapture'].forEach(function (type) { view.addEventListener(type, function (e) { if (joyEnd(e)) return; if (!mouseCaught()) drag = null; }); });
+    document.addEventListener('mousemove', function (e) {
+      var st = state;
+      if (!st || !mouseCaught()) return;
+      var mx = e.movementX || 0, my = e.movementY || 0;
+      if (Math.abs(mx) > 300 || Math.abs(my) > 300) return;    // the first event after catching can jump
+      st.dragTurn += mx * LOOK;
+      st.dPitch -= my * LOOK * P;
+      st.goal = null;
+    });
+    document.addEventListener('pointerlockchange', function () {
+      var on = mouseCaught();
+      if (on && state) state.lockFails = 0;
+      root.querySelector('.mx-doom-side').classList.toggle('is-caught', on);
+      view.classList.toggle('is-caught', on);
+      if (!on && state) state.mouseFreedAt = performance.now();
     });
     view.addEventListener('pointermove', function (e) {
       if (!state) return;
+      if (state.joy && e.pointerId === state.joy.id) { joyMove(e); return; }
       if (!drag) {                                               // a hand over things you can use
         var p = toCanvas(e), x = Math.max(0, Math.min(W - 1, p[0] | 0)), ref = state.pickRef[x];
         var over = ref && p[1] >= state.pickY0[x] && p[1] <= state.pickY1[x];
         view.classList.toggle('is-over', !!over);
         return;
       }
-      var dx = e.clientX - drag.x;
-      if (Math.abs(dx) > 2) drag.moved = true;
-      drag.x = e.clientX;
-      if (drag.moved) { state.dragTurn += dx * 0.0055; state.goal = null; }
+      if (mouseCaught()) return;                                  // caught: the movement turns it (below)
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) drag.moved = true;
+      drag.x = e.clientX; drag.y = e.clientY;
+      if (drag.moved) { state.dragTurn += dx * 0.0055; state.dPitch -= dy * 0.0055 * P * VIEW_H / (view.getBoundingClientRect().height || VIEW_H); state.goal = null; }
     });
     view.addEventListener('pointerup', function (e) {
+      if (joyEnd(e)) return;
       var was = drag;
       drag = null;
-      if (!was || was.moved || !state) return;
+      // the click that caught the mouse does nothing more
+      if (!was || was.moved || !state || was.catching || mouseCaught()) return;
       var p = toCanvas(e);
       clickAt(state, p[0], p[1]);
     });
@@ -1654,11 +2570,16 @@
       if (document.querySelector('.mk-draw-overlay') || st.paused) return;      // the editor or the hall of fame is on top
       if (st.musicBlocked && st.musicOn) { st.musicBlocked = false; musicStart(); }
       var menuOpen = !root.querySelector('.mx-doom-menu').hidden;
+      // Esc lets the mouse go and closes what is open inside; the gallery itself
+      // closes only with × (the Esc that freed the mouse does nothing more)
       if (e.key === 'Escape') {
         e.preventDefault(); e.stopPropagation();
-        if (menuOpen) menu(false); else if (!root.querySelector('.mx-doom-look').hidden) look(null); else if (!root.querySelector('.mx-doom-all').hidden) showAll(false); else close();
+        if (mouseCaught()) { freeMouse(); return; }
+        if (st.mouseFreedAt && performance.now() - st.mouseFreedAt < 300) return;
+        closeInside();
         return;
       }
+      if (e.code === 'Tab') { e.preventDefault(); toggleMap(st); return; }
       if (menuOpen) {
         var n = +e.key;
         if (n >= 1 && n <= COFFEES.length) { brew(st, n - 1); e.preventDefault(); }
@@ -1677,6 +2598,11 @@
     }, true);
     window.addEventListener('keyup', function (e) { if (state) state.keys[e.code] = false; }, true);
     window.addEventListener('blur', function () { if (state) state.keys = {}; });
+    var resizeTimer = 0;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { if (state && !state.closed) { setSize(state); render(state); } }, 160);
+    });
     // another tab: the music waits
     document.addEventListener('visibilitychange', function () {
       var st = state;
@@ -1687,7 +2613,7 @@
   }
   // what the big view shows for a picture; the team's drawings can be drawn over
   function lookSpecFor(st, it, ref) {
-    if (it.classic) return { src: it.url, caption: LEONARDO + ', ' + it.title + ' (' + it.year + ')' };
+    if (it.classic) return { src: it.url, caption: LEONARDO + ', ' + it.title + ' (' + it.year + ')', more: MORE[it.id] ? WIKI + MORE[it.id] : '' };
     var mine = st.items.some(function (o) { return o.parent && o.parent === it.key; });
     return {
       src: it.url,
@@ -1700,6 +2626,7 @@
   function showAll(show) {
     var st = state, box = root.querySelector('.mx-doom-all');
     if (!st) return;
+    if (show) freeMouse();
     box.hidden = !show;
     st.viewing = show || !root.querySelector('.mx-doom-look').hidden;
     st.keys = {};
@@ -1709,11 +2636,12 @@
     box.querySelector('.mx-doom-all-head span').textContent = n ? n + (n % 10 === 1 && n % 100 !== 11 ? ' zīmējums' : ' zīmējumi') : '';
     grid.innerHTML = n ? st.items.map(function (it, i) {
       return '<button type="button" class="mx-doom-all-tile" data-all="' + i + '"><img alt="" loading="lazy" decoding="async" src="' + String(it.url).replace(/"/g, '&quot;') + '">'
-        + '<span>' + (it.authorEmoji || '') + ' ' + String(st.dayTitle(it.day)).replace(/</g, '&lt;') + '</span></button>';
+        + '<span>' + esc(it.authorEmoji || '') + ' ' + esc(st.dayTitle(it.day)) + '</span></button>';
     }).join('') : '<p class="mx-doom-all-empty">Vēl nav neviena zīmējuma. Uzzīmē pirmo!</p>';
   }
   function menu(show) {
     var st = state, box = root.querySelector('.mx-doom-menu');
+    if (show) freeMouse();
     box.hidden = !show;
     if (st) { st.viewing = show || !root.querySelector('.mx-doom-look').hidden; st.keys = {}; st.dirty = true; }
     if (show) { var first = box.querySelector('[data-coffee]'); if (first) first.focus({ preventScroll: true }); }
@@ -1724,40 +2652,65 @@
     st.viewing = !!spec;
     box.hidden = !spec;
     if (!spec) { st.lookSpec = null; st.viewing = !root.querySelector('.mx-doom-all').hidden; st.dirty = true; return; }
+    freeMouse();
     st.lookSpec = spec;
     box.querySelector('img').src = spec.src;
     box.querySelector('figcaption').textContent = spec.caption;
     box.querySelector('.mx-doom-chat').hidden = !spec.chat;
     box.querySelector('.mx-doom-redraw').hidden = !spec.redraw;
+    var more = box.querySelector('.mx-doom-more');
+    more.hidden = !spec.more;
+    if (spec.more) more.href = spec.more; else more.removeAttribute('href');
     st.keys = {};
   }
   function loadArt(st, slot) {
     var key = slot.x + ',' + slot.y + ',' + slot.face, base = slot.night ? st.tex.nightWallCanvas : st.tex.plasterCanvas;
-    var rec = { isArt: true, key: key, day: slot.day, item: slot.item || null, empty: !!slot.empty, plan: !!slot.plan, reach: 3.4 };
+    var rec = { isArt: true, key: key, idx: slot.idx, day: slot.day, item: slot.item || null, empty: !!slot.empty, plan: !!slot.plan, reach: 3.4 };
     rec.tex = wallTex(slot.plan ? framedCanvas(planCanvas(st), base, false) : framedCanvas(null, base, !!slot.empty));
     st.artAt[(slot.y * st.map.w + slot.x) * 4 + FACES[slot.face]] = rec;
     if (!slot.item) return;
+    var cacheKey = slot.item.url + (slot.night ? '|n' : '');
+    if (st.artTex[cacheKey]) { rec.tex = st.artTex[cacheKey]; return; }     // already framed (a rebuild): no empty frame meanwhile
     var img = new Image();
     img.crossOrigin = 'anonymous';
     img.decoding = 'async';
     img.onload = function () {
       if (st.closed) return;
-      try { rec.tex = wallTex(framedCanvas(img, base, false)); } catch (_e) {}   // a picture from a host without CORS stays an empty frame
+      try { rec.tex = st.artTex[cacheKey] = wallTex(framedCanvas(img, base, false)); } catch (_e) {}   // a picture from a host without CORS stays an empty frame
       st.dirty = true;
     };
     img.src = slot.item.url;
   }
-  // the picture's size from the window (and what this computer managed before)
-  function pickWidth() {
-    var cssW = Math.min(window.innerWidth * 0.96 - 32, (window.innerHeight * 0.92 - 120) * 512 / 269, 1280);
-    var want = Math.round(cssW / 2 / 32) * 32, cap = 640;
-    try { cap = +localStorage.getItem(QUALITY_KEY) || 640; } catch (_e) {}
-    return Math.max(400, Math.min(cap, 640, Math.max(want, 480)));
+  // The widest picture: 800 on a strong computer, else 640 (the slow-machine
+  // check lowers it further, and raises it again when frames are cheap).
+  function maxWidth() {
+    var p = window.__mkPerfProfile || {}, cores = +(p.hardwareConcurrency || navigator.hardwareConcurrency || 0), mem = +(p.deviceMemory || navigator.deviceMemory || 0);
+    return cores >= 8 && (!mem || mem >= 8) ? 800 : 640;
   }
-  function setSize(st, w) {
-    W = w; VIEW_H = Math.round(w * 269 / 512); P = W / (2 * FOV);
+  function savedCap() {
+    var cap = 0;
+    try { cap = +localStorage.getItem(QUALITY_KEY) || 0; } catch (_e) {}
+    return Math.max(320, Math.min(maxWidth(), cap || maxWidth()));
+  }
+  // The picture is shown a whole number of screen pixels per picture pixel
+  // (2× on most screens): every pixel column as wide as the next, so nothing
+  // shimmers while you turn. The width is the most that fits at that scale.
+  function fitWidth(cap) {
+    var screen = root.querySelector('.mx-doom-screen'), dpr = window.devicePixelRatio || 1;
+    var avail = (screen && screen.clientWidth) || Math.min(window.innerWidth * 0.96 - 32, 1280);
+    var dev = Math.max(320, Math.floor(avail * dpr)), k = Math.max(1, Math.ceil(dev / cap));
+    return { w: Math.max(256, Math.floor(dev / k / 8) * 8), k: k, dpr: dpr };
+  }
+  function setSize(st) {
+    var fit = fitWidth(st.cap || savedCap());
+    W = fit.w; VIEW_H = Math.round(W * 269 / 512); P = W / (2 * FOV);
+    st.pitch = Math.max(-VIEW_H * PITCH_MAX, Math.min(VIEW_H * PITCH_MAX, st.pitch || 0));
     var view = root.querySelector('.mx-doom-view');
     view.width = W; view.height = VIEW_H;
+    view.style.width = (W * fit.k / fit.dpr) + 'px';
+    view.style.height = (VIEW_H * fit.k / fit.dpr) + 'px';
+    st.mmBase = null;
+    placeSide();
     st.ctx = view.getContext('2d', { alpha: false });
     st.img = st.ctx.createImageData(W, VIEW_H);
     st.buf = new Uint32Array(st.img.data.buffer);
@@ -1765,6 +2718,7 @@
     st.glassSide = new Uint8Array(W);
     st.wallTop = new Int32Array(W); st.wallBot = new Int32Array(W); st.pickY0 = new Int32Array(W); st.pickY1 = new Int32Array(W);
     st.pickRef = new Array(W).fill(null);
+    st.pdepth = new Float32Array(W * VIEW_H).fill(1e9);
     st.rowDist = new Float32Array(VIEW_H); st.rowOwn = new Uint32Array(VIEW_H); st.rowOther = new Uint32Array(VIEW_H);
     if (st.cup) st.cup.canvas = handCanvas(st.cup.kind);
     drawHud(st);
@@ -1781,7 +2735,8 @@
     if (state) close(true, !!keep);
     var items = (opts.items || []).slice(), sleepers = (opts.sleepers || []).slice();
     var map = buildMap(items, opts.today, opts.slotMap || {});
-    var plasterC = plasterCanvas(), nightWallC = nightWallCanvas();
+    // a rebuild (new drawings) keeps what was already made: the textures, the pictures, the aquarium
+    var plasterC = keep && keep.tex ? keep.tex.plasterCanvas : plasterCanvas(), nightWallC = keep && keep.tex ? keep.tex.nightWallCanvas : nightWallCanvas();
     map.doors.forEach(function (d) { d.tex = wallTex(doorCanvas(d.label)); });
     // who sleeps in which bed (the night panel's arrangement; else in turn)
     var bedPeople = [null, null, null, null], rest = [];
@@ -1807,23 +2762,44 @@
     props = props.concat(cats);
     var st = state = {
       map: map, x: 4.3, y: 4.55, a: -2.75, z: EYE, keys: {}, dragTurn: 0, walk: 0, sips: 0, sip: 0, seated: false,
+      pitch: 0, dPitch: 0, vx: 0, vy: 0, cap: 0, mapOn: null, mmBase: null, msgShown: false, mouseFreedAt: 0, noLock: false,
       artAt: new Array(map.w * map.h * 4), aim: null, dirty: true, closed: false, frames: 0, cost: 0, loweredAt: -99, drawnAt: 0,
       props: props, cats: cats, catFrames: null, cup: null, brew: null, goal: null, promptKey: '',
       aqua: null, aquaSeen: true,
       musicOn: false, today: opts.today, sleepers: sleepers, bedPeople: bedPeople, items: items,
       me: opts.me || {},
       stats: Object.assign({ total: items.length, days: map.segs.length - 1, sleeping: sleepers.length, coffee: '', comments: '' }, opts.stats || {}),
-      onDraw: opts.onDraw, onComments: opts.onComments, onAll: opts.onAll, dayTitle: opts.dayTitle || function (d) { return d; },
-      tex: {
-        plaster: wallTex(plasterC), plasterCanvas: plasterC, stone: wallTex(stoneCanvas()), jamb: wallTex(jambCanvas()),
+      // the editor and the other windows need the mouse: it is let go first
+      onDraw: opts.onDraw && function (info) { freeMouse(); opts.onDraw(info); },
+      onComments: opts.onComments, onAll: opts.onAll && function (from) { freeMouse(); opts.onAll(from); },
+      dayTitle: opts.dayTitle || function (d) { return d; },
+      tex: keep && keep.tex ? keep.tex : {
+        plaster: wallTex(plasterC), plasterCanvas: plasterC, stone: wallTex(stoneCanvas()), jamb: wallTex(jambCanvas()), marble: wallTex(marbleCanvas()),
         nightWall: wallTex(nightWallC), nightWallCanvas: nightWallC, glass: wallTex(glassCanvas()),
         floor: wallTex(floorCanvas()), ceil: wallTex(ceilCanvas()), nightFloor: wallTex(nightFloorCanvas()), nightCeil: wallTex(nightCeilCanvas())
       },
+      artTex: keep && keep.artTex || {},
       seg: null, originEl: origin || null
     };
+    // which way each thing faces (the map runs y down): the chairs the table, the
+    // machine, the easel and the gramophone the room, the beds their foot to the room
+    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4 };
+    var bedFacing = [Math.PI / 2, Math.PI / 2, -Math.PI / 2, Math.PI];
     var makeSprites = function () {
       props.forEach(function (p) {
         if (p.kind === 'cat') return;
+        var model = p.kind === 'machine' ? function () { return machineModel(!!st.brew); }
+          : p.kind === 'gramophone' ? function () { return gramophoneModel(st.musicOn); }
+          : p.kind === 'easel' ? easelModel : p.kind === 'chair' ? chairModel : p.kind === 'monsterbox' ? monsterBoxModel
+          : p.kind === 'bed' ? function () { return bedModel(p.person); } : null;
+        if (model) {
+          p.facing = p.kind === 'chair' ? (p.x < 3.1 ? 0 : Math.PI) : p.kind === 'bed' ? bedFacing[p.bed] : FACING[p.kind];
+          p.parts = model();
+          p.mesh = meshOf(p, p.parts);
+          p.spr = SHADOW_ONLY;
+          p.radius = p.kind === 'bed' ? 0.6 : p.kind === 'chair' ? 0.25 : 0.45;
+          return;
+        }
         p.spr = p.kind === 'bed' ? bedSprite(p.person) : p.kind === 'table' ? tableSprite(st.seated) : p.kind === 'chair' ? chairSprite()
           : p.kind === 'easel' ? easelSprite() : p.kind === 'gramophone' ? gramophoneSprite(st.musicOn)
           : p.kind === 'machine' ? machineSprite(!!st.brew)
@@ -1837,9 +2813,10 @@
       if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(root, { box: root.querySelector('.mx-doom') });
       hudIcons();
     }
-    setSize(st, keep ? keep.w : pickWidth());
+    st.cap = savedCap();
+    setSize(st);
     if (keep) {
-      Object.assign(st, { x: keep.x, y: keep.y, a: keep.a, z: keep.z, sips: keep.sips, cup: keep.cup, seated: keep.seated, musicOn: keep.musicOn, originEl: keep.origin });
+      Object.assign(st, { x: keep.x, y: keep.y, a: keep.a, z: keep.z, pitch: keep.pitch || 0, sips: keep.sips, cup: keep.cup, seated: keep.seated, musicOn: keep.musicOn, mapOn: keep.mapOn, originEl: keep.origin });
       if (st.cup) st.cup.canvas = handCanvas(st.cup.kind);
     } else {
       st.musicOn = musicWanted();
@@ -1849,13 +2826,21 @@
     if (st.seated) sitDown(st, props.find(function (p) { return p.kind === 'chair' && Math.hypot(p.x - st.x, p.y - st.y) < 0.05; }) || props.find(function (p) { return p.kind === 'table'; }));
     map.slots.forEach(function (slot) { loadArt(st, slot); });
     // the aquarium's three cells of the end wall (their faces towards the hall)
-    st.aqua = makeAquarium(st, map.aquarium);
+    st.aqua = keep && keep.aqua ? keep.aqua : makeAquarium(st, map.aquarium);
+    st.aqua.rect = map.aquarium;
+    st.lightsOff = keep && keep.lightsOff || {};
+    [['main', 6, 5], ['nmp', 6, 9]].forEach(function (sw) {
+      st.artAt[(sw[2] * map.w + sw[1]) * 4 + FACES.e] = { kind: 'switch', room: sw[0], reach: 2.2, tex: switchTex(st, !st.lightsOff[sw[0]]) };
+    });
     st.aqua.cells.forEach(function (tex, i) {
       st.artAt[(map.aquarium.y * map.w + map.aquarium.cell1 - i) * 4 + FACES.n] = { kind: 'aquarium', aquarium: true, reach: 2.6, tex: tex, at: 0 };
     });
     paintAquarium(st.aqua);
+    buildLight(st);
     paintMusic();
+    paintBadges();
     drawHud(st);
+    if (keep && keep.catFrames) st.catFrames = keep.catFrames;
     if (!keep) say(st, 'Laipni lūgti galerijā! Pa kreisi Löfbergs kafija, pa labi durvis uz Nakts istabu');
     // the cats and the statue (cached by the browser and kept here after the first visit)
     var withCats = function (img) { if (state !== st) return; st.catFrames = catFrames(img); updateCats(st, 0, performance.now()); st.dirty = true; };
@@ -1876,6 +2861,7 @@
     var screen = root.querySelector('.mx-doom');
     if (window.MinkaMotion && origin) window.MinkaMotion.openSurface(screen, { key: 'doom', origin: origin, scrim: root });
     st.raf = requestAnimationFrame(frame);
+    if (!keep) { catchMouse(); statsReset(); drawStats(); audioCtx(); }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
       if (state !== st || st.closed) return;
       makeSprites();
@@ -1891,7 +2877,10 @@
     var st = state;
     if (!st) return;
     st.closed = true;
+    if (!keepMusic) freeMouse();                          // a rebuild (new drawings) keeps the caught mouse
     cancelAnimationFrame(st.raf);
+    root.querySelector('.mx-doom-msg').hidden = true;
+    if (!keepMusic) root.querySelector('.mx-doom-minimap').hidden = true;
     state = null;
     if (!keepMusic) musicStop(true);
     var box = root.querySelector('.mx-doom-look');
@@ -1913,7 +2902,7 @@
     var st = state;
     if (!st) return;
     open(Object.assign({}, opts, { origin: null }), {
-      w: W, x: st.x, y: st.y, a: st.a, z: st.z, sips: st.sips, cup: st.cup, seated: st.seated, musicOn: st.musicOn, origin: st.originEl
+      w: W, x: st.x, y: st.y, a: st.a, z: st.z, pitch: st.pitch, tex: st.tex, artTex: st.artTex, aqua: st.aqua, catFrames: st.catFrames, lightsOff: st.lightsOff, sips: st.sips, cup: st.cup, seated: st.seated, musicOn: st.musicOn, mapOn: st.mapOn, origin: st.originEl
     });
   }
   // For measuring: draws n frames turning on the spot, returns ms a frame.

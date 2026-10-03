@@ -7937,7 +7937,7 @@ function showWorkerSchedule(workerName, currentShift, opts) {
   // Position once; fade without scaling the entire text-heavy sheet.
   wmPin('transform', 'none');
   wmTabIndex = -1;
-  showModalView(opts && opts.view === 'calendar' ? 'calendar' : 'fatigue');
+  showModalView(opts && (opts.view === 'calendar' || opts.view === 'emoji') ? opts.view : 'fatigue');
 
   modal.classList.remove('wm-closing');
   modal.classList.add('open');
@@ -8392,7 +8392,6 @@ function showModalView(view) {
     if (skinView) skinView.classList.remove('hide');
     if (toggleSkin) toggleSkin.classList.add('active');
     if (typeof window.mkRenderSkinPicker === 'function') window.mkRenderSkinPicker(skinView);
-    if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(document.getElementById('worker-modal-backdrop'), { box: document.getElementById('worker-modal') });
   }
   // Motion only for a switch inside an open window; opening has its own.
   const _nextBtn = _wm ? _wm.querySelector('.view-toggle .toggle-btn.active') : null;

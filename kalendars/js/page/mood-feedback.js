@@ -2523,10 +2523,16 @@
   }
   // A day's chat and drawings (not the mood markers), newest first.
   // A drawing is an ordinary chat message whose whole text is this marker.
-  var DRAW_MARK = /^\[\[rgdraw;art=([a-f0-9]{32})\]\]\s*$/;
+  // [[rgdraw;art=ID]] or [[rgdraw;art=ID;f=N]]: N is the gallery frame it was drawn in
+  // (the frame's number on that day's wall), so it hangs there for everyone
+  var DRAW_MARK = /^\[\[rgdraw;art=([a-f0-9]{32})(?:;f=(\d{1,2}))?\]\]\s*$/;
   function drawArt(body) {
     var match = String(body || '').trim().match(DRAW_MARK);
     return match ? match[1] : '';
+  }
+  function drawFrame(body) {
+    var match = String(body || '').trim().match(DRAW_MARK);
+    return match && match[2] != null ? +match[2] : -1;
   }
   function chatItems(messages) {
     var out = [];
@@ -2820,7 +2826,7 @@
       onSave: function (blob) { return mxSkyUpload(blob, day, fromComments === true); }
     });
   }
-  async function mxSkyUpload(blob, day, fromComments, overKey) {
+  async function mxSkyUpload(blob, day, fromComments, overKey, frame) {
     var api = mxApi();
     if (!api) throw new Error('Nav savienojuma ar mākoni');
     var form = new FormData();
@@ -2828,8 +2834,8 @@
     var response = await api.apiFetch('/api/sky-art', { method: 'POST', body: form });
     var data = await response.json().catch(function () { return {}; });
     if (!response.ok || !/^[a-f0-9]{32}$/.test(String(data.artId || ''))) throw new Error(data.error || 'Neizdevās saglabāt zīmējumu');
-    var author = await postDrawing(data.artId, day, fromComments === true, overKey);
-    var item = { type: 'art', art: data.artId, author: author, at: Date.now(), parent: overKey || '' };
+    var author = await postDrawing(data.artId, day, fromComments === true, overKey, frame);
+    var item = { type: 'art', art: data.artId, author: author, at: Date.now(), parent: overKey || '', frame: frame >= 0 ? frame : -1 };
     (commentFeed[day] = commentFeed[day] || []).unshift(item);
     mxPaintDrawCount(list.querySelector('.rg-feedback-card'));
     // no picture over the curve: the cat shows it in its bubble, once the editor has closed
@@ -2926,13 +2932,13 @@
       var art = drawArt(item.body);
       if (!art || byKey[art]) return;
       byKey[art] = true;
-      out.push({ day: item.date || item.shiftDay || shiftDayKey(), art: art, author: item.author, at: Number(item.createdAt) || 0, key: item.key || '', parent: item.parent || '' });
+      out.push({ day: item.date || item.shiftDay || shiftDayKey(), art: art, author: item.author, at: Number(item.createdAt) || 0, key: item.key || '', parent: item.parent || '', frame: drawFrame(item.body) });
     });
     Object.keys(commentFeed).forEach(function (day) {
       (commentFeed[day] || []).forEach(function (c) {
         if (c.type !== 'art' || byKey[c.art]) return;
         byKey[c.art] = true;
-        out.push({ day: day, art: c.art, author: c.author, at: c.at, key: c.key || '', parent: c.parent || '' });
+        out.push({ day: day, art: c.art, author: c.author, at: c.at, key: c.key || '', parent: c.parent || '', frame: c.frame >= 0 ? c.frame : -1 });
       });
     });
     return out;
@@ -3164,7 +3170,7 @@
   /* Galerija kā Doom (js/page/mood-gallery-3d.js, ielādējas tikai pirmajā
      reizē): pastaiga pa zāli ar zīmējumiem uz sienām. Ja tā neielādējas,
      paliek parastā galerija (režģis augstāk). */
-  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261002g3d14';
+  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261003g3d31';
   var gallery3dLoad = null;
   function gallery3d() {
     if (window.MinkaGallery3D) return Promise.resolve(window.MinkaGallery3D);
@@ -3213,7 +3219,7 @@
       origin: origin,
       items: items.map(function (it) {
         var index = animalIndex(it.author);
-        return { day: it.day, art: it.art, url: skyArtUrl(it.art), at: it.at, key: it.key || '', parent: it.parent || '', authorName: it.author || '', authorEmoji: index >= 0 ? ANIMALS[index][1] : '' };
+        return { day: it.day, art: it.art, url: skyArtUrl(it.art), at: it.at, key: it.key || '', parent: it.parent || '', frame: it.frame, authorName: it.author || '', authorEmoji: index >= 0 ? ANIMALS[index][1] : '' };
       }),
       sleepers: gallerySleepers(),
       today: selected,
@@ -3239,7 +3245,7 @@
           initialUrl: info && info.base || '',
           name: info && info.over ? 'Zīmē pa virsu: jaunais būs rāmī, vecais paliks čatā' : 'Visi to redzēs galerijā un komentāros',
           onSave: function (blob) {
-            return mxSkyUpload(blob, day, 'gallery', info && info.over).then(function (item) {
+            return mxSkyUpload(blob, day, 'gallery', info && info.over, info && info.frame >= 0 && !info.over && (!info.day || info.day === day) ? info.frame : -1).then(function (item) {
               if (item && info && info.slot) {
                 var map = readJson(GALLERY_SLOTS_KEY, {});
                 map[item.art] = info.slot;
@@ -5060,7 +5066,7 @@
   // the topic and reply open in the composer (from the comments window).
   // overKey: drawn over another drawing in the gallery; posted as an answer to
   // it (older versions show it so in the chat), the gallery hangs it in that frame
-  async function postDrawing(artId, day, fromComments, overKey) {
+  async function postDrawing(artId, day, fromComments, overKey, frame) {
     var open = fromComments && !modal.hidden;
     var topic = open ? (commsTopicInput.value.trim() || (communityView === 'topic' ? communityTopic : 'Vispārīgi')) : 'Vispārīgi';
     var parent = overKey ? String(overKey) : open && communityReply ? (communityReply.key || '') : '';
@@ -5070,7 +5076,7 @@
     rememberCommunityId(clientId);
     var items = readJson(TEXT_KEY, []);
     if (!Array.isArray(items)) items = [];
-    items.unshift({ clientId: clientId, editToken: editToken, type: 'comment', text: communityEncode(topic, parent, authorName, '[[rgdraw;art=' + artId + ']]'), shiftDay: day, createdAt: Date.now(), pending: true });
+    items.unshift({ clientId: clientId, editToken: editToken, type: 'comment', text: communityEncode(topic, parent, authorName, '[[rgdraw;art=' + artId + (frame >= 0 && frame < 100 ? ';f=' + frame : '') + ']]'), shiftDay: day, createdAt: Date.now(), pending: true });
     writeJson(TEXT_KEY, items.slice(0, 500));
     await postPendingMessages(day, 'comment');
     if (open) {
