@@ -858,6 +858,7 @@
       clearInterval(antsTimer); clearInterval(sprayTimer); clearInterval(clockTimer);
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('keyup', swallow, true);
+      window.removeEventListener('paste', onPaste, true);
       window.removeEventListener('resize', onResize);
       var gone = function () {
         root.remove();
@@ -1227,7 +1228,8 @@
       if (k === 'escape') { e.preventDefault(); if (menuOpen) closeMenu(); else if (poly) finishPoly(); else if (curve) { curve = null; base = null; } else if (sel) dropSel(); else close(false); return; }
       if (k === 'enter' && poly) { e.preventDefault(); finishPoly(); return; }
       if (mod) {
-        var map = { z: e.shiftKey ? 'redo' : 'undo', y: 'redo', s: 'save', a: 'all', c: 'copy', x: 'cut', v: 'paste', i: 'invert', t: 'toggle-tools', l: 'toggle-colors', n: e.shiftKey ? 'clear' : 'new', pageup: 'zoom-1', pagedown: 'zoom-fit' };
+        if (k === 'v') return;                                       // the paste event decides: a picture from outside, else our own
+        var map = { z: e.shiftKey ? 'redo' : 'undo', y: 'redo', s: 'save', a: 'all', c: 'copy', x: 'cut', i: 'invert', t: 'toggle-tools', l: 'toggle-colors', n: e.shiftKey ? 'clear' : 'new', pageup: 'zoom-1', pagedown: 'zoom-fit' };
         if (map[k]) { e.preventDefault(); run(map[k]); }
         return;
       }
@@ -1238,6 +1240,34 @@
     }
     window.addEventListener('keydown', onKey, true);
     window.addEventListener('keyup', swallow, true);
+    // a picture from outside, as MS Paint takes it: pasted (Ctrl/Cmd+V) or dropped on the window, it comes in
+    // as a selection at the top left (or where it was dropped), to be moved and put down
+    function pasteImage(file, place) {
+      if (!file || !/^image\//.test(file.type || '')) return false;
+      createImageBitmap(file).then(function (bmp) {
+        var k = Math.min(1, SIZE / bmp.width, SIZE / bmp.height), c = canvas(Math.round(bmp.width * k), Math.round(bmp.height * k));
+        c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+        finishPending(); minimizeWin('paint', false); focusWin('paint'); setTool('select');
+        floatFrom(c, place ? Math.max(0, Math.min(SIZE - c.width, place[0])) : 0, place ? Math.max(0, Math.min(SIZE - c.height, place[1])) : 0);
+      }, function () { warn('Šo attēlu neizdevās ielīmēt.', [{ label: 'Labi', main: true }]); });
+      return true;
+    }
+    function onPaste(e) {
+      if (st.closed || activeId !== 'paint' || e.target === typer) return;
+      var items = e.clipboardData ? [].slice.call(e.clipboardData.items || []) : [];
+      var it = items.find(function (x) { return x.kind === 'file' && /^image\//.test(x.type); });
+      e.preventDefault();
+      if (!(it && pasteImage(it.getAsFile()))) run('paste');
+    }
+    window.addEventListener('paste', onPaste, true);
+    app.addEventListener('dragover', function (e) { if (e.dataTransfer && [].indexOf.call(e.dataTransfer.types || [], 'Files') >= 0) e.preventDefault(); });
+    app.addEventListener('drop', function (e) {
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!f) return;
+      e.preventDefault();
+      var r = view.getBoundingClientRect(), on = e.clientX >= r.left && e.clientX < r.right && e.clientY >= r.top && e.clientY < r.bottom;
+      pasteImage(f, on ? posOf(e) : null);
+    });
     function onResize() { if (st.zoom <= 2) refit(); }
     window.addEventListener('resize', onResize);
 
