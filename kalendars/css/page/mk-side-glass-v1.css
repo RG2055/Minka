@@ -326,7 +326,8 @@ html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .s
 html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-shift-chip:has(> .sun-icon) { --mk-shift-c: #3f9bff; }
 html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-shift-chip:has(> .moon-icon) { --mk-shift-c: #23cdcf; }
 /* Nogurums labajā augšējā stūrī: tīrs M3 gredzens (nevis stikla kolba),
-   aizpildīts līdz noguruma līmenim tā krāsā, skaitlis un līmenis vidū. */
+   aizpildīts līdz noguruma līmenim tā krāsā, skaitlis un līmenis vidū.
+   Pats gredzens ir vienāds visās dienās; šodien tas vēl paiet stūrī. */
 html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-card-body > .mk-side-fatigue {
   display: flex !important;
   flex-direction: column !important;
@@ -339,7 +340,7 @@ html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .s
   width: 58px !important;
   min-width: 58px !important;
 }
-html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-ring {
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card .mk-side-ring {
   position: relative !important;
   isolation: isolate !important;
   width: 52px !important;
@@ -352,7 +353,7 @@ html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .s
   box-shadow: none !important;
 }
 /* loks: noguruma krāsā līdz līmenim, pārējais blāvs, 6 px gredzens */
-html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-ring::after {
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card .mk-side-ring::after {
   content: '' !important;
   display: block !important;
   position: absolute !important;
@@ -364,14 +365,14 @@ html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .s
           mask: radial-gradient(closest-side, transparent calc(100% - 6px), #000 calc(100% - 5.5px)) !important;
   pointer-events: none !important;
 }
-html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-ring::before {
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card .mk-side-ring::before {
   content: none !important;
   display: none !important;
 }
-html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-ring .mk-side-liquid-vessel {
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card .mk-side-ring .mk-side-liquid-vessel {
   display: none !important;
 }
-html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-ring > .mk-side-score {
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card .mk-side-ring > .mk-side-score {
   position: relative !important;
   z-index: 1 !important;
   display: flex !important;
@@ -382,7 +383,7 @@ html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .s
   -webkit-text-fill-color: #fff !important;
   text-shadow: none !important;
 }
-html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-ring small {
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card .mk-side-ring small {
   margin-top: 2px !important;
   font: 700 7.5px/1 var(--mk-font-brand, "Google Sans", Inter, system-ui, sans-serif) !important;
   letter-spacing: 0 !important;
@@ -391,7 +392,7 @@ html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .s
   -webkit-text-fill-color: var(--mk-side-fat-color, #42d991) !important;
   text-shadow: none !important;
 }
-html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-side-ticks) .mk-side-fatigue-caption {
+html:not(.mk-mobile-shell):not(.host-radio-open):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card .mk-side-fatigue-caption {
   display: none !important;
 }
 /* M3 burti sānu kartītēs: Google Sans, bez lielajiem burtiem un plata

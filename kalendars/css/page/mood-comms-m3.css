@@ -960,10 +960,13 @@
   transform: none !important;
 }
 /* Pārējām reakcijām nosaukums parādās, kad tā ir izvēlēta; šai — kad uz tās
-   uzej, jo citādi neviens neuzzina, kas tā par pogu. */
+   uzej, jo citādi neviens neuzzina, kas tā par pogu. Virs pogas: tekošās
+   maiņas kompaktā kartīte beidzas tieši zem burbuļiem un nogrieztu to. */
 #grafiks-list .rg-feedback-card .rg-pulse-own:hover .rg-pulse-name,
 #grafiks-list .rg-feedback-card .rg-pulse-own:focus-visible .rg-pulse-name {
   display: block !important;
+  top: auto !important;
+  bottom: calc(100% + 5px) !important;
   max-width: none !important;
   white-space: nowrap !important;
 }
