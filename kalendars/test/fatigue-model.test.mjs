@@ -53,6 +53,12 @@ test('saved order changes invalidate same-minute scores without extra network or
  const e=env([shift('07.09.2026')],'2026-09-08T01:00:00+03:00',plan());const before=e.score();
  e.plan(plan([...names].reverse()));const after=e.score();assert.equal(after.nightRest.workHours,0);assert.equal(after.nightRest.restHours,1);assert.ok(after.score<before.score);e.run();assert.equal(e.paints(),1);
 });
+test('a night-plan change keeps the cached result of people not on that night',()=>{
+ const e=env([shift('07.09.2026'),shift('05.09.2026',24,'08:00','08:00',['Radiologist X'])],'2026-09-08T01:00:00+03:00',plan());
+ const other=e.score('Radiologist X'),mine=e.score();
+ e.plan(plan([...names].reverse()));
+ assert.equal(e.score('Radiologist X'),other);assert.notEqual(e.score(),mine);
+});
 test('hidden plan update does not schedule a visual repaint',()=>{
  const e=env([shift('07.09.2026')]);e.doc.hidden=true;e.plan(plan());e.run();assert.equal(e.paints(),0);
  e.doc.hidden=false;e.doc.dispatchEvent({type:'visibilitychange'});e.run();assert.equal(e.paints(),1);

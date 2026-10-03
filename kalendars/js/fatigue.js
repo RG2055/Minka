@@ -65,6 +65,24 @@
     cachedGrafiksStoreRad = window.__grafiksStoreRad || null;
   }
 
+  // Who a night-plan change can move: the roster of every changed night plus
+  // any name written in the plan itself. null = cannot tell, clear everything.
+  function nightPlanNames(prev, next) {
+    try {
+      const names = new Set();
+      const collect = v => {
+        if (typeof v === 'string') { if (v.trim()) names.add(v.trim()); }
+        else if (v && typeof v === 'object') Object.values(v).forEach(collect);
+      };
+      new Set(Object.keys(prev || {}).concat(Object.keys(next || {}))).forEach(date => {
+        if (JSON.stringify(prev[date]) === JSON.stringify(next[date])) return;
+        workersOn(normalizeDateStr(date)).forEach(w => { if (w && w.name) names.add(String(w.name).trim()); });
+        collect(prev[date]); collect(next[date]);
+      });
+      return names;
+    } catch (_) { return null; }
+  }
+
   function syncFatigueCache() {
     let habits='';
     try{habits=localStorage.getItem('minkaNightStatsV1')||'';}catch(_){}
@@ -72,15 +90,18 @@
     let raw = '';
     try { raw = localStorage.getItem('minkaNightSplitByDateV1') || ''; } catch (_) {}
     if (raw !== nightPlanRaw) {
+      const first = nightPlanRaw === null, prev = nightPlans;
       nightPlanRaw = raw;
       try { nightPlans = JSON.parse(raw || '{}') || {}; } catch (_) { nightPlans = {}; }
-      resultCache.clear();
-      sampleCache.clear();
-      planCache.clear();
-        forecastCache.clear();
-      scenarioCache.clear();
-      sleepCache.clear();
-      seriesCache.clear();
+      // A changed night touches only the people of that night: everyone else
+      // (the radiologists above all) keeps their numbers, nothing recomputed.
+      const names = first ? null : nightPlanNames(prev, nightPlans);
+      [resultCache, sampleCache, planCache, forecastCache, scenarioCache, sleepCache, seriesCache].forEach(cache => {
+        if (!names) { cache.clear(); return; }
+        for (const key of Array.from(cache.keys())) {
+          if (names.has(String(key).slice(0, String(key).indexOf('|')))) cache.delete(key);
+        }
+      });
     }
     const nextGrafiks = window.__grafiksStore || null;
     const nextRadiologists = window.__grafiksStoreRad || null;

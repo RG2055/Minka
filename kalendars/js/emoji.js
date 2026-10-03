@@ -477,6 +477,11 @@
       meta.setAttribute('data-mk-emoji-home', glyph);
       var fly = meta.querySelector('.mk-mid-meta-emoji-fly');
       if (fly) paintEmoji(fly, glyph);
+      // a large emoji is kept inside the card for the new glyph's own size
+      if (card.classList && card.classList.contains('mk-emoji-zs') && typeof window.mkFitEmojiInside === 'function') {
+        if (card.__emojiFit) cancelAnimationFrame(card.__emojiFit);
+        card.__emojiFit = requestAnimationFrame(function () { card.__emojiFit = 0; window.mkFitEmojiInside(card); });
+      }
     }
     var bgEl = card.querySelector('.mk-mid-bg-emoji');
     if (bgEl && emoji && typeof window !== 'undefined' && window.MinkaEmoji3D && (window.MinkaEmoji3D.decode(emoji) || bgEl.hasAttribute('data-mk-emoji'))) paintEmoji(bgEl, emoji, true);
@@ -1677,6 +1682,19 @@
         z-index:5 !important;
       }
       .mkp-tab:hover .mkp-cat-name { opacity:1 !important; }
+      /* "Jaunums" on the 3D sets: a small pill on the tab, the picture under it (the
+         worker window has its own, the same look) */
+      #mk-emoji-picker .mkp-tab-new {
+        position:absolute !important; top:3px !important; left:50% !important; translate:-50% 0;
+        padding:1px 5px !important; border-radius:6px !important;
+        background:#6dd58c !important; color:#06341b !important;
+        font:700 8px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+        font-style:normal !important; letter-spacing:.02em !important; white-space:nowrap !important;
+        pointer-events:none !important;
+      }
+      #mk-emoji-picker .mkp-tab.mkp-tab-isnew .mkp-tab-ico { margin-top:12px !important; line-height:1 !important; }
+      #mk-emoji-picker .mkp-tab.mkp-tab-isnew .mkp-tab-pic { width:18px !important; height:18px !important; }
+      #mk-emoji-picker .mkp-group h5 .mkp-tab-new { position:static !important; display:inline-block !important; translate:none; margin-left:8px !important; vertical-align:1px !important; text-transform:none !important; }
       .mkp-body {
         display:grid !important;
         grid-template-columns:minmax(0, 1fr) 280px !important;

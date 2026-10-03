@@ -3767,10 +3767,65 @@ function filterFullList(btn) {
     }, { timeout: 1500 });
   }
 
+  /* A re-render with the same people (a night part moved, a fatigue refresh)
+     must not rebuild the cards: that restarted the emoji, the ring and the
+     decorations of every card, the radiologists' too. Unchanged cards stay as
+     they are; where only the fatigue moved, it is written in place. */
+  const SIDE_NO_FATIGUE = { score: 0, key: '', label: '', color: '', contextLabel: '' };
+  function patchSideFatigue(el, fatigue) {
+    el.style.setProperty('--mk-side-fat', fatigue.score + '%');
+    el.style.setProperty('--mk-side-fat-color', fatigue.color);
+    el.dataset.fatScore = String(fatigue.score);
+    el.dataset.fatLabel = fatigue.label || '';
+    el.dataset.fatigue = fatigue.key;
+    const ring = el.querySelector('.mk-side-ring');
+    if (ring) ring.setAttribute('aria-label', `Nogurums ${fatigue.score} procenti, ${fatigue.label}`);
+    const score = el.querySelector('.mk-side-score');
+    if (score) score.innerHTML = `${mkEscAttr(fatigue.score)}<small>${mkEscAttr(fatigue.label || '')}</small>`;
+    const caption = el.querySelector('.mk-side-fatigue-caption');
+    if (caption) caption.title = fatigue.contextLabel || 'Tagad';
+  }
+  function syncSideTicks(el, item) {
+    const row = el.querySelector(':scope > .mk-side-ticks');
+    if (row) {
+      if (item.hit && item.hit.stale) row.dataset.stale = '1';
+      const tip = row.querySelector('.mk-side-tick-tip');
+      const tipHtml = `<b>${mkEscAttr(item.fatigue.score)}</b>${mkEscAttr(item.fatigue.label || '')}`;
+      if (tip && tip.innerHTML !== tipHtml) tip.innerHTML = tipHtml;
+    } else if (item.ticks) {
+      const main = el.querySelector(':scope > .mk-side-card-main');
+      if (main) main.insertAdjacentHTML('afterend', item.ticks);
+    }
+  }
+  function patchSideCards(container, items) {
+    const els = container.querySelectorAll(':scope > .mk-side-card');
+    if (els.length !== items.length) return false;
+    for (let i = 0; i < items.length; i++) {
+      if (els[i].dataset.worker !== items[i].name || !els[i].__mkSideShape) return false;
+    }
+    items.forEach((item, i) => {
+      const el = els[i];
+      if (el.__mkSideCore !== item.core) {
+        if (el.__mkSideShape === item.shape) patchSideFatigue(el, item.fatigue);
+        else {
+          const tpl = document.createElement('template');
+          tpl.innerHTML = item.html.trim();
+          const fresh = tpl.content.firstElementChild;
+          fresh.__mkSideCore = item.core; fresh.__mkSideShape = item.shape;
+          el.replaceWith(fresh);
+          return;
+        }
+        el.__mkSideCore = item.core;
+      }
+      syncSideTicks(el, item);
+    });
+    return true;
+  }
+
   function renderSideDutyCards(container, workers, options) {
     if (!container) return;
     const scheduleIndex = options.isToday ? buildSideScheduleIndex(options.sourceStore, activeDateStr, options.now) : new Map();
-    const cards = workers.map(worker => {
+    const items = workers.map(worker => {
       const workerName = String(worker.name || '').trim();
       const nameParts = workerName.split(/\s+/).filter(Boolean);
       const firstName = formatSideNamePart(nameParts[0], false);
@@ -3802,18 +3857,19 @@ function filterFullList(btn) {
         ? `<span class="mk-side-shift-chip">${uiState.shiftHours}H${iconHtml}</span>`
         : uiState.shiftBadge;
       const footer = options.isToday ? renderSideFooter(scheduleIndex.get(workerName), fatigue) : '';
-      const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
       // Already worked out for this shift: back at once, no animation (a
       // stale row too, refreshed in place in idle time).
-      let ticks = '';
+      let ticks = '', hit = null;
       if (options.isToday) {
         try {
-          const hit = sideTickCached(workerName, +options.now);
+          hit = sideTickCached(workerName, +options.now);
           if (hit) ticks = sideTicksHtml(hit.entry, Date.now(), hit.stale, { score: fatigue.score, label: fatigue.label });
         } catch (_e) {}
       }
 
-      return `
+      const card = (fatigue, ticks) => {
+        const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
+        return `
         <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
           <div class="mk-side-card-main">
             <div class="mk-side-icon-rail">
@@ -3838,8 +3894,21 @@ function filterFullList(btn) {
           ${footer}
           
         </article>`;
+      };
+      return { name: workerName, fatigue, hit, ticks, html: card(fatigue, ticks), core: card(fatigue, ''), shape: card(SIDE_NO_FATIGUE, '') };
     });
-    container.innerHTML = cards.length ? cards.join('') : '<span class="mk-duty-empty">ATPŪTA</span>';
+    const keys = activeDateStr + '|' + !!options.isToday + '|' + items.map(item => item.name).join('\n');
+    if (container.__mkSideKeys === keys && items.length && patchSideCards(container, items)) {
+      scheduleSideTicks(container, options);
+      return;
+    }
+    container.innerHTML = items.length ? items.map(item => item.html).join('') : '<span class="mk-duty-empty">ATPŪTA</span>';
+    container.__mkSideKeys = keys;
+    container.querySelectorAll(':scope > .mk-side-card').forEach((el, i) => {
+      if (!items[i]) return;
+      el.__mkSideCore = items[i].core;
+      el.__mkSideShape = items[i].shape;
+    });
     scheduleSideTicks(container, options);
   }
 

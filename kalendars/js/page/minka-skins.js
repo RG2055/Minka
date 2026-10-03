@@ -1012,12 +1012,20 @@
   }
   /* A large emoji (L / XL) never leaves the card: once placed, its plate is measured and
      pushed back inside by the least it takes (a translate, 3 % of the card from the edge). */
-  function fitEmojiInside(card) {
+  // A plate measured wholly off its card is not laid out yet (a look or face still being
+  // applied, a picture still loading): pushed by that, the emoji ended up a card's length
+  // away until the page was reloaded.
+  function offCard(c, r) { return r.bottom <= c.top || r.top >= c.bottom || r.right <= c.left || r.left >= c.right; }
+  function fitEmojiInside(card, tries) {
     var el = card && (card.querySelector('[data-wf-part="emoji"]') || card.querySelector('.mk-mid-meta-emoji:not(.is-initials)'));
     if (!el) return;
+    if (card.__ezRetry) { cancelAnimationFrame(card.__ezRetry); card.__ezRetry = 0; }
     if (el.style.getPropertyValue('translate')) el.style.removeProperty('translate');
     if (!card.classList.contains('mk-emoji-zs') || !(parseFloat(card.style.getPropertyValue('--mk-ez')) > 1)) return;
     var c = card.getBoundingClientRect(), r = el.getBoundingClientRect(); if (!c.width || !r.width) return;
+    var again = function () { if ((tries || 0) < 30) card.__ezRetry = requestAnimationFrame(function () { card.__ezRetry = 0; fitEmojiInside(card, (tries || 0) + 1); }); };
+    if ((card.dataset.watchFace && !el.hasAttribute('data-wf-part')) || offCard(c, r)) { again(); return; }
+    var pic = el.querySelector('img'); if (pic && !pic.complete) pic.addEventListener('load', function () { if (el.isConnected) fitEmojiInside(card); }, { once: true });
     var m = c.width * .03, dx = 0, dy = 0;
     if (r.width > c.width - 2 * m) dx = (c.left + c.right - r.left - r.right) / 2;
     else if (r.left < c.left + m) dx = c.left + m - r.left; else if (r.right > c.right - m) dx = c.right - m - r.right;
@@ -1026,6 +1034,8 @@
     if (!dx && !dy) return;
     var k = card.offsetWidth ? c.width / card.offsetWidth : 1;     // a scaled preview: undo its scale
     el.style.setProperty('translate', (dx / k).toFixed(1) + 'px ' + (dy / k).toFixed(1) + 'px');
+    // The push must leave it on the card; if the layout moved meanwhile, measure again.
+    if (offCard(card.getBoundingClientRect(), el.getBoundingClientRect())) { el.style.removeProperty('translate'); again(); }
   }
   window.mkFitEmojiInside = fitEmojiInside;
   // Emoji tab → Izmērs: how big the person's emoji sits on the card ('' = as drawn).

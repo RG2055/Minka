@@ -588,7 +588,7 @@
   var _nsStats=null, _nsStatsPromise=null, _nsStatsAt=0, _nsStatsRetryAt=0;
   var _nsStatsRenderVersion=0;
   var NS_STATS_TIMEOUT=15000;
-  var NS_BED_LABEL={main_left_top:'Galvenā · augšā',main_left_bottom:'Galvenā · apakšā',main_right_top:'Galvenā · pa labi',nmp_center:'Jaunais NMP'};
+  var NS_BED_LABEL={main_left_top:'Galvenā, augšā',main_left_bottom:'Galvenā, apakšā',main_right_top:'Galvenā, pa labi',nmp_center:'Jaunais NMP'};
 
   // Header icon: the dock's own Nakts icon in the chosen icon set (one icon
   // everywhere); the RG mark only when the shell is not there to ask.
@@ -770,7 +770,7 @@
       var nights=Number(stats.nights);
       nights=Number.isFinite(nights) ? Math.max(0, Math.min(100000, Math.round(nights))) : 0;
       var saved=Date.now()-_nsStatsAt>=NS_STATS_TTL;
-      var age=saved?' · saglabāta '+new Date(_nsStatsAt).toLocaleString('lv-LV'):'';
+      var age=saved?', saglabāta '+new Date(_nsStatsAt).toLocaleString('lv-LV'):'';
       box.innerHTML=rows+'<div class="ns-stats-foot">Vēsture: '+nights+' naktis'+escHtml(age)+'</div>';
     }
     // Paint valid local history synchronously, including an older snapshot.
@@ -2187,7 +2187,7 @@
     var h=Math.floor(min/60), m=min%60;
     return h?(h+' h'+(m?' '+m+' min':'')):(m+' min');
   }
-  // Viena kartīte: guļ tagad / nākamā / izgulējās. Tikai šodienas naktij.
+  // Viena kartīte: daļa iet tagad / nākamā / beigusies. Tikai šodienas naktij.
   function nsSlotState(slots,i,cur){
     // __g_todayStr is the live duty day from calendar.js (it stays on the
     // previous date until 08:00, exactly like tonight's plan does).
@@ -2195,11 +2195,11 @@
     var today=window.__activeDateStr && todayStr && window.__activeDateStr===todayStr;
     if(!today || !slots || !slots[i]) return null;
     var s=slots[i];
-    if(cur>=s.s && cur<s.e) return {cls:'is-now', text:'Guļ · vēl '+nsLeftText(s.e-cur)};
-    if(cur>=s.e) return {cls:'is-done', text:'Izgulējās ✓'};
+    if(cur>=s.s && cur<s.e) return {cls:'is-now', text:'Vēl '+nsLeftText(s.e-cur)};
+    if(cur>=s.e) return {cls:'is-done', text:'Beigusies'};
     // Countdown only for the very next person, and only within 12 h.
     var prevStarted = i===0 || cur>=slots[i-1].s;
-    if(prevStarted && s.s-cur<=12*60) return {cls:'is-next', text:'Nākamā · pēc '+nsLeftText(s.s-cur)};
+    if(prevStarted && s.s-cur<=12*60) return {cls:'is-next', text:'Pēc '+nsLeftText(s.s-cur)};
     return null;
   }
   // The person whose part it is now colours the window (M3 tonal surfaces, the seed is
