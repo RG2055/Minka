@@ -75,7 +75,7 @@
   // the hall's own monument: two of the team's cats in marble, in Michelangelo's manner
   // (posed from the Nakts cats' rig by scripts/blender/cat_statue.py): in the hall a real
   // 3D mesh with its light baked in (mesh + tex), the picture for the close look
-  var CAT_STATUE = { title: 'Špricētājs un Klibais', src: 'cut/cat-statue.webp?v=20261003s1', mesh: 'cat-statue-mesh.json?v=20261003s2', tex: 'cat-statue-tex.webp?v=20261003s2', caption: 'Špricētājs un Klibais. Marmors, Mikelandželo Buonaroti manierē (non finito bluķis), 2026' };
+  var CAT_STATUE = { title: 'Špricētājs un Klibais', src: 'cut/cat-statue.webp?v=20261003s1', mesh: 'cat-statue-mesh.json?v=20261003s3', tex: 'cat-statue-tex.webp?v=20261003s3', caption: 'Špricētājs un Klibais. Marmors, Mikelandželo Buonaroti manierē (non finito bluķis), 2026' };
   var VENUS = { title: 'Mīlo Venēra', caption: 'Mīlo Venēra (Afrodīte no Mēlas), ap. 130–100 p.m.ē., Luvra. Foto: Jastrow, publiskais domēns' };
   // "Vairāk par darbu": the work's page (as DOOM: The Gallery Experience links to The Met)
   var WIKI = 'https://en.wikipedia.org/wiki/';
@@ -2554,13 +2554,14 @@
       var grad = function (x0, y0, x1, y1, a, b) { var gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, 'rgba(255,255,255,' + a + ')'); gr.addColorStop(1, 'rgba(255,255,255,' + b + ')'); return gr; };
       g.lineCap = 'round'; g.lineJoin = 'round';
       if (kind === 'close') { g.strokeStyle = grad(3, 3, 19, 19, 1, 0.75); g.lineWidth = 4; g.beginPath(); g.moveTo(5, 5); g.lineTo(17, 17); g.moveTo(17, 5); g.lineTo(5, 17); g.stroke(); }
-      else if (kind === 'draw') {                                    // a pencil drawing a line
-        g.save(); g.translate(11, 11); g.rotate(-Math.PI / 4);
-        g.fillStyle = grad(-3, -9, 3, 5, 1, 0.6); g.fillRect(-3, -9, 6, 13);       // its body
-        g.fillStyle = '#fff'; g.fillRect(-3, -11, 6, 2);                            // the end
-        g.beginPath(); g.moveTo(-3, 4); g.lineTo(3, 4); g.lineTo(0, 10); g.closePath(); g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();   // the point
+      else if (kind === 'draw') {                                    // a pencil, point down-left: solid shapes only (no see-through: the dither turns it to grain)
+        g.save(); g.translate(12, 10); g.rotate(Math.PI / 4);
+        g.fillStyle = '#fff';
+        g.fillRect(-3.5, -10, 7, 3.5);                                              // the rubber end
+        g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.strokeRect(-2.7, -5.2, 5.4, 10); // the body, drawn as an outline
+        g.fillRect(-3.5, -6.2, 7, 1.6);                                             // the metal band
+        g.beginPath(); g.moveTo(-3.5, 5); g.lineTo(3.5, 5); g.lineTo(0, 11.5); g.closePath(); g.fill();   // the point
         g.restore();
-        g.strokeStyle = '#fff'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(2, 20); g.quadraticCurveTo(6, 16, 9, 19); g.stroke();
       } else if (kind === 'all') {                                   // a wall of four pictures
         [[2, 2], [12, 2], [2, 12], [12, 12]].forEach(function (q, i) { g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.strokeRect(q[0] + 0.75, q[1] + 0.75, 7.5, 7.5); g.fillStyle = grad(q[0], q[1], q[0] + 8, q[1] + 8, 0.25 + i * 0.15, 0.7); g.fillRect(q[0] + 2, q[1] + 2, 5, 5); });
       } else if (kind === 'music' || kind === 'mute') {             // two notes

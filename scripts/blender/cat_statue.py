@@ -177,9 +177,9 @@ bpy.ops.object.transform_apply(scale=True)
 bv0 = blk.modifiers.new('bev', 'BEVEL'); bv0.width = 0.03; bv0.segments = 2
 ss = blk.modifiers.new('sub', 'SUBSURF'); ss.subdivision_type = 'SIMPLE'; ss.levels = ss.render_levels = 5
 tex = bpy.data.textures.new('chisel', 'VORONOI'); tex.noise_scale = 0.045; tex.distance_metric = 'DISTANCE'
-d = blk.modifiers.new('chisel', 'DISPLACE'); d.texture = tex; d.strength = 0.022; d.texture_coords = 'GLOBAL'
+d = blk.modifiers.new('chisel', 'DISPLACE'); d.texture = tex; d.strength = 0.012; d.texture_coords = 'GLOBAL'
 tex2 = bpy.data.textures.new('grain', 'CLOUDS'); tex2.noise_scale = 0.02
-d2 = blk.modifiers.new('grain', 'DISPLACE'); d2.texture = tex2; d2.strength = 0.006; d2.texture_coords = 'GLOBAL'
+d2 = blk.modifiers.new('grain', 'DISPLACE'); d2.texture = tex2; d2.strength = 0.002; d2.texture_coords = 'GLOBAL'
 blk.data.materials.append(marble('Rough', base=(0.68, 0.64, 0.56), rough=0.8))
 for p in blk.data.polygons:
     p.use_smooth = True

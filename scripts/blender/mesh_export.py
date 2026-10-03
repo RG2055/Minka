@@ -14,8 +14,8 @@ import bmesh
 import bpy
 
 TARGET_H = 0.62            # game units, the plinth's foot to the top of the tail
-TRIS = {'Cat': 1000, 'Cat.001': 1000, 'Cube': 360}
-TEX = 1024
+TRIS = {'Cat': 5200, 'Cat.001': 5200, 'Cube': 1400}
+TEX = 2048
 
 
 def copy_eval(o, name):
@@ -60,6 +60,16 @@ def run(out, parts, texts, stone):
     for o in parts + texts:
         o.hide_render = True; o.hide_set(True)
 
+    # each part unwrapped on its own and put in its own tile: the cats get most of the texture
+    TILES = {'Cat': (0, .33, .5, 1), 'Cat.001': (.5, .33, 1, 1), 'Cube': (0, 0, .5, .33), 'Cube.001': (.5, 0, .75, .33), 'Cube.002': (.75, 0, 1, .33)}
+    for o, lo in zip(parts, lows):
+        bpy.ops.object.select_all(action='DESELECT'); lo.select_set(True); bpy.context.view_layer.objects.active = lo
+        bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.004)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        u0, v0, u1, v1 = TILES.get(o.name, (0, 0, 1, 1))
+        for l in lo.data.uv_layers.active.data:
+            l.uv = (u0 + .006 + l.uv[0] * (u1 - u0 - .012), v0 + .006 + l.uv[1] * (v1 - v0 - .012))
     # one low object
     bpy.ops.object.select_all(action='DESELECT')
     for lo in lows:
@@ -75,10 +85,6 @@ def run(out, parts, texts, stone):
         p.use_smooth = False
     print('LOW TOTAL', len(low.data.polygons))
 
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.003)
-    bpy.ops.object.mode_set(mode='OBJECT')
 
     img = bpy.data.images.new('statueTex', TEX, TEX, alpha=True)
     mat = bpy.data.materials.new('LowMat'); mat.use_nodes = True
@@ -89,22 +95,23 @@ def run(out, parts, texts, stone):
 
     # walked round in the game: light from every side (a bright room, a key from above
     # front left, another from behind right), not the photo's dark museum
+    for L in bpy.data.lights: L.energy *= 0.3                     # the photo's museum lights, far too strong for a bake
     bg = sc.world.node_tree.nodes['Background']
-    bg.inputs['Color'].default_value = (0.62, 0.62, 0.64, 1); bg.inputs['Strength'].default_value = 1.0
-    for nm, loc, e in (('back', (1.2, 1.5, 1.3), 140), ('top', (0.0, 0.0, 2.0), 120)):
+    bg.inputs['Color'].default_value = (0.5, 0.48, 0.46, 1); bg.inputs['Strength'].default_value = 0.42
+    for nm, loc, e in (('back', (1.2, 1.5, 1.3), 45), ('top', (0.0, 0.0, 2.0), 35)):
         L = bpy.data.lights.new(nm, 'AREA'); L.energy = e; L.size = 1.2
         o = bpy.data.objects.new(nm, L); sc.collection.objects.link(o); o.location = loc
         from mathutils import Vector
         o.rotation_euler = (Vector((0, 0, 0.1)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
     sc.render.engine = 'CYCLES'
-    sc.cycles.samples = 96
+    sc.cycles.samples = 192
     bpy.ops.object.select_all(action='DESELECT')
     for h in highs:
         h.select_set(True)
     low.select_set(True)
     bpy.context.view_layer.objects.active = low
     bpy.ops.object.bake(type='DIFFUSE', pass_filter={'DIRECT', 'INDIRECT', 'COLOR'}, use_selected_to_active=True,
-                        cage_extrusion=0.02, max_ray_distance=0.08, margin=8)
+                        cage_extrusion=0.05, max_ray_distance=0.2, margin=24)
     img.filepath_raw = out.replace('.json', '.png'); img.file_format = 'PNG'; img.save()
 
     # the mesh in the game's axes

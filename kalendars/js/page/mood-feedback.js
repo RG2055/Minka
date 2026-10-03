@@ -2541,6 +2541,30 @@
     var match = String(body || '').trim().match(DRAW_MARK);
     return match && match[2] != null ? +match[2] : -1;
   }
+  // A drawing in the chat opened at full size: dark cover, the picture as large as fits, its name;
+  // a click anywhere or Esc closes it
+  function artViewer(src, title) {
+    var old = document.querySelector('.rg-art-viewer'); if (old) old.remove();
+    var box = document.createElement('div');
+    box.className = 'rg-art-viewer';
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', title || 'Zīmējums');
+    var img = document.createElement('img'); img.src = src; img.alt = title || 'Zīmējums';
+    box.appendChild(img);
+    if (title) { var cap = document.createElement('div'); cap.className = 'rg-art-viewer-cap'; cap.textContent = title; box.appendChild(cap); }
+    var close = function () { box.remove(); window.removeEventListener('keydown', onKey, true); };
+    var onKey = function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+    box.addEventListener('click', close);
+    window.addEventListener('keydown', onKey, true);
+    document.body.appendChild(box);
+  }
+  document.addEventListener('click', function (e) {
+    var pic = e.target.closest && e.target.closest('.rg-comms-art');
+    if (pic) { e.preventDefault(); artViewer(pic.src, pic.dataset.artTitle || ''); }
+  });
+  document.addEventListener('keydown', function (e) {
+    var pic = e.target && e.target.classList && e.target.classList.contains('rg-comms-art') ? e.target : null;
+    if (pic && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); artViewer(pic.src, pic.dataset.artTitle || ''); }
+  });
   function chatItems(messages) {
     var out = [];
     (messages || []).forEach(function (item) {
@@ -3204,7 +3228,7 @@
   /* Galerija kā Doom (js/page/mood-gallery-3d.js, ielādējas tikai pirmajā
      reizē): pastaiga pa zāli ar zīmējumiem uz sienām. Ja tā neielādējas,
      paliek parastā galerija (režģis augstāk). */
-  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261003g3d76';
+  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261003g3d79';
   var gallery3dLoad = null;
   // the gallery's own paint window (js/page/mood-gallery-paint.js): only for the
   // gallery's frames; everywhere else the usual editor (js/skin-draw.js)
@@ -4884,6 +4908,10 @@
         picture.decoding = 'async';
         picture.width = 192;
         picture.height = 192;
+        picture.tabIndex = 0;
+        picture.setAttribute('role', 'button');
+        picture.title = drawTitle(item.body) || 'Atvērt pilnā izmērā';
+        picture.dataset.artTitle = drawTitle(item.body);
         bubble.appendChild(picture);
       } else if (emojiCount) {
         bubble.classList.add('is-emoji-only');

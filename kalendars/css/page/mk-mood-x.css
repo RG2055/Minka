@@ -742,7 +742,7 @@
 /* A drawing in the comments (mood-feedback.js, skin-draw.js "sky"): the
    picture on the night sky it was drawn on; the pen sits by the emoji. */
 #rgFeedbackModal .rg-comms-bubble.is-art { padding: 6px !important; background: #070c16 !important; }
-#rgFeedbackModal .rg-comms-art { display: block; width: min(192px, 60vw); height: auto; aspect-ratio: 1; border-radius: 12px; background: radial-gradient(120% 90% at 50% 0%, #10233a, #060b13 70%); }
+#rgFeedbackModal .rg-comms-art { cursor: zoom-in; display: block; width: min(192px, 60vw); height: auto; aspect-ratio: 1; border-radius: 12px; background: radial-gradient(120% 90% at 50% 0%, #10233a, #060b13 70%); }
 /* in the sky: the drawing alone on a dark glass card, the artist's animal on its corner */
 .mx-say.is-art { --mx-say-bg: rgba(7, 12, 22, .94); padding: 5px; }
 .mx-say.is-art:hover { --mx-say-bg: rgba(14, 22, 36, .96); }
@@ -1966,3 +1966,7 @@
 .gp-saveas-row { display: flex; align-items: center; gap: 4px; }
 .gp-saveas-row .gp-name { flex: 1; min-width: 200px; margin-top: 0; }
 .gp-saveas-where { margin-top: 8px !important; color: var(--w-shadow); }
+/* a chat drawing at full size (mood-feedback.js artViewer) */
+.rg-art-viewer { position: fixed; inset: 0; z-index: 240000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; box-sizing: border-box; background: rgba(4, 7, 12, .9); cursor: zoom-out; }
+.rg-art-viewer img { display: block; width: min(90vmin, 768px); height: auto; aspect-ratio: 1; border-radius: 14px; background: radial-gradient(120% 90% at 50% 0%, #10233a, #060b13 70%); image-rendering: auto; box-shadow: 0 18px 48px rgba(0, 0, 0, .5); }
+.rg-art-viewer-cap { max-width: min(90vmin, 768px); color: #e8edf5; font: 600 16px/1.35 Inter, system-ui, sans-serif; text-align: center; }
