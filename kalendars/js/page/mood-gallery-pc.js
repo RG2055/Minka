@@ -201,152 +201,261 @@
     }
     function bin() { dialog('Atkritumi', 'Atkritumi ir tukši. Kā vienmēr pēc nakts dežūras.', 'info'); }
 
-    /* ── Konfektes 98 ── */
+    /* ── Konfektes 98 (match-3), built on the puzzle skill's rules: the board is the truth and the
+       picture only plays out what resolution did; resolve until stable; input locked meanwhile;
+       a seeded refill (the day's board); deadlock → reshuffle. Juice in three tiers (game-feel):
+       small (3 in a row): sparks, a soft pop, the points rising; medium (a special made, a chain):
+       a little shake, more sparks; large (a blast, a bomb, a combo): a flash, a short hit-stop,
+       a beam across the board, a word. Hints when idle; tips the first times. ── */
+    var PCOL = ['#c9a77a', '#c8ccc8', '#3a3346', '#ff4f7a', '#ffd23f', '#5aa8ff'];
+    var PNAME = ['kafijas', 'Monster', 'kaķu', 'siržu', 'zvaigžņu', 'tablešu'];
+    var WORDS = ['Lieliski!', 'Super!', 'Fantastiski!', 'Neticami!'];
     function candy() {
       if (wins.candy) { front('candy'); return; }
-      // as large as the screen allows (the window's bars and the taskbar under it), at most 80 px a cell
       var rr0 = root.getBoundingClientRect();
       CELL = Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 190) / N)));
       var size = N * CELL;
       var w = win('candy', 'Konfektes 98', 'candy',
-        '<div class="pc98-candy"><div class="pc98-cbar"><span>Punkti <b class="pc98-score">0</b></span><span>Gājieni <b class="pc98-moves">' + MOVES + '</b></span><span>Rekords <b class="pc98-best">0</b></span></div>'
-        + '<div class="pc98-well"><canvas class="pc98-board" width="' + size + '" height="' + size + '"></canvas><div class="pc98-chain" hidden></div></div>'
-        + '<div class="pc98-cfoot"><button type="button" class="pc98-btn" data-c="new">Jauna spēle</button><button type="button" class="pc98-btn" data-c="table">Dienas tabula</button><span class="pc98-hint">Dienas laukums visiem vienāds</span></div></div>',
+        '<div class="pc98-candy"><div class="pc98-cbar"><span>Punkti <b class="pc98-score">0</b></span><span>Gājieni <b class="pc98-moves">' + MOVES + '</b></span>'
+        + '<span class="pc98-goal" title="Dienas mērķis"><i class="pc98-gico"></i><b class="pc98-gnum">0/0</b></span><span>Rekords <b class="pc98-best">0</b></span></div>'
+        + '<div class="pc98-well"><canvas class="pc98-board" width="' + size + '" height="' + size + '"></canvas></div>'
+        + '<div class="pc98-cfoot"><button type="button" class="pc98-btn" data-c="new">Jauna spēle</button><button type="button" class="pc98-btn" data-c="table">Dienas tabula</button><button type="button" class="pc98-btn" data-c="help">Kā spēlēt?</button><span class="pc98-hint">Dienas laukums visiem vienāds</span></div></div>',
         size + 34, Math.max(100, (rr0.width - size - 34) / 2), Math.max(6, (rr0.height - size - 170) / 2));
       var cv = w.el.querySelector('.pc98-board'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
-      var chainEl = w.el.querySelector('.pc98-chain');
-      var G = {}, anim = [], raf = 0, busy = false, sel = null, drag = null;
-      var best = 0; try { var b = JSON.parse(localStorage.getItem(BEST_KEY) || '{}'); best = b.day === today ? b.score : 0; } catch (_e) {}
+      var G = {}, anim = [], fx = { parts: [], floats: [], beams: [], rings: [], bubbles: [], flash: 0, shake: 0, word: null, stopUntil: 0 }, raf = 0, busy = false, sel = null, drag = null;
+      var hint = null, idleAt = performance.now(), swapOff = null;
+      var best = 0; try { var b0 = JSON.parse(localStorage.getItem(BEST_KEY) || '{}'); best = b0.day === today ? b0.score : 0; } catch (_e) {}
       w.el.querySelector('.pc98-best').textContent = best;
-      // cells: { t: type 0..5 or -1 colour bomb, s: special 'h'|'v'|'b'|'' , y: drawn y offset (cells), k: scale }
       function newGame() {
-        G = { rnd: rng(seedOf('candy:' + today)), board: [], score: 0, moves: MOVES, over: false };
+        var r = rng(seedOf('candy:' + today));
+        G = { rnd: r, board: [], score: 0, moves: MOVES, over: false, chain: 0, goal: { t: (seedOf('goal:' + today) % 6), need: 24, got: 0, done: false } };
         for (var y = 0; y < N; y++) { G.board.push([]); for (var x = 0; x < N; x++) G.board[y].push(fresh(x, y, true)); }
         if (!hasMove()) shuffle();
+        fx.parts = []; fx.floats = []; fx.beams = []; fx.rings = []; fx.bubbles = []; fx.word = null; hint = null; idleAt = performance.now();
+        w.el.querySelector('.pc98-gico').style.backgroundImage = 'url(' + PIECES[G.goal.t].toDataURL() + ')';
         paintBar(); draw();
       }
       function fresh(x, y, noMatch) {
         var t, guard = 0;
         do { t = (G.rnd() * 6) | 0; guard++; } while (noMatch && guard < 20 && ((x >= 2 && G.board[y][x - 1].t === t && G.board[y][x - 2].t === t) || (y >= 2 && G.board[y - 1][x].t === t && G.board[y - 2][x].t === t)));
-        return { t: t, s: '', dy: 0, k: 1, a: 1 };
+        var c = { t: t, s: '', dy: 0, k: 1, a: 1, sq: 0 };
+        if (!noMatch && G.rnd() < 0.022) c.gold = true;             // now and then a golden cup (+2 moves)
+        return c;
       }
       function paintBar() {
         w.el.querySelector('.pc98-score').textContent = G.score;
-        w.el.querySelector('.pc98-moves').textContent = G.moves;
+        var mv = w.el.querySelector('.pc98-moves'); mv.textContent = G.moves; mv.classList.toggle('is-low', G.moves <= 5);
+        w.el.querySelector('.pc98-gnum').textContent = Math.min(G.goal.got, G.goal.need) + '/' + G.goal.need;
+        w.el.querySelector('.pc98-goal').classList.toggle('is-done', G.goal.done);
       }
-      function matches() {
-        var runs = [];
-        for (var y = 0; y < N; y++) for (var x = 0; x < N;) { var t = G.board[y][x].t, e = x + 1; while (t >= 0 && e < N && G.board[y][e].t === t) e++; if (t >= 0 && e - x >= 3) runs.push({ cells: range(x, e).map(function (i) { return [i, y]; }), dir: 'h' }); x = e; }
-        for (x = 0; x < N; x++) for (y = 0; y < N;) { var t2 = G.board[y][x].t, e2 = y + 1; while (t2 >= 0 && e2 < N && G.board[e2][x].t === t2) e2++; if (t2 >= 0 && e2 - y >= 3) runs.push({ cells: range(y, e2).map(function (i) { return [x, i]; }), dir: 'v' }); y = e2; }
-        return runs;
+      var at = function (x, y) { return x >= 0 && y >= 0 && x < N && y < N ? G.board[y][x] : null; };
+      function runs() {
+        var out = [];
+        for (var y = 0; y < N; y++) for (var x = 0; x < N;) { var t = G.board[y][x].t, e = x + 1; while (t >= 0 && e < N && G.board[y][e].t === t) e++; if (t >= 0 && e - x >= 3) out.push({ t: t, dir: 'h', cells: seq(x, e).map(function (i) { return [i, y]; }) }); x = e; }
+        for (x = 0; x < N; x++) for (y = 0; y < N;) { var t2 = G.board[y][x].t, e2 = y + 1; while (t2 >= 0 && e2 < N && G.board[e2][x].t === t2) e2++; if (t2 >= 0 && e2 - y >= 3) out.push({ t: t2, dir: 'v', cells: seq(y, e2).map(function (i) { return [x, i]; }) }); y = e2; }
+        return out;
       }
-      function range(a, b) { var r = []; for (var i = a; i < b; i++) r.push(i); return r; }
-      function wouldMatch(x1, y1, x2, y2) {
-        var b = G.board, A = b[y1][x1], B = b[y2][x2];
-        if (A.t < 0 || B.t < 0) return true;
-        b[y1][x1] = B; b[y2][x2] = A;
-        var ok = matches().length > 0;
-        b[y1][x1] = A; b[y2][x2] = B;
-        return ok;
+      function seq(a, b) { var r = []; for (var i = a; i < b; i++) r.push(i); return r; }
+      function swapIn(x1, y1, x2, y2) { var t = G.board[y1][x1]; G.board[y1][x1] = G.board[y2][x2]; G.board[y2][x2] = t; }
+      function special(c) { return c && (c.s || c.t < 0); }
+      // how good a swap is (for the hint): matched pieces, more for specials made or used
+      function swapValue(x1, y1, x2, y2) {
+        var A = G.board[y1][x1], B = G.board[y2][x2];
+        if (special(A) && special(B)) return 60;
+        if (A.t < 0 || B.t < 0) return 40;
+        swapIn(x1, y1, x2, y2);
+        var rs = runs(), v = 0;
+        rs.forEach(function (r) { v += r.cells.length + (r.cells.length >= 5 ? 20 : r.cells.length === 4 ? 8 : 0); });
+        if (rs.length > 1) v += 6;
+        swapIn(x1, y1, x2, y2);
+        return v;
       }
-      function hasMove() {
-        for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
-          if (x + 1 < N && wouldMatch(x, y, x + 1, y)) return true;
-          if (y + 1 < N && wouldMatch(x, y, x, y + 1)) return true;
-        }
-        return false;
+      function bestMove() {
+        var bestV = 0, mv = null;
+        for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) [[1, 0], [0, 1]].forEach(function (d) {
+          var nx = x + d[0], ny = y + d[1]; if (nx >= N || ny >= N) return;
+          var v = swapValue(x, y, nx, ny); if (v > bestV) { bestV = v; mv = [x, y, nx, ny]; }
+        });
+        return mv;
       }
+      function hasMove() { return !!bestMove(); }
       function shuffle() {
         var guard = 0;
         do {
           var all = []; G.board.forEach(function (r) { r.forEach(function (c) { all.push(c); }); });
           for (var i = all.length - 1; i > 0; i--) { var j = (G.rnd() * (i + 1)) | 0, tmp = all[i]; all[i] = all[j]; all[j] = tmp; }
           for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) G.board[y][x] = all[y * N + x];
-        } while ((matches().length || !hasMove()) && ++guard < 60);
+        } while ((runs().length || !hasMove()) && ++guard < 80);
       }
-      /* the move: swap, resolve in steps (clear → fall → refill → again) with a little animation each */
+
+      /* ── a move ── */
       function trySwap(x1, y1, x2, y2) {
         if (busy || G.over) return;
+        hint = null; idleAt = performance.now();
         var A = G.board[y1][x1], B = G.board[y2][x2];
-        var bomb = A.t < 0 ? [A, B, x1, y1] : B.t < 0 ? [B, A, x2, y2] : null;
-        G.board[y1][x1] = B; G.board[y2][x2] = A;
-        if (!bomb && !matches().length) {                           // no match: swap back
-          G.board[y1][x1] = A; G.board[y2][x2] = B; blip(140, 0.08, 'square', 0.03);
-          tween(140, function (k) { swapOff = { x1: x1, y1: y1, x2: x2, y2: y2, k: Math.sin(k * Math.PI) * 0.4 }; }, function () { swapOff = null; draw(); });
+        var combo = (special(A) && special(B)) || A.t < 0 || B.t < 0;
+        swapIn(x1, y1, x2, y2);
+        if (!combo && !runs().length) {                              // no match: they go there and come back
+          swapIn(x1, y1, x2, y2); blip(140, 0.08, 'square', 0.03);
+          var bo = { x1: x1, y1: y1, x2: x2, y2: y2, k: 0 }; busy = true;   // input locked while it bounces back
+          tween(170, function (k) { bo.k = Math.sin(k * Math.PI) * 0.45; swapOff = bo; }, function () { if (swapOff === bo) swapOff = null; busy = false; });
           return;
         }
         G.moves--; G.chain = 0; paintBar(); busy = true;
-        swapOff = { x1: x2, y1: y2, x2: x1, y2: y1, k: 1 };
-        tween(130, function (k) { swapOff.k = 1 - k; }, function () {
-          swapOff = null;
-          if (bomb) {                                               // the colour bomb takes every piece of the other's colour, and itself
-            var col = bomb[1].t, kill = [];
-            for (var yy = 0; yy < N; yy++) for (var xx = 0; xx < N; xx++) if (G.board[yy][xx].t === col || G.board[yy][xx] === bomb[0]) kill.push([xx, yy]);
-            clearCells(kill, 1, null, step);
-          } else step([x2, y2]);
+        var so = swapOff = { x1: x2, y1: y2, x2: x1, y2: y1, k: 1 };
+        tween(130, function (k) { so.k = 1 - k; swapOff = so; }, function () {
+          if (swapOff === so) swapOff = null;
+          if (combo) comboBlast(x2, y2, x1, y1); else resolve([x2, y2]);
         });
       }
-      var swapOff = null;
-      function step(made) {
-        var runs = matches();
-        if (!runs.length) { busy = false; afterMove(); return; }
+      // two specials (or the bomb with anything) swapped: their combined effect at once
+      function comboBlast(xa, ya, xb, yb) {
+        var A = G.board[ya][xa], B = G.board[yb][xb], kill = [], fxs = [];
+        var line = function (c) { return c && (c.s === 'h' || c.s === 'v'); };
+        var addRow = function (y) { for (var x = 0; x < N; x++) kill.push([x, y]); fxs.push({ beam: 'row', i: y }); };
+        var addCol = function (x) { for (var y = 0; y < N; y++) kill.push([x, y]); fxs.push({ beam: 'col', i: x }); };
+        var box = function (cx, cy, r) { for (var y = cy - r; y <= cy + r; y++) for (var x = cx - r; x <= cx + r; x++) if (at(x, y)) kill.push([x, y]); fxs.push({ ring: [cx, cy, r] }); };
+        G.chain = 1;
+        if (A.t < 0 && B.t < 0) { for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) kill.push([x, y]); fxs.push({ ring: [xa, ya, 8] }); word(3); }
+        else if (A.t < 0 || B.t < 0) {
+          var bomb = A.t < 0 ? A : B, other = A.t < 0 ? B : A, col = other.t, bx = A.t < 0 ? xa : xb, by = A.t < 0 ? ya : yb;
+          kill.push([bx, by]);
+          for (var yy = 0; yy < N; yy++) for (var xx = 0; xx < N; xx++) {
+            var c = G.board[yy][xx]; if (c.t !== col) continue;
+            if (other.s && c !== other) c.s = other.s === 'w' ? 'w' : (G.rnd() < 0.5 ? 'h' : 'v');   // the bomb makes them all special first
+            kill.push([xx, yy]); fxs.push({ zap: [bx, by, xx, yy] });
+          }
+          word(other.s ? 3 : 2);
+        } else if (line(A) && line(B)) { addRow(ya); addCol(xa); word(2); }
+        else if ((line(A) && B.s === 'w') || (line(B) && A.s === 'w')) { for (var d = -1; d <= 1; d++) { addRow(ya + d < 0 || ya + d >= N ? ya : ya + d); addCol(xa + d < 0 || xa + d >= N ? xa : xa + d); } word(3); }
+        else if (A.s === 'w' && B.s === 'w') { box(xa, ya, 2); word(3); }
+        else { resolve([xa, ya]); return; }
+        A.spent = B.spent = true;                                    // their power is spent in the combo
+        clearCells(kill, null, fxs, 'large', function () { resolve(null); });
+      }
+      // resolve until stable: find runs, make specials, clear (specials set each other off), fall, again
+      function resolve(made) {
+        var rs = runs();
+        if (!rs.length) { busy = false; afterMove(); return; }
         G.chain++;
-        var kill = [], spawn = [];
-        runs.forEach(function (r) { r.cells.forEach(function (c) { kill.push(c); }); });
-        // a run of 4 leaves an X-ray (clears its line), 5 a colour bomb; at the moved piece if it is in the run
-        runs.forEach(function (r) {
-          if (r.cells.length < 4) return;
-          var at = r.cells.find(function (c) { return made && c[0] === made[0] && c[1] === made[1]; }) || r.cells[1];
-          spawn.push({ at: at, t: r.cells.length >= 5 ? -1 : G.board[at[1]][at[0]].t, s: r.cells.length >= 5 ? 'b' : (r.dir === 'h' ? 'h' : 'v') });
+        var kill = [], spawn = [], used = {};
+        rs.forEach(function (r) { r.cells.forEach(function (c) { kill.push(c); }); });
+        // L / T: a horizontal and a vertical run of one colour crossing → a coffee blast at the crossing
+        rs.forEach(function (h) {
+          if (h.dir !== 'h') return;
+          rs.forEach(function (v) {
+            if (v.dir !== 'v' || v.t !== h.t) return;
+            var cross = h.cells.find(function (a) { return v.cells.some(function (b) { return a[0] === b[0] && a[1] === b[1]; }); });
+            if (cross && !used[h.cells[0] + ''] && !used[v.cells[0] + '']) { used[h.cells[0] + ''] = used[v.cells[0] + ''] = 1; spawn.push({ at: cross, t: h.t, s: 'w' }); }
+          });
         });
-        clearCells(kill, G.chain, spawn, function () { step(null); });
+        rs.forEach(function (r) {
+          if (used[r.cells[0] + ''] || r.cells.length < 4) return;
+          var p = r.cells.find(function (c) { return made && c[0] === made[0] && c[1] === made[1]; }) || r.cells[(r.cells.length / 2) | 0];
+          spawn.push({ at: p, t: r.cells.length >= 5 ? -1 : r.t, s: r.cells.length >= 5 ? 'b' : r.dir });
+        });
+        var tier = spawn.length || G.chain >= 3 ? (spawn.some(function (s) { return s.s === 'b'; }) || G.chain >= 4 ? 'large' : 'medium') : G.chain >= 2 ? 'medium' : 'small';
+        if (G.chain >= 3) word(Math.min(3, G.chain - 2));
+        clearCells(kill, spawn, [], tier, function () { resolve(null); });
       }
-      function clearCells(list, chain, spawn, done) {
-        var seen = {}, cells = [];
+      // clear these cells; a special among them goes off and takes its line / box / colour with it
+      function clearCells(list, spawn, fxs, tier, done) {
+        var seen = {}, cells = [], spawnAt = {}, goldGot = 0;
+        (spawn || []).forEach(function (s) { spawnAt[s.at[0] + ',' + s.at[1]] = s; });
         function add(x, y) {
-          var k = x + ',' + y; if (seen[k] || x < 0 || y < 0 || x >= N || y >= N) return; seen[k] = 1; cells.push([x, y]);
-          var c = G.board[y][x];
-          if (c.s === 'h') for (var i = 0; i < N; i++) add(i, y);   // an X-ray clears its row or column
-          if (c.s === 'v') for (var j = 0; j < N; j++) add(x, j);
+          var key = x + ',' + y, c = at(x, y); if (!c || seen[key]) return; seen[key] = 1;
+          cells.push([x, y]);
+          if (spawnAt[key] || c.spent) return;                       // a new special born here stays; a spent one does nothing more
+          if (c.gold) goldGot++;
+          if (c.s === 'h') { fxs.push({ beam: 'row', i: y }); for (var i = 0; i < N; i++) add(i, y); tier = 'large'; }
+          else if (c.s === 'v') { fxs.push({ beam: 'col', i: x }); for (var j = 0; j < N; j++) add(x, j); tier = 'large'; }
+          else if (c.s === 'w') { fxs.push({ ring: [x, y, 1] }); for (var yy = y - 1; yy <= y + 1; yy++) for (var xx = x - 1; xx <= x + 1; xx++) add(xx, yy); tier = 'large'; }
+          else if (c.t < 0) {                                        // a bomb set off by others: the most common colour
+            var count = [0, 0, 0, 0, 0, 0]; G.board.forEach(function (r) { r.forEach(function (q) { if (q.t >= 0) count[q.t]++; }); });
+            var col = count.indexOf(Math.max.apply(null, count));
+            for (var by = 0; by < N; by++) for (var bx = 0; bx < N; bx++) if (G.board[by][bx].t === col) { fxs.push({ zap: [x, y, bx, by] }); add(bx, by); }
+            tier = 'large';
+          }
         }
         list.forEach(function (c) { add(c[0], c[1]); });
-        var spawnAt = {}; (spawn || []).forEach(function (s) { spawnAt[s.at[0] + ',' + s.at[1]] = s; });
-        G.score += cells.length * 10 * chain + (spawn || []).length * 50;
+        var chain = Math.max(1, G.chain), gain = 0;
+        cells.forEach(function (c) {
+          var p = G.board[c[1]][c[0]];
+          if (!spawnAt[c[0] + ',' + c[1]] && p.t === G.goal.t) G.goal.got++;
+          gain += 10 * chain;
+        });
+        gain += (spawn || []).length * 60;
+        G.score += gain;
+        if (!G.goal.done && G.goal.got >= G.goal.need) { G.goal.done = true; G.score += 1000; floatText(N / 2 - 0.5, N / 2, '+1000', '#1db954', 1.8); blip(784, 0.14, 'triangle', 0.06); setTimeout(function () { blip(1046, 0.2, 'triangle', 0.06); }, 120); }
+        if (goldGot) { G.moves += goldGot * 2; floatText(cells[0][0], cells[0][1], '+' + (goldGot * 2), '#ffcf3a', 1.5); blip(1200, 0.12, 'triangle', 0.05); }
         paintBar();
-        blip(420 + chain * 90, 0.09, 'triangle', 0.05);
-        if (chain > 1) { chainEl.hidden = false; chainEl.textContent = '×' + chain; chainEl.style.animation = 'none'; void chainEl.offsetWidth; chainEl.style.animation = ''; }
-        tween(150, function (k) { cells.forEach(function (c) { if (!spawnAt[c[0] + ',' + c[1]]) G.board[c[1]][c[0]].k = 1 + k * 0.35, G.board[c[1]][c[0]].a = 1 - k; }); }, function () {
+        // the feedback, by tier
+        var cx = 0, cy = 0; cells.forEach(function (c) { cx += c[0]; cy += c[1]; }); cx /= cells.length; cy /= cells.length;
+        cells.forEach(function (c) {
+          var p = G.board[c[1]][c[0]];
+          burst(c[0], c[1], p.t < 0 ? '#b07ae0' : PCOL[p.t], tier === 'small' ? 5 : tier === 'medium' ? 7 : 9);
+          fx.bubbles.push({ x: c[0], y: c[1], n: 10 * chain, life: 1 });       // a white glow with the piece's points in it
+        });
+        fxs.forEach(function (f) { if (f.beam) fx.beams.push({ kind: f.beam, i: f.i, life: 1 }); if (f.ring) fx.rings.push({ x: f.ring[0], y: f.ring[1], r: f.ring[2], life: 1 }); if (f.zap) fx.beams.push({ kind: 'zap', p: f.zap, life: 1 }); });
+        if (tier === 'medium') fx.shake = Math.max(fx.shake, 0.35);
+        if (tier === 'large') { fx.shake = Math.max(fx.shake, 0.8); fx.flash = 0.5; fx.stopUntil = performance.now() + 70; }
+        var base = [523, 587, 659, 784, 880, 1046][Math.min(5, chain - 1)];
+        blip(base, 0.09, 'triangle', 0.05);
+        if (tier === 'large') { blip(110, 0.25, 'sawtooth', 0.05); setTimeout(function () { blip(base * 1.5, 0.12, 'square', 0.035); }, 60); }
+        // the pieces swell and fade, the specials born pop in with an overshoot
+        tween(tier === 'small' ? 150 : 190, function (k) {
+          cells.forEach(function (c) { var p = G.board[c[1]][c[0]]; if (!spawnAt[c[0] + ',' + c[1]]) { p.k = 1 + k * 0.4; p.a = 1 - k; } });
+        }, function () {
           cells.forEach(function (c) {
             var s = spawnAt[c[0] + ',' + c[1]];
-            G.board[c[1]][c[0]] = s ? { t: s.t, s: s.s, dy: 0, k: 1, a: 1 } : null;
+            G.board[c[1]][c[0]] = s ? { t: s.t, s: s.s === 'b' ? '' : s.s, dy: 0, k: 0.2, a: 1, sq: 0, born: true } : null;
+            if (s && s.s === 'b') G.board[c[1]][c[0]].t = -1;
           });
+          var born = [];
+          G.board.forEach(function (r) { r.forEach(function (p) { if (p && p.born) { born.push(p); p.born = false; } }); });
+          if (born.length) tween(260, function (k) { born.forEach(function (p) { p.k = backOut(k); }); }, null);
           fall(done);
         });
       }
+      function backOut(k) { var s = 1.70158; k -= 1; return k * k * ((s + 1) * k + s) + 1; }
       function fall(done) {
-        var maxD = 0;
+        var maxD = 0, moved = [];
         for (var x = 0; x < N; x++) {
           var write = N - 1;
-          for (var y = N - 1; y >= 0; y--) if (G.board[y][x]) { var c = G.board[y][x]; if (write !== y) { c.dy = -(write - y); G.board[write][x] = c; G.board[y][x] = null; maxD = Math.max(maxD, write - y); } write--; }
-          for (var ny = write; ny >= 0; ny--) { var f = fresh(x, ny, false); f.dy = -(write + 1); G.board[ny][x] = f; maxD = Math.max(maxD, write + 1); }
+          for (var y = N - 1; y >= 0; y--) if (G.board[y][x]) { var c = G.board[y][x]; if (write !== y) { c.dy = -(write - y); G.board[write][x] = c; G.board[y][x] = null; maxD = Math.max(maxD, write - y); moved.push(c); } write--; }
+          for (var ny = write; ny >= 0; ny--) { var f = fresh(x, ny, false); f.dy = -(write + 1); G.board[ny][x] = f; maxD = Math.max(maxD, write + 1); moved.push(f); }
         }
-        var start = G.board.map(function (r) { return r.map(function (c) { return c.dy; }); });
-        tween(110 + maxD * 45, function (k) {
-          var e = k < 1 ? 1 - Math.pow(1 - k, 2.4) : 1;
-          for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) G.board[y][x].dy = start[y][x] * (1 - e);
-        }, function () { blip(260, 0.04, 'square', 0.025); done(); });
+        var start = moved.map(function (c) { return c.dy; });
+        tween(120 + maxD * 50, function (k) {
+          var e = k * k;                                             // falls under gravity, then lands
+          moved.forEach(function (c, i) { c.dy = start[i] * (1 - e); });
+        }, function () {
+          moved.forEach(function (c) { c.dy = 0; c.sq = 1; });       // squash on landing, then spring back
+          tween(160, function (k) { moved.forEach(function (c) { c.sq = 1 - k; }); }, null);
+          blip(260, 0.04, 'square', 0.025);
+          done();
+        });
       }
       function afterMove() {
-        draw();
-        if (!hasMove()) { shuffle(); draw(); dialog('Konfektes 98', 'Gājienu vairs nav. Laukums sajaukts no jauna.', 'info'); }
-        if (G.moves <= 0) gameOver();
+        if (!hasMove()) { shuffle(); fx.flash = 0.4; kick(); }
+        if (G.moves <= 0) finale();
+      }
+      // "Saldais finālis": the moves are spent; every special still on the board goes off for a bonus
+      function finale() {
+        var left = [];
+        G.board.forEach(function (r, y) { r.forEach(function (c, x) { if (special(c)) left.push([x, y]); }); });
+        if (!left.length) { gameOver(); return; }
+        busy = true; word(-1);
+        G.chain = 2;
+        clearCells(left, null, [], 'large', function () { busy = true; var rs = runs(); if (rs.length) resolve(null); else { busy = false; gameOver(); } });
       }
       function gameOver() {
-        G.over = true;
+        G.over = true; hint = null;
         if (G.score > best) { best = G.score; try { localStorage.setItem(BEST_KEY, JSON.stringify({ day: today, score: best })); } catch (_e) {} }
         w.el.querySelector('.pc98-best').textContent = best;
         blip(660, 0.15, 'triangle', 0.06); setTimeout(function () { blip(880, 0.2, 'triangle', 0.06); }, 140);
-        submit(G.score).then(function () { table('Spēle beigusies: ' + G.score + ' punkti.'); }, function () { table('Spēle beigusies: ' + G.score + ' punkti.'); });
+        var head = 'Spēle beigusies: ' + G.score + ' punkti.' + (G.goal.done ? ' Dienas mērķis izpildīts!' : '');
+        submit(G.score).then(function () { table(head); }, function () { table(head); });
       }
       function submit(score) {
         var a = api(); if (!a || !score) return Promise.reject();
@@ -364,57 +473,196 @@
           list.innerHTML = d.top.length ? d.top.map(function (e) { return '<li' + (e.me ? ' class="is-me"' : '') + '><span>' + esc(e.name) + '</span><b>' + e.score + '</b></li>'; }).join('') : '<li>Šodien vēl neviens nav spēlējis. Esi pirmais!</li>';
         }).catch(function () { list.innerHTML = '<li>Tavs rekords šodien: ' + best + '</li>'; });
       }
-      /* drawing: only while something moves (or on input) */
-      function draw() {
+      function help() {
+        var id = 'help';
+        var row = function (draw, text) { return '<li><span class="pc98-hico">' + draw + '</span><span>' + text + '</span></li>'; };
+        var t = win(id, 'Kā spēlēt?', 'candy', '<div class="pc98-table"><ul class="pc98-help">'
+          + row('3', 'Samaini divas blakus konfektes, lai 3 vai vairāk vienādas būtu rindā.')
+          + row('4', '4 rindā: rentgens. Notīra visu rindu vai kolonnu.')
+          + row('L', 'L vai T forma: kafijas sprādziens. Notīra 3×3.')
+          + row('5', '5 rindā: MR bumba. Samaini ar konfekti, un visas tās krāsas pazūd.')
+          + row('★', 'Zelta krūzīte: +2 gājieni.')
+          + row('+', 'Divas speciālās kopā: kombo (krusts, 3 rindas, 5×5, viss laukums).')
+          + row('◎', 'Dienas mērķis augšā: savāc konfektes, un +1000. Beigās speciālās uzsprāgst bonusā.')
+          + '</ul></div><div class="pc98-btns"><button type="button" class="pc98-btn is-default">Labi</button></div>', 420, 380, 60);
+        t.el.querySelector('.pc98-btn').addEventListener('click', function () { closeWin(id); });
+      }
+
+      /* ── effects ── */
+      function burst(x, y, col, n) {
+        for (var i = 0; i < n; i++) {
+          var an = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 3.5;
+          fx.parts.push({ x: (x + 0.5) * CELL, y: (y + 0.5) * CELL, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - 2, life: 1, col: col, s: 2 + (Math.random() * 3 | 0), star: Math.random() < 0.35 });
+        }
+        if (fx.parts.length > 400) fx.parts.splice(0, fx.parts.length - 400);
+      }
+      function floatText(x, y, text, col, scale) { fx.floats.push({ x: (x + 0.5) * CELL, y: (y + 0.5) * CELL, text: text, col: col, s: scale || 1, life: 1 }); kick(); }
+      function word(i) { fx.word = { text: i < 0 ? 'Saldais finālis!' : WORDS[Math.max(0, Math.min(WORDS.length - 1, i))], life: 1 }; kick(); }
+      function fxActive() { return fx.parts.length || fx.floats.length || fx.beams.length || fx.rings.length || fx.bubbles.length || fx.flash > 0 || fx.shake > 0.01 || fx.word || hint; }
+      function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+
+      /* ── drawing (only while something moves, sparks fly or a hint shows) ── */
+      function draw(now) {
+        now = now || performance.now();
+        var sh = fx.shake * fx.shake * 7, ox = sh ? Math.sin(now * 0.09) * sh : 0, oy = sh ? Math.cos(now * 0.11) * sh : 0;
+        g.setTransform(1, 0, 0, 1, 0, 0);
         g.fillStyle = '#efe6fb'; g.fillRect(0, 0, size, size);
+        g.setTransform(1, 0, 0, 1, ox, oy);
         for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if ((x + y) & 1) { g.fillStyle = '#e4d8f6'; g.fillRect(x * CELL, y * CELL, CELL, CELL); }
         if (sel) { g.fillStyle = 'rgba(122,92,255,.28)'; g.fillRect(sel[0] * CELL, sel[1] * CELL, CELL, CELL); }
+        var hw = hint ? Math.sin(now / 110) * 0.08 : 0;
         for (y = 0; y < N; y++) for (x = 0; x < N; x++) {
           var c = G.board[y][x]; if (!c) continue;
-          var ox = x, oy = y + (c.dy || 0);
+          var px = x, py = y + (c.dy || 0);
           if (swapOff) {
-            if (x === swapOff.x1 && y === swapOff.y1) { ox += (swapOff.x2 - swapOff.x1) * swapOff.k; oy += (swapOff.y2 - swapOff.y1) * swapOff.k; }
-            else if (x === swapOff.x2 && y === swapOff.y2) { ox += (swapOff.x1 - swapOff.x2) * swapOff.k; oy += (swapOff.y1 - swapOff.y2) * swapOff.k; }
+            if (x === swapOff.x1 && y === swapOff.y1) { px += (swapOff.x2 - swapOff.x1) * swapOff.k; py += (swapOff.y2 - swapOff.y1) * swapOff.k; }
+            else if (x === swapOff.x2 && y === swapOff.y2) { px += (swapOff.x1 - swapOff.x2) * swapOff.k; py += (swapOff.y1 - swapOff.y2) * swapOff.k; }
           }
-          piece(c, ox * CELL, oy * CELL);
+          var hinted = hint && ((x === hint[0] && y === hint[1]) || (x === hint[2] && y === hint[3]));
+          if (hinted) { px += (x === hint[0] && y === hint[1] ? hint[2] - hint[0] : hint[0] - hint[2]) * hw; py += (x === hint[0] && y === hint[1] ? hint[3] - hint[1] : hint[1] - hint[3]) * hw; }
+          piece(c, px * CELL, py * CELL, now, hinted);
         }
-      }
-      function piece(c, px, py) {
-        var k = c.k || 1, s = Math.round(CELL * 0.74 * k), o = (CELL - s) / 2, q = s / 32;
-        g.globalAlpha = c.a == null ? 1 : Math.max(0, c.a);
-        if (c.t < 0) {                                              // the colour bomb: a little X-ray film with all six inside
-          g.fillStyle = '#1b1530'; g.fillRect(px + o, py + o, s, s); g.fillStyle = '#7a5cff'; g.fillRect(px + o + 2, py + o + 2, s - 4, s - 4);
-          for (var i = 0; i < 6; i++) g.drawImage(PIECES[i], px + o + 3 + (i % 3) * (s - 6) / 3, py + o + 3 + ((i / 3) | 0) * (s - 6) / 2, (s - 6) / 3, (s - 6) / 3);
-        } else {
-          g.drawImage(PIECES[c.t], px + o, py + o, s, s);
-          if (c.s === 'h' || c.s === 'v') {                         // an X-ray: white stripes across it
-            g.fillStyle = 'rgba(255,255,255,.85)';
-            for (var j = 0; j < 3; j++) { if (c.s === 'h') g.fillRect(px + o, py + o + (6 + j * 9) * q, s, 2 * q); else g.fillRect(px + o + (6 + j * 9) * q, py + o, 2 * q, s); }
+        if (hint) {                                                   // a soft ring round the two pieces of the hinted move
+          g.strokeStyle = 'rgba(255,255,255,' + (0.55 + Math.sin(now / 140) * 0.35) + ')'; g.lineWidth = 3;
+          var hx = Math.min(hint[0], hint[2]) * CELL + 3, hy = Math.min(hint[1], hint[3]) * CELL + 3;
+          g.strokeRect(hx, hy, (Math.abs(hint[2] - hint[0]) + 1) * CELL - 6, (Math.abs(hint[3] - hint[1]) + 1) * CELL - 6);
+        }
+        // light: added on top ('lighter'), so it glows over the candy
+        g.globalCompositeOperation = 'lighter';
+        fx.bubbles.forEach(function (b) {
+          var cx = (b.x + 0.5) * CELL, cy = (b.y + 0.5) * CELL, r = CELL * (0.35 + (1 - b.life) * 0.25);
+          var gb = g.createRadialGradient(cx, cy, 0, cx, cy, r); gb.addColorStop(0, 'rgba(255,255,255,' + (0.95 * b.life) + ')'); gb.addColorStop(0.55, 'rgba(255,240,255,' + (0.6 * b.life) + ')'); gb.addColorStop(1, 'rgba(255,255,255,0)');
+          g.fillStyle = gb; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+        });
+        fx.beams.forEach(function (b) {
+          var L = Math.max(0, b.life);
+          if (b.kind === 'row' || b.kind === 'col') {
+            var horiz = b.kind === 'row', mid = (b.i + 0.5) * CELL, half = CELL * 0.5 * L;
+            var gr = horiz ? g.createLinearGradient(0, mid - half, 0, mid + half) : g.createLinearGradient(mid - half, 0, mid + half, 0);
+            gr.addColorStop(0, 'rgba(120,180,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,' + L + ')'); gr.addColorStop(1, 'rgba(255,120,210,0)');
+            g.fillStyle = gr; if (horiz) g.fillRect(0, mid - half, size, half * 2); else g.fillRect(mid - half, 0, half * 2, size);
+          } else {                                                    // lightning from the bomb: a jagged bolt, new each frame
+            var x0 = (b.p[0] + 0.5) * CELL, y0 = (b.p[1] + 0.5) * CELL, x1 = (b.p[2] + 0.5) * CELL, y1 = (b.p[3] + 0.5) * CELL;
+            var segs = 7, nx = -(y1 - y0), ny = x1 - x0, nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl;
+            [[6, 'rgba(150,120,255,' + (0.45 * L) + ')'], [2.2, 'rgba(255,255,255,' + L + ')']].forEach(function (st) {
+              g.strokeStyle = st[1]; g.lineWidth = st[0]; g.beginPath(); g.moveTo(x0, y0);
+              for (var k = 1; k < segs; k++) { var f = k / segs, j2 = (Math.random() - 0.5) * CELL * 0.45; g.lineTo(x0 + (x1 - x0) * f + nx * j2, y0 + (y1 - y0) * f + ny * j2); }
+              g.lineTo(x1, y1); g.stroke();
+            });
           }
+        });
+        fx.rings.forEach(function (r) {
+          var L = Math.max(0, r.life), rad = (r.r + 0.5) * CELL * (1.25 - L * 0.6), cx = (r.x + 0.5) * CELL, cy = (r.y + 0.5) * CELL;
+          var gr2 = g.createRadialGradient(cx, cy, rad * 0.6, cx, cy, rad); gr2.addColorStop(0, 'rgba(255,210,63,0)'); gr2.addColorStop(0.8, 'rgba(255,230,140,' + L + ')'); gr2.addColorStop(1, 'rgba(255,255,255,0)');
+          g.fillStyle = gr2; g.beginPath(); g.arc(cx, cy, rad, 0, Math.PI * 2); g.fill();
+        });
+        fx.parts.forEach(function (p) {
+          g.globalAlpha = Math.max(0, p.life); g.fillStyle = p.star ? '#fff6c8' : p.col;
+          if (p.star) { var m = p.s + 1; g.fillRect(p.x - m, p.y, m * 2 + 1, 1); g.fillRect(p.x, p.y - m, 1, m * 2 + 1); g.fillRect(p.x - 1, p.y - 1, 3, 3); }
+          else g.fillRect(p.x | 0, p.y | 0, p.s, p.s);
+        });
+        g.globalCompositeOperation = 'source-over';
+        // the points of each cleared piece, in its glow
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        fx.bubbles.forEach(function (b) {
+          if (b.life < 0.15) return;
+          g.globalAlpha = Math.min(1, b.life * 1.4); g.font = '900 ' + Math.round(CELL * 0.28) + 'px Tahoma, sans-serif';
+          g.fillStyle = '#7a3fd0'; g.fillText(b.n, (b.x + 0.5) * CELL, (b.y + 0.5) * CELL - (1 - b.life) * 6);
+        });
+        g.globalAlpha = 1;
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        fx.floats.forEach(function (f) {
+          g.globalAlpha = Math.min(1, f.life * 1.6);
+          g.font = '900 ' + Math.round(CELL * 0.36 * f.s) + 'px Tahoma, sans-serif';
+          g.fillStyle = '#2a1d48'; g.fillText(f.text, f.x + 2, f.y + 2); g.fillStyle = f.col; g.fillText(f.text, f.x, f.y);
+        });
+        if (fx.word) {
+          var wl = fx.word.life, ws = wl > 0.8 ? backOut((1 - wl) / 0.2) : 1;
+          g.globalAlpha = Math.min(1, wl * 2.5);
+          g.font = '900 ' + Math.round(CELL * 0.85 * ws) + 'px Tahoma, sans-serif';
+          g.lineWidth = 6; g.strokeStyle = '#2a1d48'; g.strokeText(fx.word.text, size / 2, size * 0.42);
+          var gr = g.createLinearGradient(0, size * 0.36, 0, size * 0.48); gr.addColorStop(0, '#ffe0f0'); gr.addColorStop(1, '#ff5fb0');
+          g.fillStyle = gr; g.fillText(fx.word.text, size / 2, size * 0.42);
+        }
+        g.globalAlpha = 1;
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        if (fx.flash > 0) { g.fillStyle = 'rgba(255,255,255,' + fx.flash + ')'; g.fillRect(0, 0, size, size); }
+      }
+      var striped = {};
+      function stripedOf(t, dir) {
+        var key = t + dir; if (striped[key]) return striped[key];
+        var c = canvas(16, 16), q = c.getContext('2d'); q.drawImage(PIECES[t], 0, 0);
+        var d = q.getImageData(0, 0, 16, 16), px = d.data;
+        for (var y = 0; y < 16; y++) for (var x = 0; x < 16; x++) {
+          var i = (y * 16 + x) * 4, band = ((dir === 'h' ? y : x) + 1) % 4;
+          if (!px[i + 3]) continue;
+          if (band < 2) { px[i] = px[i] + (255 - px[i]) * 0.72; px[i + 1] = px[i + 1] + (255 - px[i + 1]) * 0.72; px[i + 2] = px[i + 2] + (255 - px[i + 2]) * 0.72; }
+          else { px[i] *= 0.82; px[i + 1] *= 0.82; px[i + 2] *= 0.82; }
+        }
+        q.putImageData(d, 0, 0);
+        return (striped[key] = c);
+      }
+      function piece(c, px, py, now, hinted) {
+        var k = c.k || 1, sq = c.sq || 0, s = Math.round(CELL * 0.74 * k);
+        var sw = s * (1 + sq * 0.14), shh = s * (1 - sq * 0.14), ox = (CELL - sw) / 2, oy = CELL - (CELL - s) / 2 - shh;   // squash from the bottom
+        g.globalAlpha = c.a == null ? 1 : Math.max(0, c.a);
+        if (c.gold) { g.fillStyle = 'rgba(255,207,58,' + (0.35 + Math.sin(now / 200) * 0.15) + ')'; g.beginPath(); g.arc(px + CELL / 2, py + CELL / 2, CELL * 0.46, 0, Math.PI * 2); g.fill(); }
+        if (c.t < 0) {                                                // the MR bomb: a dark disc with the six colours turning round it
+          var cx = px + CELL / 2, cy = py + CELL / 2, r = sw / 2;
+          g.fillStyle = '#1b1530'; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+          for (var i = 0; i < 6; i++) { var an = now / 400 + i * Math.PI / 3; g.fillStyle = PCOL[i]; g.beginPath(); g.arc(cx + Math.cos(an) * r * 0.58, cy + Math.sin(an) * r * 0.58, r * 0.2, 0, Math.PI * 2); g.fill(); }
+          g.fillStyle = '#fff'; g.font = '900 ' + Math.round(r * 0.6) + 'px Tahoma, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MR', cx, cy + 1);
+        } else {
+          if (c.s === 'w') {                                          // wrapped: a pink-and-yellow wrapper with twists at the sides
+            g.fillStyle = '#ff9ad2'; g.fillRect(px + ox - sw * 0.08, py + oy + shh * 0.1, sw * 1.16, shh * 0.8);
+            g.fillStyle = '#ffd23f'; for (var j = 0; j < 4; j++) g.fillRect(px + ox + j * sw / 4, py + oy + shh * 0.1, sw / 8, shh * 0.8);
+            g.fillStyle = '#ff5fb0'; g.beginPath(); g.moveTo(px + ox - sw * 0.08, py + oy + shh / 2); g.lineTo(px + ox - sw * 0.28, py + oy + shh * 0.2); g.lineTo(px + ox - sw * 0.28, py + oy + shh * 0.8); g.fill();
+            g.beginPath(); g.moveTo(px + ox + sw * 1.08, py + oy + shh / 2); g.lineTo(px + ox + sw * 1.28, py + oy + shh * 0.2); g.lineTo(px + ox + sw * 1.28, py + oy + shh * 0.8); g.fill();
+            g.drawImage(PIECES[c.t], px + ox + sw * 0.15, py + oy + shh * 0.15, sw * 0.7, shh * 0.7);
+          } else if (c.s === 'h' || c.s === 'v') {                    // an X-ray: the candy itself striped, a soft glow round it
+            var gl = g.createRadialGradient(px + CELL / 2, py + CELL / 2, 2, px + CELL / 2, py + CELL / 2, CELL * 0.5);
+            gl.addColorStop(0, 'rgba(255,255,255,.75)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
+            g.fillStyle = gl; g.fillRect(px, py, CELL, CELL);
+            g.drawImage(stripedOf(c.t, c.s), px + ox, py + oy, sw, shh);
+          } else g.drawImage(PIECES[c.t], px + ox, py + oy, sw, shh);
+          if (c.gold) { g.fillStyle = '#ffcf3a'; g.font = '900 ' + Math.round(CELL * 0.3) + 'px Tahoma, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('★', px + CELL * 0.8, py + CELL * 0.2); }
         }
         g.globalAlpha = 1;
       }
-      function tween(ms, each, done) {
-        var t0 = performance.now();
-        anim.push({ t0: t0, ms: ms, each: each, done: done });
-        if (!raf) raf = requestAnimationFrame(tick);
-      }
+      function tween(ms, each, done) { anim.push({ t0: performance.now(), ms: ms, each: each, done: done }); kick(); }
+      var last = 0;
       function tick(now) {
         raf = 0;
-        var keep = [];
-        anim.forEach(function (a) { var k = Math.min(1, (now - a.t0) / a.ms); a.each(k); if (k < 1) keep.push(a); else a.fin = true; });
-        var fin = anim.filter(function (a) { return a.fin; }); anim = keep;
-        draw();
+        var dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016); last = now;
+        if (now < fx.stopUntil) { raf = requestAnimationFrame(tick); return; }   // the hit-stop: a few frames held
+        var keep = [], fin = [];
+        anim.forEach(function (a) { var k = Math.min(1, (now - a.t0) / a.ms); a.each(k); if (k < 1) keep.push(a); else fin.push(a); });
+        anim = keep;
+        fx.parts.forEach(function (p) { p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.vy += 0.22 * dt * 60; p.life -= dt * 1.6; });
+        fx.parts = fx.parts.filter(function (p) { return p.life > 0; });
+        fx.floats.forEach(function (f) { f.y -= dt * 40; f.life -= dt * 1.1; }); fx.floats = fx.floats.filter(function (f) { return f.life > 0; });
+        fx.beams.forEach(function (b) { b.life -= dt * (b.kind === 'zap' ? 2.2 : 2.6); }); fx.beams = fx.beams.filter(function (b) { return b.life > 0; });
+        fx.rings.forEach(function (r) { r.life -= dt * 2.4; }); fx.rings = fx.rings.filter(function (r) { return r.life > 0; });
+        fx.bubbles.forEach(function (b) { b.life -= dt * 2.2; }); fx.bubbles = fx.bubbles.filter(function (b) { return b.life > 0; });
+        fx.flash = Math.max(0, fx.flash - dt * 3); fx.shake = Math.max(0, fx.shake - dt * 2.2);
+        if (fx.word) { fx.word.life -= dt * 0.9; if (fx.word.life <= 0) fx.word = null; }
+        // the hint: after 5 s with nothing pressed, the best move wobbles
+        if (!busy && !G.over && !hint && !sel && now - idleAt > 5000) hint = bestMove();
+        draw(now);
         fin.forEach(function (a) { if (a.done) a.done(); });
-        if (anim.length && !raf) raf = requestAnimationFrame(tick);
+        if (anim.length || fxActive() || !G.over) { if (!raf) raf = requestAnimationFrame(anim.length || fxActive() ? tick : idle); }
       }
-      /* input: click two neighbours, or drag one onto the next */
+      // nothing moving: check for the hint once a second instead of every frame
+      function idle() { raf = 0; setTimeout(function () { if (wins.candy && !raf) { last = 0; raf = requestAnimationFrame(tick); } }, 1000); }
+
+      /* ── input: click two neighbours, or drag one onto the next ── */
       function cellAt(ev) { var r = cv.getBoundingClientRect(); return [Math.floor((ev.clientX - r.left) / r.width * N), Math.floor((ev.clientY - r.top) / r.height * N)]; }
       cv.addEventListener('pointerdown', function (ev) {
+        idleAt = performance.now(); hint = null;
         if (busy || G.over) return;
-        var c = cellAt(ev); cv.setPointerCapture(ev.pointerId);
+        var c = cellAt(ev); try { cv.setPointerCapture(ev.pointerId); } catch (_e) {}
         if (sel && Math.abs(sel[0] - c[0]) + Math.abs(sel[1] - c[1]) === 1) { var s0 = sel; sel = null; trySwap(s0[0], s0[1], c[0], c[1]); return; }
-        sel = c; drag = { c: c, x: ev.clientX, y: ev.clientY }; blip(520, 0.03, 'square', 0.02); draw();
+        sel = c; drag = { c: c, x: ev.clientX, y: ev.clientY }; blip(520, 0.03, 'square', 0.02); kick();
       });
       cv.addEventListener('pointermove', function (ev) {
         if (!drag || busy) return;
@@ -422,13 +670,15 @@
         if (Math.max(Math.abs(dx), Math.abs(dy)) < th) return;
         var c = drag.c, t = Math.abs(dx) > Math.abs(dy) ? [c[0] + Math.sign(dx), c[1]] : [c[0], c[1] + Math.sign(dy)];
         drag = null; sel = null;
-        if (t[0] >= 0 && t[1] >= 0 && t[0] < N && t[1] < N) trySwap(c[0], c[1], t[0], t[1]); else draw();
+        if (t[0] >= 0 && t[1] >= 0 && t[0] < N && t[1] < N) trySwap(c[0], c[1], t[0], t[1]); else kick();
       });
       cv.addEventListener('pointerup', function () { drag = null; });
       w.el.querySelector('[data-c="new"]').addEventListener('click', function () { if (!busy) newGame(); });
       w.el.querySelector('[data-c="table"]').addEventListener('click', function () { table(); });
+      w.el.querySelector('[data-c="help"]').addEventListener('click', help);
       w.onClose = function () { if (raf) cancelAnimationFrame(raf); raf = 0; anim = []; };
-      newGame();
+      newGame(); kick();
+      if (window.__candyTest) window.__candyTest({ G: function () { return G; }, combo: function (xa, ya, xb, yb) { busy = true; comboBlast(xa, ya, xb, yb); } });   // the test page only
     }
 
     /* ── Iestatījumi: the desktop's wallpaper (as YesterPlayOS lets you change it) ── */

@@ -2145,3 +2145,14 @@
 .pc98-spec { width: 96px; height: 36px; image-rendering: pixelated; box-shadow: var(--l-sunken); background: #120a30; }
 .pc98-vol { width: 80px; accent-color: #1db954; }
 @media (max-width: 700px) { .pc98-mside { display: none; } .pc98-spec, .pc98-vol { display: none; } }
+/* Konfektes 98: the day's goal, the low moves, the tip line, the help */
+.pc98-goal { display: flex; align-items: center; gap: 4px; }
+.pc98-gico { width: 18px; height: 18px; flex: none; background: no-repeat center / 18px 18px; image-rendering: pixelated; }
+.pc98-goal b { margin-left: auto; }
+.pc98-goal.is-done { background: #d8ffe6 !important; }
+.pc98-goal.is-done b { color: #1a9a46; }
+.pc98-moves.is-low { color: #e0303a; }
+.pc98-help { margin: 0; padding: 6px 8px; list-style: none; background: #fff; box-shadow: var(--l-sunken); }
+.pc98-help li { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+.pc98-hico { flex: none; width: 26px; height: 26px; display: grid; place-items: center; background: #6a3fd0; color: #fff; font: 900 14px/1 Tahoma, sans-serif; box-shadow: var(--l-raised); }
+@media (prefers-reduced-motion: reduce) { 
