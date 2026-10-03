@@ -132,6 +132,7 @@
       + '<button type="button" data-open="mypc">' + img('pc', 24) + '<span>Mans dators</span></button><hr>'
       + '<button type="button" data-act="off">' + img('pc', 24) + '<span>Izslēgt datoru…</span></button></div></div>'
       + '<div class="pc98-boot"><b>Windows 98</b><span>Startē…</span></div>';
+    if (opts.solo) root.classList.add('pc98-solo');
     document.body.appendChild(root);
     var $ = function (s) { return root.querySelector(s); };
     var WALL_KEY = 'minkaPC98Wall';
@@ -177,6 +178,7 @@
       var w = wins[id]; if (!w) return;
       if (w.onClose) w.onClose();
       w.el.remove(); w.task.remove(); delete wins[id];
+      if (opts.solo && id === 'candy') { close(); return; }         // from the arcade: the game is all there is
       var rest = Object.keys(wins); if (rest.length) front(rest[rest.length - 1]);
     }
     function dialog(title, text, icon) {
@@ -213,14 +215,15 @@
     function candy() {
       if (wins.candy) { front('candy'); return; }
       var rr0 = root.getBoundingClientRect();
-      CELL = Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 190) / N)));
+      CELL = Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 212) / N)));
       var size = N * CELL;
       var w = win('candy', 'Konfektes 98', 'candy',
         '<div class="pc98-candy"><div class="pc98-cbar"><span>Punkti <b class="pc98-score">0</b></span><span>Gājieni <b class="pc98-moves">' + MOVES + '</b></span>'
-        + '<span class="pc98-goal" title="Dienas mērķis"><i class="pc98-gico"></i><b class="pc98-gnum">0/0</b></span><span>Rekords <b class="pc98-best">0</b></span></div>'
+        + '<span class="pc98-goal" title="Dienas mērķis"><i class="pc98-gico"></i><b class="pc98-gnum">0/0</b></span><span class="pc98-jelly" title="Želeja"><i class="pc98-jico"></i><b class="pc98-jnum">0</b></span></div>'
+        + '<div class="pc98-stars"><i class="pc98-sfill"></i><b data-s="0">★</b><b data-s="1">★</b><b data-s="2">★</b></div>'
         + '<div class="pc98-well"><canvas class="pc98-board" width="' + size + '" height="' + size + '"></canvas></div>'
-        + '<div class="pc98-cfoot"><button type="button" class="pc98-btn" data-c="new">Jauna spēle</button><button type="button" class="pc98-btn" data-c="table">Dienas tabula</button><button type="button" class="pc98-btn" data-c="help">Kā spēlēt?</button><span class="pc98-hint">Dienas laukums visiem vienāds</span></div></div>',
-        size + 34, Math.max(100, (rr0.width - size - 34) / 2), Math.max(6, (rr0.height - size - 170) / 2));
+        + '<div class="pc98-cfoot"><button type="button" class="pc98-btn" data-c="new">Jauna spēle</button><button type="button" class="pc98-btn" data-c="table">Dienas tabula</button><button type="button" class="pc98-btn" data-c="help">Kā spēlēt?</button><button type="button" class="pc98-btn pc98-mbtn" data-c="music" title="Mūzika">♪</button><span class="pc98-hint">Rekords šodien: <b class="pc98-best">0</b></span></div></div>',
+        size + 34, Math.max(100, (rr0.width - size - 34) / 2), Math.max(6, (rr0.height - size - 192) / 2));
       var cv = w.el.querySelector('.pc98-board'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
       var G = {}, anim = [], fx = { parts: [], floats: [], beams: [], rings: [], bubbles: [], flash: 0, shake: 0, word: null, stopUntil: 0 }, raf = 0, busy = false, sel = null, drag = null;
       var hint = null, idleAt = performance.now(), swapOff = null;
@@ -228,7 +231,12 @@
       w.el.querySelector('.pc98-best').textContent = best;
       function newGame() {
         var r = rng(seedOf('candy:' + today));
-        G = { rnd: r, board: [], score: 0, moves: MOVES, over: false, chain: 0, goal: { t: (seedOf('goal:' + today) % 6), need: 24, got: 0, done: false } };
+        G = { rnd: r, board: [], score: 0, moves: MOVES, over: false, chain: 0, goal: { t: (seedOf('goal:' + today) % 6), need: 24, got: 0, done: false }, stars: 0 };
+        // the day's jelly: a mirrored patch under the pieces; matching on it clears it (+2000 for all)
+        var jr = rng(seedOf('jelly:' + today)); G.jelly = []; G.jellyLeft = 0; G.jellyDone = false;
+        for (var jy = 0; jy < N; jy++) { G.jelly.push([]); for (var jx = 0; jx < N; jx++) G.jelly[jy].push(0); }
+        for (jy = 1; jy < N - 1; jy++) for (jx = 0; jx < N / 2; jx++) if (jr() < (jy > 2 && jy < 6 ? 0.55 : 0.25)) { G.jelly[jy][jx] = G.jelly[jy][N - 1 - jx] = 1; }
+        G.jelly.forEach(function (row) { row.forEach(function (v) { G.jellyLeft += v; }); });
         for (var y = 0; y < N; y++) { G.board.push([]); for (var x = 0; x < N; x++) G.board[y].push(fresh(x, y, true)); }
         if (!hasMove()) shuffle();
         fx.parts = []; fx.floats = []; fx.beams = []; fx.rings = []; fx.bubbles = []; fx.word = null; hint = null; idleAt = performance.now();
@@ -247,6 +255,13 @@
         var mv = w.el.querySelector('.pc98-moves'); mv.textContent = G.moves; mv.classList.toggle('is-low', G.moves <= 5);
         w.el.querySelector('.pc98-gnum').textContent = Math.min(G.goal.got, G.goal.need) + '/' + G.goal.need;
         w.el.querySelector('.pc98-goal').classList.toggle('is-done', G.goal.done);
+        w.el.querySelector('.pc98-jnum').textContent = G.jellyLeft;
+        w.el.querySelector('.pc98-jelly').classList.toggle('is-done', G.jellyDone);
+        // three stars, as Candy Crush: 1500, 3000, 5000
+        var STAR = [1500, 3000, 5000], got = STAR.filter(function (v) { return G.score >= v; }).length;
+        w.el.querySelector('.pc98-sfill').style.width = Math.min(100, G.score / STAR[2] * 100) + '%';
+        w.el.querySelectorAll('.pc98-stars b').forEach(function (b, i) { b.classList.toggle('is-on', i < got); });
+        if (got > G.stars) { G.stars = got; blip(988 + got * 120, 0.12, 'triangle', 0.05); setTimeout(function () { blip(1318 + got * 120, 0.14, 'triangle', 0.045); }, 90); }
       }
       var at = function (x, y) { return x >= 0 && y >= 0 && x < N && y < N ? G.board[y][x] : null; };
       function runs() {
@@ -380,6 +395,7 @@
         list.forEach(function (c) { add(c[0], c[1]); });
         var chain = Math.max(1, G.chain), gain = 0;
         cells.forEach(function (c) {
+          if (G.jelly[c[1]][c[0]]) { G.jelly[c[1]][c[0]] = 0; G.jellyLeft--; gain += 50; for (var jb = 0; jb < 6; jb++) burst(c[0], c[1], '#ff9ad2', 1); }
           var p = G.board[c[1]][c[0]];
           if (!spawnAt[c[0] + ',' + c[1]] && p.t === G.goal.t) G.goal.got++;
           gain += 10 * chain;
@@ -387,6 +403,7 @@
         gain += (spawn || []).length * 60;
         G.score += gain;
         if (!G.goal.done && G.goal.got >= G.goal.need) { G.goal.done = true; G.score += 1000; floatText(N / 2 - 0.5, N / 2, '+1000', '#1db954', 1.8); blip(784, 0.14, 'triangle', 0.06); setTimeout(function () { blip(1046, 0.2, 'triangle', 0.06); }, 120); }
+        if (!G.jellyDone && G.jellyLeft === 0) { G.jellyDone = true; G.score += 2000; floatText(N / 2 - 0.5, N / 2 + 1, '+2000', '#ff5fb0', 1.8); fx.word = { text: 'Visa želeja!', life: 1 }; blip(660, 0.15, 'triangle', 0.06); setTimeout(function () { blip(990, 0.2, 'triangle', 0.06); }, 130); }
         if (goldGot) { G.moves += goldGot * 2; floatText(cells[0][0], cells[0][1], '+' + (goldGot * 2), '#ffcf3a', 1.5); blip(1200, 0.12, 'triangle', 0.05); }
         paintBar();
         // the feedback, by tier
@@ -484,6 +501,8 @@
           + row('★', 'Zelta krūzīte: +2 gājieni.')
           + row('+', 'Divas speciālās kopā: kombo (krusts, 3 rindas, 5×5, viss laukums).')
           + row('◎', 'Dienas mērķis augšā: savāc konfektes, un +1000. Beigās speciālās uzsprāgst bonusā.')
+          + row('▢', 'Rozā želeja: saliec konfektes virs tās. Visa želeja nost: +2000.')
+          + row('★', 'Zvaigznes: 1500, 3000 un 5000 punkti.')
           + '</ul></div><div class="pc98-btns"><button type="button" class="pc98-btn is-default">Labi</button></div>', 420, 380, 60);
         t.el.querySelector('.pc98-btn').addEventListener('click', function () { closeWin(id); });
       }
@@ -509,6 +528,12 @@
         g.fillStyle = '#efe6fb'; g.fillRect(0, 0, size, size);
         g.setTransform(1, 0, 0, 1, ox, oy);
         for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if ((x + y) & 1) { g.fillStyle = '#e4d8f6'; g.fillRect(x * CELL, y * CELL, CELL, CELL); }
+        for (y = 0; y < N; y++) for (x = 0; x < N; x++) if (G.jelly[y][x]) {   // jelly: a soft pink tile with a shine
+          var jx0 = x * CELL + 2, jy0 = y * CELL + 2, js = CELL - 4;
+          var jg = g.createLinearGradient(0, jy0, 0, jy0 + js); jg.addColorStop(0, 'rgba(255,170,215,.85)'); jg.addColorStop(1, 'rgba(240,110,180,.75)');
+          g.fillStyle = jg; g.beginPath(); g.roundRect(jx0, jy0, js, js, CELL * 0.18); g.fill();
+          g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.roundRect(jx0 + js * 0.12, jy0 + js * 0.08, js * 0.5, js * 0.14, js * 0.07); g.fill();
+        }
         if (sel) { g.fillStyle = 'rgba(122,92,255,.28)'; g.fillRect(sel[0] * CELL, sel[1] * CELL, CELL, CELL); }
         var hw = hint ? Math.sin(now / 110) * 0.08 : 0;
         for (y = 0; y < N; y++) for (x = 0; x < N; x++) {
@@ -676,7 +701,21 @@
       w.el.querySelector('[data-c="new"]').addEventListener('click', function () { if (!busy) newGame(); });
       w.el.querySelector('[data-c="table"]').addEventListener('click', function () { table(); });
       w.el.querySelector('[data-c="help"]').addEventListener('click', help);
-      w.onClose = function () { if (raf) cancelAnimationFrame(raf); raf = 0; anim = []; };
+      var tune = null, tuneGain = null, tuneOn = !!opts.solo;
+      function tuneStart() {
+        if (tune) return;
+        actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+        if (actx.state === 'suspended') actx.resume();
+        tuneGain = tuneGain || (function () { var gn = actx.createGain(); gn.gain.value = 0.5; gn.connect(actx.destination); return gn; })();
+        var loop = function () { tune = chipPlay(CHIP[0], tuneGain, function () { tune = null; if (tuneOn && wins.candy) loop(); }); };
+        loop();
+      }
+      function tuneStop() { if (tune) { tune.stop(); tune = null; } }
+      var mbtn = w.el.querySelector('[data-c="music"]');
+      mbtn.classList.toggle('is-on', tuneOn);
+      mbtn.addEventListener('click', function () { tuneOn = !tuneOn; mbtn.classList.toggle('is-on', tuneOn); if (tuneOn) tuneStart(); else tuneStop(); });
+      if (tuneOn) tuneStart();
+      w.onClose = function () { if (raf) cancelAnimationFrame(raf); raf = 0; anim = []; tuneOn = false; tuneStop(); };
       newGame(); kick();
       if (window.__candyTest) window.__candyTest({ G: function () { return G; }, combo: function (xa, ya, xb, yb) { busy = true; comboBlast(xa, ya, xb, yb); } });   // the test page only
     }
@@ -983,11 +1022,19 @@
       clearInterval(clock);
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('keyup', swallow, true);
+      if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.detach(root);
       root.remove(); openNow = null;
       if (window.MinkaGallery3D && window.MinkaGallery3D.pause) window.MinkaGallery3D.pause(false);
       if (opts.onClose) opts.onClose();
     }
     // the boot screen, then the day's error and (the first time today) the new chapter
+    if (opts.solo) {                                                // the arcade: straight into the game, the gallery's dither round it
+      $('.pc98-boot').remove();
+      candy();
+      if (window.MinkaDitherBackdrop && wins.candy) window.MinkaDitherBackdrop.attach(root, { box: wins.candy.el });
+      openNow = { close: close };
+      return openNow;
+    }
     setTimeout(function () {
       var bt = $('.pc98-boot'); if (bt) bt.remove();
       if (opts.app && OPEN[opts.app]) { OPEN[opts.app](); return; }   // from the arcade machine: straight into the game

@@ -763,8 +763,9 @@
      (a cup brewing in the machine) are drawn with them. Loaded once, kept for the next visit. */
   var BAKED_V = '?v=20261003p3', BAKED_KINDS = { arcade: 1, oldpc: 1, machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
   function isBaked(kind) { return !!(baked[kind] && baked[kind].tris); }
-  function bakedMesh(m, img) {
-    var tex = texOf(imgCanvas(img)), q = 1 / m.q, uq = 1 / m.uq, tris = [];
+  var BAKED_SCALE = { arcade: 0.8 };                                 // the arcade machine a little smaller than built
+  function bakedMesh(m, img, sc) {
+    var tex = texOf(imgCanvas(img)), q = (sc || 1) / m.q, uq = 1 / m.uq, tris = [];
     for (var i = 0; i < m.f.length; i += 3) {
       var v = [], uv = [];
       for (var k = 0; k < 3; k++) { var j = m.f[i + k]; v.push([m.v[j * 3] * q, m.v[j * 3 + 1] * q, m.v[j * 3 + 2] * q]); uv.push([m.t[j * 2] * uq, m.t[j * 2 + 1] * uq]); }
@@ -782,7 +783,7 @@
     baked[kind] = {};
     var base = ART + 'props/' + kind;
     Promise.all([fetch(base + '-mesh.json' + BAKED_V).then(function (r) { return r.json(); }), new Promise(function (ok, no) { var im = loadImage(base + '-tex.webp' + BAKED_V, ok); im.onerror = no; })])
-      .then(function (got) { baked[kind].tris = bakedMesh(got[0], got[1]); done(); }, function () { delete baked[kind]; });
+      .then(function (got) { baked[kind].tris = bakedMesh(got[0], got[1], BAKED_SCALE[kind]); done(); }, function () { delete baked[kind]; });
   }
   // the sprite path still lays the thing's shadow on the floor; its picture is the 3D parts
   var SHADOW_ONLY = { w: 1, h: 1, levels: [{ w: 1, h: 1, px: new Uint32Array(1) }] };
@@ -916,11 +917,12 @@
         })
       };
     }
+    var k = BAKED_SCALE.arcade, S = function (q) { return q.map(function (v) { return [v[0] * k, v[1] * k, v[2] * k]; }); };
     var out = [
-      { quad: [[0.0655, 0.16, 0.965], [0.0655, -0.16, 0.965], [0.0655, -0.16, 0.615], [0.0655, 0.16, 0.615]], n: [1, 0, 0], tex: arcadeTex.screen, soft: 0 },
-      { quad: [[0.1475, 0.18, 1.155], [0.1475, -0.18, 1.155], [0.1475, -0.18, 1.045], [0.1475, 0.18, 1.045]], n: [1, 0, 0], tex: arcadeTex.sign, soft: 0 }
+      { quad: S([[0.0655, 0.16, 0.965], [0.0655, -0.16, 0.965], [0.0655, -0.16, 0.615], [0.0655, 0.16, 0.615]]), n: [1, 0, 0], tex: arcadeTex.screen, soft: 0 },
+      { quad: S([[0.1475, 0.18, 1.155], [0.1475, -0.18, 1.155], [0.1475, -0.18, 1.045], [0.1475, 0.18, 1.045]]), n: [1, 0, 0], tex: arcadeTex.sign, soft: 0 }
     ];
-    return isBaked('arcade') ? out : box(-0.2, 0.2, -0.21, 0.21, 0, 1.18, { all: { color: '#8f6ad8' } }).concat(out);
+    return isBaked('arcade') ? out : box(-0.2 * k, 0.2 * k, -0.21 * k, 0.21 * k, 0, 1.18 * k, { all: { color: '#8f6ad8' } }).concat(out);
   }
   /* The day's golden cup: hidden somewhere in the hall (the same place for everyone that day,
      another place tomorrow), a reason to walk the whole hall; found, it is gone till tomorrow. */
@@ -3190,7 +3192,7 @@
     return { tris: tris, bills: [] };
   }
   // the old computer's Windows 98 (js/page/mood-gallery-pc.js), loaded the first time it is switched on
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261003pc13', pcLoad = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261003pc14', pcLoad = null;
   function openPC(st, app) {
     freeMouse();
     if (!pcLoad) pcLoad = new Promise(function (ok, no) {
@@ -3202,7 +3204,7 @@
       // the hall's music stops while the computer is on (it has its own sounds), and comes back after
       var wasOn = !!(audio && !audio.paused);
       if (wasOn) audio.pause();
-      window.MinkaGalleryPC.open({ me: st.me, app: app || '', music: MUSIC.map(function (m) { return { title: m.title, src: ART + 'music/' + m.file + MUSIC_V }; }), onClose: function () {
+      window.MinkaGalleryPC.open({ me: st.me, app: app || '', solo: app === 'candy', music: MUSIC.map(function (m) { return { title: m.title, src: ART + 'music/' + m.file + MUSIC_V }; }), onClose: function () {
         if (wasOn && state === st && st.musicOn && audio) { var pl = audio.play(); if (pl && pl.catch) pl.catch(function () {}); }
       } });
       earn(st, 'pc');
@@ -3234,7 +3236,7 @@
       return { kind: 'bed', bed: i, x: s[0], y: s[1], h: 0.5, solid: 0.42, reach: 2.8, shade: 0.3, person: bedPeople[i] };
     });
     // the Konfektes 98 arcade machine at the Leonardo hall's start, seen as you come in from the lobby
-    props.push({ kind: 'arcade', x: 1.42, y: LEO_Y0 + 0.62, h: 1.18, solid: 0.36, reach: 2.6, shade: 0.24 });
+    props.push({ kind: 'arcade', x: 1.36, y: LEO_Y0 + 0.62, h: 0.94, solid: 0.3, reach: 2.6, shade: 0.2 });
     // the old computer on its desk in the lobby's corner, turned to the room
     props.push({ kind: 'oldpc', x: 4.62, y: 1.42, h: 0.66, solid: 0.38, reach: 2.6, shade: 0.22 });
     props.push({ kind: 'table', x: 3.1, y: 2.7, h: 0.34, solid: 0.42, reach: 2.6, shade: 0.22 });
