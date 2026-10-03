@@ -80,7 +80,7 @@
     'belle-ferronniere': 'La_Belle_Ferronni%C3%A8re', 'benois-madonna': 'Benois_Madonna', 'madonna-litta': 'Madonna_Litta',
     'last-supper': 'The_Last_Supper_(Leonardo)', 'annunciation': 'Annunciation_(Leonardo)', venus: 'Venus_de_Milo'
   };
-  /* Ieskati (as DOOM TGE's medals): things to find by walking the whole place,
+  /* Medaļas (as DOOM TGE's medals): things to find by walking the whole place,
      kept on this computer. Each says once, at the top, when it is got. */
   var BADGES = [
     ['leo', 'Visi 9 Leonardo darbi'], ['venus', 'Mīlo Venēra'], ['plan', 'Nakts plāns'], ['sit', 'Pie galda'],
@@ -1310,8 +1310,11 @@
       var n = { e: [1, 0], w: [-1, 0], s: [0, 1], n: [0, -1] }[sl.face];
       pool(sl.x + 0.5 + n[0] * 1.05, sl.y + 0.5 + n[1] * 1.05, 1.35, -12);
     });
-    var aq = map.aquarium;
-    pool((aq.x0 + aq.x1) / 2, aq.y - 0.45, 1.7, -8);
+    var aq = map.aquarium, now = performance.now();
+    pool((aq.x0 + aq.x1) / 2, aq.y - 0.45, 1.7, -8 + Math.sin(now / 700) * 3);       // the tank's light pulses (Doom's glow)
+    // the lamp over the White Monster corner flickers (Doom's flicker): mostly on, now and then a short drop
+    var tick = (now / 90) | 0, hsh = Math.imul(tick ^ 0x5bd1e995, 2654435761) >>> 0;
+    pool(1.6, map.h - 1.7, 1.5, (hsh % 100) < 14 ? -2 : -11);
     pool(1.75, 2.55, 0.8, -5);                                     // the Löfbergs machine's light
     st.props.forEach(function (p) {
       if (p.kind !== 'bed') return;
@@ -1679,10 +1682,11 @@
     meter.hidden = !cup;
     if (cup) { var bars = '', all = cup.kind.sips || SIPS; for (var k = 0; k < all; k++) bars += k < cup.left ? '<i class="is-full"></i>' : '<i></i>'; meter.innerHTML = bars; }
   }
+  // the status bar's pictures in the window's one ink (white dither, as the buttons beside it)
   function hudIcons() {
-    [['today', ''], ['night', 'nsToggleBtnParent'], ['draw', ''], ['cup', '']].forEach(function (pair) {
+    [['today', 'frame'], ['night', 'night'], ['draw', 'all'], ['cup', 'cup']].forEach(function (pair) {
       var el = root.querySelector('[data-ico="' + pair[0] + '"]');
-      if (el) el.innerHTML = (pair[1] && dockIcon(pair[1])) || ICONS[pair[0]];
+      if (el) el.innerHTML = '<i class="mx-doom-ico" style="' + iconMask(pair[1]) + '"></i>';
     });
   }
 
@@ -1735,11 +1739,11 @@
   }
   function paintMusic() {
     if (!root) return;
-    var on = !!(state && state.musicOn), btn = root.querySelector('.mx-doom-music'), now = root.querySelector('.mx-doom-now');
+    var on = !!(state && state.musicOn), btn = root.querySelector('.mx-doom-music');
+    if (!btn) return;
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    btn.setAttribute('aria-label', on ? 'Izslēgt mūziku (M)' : 'Ieslēgt mūziku (M)');
+    btn.title = on ? '♪ ' + MUSIC[musicIdx].title : '';
     btn.classList.toggle('is-off', !on);
-    now.textContent = on ? '♪ ' + MUSIC[musicIdx].title : 'Mūzika izslēgta';
   }
   function setMusic(st, on) {
     st.musicOn = on;
@@ -1753,7 +1757,7 @@
 
   /* ── Skaņas ───────────────────────────────────────────────────────────── */
   // Short, dry, made right here (Web Audio, no files): the doors, the
-  // coffee machine, a sip, the fish food, an Ieskats. Only while the sound is on
+  // coffee machine, a sip, the fish food, a medal. Only while the sound is on
   // (the speaker button, M): the same switch as the music.
   var actx = null, noiseBuf = null;
   function audioCtx() {
@@ -1794,7 +1798,160 @@
     else if (kind === 'badge') { tone(a, t, 'square', 880, 880, 0.07, 0.035); tone(a, t + 0.08, 'square', 1320, 1320, 0.09, 0.035); }
   }
 
-  /* ── Ieskati ──────────────────────────────────────────────────────────── */
+  /* ── Ievads ───────────────────────────────────────────────────────────────
+     As basement.studio opens, in the gallery's blue: a work of art (Venus de Milo
+     first, then Leonardo, one each opening) comes out of the blue sky in fine dots
+     from the middle outwards, stays so you can see it, then a wave turns it into
+     the hall, first in the hall's own dots, then in its colours (~5 s). Drawn on
+     its own layer at the screen's real resolution (not the game's coarse pixels):
+     error-diffused dots in three inks on a soft blue, as the sky round the window.
+     It never stutters: every pixel is written only two or three times in the
+     whole opening (pixels are sorted by the moment they change), and the hall's
+     dots are worked out a few rows a frame while the work stands. Skipped for
+     reduced motion. */
+  var INTRO_IN = 1800, INTRO_HOLD = 1200, INTRO_TURN = 2000, INTRO_MAXW = 1280;
+  var INTRO_ART = ['venus-milo', 'mona-lisa', 'vitruvian', 'lady-ermine', 'last-supper'], introNext = 0, introImgs = {};
+  var B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  var INK_MID = [150, 162, 255], INK_HI = [244, 246, 255];
+  function hash2(x, y) { var h = Math.imul(x, 374761393) + Math.imul(y, 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+  function introImage() {
+    var id = INTRO_ART[introNext++ % INTRO_ART.length];
+    if (!introImgs[id]) { introImgs[id] = new Image(); introImgs[id].decoding = 'async'; introImgs[id].src = ART + id + '.webp' + ART_V; }
+    return introImgs[id];
+  }
+  // the sky: blue from top to bottom with a few soft lighter patches
+  function introSky(IW, IH) {
+    var c = canvas(IW, IH), g = c.getContext('2d', { willReadFrequently: true });
+    var lin = g.createLinearGradient(0, 0, 0, IH); lin.addColorStop(0, '#1a28dc'); lin.addColorStop(1, '#1c22c8');
+    g.fillStyle = lin; g.fillRect(0, 0, IW, IH);
+    [[0.72, 0.3, 0.45], [0.25, 0.8, 0.35], [0.9, 0.85, 0.3]].forEach(function (b) {
+      var r = b[2] * IW, gr = g.createRadialGradient(b[0] * IW, b[1] * IH, 0, b[0] * IW, b[1] * IH, r);
+      gr.addColorStop(0, 'rgba(70,90,250,.55)'); gr.addColorStop(1, 'rgba(70,90,250,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, IW, IH);
+    });
+    return new Uint32Array(g.getImageData(0, 0, IW, IH).data.buffer.slice(0));
+  }
+  // three inks by error diffusion (Floyd–Steinberg, serpentine): 0 sky, 1 pale blue, 2 white
+  function diffuse(lum, IW, IH, y0, y1, err) {
+    var lv = err.levels;
+    for (var y = y0; y < y1; y++) {
+      var cur = err.rows[y & 1], nxt = err.rows[(y + 1) & 1], ltr = !(y & 1);
+      nxt.fill(0);
+      for (var k = 0; k < IW; k++) {
+        var x = ltr ? k : IW - 1 - k, i = y * IW + x, v = lum[i] + cur[x + 1];
+        if (lum[i] < 0) { lv[i] = 255; continue; }                    // outside the work: the sky
+        var q = v < 0.25 ? 0 : v < 0.72 ? 1 : 2, e = v - [0, 0.5, 1][q], s = ltr ? 1 : -1;
+        lv[i] = q;
+        cur[x + 1 + s] += e * 7 / 16; nxt[x + 1 - s] += e * 3 / 16; nxt[x + 1] += e * 5 / 16; nxt[x + 1 + s] += e / 16;
+      }
+    }
+  }
+  function errState(IW, IH) { return { levels: new Uint8Array(IW * IH), rows: [new Float32Array(IW + 2), new Float32Array(IW + 2)] }; }
+  function inkOf(sky, level, mix) {                                 // the ink a level is drawn in over the sky
+    if (level === 255 || level === 0) return sky;
+    var c = level === 1 ? INK_MID : INK_HI, a = level === 1 ? 0.75 * mix : mix;
+    return (255 << 24 | Math.round(((sky >> 16) & 255) * (1 - a) + c[2] * a) << 16 | Math.round(((sky >> 8) & 255) * (1 - a) + c[1] * a) << 8 | Math.round((sky & 255) * (1 - a) + c[0] * a)) >>> 0;
+  }
+  // every pixel's moment (0..1) into 512 lists, so a frame touches only the pixels whose moment came
+  function byMoment(IW, IH, moment) {
+    var N = 512, n = IW * IH, at = new Uint16Array(n), counts = new Uint32Array(N + 1);
+    for (var i = 0; i < n; i++) { var m = Math.max(0, Math.min(N - 1, (moment(i % IW, (i / IW) | 0) * N) | 0)); at[i] = m; counts[m + 1]++; }
+    for (var b = 0; b < N; b++) counts[b + 1] += counts[b];
+    var order = new Uint32Array(n), fill = counts.slice(0, N);
+    for (i = 0; i < n; i++) order[fill[at[i]]++] = i;
+    return { order: order, start: counts, N: N, done: 0 };
+  }
+  function lumOf(img, IW, IH) {                                     // the work fitted in, its light 0..1 (outside: -1)
+    var c = canvas(IW, IH), g = c.getContext('2d', { willReadFrequently: true });
+    var k = Math.min(IW / img.naturalWidth, IH / img.naturalHeight) * 0.96, w = img.naturalWidth * k, h = img.naturalHeight * k;
+    g.drawImage(img, (IW - w) / 2, (IH - h) / 2, w, h);
+    var d = g.getImageData(0, 0, IW, IH).data, out = new Float32Array(IW * IH);
+    for (var i = 0, j = 0; i < out.length; i++, j += 4) {
+      if (d[j + 3] < 100) { out[i] = -1; continue; }
+      var l = (d[j] * 0.3 + d[j + 1] * 0.59 + d[j + 2] * 0.11) / 255;
+      // contrast round the middle: white marble keeps its texture, dark old paint still shows in dots
+      out[i] = Math.max(0, Math.min(1, (Math.pow(l, 1.15) - 0.5) * 1.25 + 0.5));
+    }
+    return out;
+  }
+  function introStart(st) {
+    var view = root.querySelector('.mx-doom-view'), layer = root.querySelector('.mx-doom-intro'), dpr = window.devicePixelRatio || 1;
+    var cw = view.offsetWidth, ch = view.offsetHeight;
+    if (!cw || !ch) return null;
+    var s = Math.min(dpr, INTRO_MAXW / cw), IW = Math.round(cw * s), IH = Math.round(ch * s);
+    layer.width = IW; layer.height = IH;
+    layer.style.left = view.offsetLeft + 'px'; layer.style.top = view.offsetTop + 'px';
+    layer.style.width = cw + 'px'; layer.style.height = ch + 'px';
+    layer.hidden = false;
+    var g = layer.getContext('2d'), img = g.createImageData(IW, IH), out = new Uint32Array(img.data.buffer), sky = introSky(IW, IH);
+    out.set(sky); g.putImageData(img, 0, 0);
+    return { t0: performance.now(), IW: IW, IH: IH, g: g, img: img, out: out, sky: sky, pic: introImage(), art: null, inOrder: null, turnOrder: null, hall: null };
+  }
+  function introStep(st, now) {
+    var it = st.intro;
+    if (!it.out) { var made = introStart(st); if (!made) { st.intro = null; st.dirty = true; return; } it = st.intro = Object.assign(made, { base: it.base }); }
+    var IW = it.IW, IH = it.IH, out = it.out, sky = it.sky;
+    // made while the sky stands still, one piece a frame: the work's dots, then the order they come in
+    if (it.pic && !it.art) {
+      if (it.pic.complete && it.pic.naturalWidth) { var lum = lumOf(it.pic, IW, IH), e = errState(IW, IH); diffuse(lum, IW, IH, 0, IH, e); it.art = e.levels; return; }
+      if (now - it.t0 > 1500) { it.pic = null; it.t0 = now - INTRO_IN; }   // not in time: straight to the hall
+      else return;
+    }
+    if (it.art && !it.inOrder) {
+      it.inOrder = byMoment(IW, IH, function (x, y) { var dx = x / IW - 0.5, dy = (y / IH - 0.5) * IH / IW; return Math.min(0.999, Math.hypot(dx, dy) * 1.16 + hash2(x >> 1, y >> 1) * 0.2); });
+      it.t0 = now;
+      return;
+    }
+    var t = now - it.t0, changed = false;
+    // 1. the work comes out of the sky
+    if (it.art) {
+      var o = it.inOrder, upto = Math.min(o.N, Math.floor(Math.min(1, t / INTRO_IN) * o.N));
+      for (var b = o.done; b < upto; b++) for (var k = o.start[b]; k < o.start[b + 1]; k++) { var i = o.order[k]; out[i] = inkOf(sky[i], it.art[i], 1); }
+      if (upto > o.done) { o.done = upto; changed = true; }
+    }
+    // 2. while it stands: the hall drawn again (its pictures are in by now), its dots worked out a few rows a frame
+    if (t >= INTRO_IN && !it.turnOrder) {
+      it.turnOrder = byMoment(IW, IH, function (x, y) { return Math.min(0.999, (x / IW) * 0.72 + (1 - y / IH) * 0.08 + hash2((x >> 2) + 7, y >> 2) * 0.2); });
+      if (changed) it.g.putImageData(it.img, 0, 0);
+      return;
+    }
+    if (t >= INTRO_IN && !it.hall) {
+      render(st); it.base = new Uint32Array(st.buf);
+      var hl = new Float32Array(IW * IH), bw = W, bh = VIEW_H;
+      for (var y = 0; y < IH; y++) { var sy = ((y * bh / IH) | 0) * bw; for (var x = 0; x < IW; x++) { var c = it.base[sy + ((x * bw / IW) | 0)]; hl[y * IW + x] = Math.min(1, ((c & 255) * 0.3 + ((c >> 8) & 255) * 0.59 + ((c >> 16) & 255) * 0.11) / 255 * 1.1); } }
+      it.hall = { lum: hl, e: errState(IW, IH), row: 0 };
+    }
+    if (it.hall && it.hall.row < IH) {
+      var rows = Math.max(8, Math.ceil(IH / Math.max(1, (INTRO_HOLD - 150) / 16)));
+      diffuse(it.hall.lum, IW, IH, it.hall.row, Math.min(IH, it.hall.row + rows), it.hall.e);
+      it.hall.row += rows;
+    }
+    // 3. the wave: the hall's dots first, its colours a moment after
+    var tt = t - INTRO_IN - INTRO_HOLD;
+    if (tt >= 0 && it.hall) {
+      if (it.hall.row < IH) { diffuse(it.hall.lum, IW, IH, it.hall.row, IH, it.hall.e); it.hall.row = IH; }
+      var w = it.turnOrder, lv = it.hall.e.levels, base = it.base, bw2 = W, bh2 = VIEW_H;
+      var dotsUpto = Math.min(w.N, Math.floor(Math.min(1, tt / (INTRO_TURN * 0.7)) * w.N));
+      for (b = w.done; b < dotsUpto; b++) for (k = w.start[b]; k < w.start[b + 1]; k++) { i = w.order[k]; out[i] = inkOf(sky[i], lv[i], 1); }
+      if (dotsUpto > w.done) { w.done = dotsUpto; changed = true; }
+      w.cdone = w.cdone || 0;
+      var colUpto = Math.min(w.N, Math.floor(Math.max(0, Math.min(1, (tt - INTRO_TURN * 0.3) / (INTRO_TURN * 0.7))) * w.N));
+      for (b = w.cdone; b < colUpto; b++) for (k = w.start[b]; k < w.start[b + 1]; k++) {
+        i = w.order[k]; var px0 = i % IW, py0 = (i / IW) | 0;
+        out[i] = base[((py0 * bh2 / IH) | 0) * bw2 + ((px0 * bw2 / IW) | 0)];
+      }
+      if (colUpto > w.cdone) { w.cdone = colUpto; changed = true; }
+      if (colUpto >= w.N) { introEnd(st); return; }
+    }
+    if (changed) it.g.putImageData(it.img, 0, 0);
+  }
+  function introEnd(st) {
+    st.intro = null; st.dirty = true;
+    var layer = root && root.querySelector('.mx-doom-intro');
+    if (layer) { layer.hidden = true; layer.width = layer.height = 1; }
+  }
+
+  /* ── Medaļas ──────────────────────────────────────────────────────────── */
   function badgeStore() { try { return JSON.parse(localStorage.getItem(BADGE_KEY) || '{}') || {}; } catch (_e) { return {}; } }
   function badgeSave(b) { try { localStorage.setItem(BADGE_KEY, JSON.stringify(b)); } catch (_e) {} }
   function earn(st, id) {
@@ -1803,8 +1960,9 @@
     b[id] = Date.now();
     badgeSave(b);
     var label = (BADGES.find(function (x) { return x[0] === id; }) || [id, id])[1];
-    say(st, 'Ieskats: ' + label + ' (' + BADGES.filter(function (x) { return b[x[0]]; }).length + '/' + BADGES.length + ')');
+    say(st, 'Medaļa: ' + label + ' (' + BADGES.filter(function (x) { return b[x[0]]; }).length + '/' + BADGES.length + ')');
     sfx(st, 'badge');
+    flash();
     paintBadges();
   }
   // a step towards one that needs several (the Leonardo works seen, the cats stroked)
@@ -1912,6 +2070,7 @@
       if (st.viewing && !st.paused) padRead(st);               // B on the controller closes the view
       return;
     }
+    if (st.intro) { introStep(st, now); st.last = now; st.dragTurn = st.dPitch = 0; return; }
     var dt = Math.min(0.05, (now - (st.last || now)) / 1000);
     st.last = now;
     var k = st.keys, moved = false;
@@ -1990,6 +2149,8 @@
         if (lo !== lampOff) { lampOff = lo; moved = true; }
       }
     } else if (lampOff) { lampOff = 0; moved = true; }
+    // near the hall's end the tank's light and the flickering lamp move: the light is worked out again 10 times a second
+    if (st.y > st.map.h - 10 && now - (st.dynAt || 0) > 100) { st.dynAt = now; buildLight(st); moved = true; }
     var aq = st.aqua, aquaTick = aq && st.aquaSeen && !st.viewing && now - aq.at >= (aq.food.length ? 32 : 48);
     if (aquaTick) { stepAquarium(aq, Math.min(0.1, (now - (aq.at || now)) / 1000)); paintAquarium(aq); aq.at = now; }
     // eye height eases to sitting or standing
@@ -2007,12 +2168,13 @@
     }
     if (st.msgShown && now >= st.msgUntil) { st.msgShown = false; root.querySelector('.mx-doom-msg').hidden = true; }
     // nothing changed: nothing is drawn; a cat in sight is drawn 30 times a second
-    var catTick = st.catsSeen && now - st.drawnAt >= 32;
+    var roomy = st.cost && st.cost < 4;                              // a frame costs little here
+    var catTick = st.catsSeen && now - st.drawnAt >= (roomy ? 0 : 32);
     if (!moved && !st.dirty && !catTick && !aquaTick) {
       return;
     }
     // turning the view with the caught mouse: every frame (30 a second judders there)
-    var smooth = looked || (moved && document.pointerLockElement);
+    var smooth = looked || (moved && document.pointerLockElement) || (catTick && roomy);
     if (now - st.drawnAt < 28 && !st.dirty && !smooth) return;
     st.drawnAt = now;
     st.dirty = false;
@@ -2076,7 +2238,7 @@
     st.goal = null; st.vx = st.vy = 0;
     st.glide = { t0: performance.now(), ms: 320, from: { x: st.x, y: st.y, a: st.a, p: st.pitch }, to: { x: tx, y: ty, a: ta }, then: then };
   }
-  // what is open inside the game closes: the coffee menu, a picture, all drawings, the Ieskati
+  // what is open inside the game closes: the coffee menu, a picture, all drawings, the medals
   function closeInside() {
     if (!root.querySelector('.mx-doom-menu').hidden) menu(false);
     else if (!root.querySelector('.mx-doom-look').hidden) look(null);
@@ -2137,6 +2299,7 @@
     st.cup = { kind: kind, left: SIPS, canvas: handCanvas(kind), inAt: performance.now() };
     drawHud(st);
     say(st, kind.name + ' rokā. C vai klikšķis uz krūzītes: malks');
+    flash();
   }
   function brew(st, i) {
     menu(false);
@@ -2158,6 +2321,7 @@
     st.cup = { kind: MONSTER, left: MONSTER.sips, canvas: handCanvas(MONSTER), inAt: performance.now() };
     drawHud(st);
     say(st, 'White Monster rokā. C vai klikšķis uz bundžas: malks');
+    flash();
   }
   function standUp(st) {
     st.seated = false;
@@ -2237,6 +2401,12 @@
     st.goal = { x: gx, y: gy, stop: 0.2 };
   }
 
+  // Doom's bonus flash: a short gold wash over the picture as you pick something up
+  function flash() {
+    var el = root && root.querySelector('.mx-doom-flash');
+    if (!el || document.documentElement.dataset.motion === 'reduced') return;
+    el.classList.remove('is-on'); void el.offsetWidth; el.classList.add('is-on');
+  }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function mouseCaught() { return !!root && document.pointerLockElement === root.querySelector('.mx-doom-view'); }
   function freeMouse() { if (mouseCaught() && document.exitPointerLock) document.exitPointerLock(); }
@@ -2264,7 +2434,7 @@
     var map = st.map, sec = root.querySelector('.mx-doom');
     var box = { left: sec.offsetLeft, top: sec.offsetTop, right: sec.offsetLeft + sec.offsetWidth, height: sec.offsetHeight };
     var side = Math.min(box.left, window.innerWidth - box.right) - 56;   // its frame and some sky round it
-    var cs = Math.min(12, Math.floor(side / map.w), Math.floor((window.innerHeight - 96) / map.h));
+    var cs = Math.min(12, Math.floor(side / map.w), Math.floor((window.innerHeight - 96 - KEYS_H) / map.h));
     return { cs: cs, box: box, outside: cs >= 5 };
   }
   function toggleMap(st) {
@@ -2315,13 +2485,78 @@
     g.putImageData(img, 0, 0);
     return { canvas: b, cs: cs };
   }
+  var ICON_PX = 22, iconCache = {};
+  function iconMask(kind) {
+    if (!iconCache[kind]) {
+      var n = ICON_PX, c = canvas(n, n), g = c.getContext('2d', { willReadFrequently: true }), m = n / 22;
+      g.scale(m, m);
+      var grad = function (x0, y0, x1, y1, a, b) { var gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, 'rgba(255,255,255,' + a + ')'); gr.addColorStop(1, 'rgba(255,255,255,' + b + ')'); return gr; };
+      g.lineCap = 'round'; g.lineJoin = 'round';
+      if (kind === 'close') { g.strokeStyle = grad(3, 3, 19, 19, 1, 0.75); g.lineWidth = 4; g.beginPath(); g.moveTo(5, 5); g.lineTo(17, 17); g.moveTo(17, 5); g.lineTo(5, 17); g.stroke(); }
+      else if (kind === 'draw') {                                    // a pencil drawing a line
+        g.save(); g.translate(11, 11); g.rotate(-Math.PI / 4);
+        g.fillStyle = grad(-3, -9, 3, 5, 1, 0.6); g.fillRect(-3, -9, 6, 13);       // its body
+        g.fillStyle = '#fff'; g.fillRect(-3, -11, 6, 2);                            // the end
+        g.beginPath(); g.moveTo(-3, 4); g.lineTo(3, 4); g.lineTo(0, 10); g.closePath(); g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();   // the point
+        g.restore();
+        g.strokeStyle = '#fff'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(2, 20); g.quadraticCurveTo(6, 16, 9, 19); g.stroke();
+      } else if (kind === 'all') {                                   // a wall of four pictures
+        [[2, 2], [12, 2], [2, 12], [12, 12]].forEach(function (q, i) { g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.strokeRect(q[0] + 0.75, q[1] + 0.75, 7.5, 7.5); g.fillStyle = grad(q[0], q[1], q[0] + 8, q[1] + 8, 0.25 + i * 0.15, 0.7); g.fillRect(q[0] + 2, q[1] + 2, 5, 5); });
+      } else if (kind === 'music' || kind === 'mute') {             // two notes
+        g.fillStyle = '#fff';
+        g.beginPath(); g.ellipse(6, 17, 3.4, 2.6, -0.4, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.ellipse(16, 15, 3.4, 2.6, -0.4, 0, Math.PI * 2); g.fill();
+        g.fillRect(8.4, 4, 1.8, 13); g.fillRect(18.4, 2, 1.8, 13);
+        g.fillStyle = grad(8, 2, 20, 6, 1, 0.7); g.beginPath(); g.moveTo(8.4, 4); g.lineTo(20.2, 2); g.lineTo(20.2, 5.5); g.lineTo(8.4, 7.5); g.closePath(); g.fill();
+        if (kind === 'mute') { g.globalCompositeOperation = 'destination-out'; g.lineWidth = 4.5; g.beginPath(); g.moveTo(2, 2); g.lineTo(20, 20); g.stroke(); g.globalCompositeOperation = 'source-over'; g.strokeStyle = '#fff'; g.lineWidth = 1.8; g.beginPath(); g.moveTo(2, 2); g.lineTo(20, 20); g.stroke(); }
+      } else if (kind === 'frame') {                                 // a picture: hills and a sun in a frame
+        g.strokeStyle = '#fff'; g.lineWidth = 2; g.strokeRect(2, 3.5, 18, 15);
+        g.fillStyle = '#fff'; g.beginPath(); g.moveTo(4, 17); g.lineTo(9, 9.5); g.lineTo(12, 13.5); g.lineTo(15, 9); g.lineTo(18.5, 17); g.closePath(); g.fill();
+        g.beginPath(); g.arc(7, 7.5, 1.8, 0, Math.PI * 2); g.fill();
+      } else if (kind === 'night') {                                 // the moon and a star
+        g.fillStyle = '#fff'; g.beginPath(); g.arc(10, 12, 8, 0, Math.PI * 2); g.fill();
+        g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(14.5, 9, 7, 0, Math.PI * 2); g.fill(); g.globalCompositeOperation = 'source-over';
+        g.fillStyle = '#fff'; g.fillRect(17, 2.5, 2, 6); g.fillRect(15, 4.5, 6, 2);
+      } else if (kind === 'cup') {                                   // a cup, its steam
+        g.fillStyle = '#fff'; g.beginPath(); g.moveTo(3, 9); g.lineTo(15, 9); g.lineTo(14, 19); g.quadraticCurveTo(9, 21, 4, 19); g.closePath(); g.fill();
+        g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(16, 13, 2.8, -Math.PI / 2, Math.PI / 2); g.stroke();
+        g.lineWidth = 1.6; g.beginPath(); g.moveTo(6.5, 7); g.quadraticCurveTo(5, 5, 6.5, 2.5); g.moveTo(10.5, 7); g.quadraticCurveTo(9, 5, 10.5, 2.5); g.stroke();
+      } else if (kind === 'mouse') {                                 // a computer mouse: its outline, the two buttons, the wheel, the left one lit
+        g.strokeStyle = '#fff'; g.lineWidth = 2; g.lineJoin = 'round';
+        g.beginPath(); g.moveTo(11, 2); g.bezierCurveTo(17.5, 2, 18, 6, 18, 10); g.lineTo(18, 14); g.bezierCurveTo(18, 19, 15, 21, 11, 21); g.bezierCurveTo(7, 21, 4, 19, 4, 14); g.lineTo(4, 10); g.bezierCurveTo(4, 6, 4.5, 2, 11, 2); g.closePath(); g.stroke();
+        g.fillStyle = '#fff'; g.beginPath(); g.moveTo(10, 3); g.bezierCurveTo(5.5, 3.2, 5, 6, 5, 10); g.lineTo(10, 10); g.closePath(); g.fill();   // the left button, lit
+        g.beginPath(); g.moveTo(4, 10.5); g.lineTo(18, 10.5); g.stroke();                                                                          // where the buttons end
+        g.beginPath(); g.moveTo(11, 2.5); g.lineTo(11, 10.5); g.stroke();                                                                          // between them
+        g.fillRect(10, 5, 2, 3.5);                                                                                                                  // the wheel
+      } else if (kind === 'star') {
+        var rg = g.createRadialGradient(11, 11, 1, 11, 11, 10); rg.addColorStop(0, '#fff'); rg.addColorStop(1, 'rgba(255,255,255,.45)');
+        g.fillStyle = rg; g.beginPath();
+        for (var k = 0; k < 10; k++) { var r = k % 2 ? 4.2 : 10, an = -Math.PI / 2 + k * Math.PI / 5; g.lineTo(11 + Math.cos(an) * r, 11.5 + Math.sin(an) * r); }
+        g.closePath(); g.fill();
+      } else if (kind === 'full') {                                  // the four corners, a picture in between
+        g.strokeStyle = '#fff'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(2, 7); g.lineTo(2, 2); g.lineTo(7, 2); g.moveTo(15, 2); g.lineTo(20, 2); g.lineTo(20, 7); g.moveTo(20, 15); g.lineTo(20, 20); g.lineTo(15, 20); g.moveTo(7, 20); g.lineTo(2, 20); g.lineTo(2, 15); g.stroke();
+        g.fillStyle = grad(6, 6, 16, 16, 0.65, 0.2); g.fillRect(6, 6, 10, 10);
+      }
+      var img = g.getImageData(0, 0, n, n), d = img.data;
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+        var i = (y * n + x) * 4, l = d[i + 3] / 255;
+        d[i] = d[i + 1] = d[i + 2] = 255; d[i + 3] = l * 16 > B4[(y & 3) * 4 + (x & 3)] + 0.5 ? 255 : 0;
+      }
+      g.setTransform(1, 0, 0, 1, 0, 0); g.putImageData(img, 0, 0);
+      var big = canvas(n * 2, n * 2), bg = big.getContext('2d');      // each dot 2×2: crisp at the button's size
+      bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, n * 2, n * 2);
+      var url = big.toDataURL('image/png');
+      iconCache[kind] = '-webkit-mask-image:url(' + url + ');mask-image:url(' + url + ')';
+    }
+    return iconCache[kind];
+  }
   function placeSide() {
     var side = root.querySelector('.mx-doom-side'), sec = root.querySelector('.mx-doom');
     if (!side || !sec) return;
     var outside = sec.offsetLeft - 32 >= side.offsetWidth;
     side.classList.toggle('is-inside', !outside);
     side.style.left = Math.round(outside ? (sec.offsetLeft - side.offsetWidth) / 2 : sec.offsetLeft + 14) + 'px';
-    side.style.top = Math.round(outside ? sec.offsetTop + 48 : sec.offsetTop + sec.offsetHeight - side.offsetHeight - 76) + 'px';
+    side.style.top = Math.round(outside ? sec.offsetTop : sec.offsetTop + 12) + 'px';
   }
   /* stats.js (mrdoob, MIT) made over in the gallery's one ink: the same three
      panels, a click switches them. FPS: pictures drawn a second (a still
@@ -2360,12 +2595,22 @@
   }
   function statsReset() { stats.at = 0; stats.n = 0; }
 
+  // The keys, under the map beside the window: W A S D and the others as small keycaps, a word each
+  var KEYS_H = 236;
+  function placeKeys(room, under) {
+    var k = root.querySelector('.mx-doom-keys');
+    if (!k) return;
+    k.hidden = !room.outside;
+    if (!room.outside) return;
+    var left = Math.min(window.innerWidth - k.offsetWidth - 8, room.box.right + (window.innerWidth - room.box.right - k.offsetWidth) / 2);
+    k.style.left = Math.round(left) + 'px'; k.style.top = Math.round(under) + 'px';
+  }
   function drawMinimap(st) {
     var c = root.querySelector('.mx-doom-minimap');
     if (!c) return;
     var room = mapRoom(st), show = room.outside ? st.mapOn !== false : st.mapOn === true;
     c.hidden = !show;
-    if (!show) return;
+    if (!show) { placeKeys(room, room.box.top); return; }
     var cs = room.outside ? room.cs : Math.max(3, Math.min(8, Math.floor(room.box.height * 0.6 / st.map.h)));
     if (!st.mmBase || st.mmBase.cs !== cs || st.mmBase.outside !== room.outside) {
       st.mmBase = minimapBase(st, cs);
@@ -2375,8 +2620,9 @@
       // beside the window on the right, its middle at the window's middle; or over the picture
       var frame = room.outside ? 24 : 18;                     // its padding and border round the plan
       var left = room.outside ? room.box.right + (window.innerWidth - room.box.right - c.width - frame) / 2 : room.box.right - c.width - frame - 14;
-      var top = room.outside ? Math.max(28, room.box.top + (room.box.height - c.height - frame) / 2) : room.box.top + 64;
+      var top = room.outside ? room.box.top : room.box.top + 64;
       c.style.left = Math.round(left) + 'px'; c.style.top = Math.round(top) + 'px';
+      placeKeys(room, top + c.height + frame + 16);
     }
     var g = c.getContext('2d'), px0 = st.x * cs, py0 = st.y * cs;
     g.clearRect(0, 0, c.width, c.height);
@@ -2399,15 +2645,8 @@
     root.id = 'mxDoom';
     root.hidden = true;
     root.innerHTML = '<section class="mx-doom" role="dialog" aria-modal="true" aria-label="Galerija">'
-      + '<div class="mx-doom-bar"><strong>Galerija</strong>'
-      + '<span class="mx-doom-help" title="' + CREDITS + '">Klikšķis: noķert peli, W A S D: iet, pele: skaties, klikšķis vai E: darīt, labais klikšķis vai C: malks, M: mūzika, Tab: karte, Esc: atlaist peli, ×: iziet</span>'
-      + '<span class="mx-doom-now" title="' + MUSIC_CREDIT + '"></span>'
-      + '<button type="button" class="mx-doom-music" aria-pressed="true"><span class="is-on">' + ICON_ON + '</span><span class="is-off">' + ICON_OFF + '</span></button>'
-      + '<button type="button" class="mx-doom-badges-btn" aria-label="Ieskati"><span aria-hidden="true">★</span><b></b></button>'
-      + '<button type="button" class="mx-doom-full" aria-label="Pilnekrāns"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
-      + '<button type="button" class="mx-doom-all-btn">Visi zīmējumi</button><button type="button" class="mx-doom-draw">Uzzīmēt</button><button type="button" class="mx-doom-close" aria-label="Iziet no galerijas">×</button></div>'
       + '<div class="mx-doom-screen"><canvas class="mx-doom-view"></canvas>'
-      + '<div class="mx-doom-msg" hidden></div>'
+      + '<div class="mx-doom-msg" hidden></div><div class="mx-doom-flash" aria-hidden="true"></div><canvas class="mx-doom-intro" hidden aria-hidden="true"></canvas>'
 
       + '<div class="mx-doom-hud">' + hudCell('draw', 'total', 'ZĪMĒJUMI') + hudCell('today', 'today', 'ŠODIEN')
       + '<div class="mx-hud-face"><b data-hud="face"></b><span>TU</span></div>' + hudCell('night', 'sleeping', 'GUĻ')
@@ -2419,18 +2658,34 @@
       + '</div><button type="button" class="mx-doom-menu-cancel">Atpakaļ</button></div></div>'
       + '<div class="mx-doom-look" hidden><figure><img alt=""><figcaption></figcaption></figure>'
       + '<div class="mx-doom-look-actions"><button type="button" class="mx-doom-back">Atpakaļ</button><button type="button" class="mx-doom-redraw">Pārzīmēt</button><button type="button" class="mx-doom-chat">Komentāros</button><a class="mx-doom-more" target="_blank" rel="noopener noreferrer" hidden>Vairāk par darbu</a></div></div>'
-      + '<div class="mx-doom-badges" hidden><div class="mx-doom-all-head"><strong>Ieskati</strong><span></span><button type="button" class="mx-doom-badges-close">Atpakaļ</button></div><ul class="mx-doom-badges-list"></ul></div>'
+      + '<div class="mx-doom-badges" hidden><div class="mx-doom-all-head"><strong>Medaļas</strong><span></span><button type="button" class="mx-doom-badges-close">Atpakaļ</button></div><ul class="mx-doom-badges-list"></ul></div>'
       + '<div class="mx-doom-joy" hidden aria-hidden="true"><i></i></div>'
       + '<div class="mx-doom-all" hidden><div class="mx-doom-all-head"><strong>Visi zīmējumi</strong><span></span><button type="button" class="mx-doom-all-close">Atpakaļ</button></div><div class="mx-doom-all-grid"></div></div>'
       + '</div></section>';
     var mm = document.createElement('canvas');
     mm.className = 'mx-doom-minimap'; mm.hidden = true; mm.setAttribute('aria-hidden', 'true');
     root.appendChild(mm);
+    var keys = document.createElement('div');
+    keys.className = 'mx-doom-keys'; keys.hidden = true;
+    var key = function (k, word) { return '<div class="mx-key-row"><kbd>' + k + '</kbd><span>' + word + '</span></div>'; };
+    keys.innerHTML = '<div class="mx-key-wasd"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>iet</span></div>'
+      + '<div class="mx-key-row"><kbd class="mx-key-ico"><i class="mx-doom-ico" style="' + iconMask('mouse') + '"></i></kbd><span>skatīties</span></div>'
+      + '<div class="mx-key-row mx-key-esc"><kbd>Esc</kbd><span>atlaist peli</span></div>'
+      + key('Shift', 'skriet') + key('E', 'darīt') + key('C', 'malks') + key('M', 'mūzika') + key('Tab', 'karte');
+    root.appendChild(keys);
     // left of the window on the dither sky: the Esc key (lit while the mouse is
     // caught: it lets it go) and how many pictures a second are drawn
     var side = document.createElement('div');
     side.className = 'mx-doom-side';
-    side.innerHTML = '<kbd class="mx-doom-esc" title="Esc: atlaist peli">Esc</kbd><canvas class="mx-doom-stats" width="80" height="48" title="FPS / MS / MB: klikšķis pārslēdz"></canvas>';
+    // the buttons as small pictures in the same one ink, a word under each
+    var pic = function (cls, kind, label) { return '<button type="button" class="mx-doom-pic ' + cls + '"><i class="mx-doom-ico" style="' + iconMask(kind) + '"></i><span>' + label + '</span></button>'; };
+    side.innerHTML = pic('mx-doom-close', 'close', 'Iziet')
+      + '<canvas class="mx-doom-stats" width="80" height="48" aria-label="FPS, MS, MB"></canvas>'
+      + pic('mx-doom-draw', 'draw', 'Zīmēt')
+      + pic('mx-doom-all-btn', 'all', 'Zīmējumi')
+      + '<button type="button" class="mx-doom-pic mx-doom-music"><i class="mx-doom-ico is-on" style="' + iconMask('music') + '"></i><i class="mx-doom-ico is-off" style="' + iconMask('mute') + '"></i><span>Mūzika</span></button>'
+      + '<button type="button" class="mx-doom-pic mx-doom-badges-btn"><i class="mx-doom-ico" style="' + iconMask('star') + '"></i><span>Medaļas</span><b></b></button>'
+      + pic('mx-doom-full', 'full', 'Pilnekrāns');
     root.appendChild(side);
     document.body.appendChild(root);
     root.addEventListener('click', function (e) {
@@ -2536,7 +2791,7 @@
     document.addEventListener('pointerlockchange', function () {
       var on = mouseCaught();
       if (on && state) state.lockFails = 0;
-      root.querySelector('.mx-doom-side').classList.toggle('is-caught', on);
+      root.querySelector('.mx-doom-keys').classList.toggle('is-caught', on);
       view.classList.toggle('is-caught', on);
       if (!on && state) state.mouseFreedAt = performance.now();
     });
@@ -2719,6 +2974,7 @@
     st.wallTop = new Int32Array(W); st.wallBot = new Int32Array(W); st.pickY0 = new Int32Array(W); st.pickY1 = new Int32Array(W);
     st.pickRef = new Array(W).fill(null);
     st.pdepth = new Float32Array(W * VIEW_H).fill(1e9);
+    if (st.intro) introEnd(st);
     st.rowDist = new Float32Array(VIEW_H); st.rowOwn = new Uint32Array(VIEW_H); st.rowOther = new Uint32Array(VIEW_H);
     if (st.cup) st.cup.canvas = handCanvas(st.cup.kind);
     drawHud(st);
@@ -2860,6 +3116,11 @@
     });
     var screen = root.querySelector('.mx-doom');
     if (window.MinkaMotion && origin) window.MinkaMotion.openSurface(screen, { key: 'doom', origin: origin, scrim: root });
+    if (!keep && document.documentElement.dataset.motion !== 'reduced' && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+      render(st);
+      st.intro = { base: new Uint32Array(st.buf) };
+      introStep(st, performance.now());
+    }
     st.raf = requestAnimationFrame(frame);
     if (!keep) { catchMouse(); statsReset(); drawStats(); audioCtx(); }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
@@ -2880,6 +3141,7 @@
     if (!keepMusic) freeMouse();                          // a rebuild (new drawings) keeps the caught mouse
     cancelAnimationFrame(st.raf);
     root.querySelector('.mx-doom-msg').hidden = true;
+    introEnd(st);
     if (!keepMusic) root.querySelector('.mx-doom-minimap').hidden = true;
     state = null;
     if (!keepMusic) musicStop(true);

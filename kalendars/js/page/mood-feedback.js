@@ -3170,7 +3170,7 @@
   /* Galerija kā Doom (js/page/mood-gallery-3d.js, ielādējas tikai pirmajā
      reizē): pastaiga pa zāli ar zīmējumiem uz sienām. Ja tā neielādējas,
      paliek parastā galerija (režģis augstāk). */
-  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261003g3d31';
+  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261003g3d48';
   var gallery3dLoad = null;
   function gallery3d() {
     if (window.MinkaGallery3D) return Promise.resolve(window.MinkaGallery3D);

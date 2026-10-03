@@ -994,7 +994,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(96vw, calc((92vh - 60px - var(--mx-hud-h)) * 512 / 269), 1280px);
+  width: min(96vw, calc((94vh - var(--mx-hud-h)) * 512 / 269), 1280px);
   color: #e8edf3;
   font: 600 13px/1.3 Inter, system-ui, sans-serif;
   image-rendering: auto;
@@ -1070,6 +1070,14 @@
   pointer-events: none;
 }
 .mx-doom-msg[hidden] { display: none; }
+/* the opening's own layer over the picture, at the screen's resolution */
+.mx-doom-intro { position: absolute; z-index: 6; pointer-events: none; }
+.mx-doom-intro[hidden] { display: none; }
+/* Doom's bonus flash: a short gold wash over the picture as you pick something up */
+.mx-doom-flash { position: absolute; inset: 0 0 var(--mx-hud-h) 0; background: #f0d77e; opacity: 0; pointer-events: none; mix-blend-mode: screen; }
+.mx-doom-flash.is-on { animation: mxDoomFlash 320ms cubic-bezier(.2, 0, 0, 1) both; }
+@keyframes mxDoomFlash { from { opacity: .42; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .mx-doom-flash.is-on { animation: none; } }
 /* the plan from above, beside the window on the dither sky, in its one ink
    (js/page/mood-gallery-3d.js places it); with no room, over the picture */
 .mx-doom-minimap {
@@ -1085,6 +1093,48 @@
 }
 .mx-doom-minimap.is-inside { z-index: 3; padding: 8px; border: 1px solid rgba(148, 178, 218, .22); border-radius: 12px; background: rgba(9, 13, 21, .82); box-shadow: none; }
 .mx-doom-minimap[hidden] { display: none; }
+/* the keys under the map: keycaps as the Esc one, a word each */
+.mx-doom-keys {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+  background: #1424d6;
+  box-shadow: 4px 4px 0 rgba(255, 255, 255, .35);
+  color: #ffffff;
+  font: 800 10px/1.2 'Space Grotesk', Inter, system-ui, sans-serif;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.mx-doom-keys[hidden] { display: none; }
+.mx-doom-keys kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border: 1.5px solid #1b1f26;
+  border-radius: 6px;
+  background: #fbfbfc;
+  color: #14181f;
+  font: 800 11px/1 Inter, system-ui, sans-serif;
+  text-transform: none;
+  box-shadow: 0 3px 0 -1px #fbfbfc, 0 3px 0 0 #1b1f26;
+}
+.mx-key-wasd { display: grid; grid-template-columns: repeat(3, 24px) auto; grid-template-rows: 22px 22px; gap: 3px 3px; align-items: center; }
+.mx-key-wasd kbd:nth-child(1) { grid-column: 2; grid-row: 1; }
+.mx-key-wasd kbd:nth-child(2) { grid-column: 1; grid-row: 2; }
+.mx-key-wasd kbd:nth-child(3) { grid-column: 2; grid-row: 2; }
+.mx-key-wasd kbd:nth-child(4) { grid-column: 3; grid-row: 2; }
+.mx-key-wasd span { grid-column: 4; grid-row: 1 / 3; padding-left: 8px; }
+.mx-key-row { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.mx-key-row .mx-key-ico { height: 30px; padding: 0 3px; }
+.mx-key-row .mx-key-ico .mx-doom-ico { width: 24px; height: 24px; -webkit-mask-size: 24px 24px; mask-size: 24px 24px; }
 /* left of the window on the dither sky: the Esc key (lit while the mouse is
    caught) and the pictures drawn a second, on a page of the sky's blue */
 .mx-doom-side {
@@ -1115,11 +1165,45 @@
   color: #14181f;
   font: 700 15px/1 Inter, system-ui, sans-serif;
   box-shadow: 0 5px 0 -2px #fbfbfc, 0 5px 0 0 #1b1f26;
-  opacity: .55;
-  transition: opacity 150ms var(--mk-ease-effects, ease);
+  transition: background-color 150ms var(--mk-ease-effects, ease);
 }
-.mx-doom-side.is-caught .mx-doom-esc { opacity: 1; }
+.mx-doom-keys.is-caught .mx-key-esc kbd { background: #ffd166; }
 .mx-doom-stats { display: block; width: 80px; height: 48px; image-rendering: pixelated; pointer-events: auto; cursor: pointer; }
+/* the gallery's buttons, beside the window: keycaps as the Esc one (white, a dark
+   edge, its depth below), a dithered picture and a word on each; pressed, the
+   key goes down */
+.mx-doom-side .mx-doom-pic {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 72px;
+  height: 62px;
+  margin-bottom: 4px;
+  padding: 0;
+  border: 2px solid #1b1f26;
+  border-radius: 10px;
+  background: #fbfbfc;
+  color: #14181f;
+  box-shadow: 0 5px 0 -2px #fbfbfc, 0 5px 0 0 #1b1f26;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: translate 90ms var(--mk-ease-effects, ease), box-shadow 90ms var(--mk-ease-effects, ease), background-color 120ms var(--mk-ease-effects, ease);
+}
+.mx-doom-side .mx-doom-pic:hover, .mx-doom-side .mx-doom-pic:focus-visible { background: #e9edff; outline: none; }
+.mx-doom-side .mx-doom-pic:active { translate: 0 3px; box-shadow: 0 2px 0 -2px #fbfbfc, 0 2px 0 0 #1b1f26; }
+.mx-doom-ico { display: block; flex: none; width: 40px; height: 40px; background: currentColor; -webkit-mask-size: 40px 40px; mask-size: 40px 40px; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.mx-doom-side .mx-doom-pic span { color: inherit; font: 800 9px/1.15 'Space Grotesk', Inter, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+.mx-doom-side .mx-doom-music .mx-doom-ico.is-off, .mx-doom-side .mx-doom-music.is-off .mx-doom-ico.is-on { display: none; }
+.mx-doom-side .mx-doom-music.is-off .mx-doom-ico.is-off { display: block; }
+.mx-doom-side .mx-doom-badges-btn b { position: absolute; right: -9px; top: -9px; padding: 1px 5px; border: 2px solid #1b1f26; border-radius: 7px; background: #1424d6; color: #ffffff; font: 800 10px/1.25 'Space Grotesk', Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+/* no room beside the window: one row over the picture's top left */
+.mx-doom-side.is-inside { grid-auto-flow: column; align-items: center; gap: 8px; padding: 8px; }
+.mx-doom-side.is-inside .mx-doom-stats { display: none; }
+.mx-doom-side.is-inside .mx-doom-pic { width: 60px; height: 52px; }
+.mx-doom-side.is-inside .mx-doom-ico { width: 32px; height: 32px; -webkit-mask-size: 32px 32px; mask-size: 32px 32px; }
 /* the status bar: the dock's cells (icon, number, label), nothing faded */
 .mx-doom-hud {
   display: grid;
@@ -1559,3 +1643,51 @@
   }
   :root.mk-mx #grafiks-list .rg-feedback-card.mx-compact :is(.rg-pulse-write--comment .rg-feedback-new-count, .mx-draw-tap .mx-draw-count):empty { display: none !important; }
 }
+
+/* The status bar in the sky's style (blue, soft light, fine dots), its cells as the
+   glowing tiles of that picture: a white rounded edge, dotted glass inside, a soft
+   glow; white words and one-ink pictures. Last in the file: over the panel dither above. */
+.mx-doom .mx-doom-hud {
+  border-top: 2px solid rgba(255, 255, 255, .55);
+  background:
+    radial-gradient(55% 160% at 18% 0%, rgba(130, 150, 255, .5), transparent 70%),
+    radial-gradient(40% 140% at 86% 100%, rgba(120, 140, 255, .42), transparent 70%),
+    radial-gradient(rgba(255, 255, 255, .2) .7px, transparent 1.05px) 0 0 / 5px 5px,
+    linear-gradient(90deg, #1a28d8, #2b3ee9 55%, #2133df);
+  padding: 8px 10px;
+  gap: 10px;
+}
+.mx-doom .mx-doom-hud :is(.mx-hud-cell, .mx-hud-face) {
+  border: 2px solid rgba(255, 255, 255, .92);
+  border-radius: 12px;
+  background:
+    radial-gradient(rgba(255, 255, 255, .34) .6px, transparent .95px) 0 0 / 3px 3px,
+    linear-gradient(135deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .05) 70%);
+  box-shadow: 0 0 0 1px rgba(150, 170, 255, .45), 0 0 14px rgba(175, 190, 255, .45), inset 0 0 10px rgba(255, 255, 255, .16);
+  image-rendering: auto;
+}
+/* its pictures on the same white keycaps as the buttons beside the window: dark on white, easy to see */
+.mx-doom .mx-doom-hud .mx-hud-ico {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 34px;
+  margin-bottom: 3px;
+  border: 2px solid #1b1f26;
+  border-radius: 8px;
+  background: #fbfbfc;
+  color: #14181f;
+  filter: none;
+  box-shadow: 0 4px 0 -2px #fbfbfc, 0 4px 0 0 #1b1f26;
+}
+.mx-doom .mx-doom-hud .mx-hud-ico .mx-doom-ico { width: 26px; height: 26px; -webkit-mask-size: 26px 26px; mask-size: 26px 26px; }
+.mx-doom .mx-doom-hud :is(.mx-hud-num b, .mx-hud-num span) {
+  color: #ffffff;
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  text-shadow: 0 0 8px rgba(190, 205, 255, .55);
+}
+.mx-doom .mx-doom-hud .mx-hud-num span, .mx-doom .mx-doom-hud .mx-hud-face span { color: rgba(255, 255, 255, .82); }
+.mx-doom .mx-doom-hud .mx-hud-meter i { background: rgba(255, 255, 255, .22); }
+.mx-doom .mx-doom-hud .mx-hud-meter i.is-full { background: #ffffff; box-shadow: 0 0 6px rgba(255, 255, 255, .6); }

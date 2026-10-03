@@ -57,7 +57,9 @@ try {
   await send('Page.navigate', { url: `http://localhost:${PORT}/kalendars/test/gallery-harness.html` });
   for (let i = 0; i < 40; i++) { await sleep(150); if (await run('!!(window.MinkaGallery3D && window.__harness)').catch(() => false)) break; }
   await run('window.__harness.open()');
-  await sleep(1200);
+  // the opening (~5 s): the game waits under it
+  for (let i = 0; i < 80; i++) { await sleep(150); if (await run(`(() => { const l = document.querySelector('.mx-doom-intro'); return !l || l.hidden; })()`)) break; }
+  check('ievads beidzas', await run(`(() => { const l = document.querySelector('.mx-doom-intro'); return !l || l.hidden; })()`));
 
   check('atveras', await run('MinkaGallery3D.isOpen()'));
   const size = await run(`(() => { const v = document.querySelector('.mx-doom-view'); return { w: v.width, h: v.height, k: parseFloat(v.style.width) * devicePixelRatio / v.width }; })()`);
