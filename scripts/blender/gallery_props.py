@@ -343,12 +343,12 @@ def oldpc():
     return parts, 0.66
 
 
-def arcade():
+def arcade(cols=('#8f6ad8', '#4a2fb0', '#ff5fb0', '#802050')):
     """a Konfektes 98 arcade cabinet: lilac body, a slanted screen (its picture is the game's), a lit marquee, buttons"""
-    body = mat('body', hexc('#8f6ad8'), rough=0.35, coat=0.5)
-    side = mat('side', hexc('#4a2fb0'), rough=0.4, coat=0.4)
+    body = mat('body', hexc(cols[0]), rough=0.35, coat=0.5)
+    side = mat('side', hexc(cols[1]), rough=0.4, coat=0.4)
     black = mat('black', hexc('#141018'), rough=0.3, coat=0.8)
-    trim = mat('trim', hexc('#ff5fb0'), rough=0.3, emit=hexc('#802050'))
+    trim = mat('trim', hexc(cols[2]), rough=0.3, emit=hexc(cols[3]))
     btnr = mat('btnr', hexc('#ff4f7a'), rough=0.25, coat=0.8)
     btny = mat('btny', hexc('#ffd23f'), rough=0.25, coat=0.8)
     btnb = mat('btnb', hexc('#5aa8ff'), rough=0.25, coat=0.8)
@@ -372,7 +372,47 @@ def arcade():
     return parts, 1.18
 
 
-BUILD = {'arcade': arcade, 'oldpc': oldpc, 'machine': machine, 'chair': chair, 'table': table, 'easel': easel, 'gramophone': gramophone, 'monsterbox': monsterbox, 'bed': bed}
+def arcademines():
+    """the same cabinet for Mīnas 98, in Windows 98 teal with a yellow marquee (the game is smaller: scaled in the gallery)"""
+    return arcade(('#2f9e98', '#16605c', '#ffd23f', '#806010'))
+
+
+def pinball():
+    """a pinball machine: legs, the cabinet with its glass (the table's picture is the game's), the backbox, plunger and buttons"""
+    body = mat('body', hexc('#1f4fd0'), rough=0.35, coat=0.5)
+    side = mat('side', hexc('#12307e'), rough=0.4, coat=0.4)
+    black = mat('black', hexc('#0b1030'), rough=0.3, coat=0.8)
+    chrome = mat('chrome', hexc('#c8ccd4'), rough=0.18, metal=1.0)
+    trim = mat('trim', hexc('#ff8a1f'), rough=0.3, emit=hexc('#803a08'))
+    btn = mat('btn', hexc('#ffd23f'), rough=0.25, coat=0.8)
+    red = mat('red', hexc('#e0303a'), rough=0.25, coat=0.8)
+    parts = []
+    L, W = 0.45, 0.22                                                 # half length (a, to the player), half width (b)
+    for a0 in (-L + 0.05, L - 0.05):
+        for b0 in (-W + 0.03, W - 0.03):
+            parts.append(rod('leg', (a0, b0, 0), (a0, b0, 0.56), 0.016, chrome, verts=10))
+            parts.append(disc('foot', a0, b0, 0, 0.012, 0.026, chrome, verts=12))
+    parts.append(gbox('cab', -L, L, -W, W, 0.54, 0.72, body, bevel=0.01))
+    for sx in (-1, 1):
+        parts.append(gbox('rail', -L, L, sx * W - (0.02 if sx > 0 else 0), sx * W + (0.02 if sx < 0 else 0), 0.72, 0.78, chrome, bevel=0.004, seg=2))
+        parts.append(gbox('flipbtn', L - 0.1, L - 0.07, sx * (W + 0.004) - 0.004, sx * (W + 0.004) + 0.004, 0.66, 0.69, btn, bevel=0.002, seg=2))
+    parts.append(gbox('apron', L - 0.02, L, -W, W, 0.72, 0.77, side, bevel=0.004))
+    parts.append(gbox('glassfloor', -L + 0.06, L - 0.02, -W + 0.02, W - 0.02, 0.72, 0.73, black))
+    # the backbox at the far end, its glass facing the player
+    parts.append(gbox('backbox', -L - 0.02, -L + 0.08, -W, W, 0.72, 1.4, body, bevel=0.01))
+    parts.append(gbox('backtop', -L - 0.03, -L + 0.11, -W - 0.01, W + 0.01, 1.4, 1.44, side, bevel=0.006))
+    parts.append(gbox('backglass', -L + 0.079, -L + 0.084, -W + 0.025, W - 0.025, 0.98, 1.37, black, bevel=0.002, seg=2))
+    parts.append(gbox('speaker', -L + 0.079, -L + 0.084, -W + 0.025, W - 0.025, 0.8, 0.94, side, bevel=0.002, seg=2))
+    parts.append(gbox('marquee', -L + 0.08, -L + 0.086, -W + 0.04, W - 0.04, 0.75, 0.78, trim))
+    # the plunger at the front, right of the player, and the coin door
+    parts.append(rod('plunger', (L, -W + 0.05, 0.66), (L + 0.06, -W + 0.05, 0.66), 0.008, chrome, verts=10))
+    parts.append(disc('knob', L + 0.06, -W + 0.05, 0.645, 0.675, 0.016, red, verts=14))
+    parts.append(gbox('coin', L - 0.003, L + 0.004, -0.07, 0.07, 0.57, 0.68, black, bevel=0.003, seg=2))
+    parts.append(gbox('coinslot', L + 0.004, L + 0.006, -0.004, 0.004, 0.6, 0.64, trim))
+    return parts, 1.44
+
+
+BUILD = {'arcade': arcade, 'arcademines': arcademines, 'pinball': pinball, 'oldpc': oldpc, 'machine': machine, 'chair': chair, 'table': table, 'easel': easel, 'gramophone': gramophone, 'monsterbox': monsterbox, 'bed': bed}
 TILE_MIN = {}
 
 

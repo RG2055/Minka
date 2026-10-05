@@ -761,9 +761,9 @@
   /* Props made in Blender with their light baked in (scripts/blender/gallery_props.py), as the cats'
      statue: once their mesh and texture are in, they replace the simple boxes; the model's own parts
      (a cup brewing in the machine) are drawn with them. Loaded once, kept for the next visit. */
-  var BAKED_V = '?v=20261003p3', BAKED_KINDS = { arcade: 1, oldpc: 1, machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
+  var BAKED_V = '?v=20261005p4', BAKED_KINDS = { arcade: 1, arcademines: 1, pinball: 1, oldpc: 1, machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
   function isBaked(kind) { return !!(baked[kind] && baked[kind].tris); }
-  var BAKED_SCALE = { arcade: 0.8 };                                 // the arcade machine a little smaller than built
+  var BAKED_SCALE = { arcade: 0.8, arcademines: 0.62, pinball: 0.56 };  // smaller than built; the pinball's glass under the eye
   function bakedMesh(m, img, sc) {
     var tex = texOf(imgCanvas(img)), q = (sc || 1) / m.q, uq = 1 / m.uq, tris = [];
     for (var i = 0; i < m.f.length; i += 3) {
@@ -923,6 +923,74 @@
       { quad: S([[0.1475, 0.18, 1.155], [0.1475, -0.18, 1.155], [0.1475, -0.18, 1.045], [0.1475, 0.18, 1.045]]), n: [1, 0, 0], tex: arcadeTex.sign, soft: 0 }
     ];
     return isBaked('arcade') ? out : box(-0.2 * k, 0.2 * k, -0.21 * k, 0.21 * k, 0, 1.18 * k, { all: { color: '#8f6ad8' } }).concat(out);
+  }
+  // Mīnas 98: the same cabinet, smaller, in Windows teal; its screen a minefield half swept
+  var minesTex = null;
+  function arcadeMinesModel() {
+    if (!minesTex) {
+      minesTex = {
+        screen: paint(96, 112, function (ctx) {
+          ctx.fillStyle = '#c0c0c0'; ctx.fillRect(0, 0, 96, 112);
+          ctx.fillStyle = '#000080'; ctx.fillRect(0, 0, 96, 14);
+          ctx.fillStyle = '#fff'; ctx.font = '700 9px Tahoma, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('MĪNAS 98', 48, 7);
+          var nums = ['#0000ff', '#008000', '#ff0000', '#000080'], r = 7;
+          for (var y = 0; y < 8; y++) for (var x = 0; x < 8; x++) {
+            var open = (x * 7 + y * 3 + x * y) % 5 > 1, px = 4 + x * 11, py = 18 + y * 11;
+            ctx.fillStyle = open ? '#bdbdbd' : '#ffffff'; ctx.fillRect(px, py, 11, 11);
+            ctx.fillStyle = open ? '#9a9a9a' : '#808080'; ctx.fillRect(px + (open ? 0 : 1), py + 10, 11, 1); ctx.fillRect(px + 10, py + (open ? 0 : 1), 1, 11);
+            if (!open) { ctx.fillStyle = '#c0c0c0'; ctx.fillRect(px + 1, py + 1, 9, 9); }
+            else if ((x + y * 3) % 4 === 0) { ctx.fillStyle = nums[(x + y) % 4]; ctx.font = '700 8px Tahoma, sans-serif'; ctx.fillText(String(1 + (x * y) % 3), px + 5.5, py + 6); }
+          }
+          ctx.fillStyle = '#000080'; ctx.font = '700 8px Tahoma, sans-serif'; ctx.fillText('NOSPIED E', 48, 106);
+          r = r;
+        }),
+        sign: paint(128, 36, function (ctx) {
+          ctx.fillStyle = '#ffd23f'; ctx.fillRect(0, 0, 128, 36);
+          ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 128, 2); ctx.fillRect(0, 34, 128, 2);
+          ctx.font = '900 15px Tahoma, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#806010'; ctx.fillText('MĪNAS 98', 65, 20); ctx.fillStyle = '#000'; ctx.fillText('MĪNAS 98', 64, 18);
+        })
+      };
+    }
+    var k = BAKED_SCALE.arcademines, S = function (q) { return q.map(function (v) { return [v[0] * k, v[1] * k, v[2] * k]; }); };
+    var out = [
+      { quad: S([[0.0655, 0.16, 0.965], [0.0655, -0.16, 0.965], [0.0655, -0.16, 0.615], [0.0655, 0.16, 0.615]]), n: [1, 0, 0], tex: minesTex.screen, soft: 0 },
+      { quad: S([[0.1475, 0.18, 1.155], [0.1475, -0.18, 1.155], [0.1475, -0.18, 1.045], [0.1475, 0.18, 1.045]]), n: [1, 0, 0], tex: minesTex.sign, soft: 0 }
+    ];
+    return isBaked('arcademines') ? out : box(-0.2 * k, 0.2 * k, -0.21 * k, 0.21 * k, 0, 1.18 * k, { all: { color: '#2f9e98' } }).concat(out);
+  }
+  // Pinbols 98: the table under its glass and the backglass, drawn here; the machine is the model
+  var pinTex = null;
+  function pinballModel() {
+    if (!pinTex) {
+      var R = function (ctx, x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+      pinTex = {
+        field: paint(64, 128, function (ctx) {
+          R(ctx, 0, 0, 64, 128, '#0b1030');
+          for (var i = 0; i < 40; i++) R(ctx, (i * 37) % 64, (i * 53) % 128, 1, 1, i % 3 ? '#6f80d8' : '#ffffff');
+          R(ctx, 2, 4, 60, 1, '#c8ccd4'); R(ctx, 2, 4, 1, 92, '#c8ccd4'); R(ctx, 56, 26, 1, 98, '#c8ccd4'); R(ctx, 61, 4, 1, 120, '#c8ccd4');
+          [[20, 34], [36, 34], [28, 46]].forEach(function (b) { R(ctx, b[0] - 3, b[1] - 3, 7, 7, '#ffd23f'); R(ctx, b[0] - 2, b[1] - 2, 5, 5, '#ff8a1f'); R(ctx, b[0], b[1], 1, 1, '#e0303a'); });
+          R(ctx, 44, 56, 8, 8, '#3f7af0'); R(ctx, 40, 60, 16, 1, '#ffd23f');
+          for (i = 0; i < 10; i++) { R(ctx, 3 + i * 1.4, 96 + i, 2, 1, '#c8ccd4'); R(ctx, 54 - i * 1.4, 96 + i, 2, 1, '#c8ccd4'); }
+          for (i = 0; i < 9; i++) { R(ctx, 18 + i, 106 + i * 0.5, 2, 2, '#ff8a1f'); R(ctx, 38 - i, 106 + i * 0.5, 2, 2, '#ff8a1f'); }
+          R(ctx, 58, 112, 2, 2, '#c8ccd4');
+        }),
+        back: paint(96, 96, function (ctx) {
+          R(ctx, 0, 0, 96, 96, '#0b1030');
+          for (var i = 0; i < 50; i++) R(ctx, (i * 41) % 96, (i * 29) % 96, 1, 1, i % 4 ? '#6f80d8' : '#ffffff');
+          for (var y = -16; y <= 16; y++) { var hw = Math.floor(Math.sqrt(256 - y * y)); R(ctx, 48 - hw, 56 + y, hw * 2 + 1, 1, y % 5 ? '#3f7af0' : '#2c5fd0'); }
+          for (var x = 0; x < 64; x++) R(ctx, 16 + x, 66 - Math.round(x * 0.3), 1, 1, '#ffd23f');
+          R(ctx, 6, 8, 84, 22, '#ff8a1f'); R(ctx, 8, 10, 80, 18, '#0b1030');
+          ctx.fillStyle = '#ffd23f'; ctx.font = '900 12px Tahoma, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('PINBOLS 98', 48, 19);
+        })
+      };
+    }
+    var k = BAKED_SCALE.pinball, S = function (q) { return q.map(function (v) { return [v[0] * k, v[1] * k, v[2] * k]; }); };
+    var out = [
+      { quad: S([[-0.39, 0.2, 0.772], [-0.39, -0.2, 0.772], [0.43, -0.2, 0.738], [0.43, 0.2, 0.738]]), n: [0.041, 0, 0.999], tex: pinTex.field, soft: 0 },
+      { quad: S([[-0.3645, 0.195, 1.37], [-0.3645, -0.195, 1.37], [-0.3645, -0.195, 0.98], [-0.3645, 0.195, 0.98]]), n: [1, 0, 0], tex: pinTex.back, soft: 0 }
+    ];
+    return isBaked('pinball') ? out : box(-0.45 * k, 0.45 * k, -0.22 * k, 0.22 * k, 0, 0.75 * k, { all: { color: '#1f4fd0' } }).concat(out);
   }
   /* The day's golden cup: hidden somewhere in the hall (the same place for everyone that day,
      another place tomorrow), a reason to walk the whole hall; found, it is gone till tomorrow. */
@@ -1754,6 +1822,8 @@
       case 'oldpc': return ['E', 'Ieslēgt veco datoru'];
       case 'goldcup': return ['E', 'Paņemt zelta krūzīti'];
       case 'arcade': return ['E', 'Spēlēt Konfektes 98'];
+      case 'arcademines': return ['E', 'Spēlēt Mīnas 98'];
+      case 'pinball': return ['E', 'Spēlēt Pinbols 98'];
       case 'cat': return ['E', 'Paglaudīt: ' + a.name];
       case 'aquarium': return ['E', 'Pabarot zivtiņas'];
       case 'monster': return ['E', 'Paņemt White Monster'];
@@ -2544,6 +2614,8 @@
       case 'oldpc': openPC(st); return;
       case 'goldcup': takeGold(st, ref); return;
       case 'arcade': openPC(st, 'candy'); return;
+      case 'arcademines': openPC(st, 'mines'); return;
+      case 'pinball': openPC(st, 'pinball'); return;
       case 'aquarium': feedFish(st, ref.at); return;
       case 'monster': case 'monsterbox': takeCan(st); return;
       case 'cat':
@@ -3192,7 +3264,7 @@
     return { tris: tris, bills: [] };
   }
   // the old computer's Windows 98 (js/page/mood-gallery-pc.js), loaded the first time it is switched on
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261003pc14', pcLoad = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261005pb2', pcLoad = null;
   function openPC(st, app) {
     freeMouse();
     if (!pcLoad) pcLoad = new Promise(function (ok, no) {
@@ -3204,7 +3276,7 @@
       // the hall's music stops while the computer is on (it has its own sounds), and comes back after
       var wasOn = !!(audio && !audio.paused);
       if (wasOn) audio.pause();
-      window.MinkaGalleryPC.open({ me: st.me, app: app || '', solo: app === 'candy', music: MUSIC.map(function (m) { return { title: m.title, src: ART + 'music/' + m.file + MUSIC_V }; }), onClose: function () {
+      window.MinkaGalleryPC.open({ me: st.me, app: app || '', solo: !!app, music: MUSIC.map(function (m) { return { title: m.title, src: ART + 'music/' + m.file + MUSIC_V }; }), onClose: function () {
         if (wasOn && state === st && st.musicOn && audio) { var pl = audio.play(); if (pl && pl.catch) pl.catch(function () {}); }
       } });
       earn(st, 'pc');
@@ -3237,6 +3309,9 @@
     });
     // the Konfektes 98 arcade machine at the Leonardo hall's start, seen as you come in from the lobby
     props.push({ kind: 'arcade', x: 1.36, y: LEO_Y0 + 0.62, h: 0.94, solid: 0.3, reach: 2.6, shade: 0.2 });
+    // beside it, smaller, Mīnas 98's cabinet; Pinbols 98 in the far right corner, past the aquarium's end and the last pillar
+    props.push({ kind: 'arcademines', x: 1.3, y: LEO_Y0 + 0.1, h: 0.73, solid: 0.24, reach: 2.4, shade: 0.16 });
+    props.push({ kind: 'pinball', x: 5.5, y: map.h - 1.55, h: 0.81, solid: 0.28, reach: 2.4, shade: 0.2 });
     // the old computer on its desk in the lobby's corner, turned to the room
     props.push({ kind: 'oldpc', x: 4.62, y: 1.42, h: 0.66, solid: 0.38, reach: 2.6, shade: 0.22 });
     props.push({ kind: 'table', x: 3.1, y: 2.7, h: 0.34, solid: 0.42, reach: 2.6, shade: 0.22 });
@@ -3281,7 +3356,7 @@
     };
     // which way each thing faces (the map runs y down): the chairs the table, the
     // machine, the easel and the gramophone the room, the beds their foot to the room
-    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4, table: 0, oldpc: Math.PI * 0.72, goldcup: 0.6, arcade: 0 };
+    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4, table: 0, oldpc: Math.PI * 0.72, goldcup: 0.6, arcade: 0, arcademines: 0, pinball: Math.PI };
     var bedFacing = [Math.PI / 2, Math.PI / 2, -Math.PI / 2, Math.PI];
     var makeSprites = function () {
       props.forEach(function (p) {
@@ -3290,7 +3365,7 @@
           : p.kind === 'gramophone' ? function () { return gramophoneModel(st.musicOn); }
           : p.kind === 'easel' ? easelModel : p.kind === 'chair' ? chairModel : p.kind === 'monsterbox' ? monsterBoxModel
           : p.kind === 'bed' ? function () { return bedModel(p.person); } : p.kind === 'table' && isBaked('table') ? function () { return []; }
-          : p.kind === 'oldpc' ? oldpcModel : p.kind === 'goldcup' ? goldcupModel : p.kind === 'arcade' ? arcadeModel : null;
+          : p.kind === 'oldpc' ? oldpcModel : p.kind === 'goldcup' ? goldcupModel : p.kind === 'arcade' ? arcadeModel : p.kind === 'arcademines' ? arcadeMinesModel : p.kind === 'pinball' ? pinballModel : null;
         if (model) {
           p.facing = p.kind === 'chair' ? (p.x < 3.1 ? 0 : Math.PI) : p.kind === 'bed' ? bedFacing[p.bed] : FACING[p.kind];
           p.parts = model();
@@ -3353,7 +3428,7 @@
       loadBaked(kind, function () {
         if (state !== st) return;
         var make = { machine: function () { return machineModel(!!st.brew); }, chair: chairModel, easel: easelModel, gramophone: function () { return gramophoneModel(st.musicOn); },
-          monsterbox: monsterBoxModel, table: function () { return []; }, oldpc: oldpcModel, arcade: arcadeModel };
+          monsterbox: monsterBoxModel, table: function () { return []; }, oldpc: oldpcModel, arcade: arcadeModel, arcademines: arcadeMinesModel, pinball: pinballModel };
         st.props.forEach(function (p) {
           if (p.kind !== kind) return;
           if (kind === 'bed') { var pp = p; remodel(p, function () { return bedModel(pp.person); }); return; }

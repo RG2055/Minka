@@ -2077,6 +2077,10 @@
 .pc98-win.is-max .pc98-note { height: auto; flex: 1; }
 .pc98-menu button { padding: 2px 8px; border: 0; background: none; cursor: default; }
 .pc98-menu button:hover, .pc98-menu button.is-on { background: #6a3fd0; color: #fff; }
+/* Pinbols 98: the fixed canvas at a whole multiple, nearest-neighbour */
+.pc98-pin { display: flex; flex-direction: column; gap: 6px; padding: 6px 4px 4px; }
+.pc98-pcv { display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: default; touch-action: none; }
+.pc98-pmsg { min-height: 18px; padding: 2px 6px; background: #fff; box-shadow: var(--l-sunken); font-size: 11px; white-space: nowrap; overflow: hidden; }
 .pc98-mines { display: flex; flex-direction: column; gap: 6px; padding: 6px; box-shadow: var(--l-raised); margin: 2px; }
 .pc98-mtop { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; box-shadow: var(--l-sunken); }
 .pc98-led { min-width: 44px; padding: 1px 3px; background: #000; color: #ff2a2a; font: 700 22px/1 'Courier New', monospace; letter-spacing: 1px; text-align: center; }
@@ -2168,6 +2172,7 @@
 .pc98-mbtn.is-on { box-shadow: var(--l-sunken); color: #1a9a46; }
 /* the arcade: only the game window, the gallery's dither on the sides */
 .pc98-solo .pc98-desk, .pc98-solo .pc98-taskbar, .pc98-solo .pc98-startmenu, .pc98-solo .pc98-boot, .pc98-solo .pc98-mx { display: none !important; }
+.pc98-solo .pc98-win { left: 50% !important; top: 50% !important; translate: -50% -50%; }   /* the one game in the middle, whatever its size */
 .pc98-help { margin: 0; padding: 6px 8px; list-style: none; background: #fff; box-shadow: var(--l-sunken); }
 .pc98-help li { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
 .pc98-hico { flex: none; width: 26px; height: 26px; display: grid; place-items: center; background: #6a3fd0; color: #fff; font: 900 14px/1 Tahoma, sans-serif; box-shadow: var(--l-raised); }

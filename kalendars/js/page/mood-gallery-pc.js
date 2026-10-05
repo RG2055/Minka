@@ -77,6 +77,7 @@
       else { R(9, 13, 4, 4, '#d7dd55'); R(19, 13, 4, 4, '#d7dd55'); R(10, 14, 2, 2, '#000'); R(20, 14, 2, 2, '#000'); }
       R(15, 19, 2, 2, '#ff8a9a');
     }
+    else if (kind === 'pinball') { R(4, 4, 24, 24, '#000'); R(5, 5, 22, 22, '#0b1030'); R(9, 7, 1, 1, '#fff'); R(22, 9, 1, 1, '#fff'); R(14, 6, 1, 1, '#9fb0ff'); R(13, 11, 6, 6, '#c8ccd4'); R(14, 12, 2, 2, '#fff'); R(7, 22, 8, 3, '#ff8a1f'); R(17, 22, 8, 3, '#ff8a1f'); R(6, 21, 2, 2, '#ffd23f'); R(24, 21, 2, 2, '#ffd23f'); }
     else if (kind === 'trophy') { R(9, 4, 14, 10, '#ffcf3a'); R(11, 14, 10, 3, '#ffcf3a'); R(14, 17, 4, 5, '#d9a21a'); R(10, 22, 12, 4, '#d9a21a'); R(5, 5, 4, 6, '#ffcf3a'); R(23, 5, 4, 6, '#ffcf3a'); }
     var big = canvas(n, n), bg = big.getContext('2d'); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, n, n);
     return (iconCache[key] = big.toDataURL('image/png'));
@@ -126,6 +127,7 @@
       + '<div class="pc98-startmenu" hidden><span class="pc98-band"><b>Windows</b>98</span><div class="pc98-items">'
       + '<button type="button" data-open="candy">' + img('candy', 24) + '<span>Konfektes 98</span></button>'
       + '<button type="button" data-open="mines">' + img('mine', 24) + '<span>Mīnas 98</span></button>'
+      + '<button type="button" data-open="pinball">' + img('pinball', 24) + '<span>Pinbols 98</span></button>'
       + '<button type="button" data-open="music">' + img('music', 24) + '<span>Mūzika 98</span></button>'
       + '<button type="button" data-open="chronicle">' + img('note', 24) + '<span>Hronika.txt</span></button>'
       + '<button type="button" data-open="settings">' + img('gear', 24) + '<span>Iestatījumi</span></button>'
@@ -141,7 +143,7 @@
 
     // the desktop's icons
     var desk = $('.pc98-desk');
-    [['candy', 'candy', 'Konfektes 98'], ['mines', 'mine', 'Mīnas 98'], ['music', 'music', 'Mūzika 98'], ['chronicle', 'note', 'Hronika.txt'], ['mypc', 'pc', 'Mans dators'], ['settings', 'gear', 'Iestatījumi'], ['bin', 'bin', 'Atkritumi']].forEach(function (d) {
+    [['candy', 'candy', 'Konfektes 98'], ['mines', 'mine', 'Mīnas 98'], ['pinball', 'pinball', 'Pinbols 98'], ['music', 'music', 'Mūzika 98'], ['chronicle', 'note', 'Hronika.txt'], ['mypc', 'pc', 'Mans dators'], ['settings', 'gear', 'Iestatījumi'], ['bin', 'bin', 'Atkritumi']].forEach(function (d) {
       var b = el('button', 'pc98-icon', img(d[1], 32) + '<span>' + d[2] + '</span>'); b.type = 'button'; b.dataset.open = d[0]; desk.appendChild(b);
     });
 
@@ -178,7 +180,7 @@
       var w = wins[id]; if (!w) return;
       if (w.onClose) w.onClose();
       w.el.remove(); w.task.remove(); delete wins[id];
-      if (opts.solo && id === 'candy') { close(); return; }         // from the arcade: the game is all there is
+      if (opts.solo && id === opts.app) { close(); return; }        // from the arcade: the game is all there is
       var rest = Object.keys(wins); if (rest.length) front(rest[rest.length - 1]);
     }
     function dialog(title, text, icon) {
@@ -225,7 +227,7 @@
         + '<div class="pc98-cfoot"><button type="button" class="pc98-btn" data-c="new">Jauna spēle</button><button type="button" class="pc98-btn" data-c="table">Dienas tabula</button><button type="button" class="pc98-btn" data-c="help">Kā spēlēt?</button><button type="button" class="pc98-btn pc98-mbtn" data-c="music" title="Mūzika">♪</button><span class="pc98-hint">Rekords šodien: <b class="pc98-best">0</b></span></div></div>',
         size + 34, Math.max(100, (rr0.width - size - 34) / 2), Math.max(6, (rr0.height - size - 192) / 2));
       var cv = w.el.querySelector('.pc98-board'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
-      var G = {}, anim = [], fx = { parts: [], floats: [], beams: [], rings: [], bubbles: [], flash: 0, shake: 0, word: null, stopUntil: 0 }, raf = 0, busy = false, sel = null, drag = null;
+      var G = {}, anim = [], fx = { parts: [], floats: [], beams: [], rings: [], bubbles: [], pix: [], flash: 0, shake: 0, word: null, stopUntil: 0 }, raf = 0, busy = false, sel = null, drag = null;
       var hint = null, idleAt = performance.now(), swapOff = null;
       var best = 0; try { var b0 = JSON.parse(localStorage.getItem(BEST_KEY) || '{}'); best = b0.day === today ? b0.score : 0; } catch (_e) {}
       w.el.querySelector('.pc98-best').textContent = best;
@@ -239,7 +241,7 @@
         G.jelly.forEach(function (row) { row.forEach(function (v) { G.jellyLeft += v; }); });
         for (var y = 0; y < N; y++) { G.board.push([]); for (var x = 0; x < N; x++) G.board[y].push(fresh(x, y, true)); }
         if (!hasMove()) shuffle();
-        fx.parts = []; fx.floats = []; fx.beams = []; fx.rings = []; fx.bubbles = []; fx.word = null; hint = null; idleAt = performance.now();
+        fx.parts = []; fx.floats = []; fx.beams = []; fx.rings = []; fx.bubbles = []; fx.pix = []; fx.word = null; hint = null; idleAt = performance.now();
         w.el.querySelector('.pc98-gico').style.backgroundImage = 'url(' + PIECES[G.goal.t].toDataURL() + ')';
         paintBar(); draw();
       }
@@ -317,6 +319,7 @@
           return;
         }
         G.moves--; G.chain = 0; paintBar(); busy = true;
+        pixelTada((x1 + x2) / 2, (y1 + y2) / 2);
         var so = swapOff = { x1: x2, y1: y2, x2: x1, y2: y1, k: 1 };
         tween(130, function (k) { so.k = 1 - k; swapOff = so; }, function () {
           if (swapOff === so) swapOff = null;
@@ -517,7 +520,42 @@
       }
       function floatText(x, y, text, col, scale) { fx.floats.push({ x: (x + 0.5) * CELL, y: (y + 0.5) * CELL, text: text, col: col, s: scale || 1, life: 1 }); kick(); }
       function word(i) { fx.word = { text: i < 0 ? 'Saldais finālis!' : WORDS[Math.max(0, Math.min(WORDS.length - 1, i))], life: 1 }; kick(); }
-      function fxActive() { return fx.parts.length || fx.floats.length || fx.beams.length || fx.rings.length || fx.bubbles.length || fx.flash > 0 || fx.shake > 0.01 || fx.word || hint; }
+      /* A move: 8-bit rings ripple out from between the two pieces in stepped
+         frames (14 a second, no smooth tween), the colours stepping round the
+         ring each frame, and pixel crosses flung out with them. Squares on
+         one grid, a few dozen fillRects a frame: nothing for an old PC. */
+      var PIX_COLS = ['#ff3d96', '#6a3fd0', '#16b4dc', '#ffb800', '#2fc95a'], PIX_STEP = 70, PIX_FRAMES = 9;   // on the light board: no white
+      function pixelTada(x, y) {
+        var crosses = [];
+        for (var i = 0; i < 7; i++) crosses.push({ a: i / 7 * Math.PI * 2 + Math.random() * 0.6, d: 0.8 + Math.random() * 0.7, c: (Math.random() * PIX_COLS.length) | 0 });
+        fx.pix.push({ x: (x + 0.5) * CELL, y: (y + 0.5) * CELL, t0: performance.now(), crosses: crosses });
+        if (fx.pix.length > 4) fx.pix.shift();
+        kick();
+      }
+      function drawPixelTada(now) {
+        var P = Math.max(4, Math.round(CELL * 0.1));
+        var sq = function (px, py, c) { g.fillStyle = c; g.fillRect(Math.round(px / P) * P - (P >> 1), Math.round(py / P) * P - (P >> 1), P - 1, P - 1); };
+        fx.pix.forEach(function (t) {
+          var f = Math.floor((now - t.t0) / PIX_STEP);
+          if (f < 0 || f >= PIX_FRAMES) return;
+          // two rings, the second a step behind; the leading one thins out at the end
+          [f, f - 3].forEach(function (rf, ri) {
+            if (rf < 0) return;
+            var rad = P * (2.5 + rf * 1.9), n = Math.max(8, Math.round(rad * 2 * Math.PI / (P * 1.35)));
+            for (var i = 0; i < n; i++) {
+              if (rf > PIX_FRAMES - 4 && (i + rf) % 2) continue;
+              var an = i / n * Math.PI * 2;
+              sq(t.x + Math.cos(an) * rad, t.y + Math.sin(an) * rad, PIX_COLS[(i + f + ri * 2) % PIX_COLS.length]);
+            }
+          });
+          // crosses: a plus of five squares, stepping outward
+          if (f >= 1) t.crosses.forEach(function (c) {
+            var r = P * (4 + f * 2.6) * c.d, cx = t.x + Math.cos(c.a) * r, cy = t.y + Math.sin(c.a) * r, col = PIX_COLS[(c.c + (f >> 1)) % PIX_COLS.length];
+            sq(cx, cy, col); sq(cx - P, cy, col); sq(cx + P, cy, col); sq(cx, cy - P, col); sq(cx, cy + P, col);
+          });
+        });
+      }
+      function fxActive() { return fx.pix.length || fx.parts.length || fx.floats.length || fx.beams.length || fx.rings.length || fx.bubbles.length || fx.flash > 0 || fx.shake > 0.01 || fx.word || hint; }
       function kick() { if (!raf) raf = requestAnimationFrame(tick); }
 
       /* ── drawing (only while something moves, sparks fly or a hint shows) ── */
@@ -587,6 +625,7 @@
           else g.fillRect(p.x | 0, p.y | 0, p.s, p.s);
         });
         g.globalCompositeOperation = 'source-over';
+        g.globalAlpha = 1; drawPixelTada(now);
         // the points of each cleared piece, in its glow
         g.textAlign = 'center'; g.textBaseline = 'middle';
         fx.bubbles.forEach(function (b) {
@@ -667,6 +706,7 @@
         fx.parts = fx.parts.filter(function (p) { return p.life > 0; });
         fx.floats.forEach(function (f) { f.y -= dt * 40; f.life -= dt * 1.1; }); fx.floats = fx.floats.filter(function (f) { return f.life > 0; });
         fx.beams.forEach(function (b) { b.life -= dt * (b.kind === 'zap' ? 2.2 : 2.6); }); fx.beams = fx.beams.filter(function (b) { return b.life > 0; });
+        fx.pix = fx.pix.filter(function (t) { return now - t.t0 < PIX_STEP * PIX_FRAMES; });
         fx.rings.forEach(function (r) { r.life -= dt * 2.4; }); fx.rings = fx.rings.filter(function (r) { return r.life > 0; });
         fx.bubbles.forEach(function (b) { b.life -= dt * 2.2; }); fx.bubbles = fx.bubbles.filter(function (b) { return b.life > 0; });
         fx.flash = Math.max(0, fx.flash - dt * 3); fx.shake = Math.max(0, fx.shake - dt * 2.2);
@@ -990,7 +1030,282 @@
       };
     }
 
-    var OPEN = { candy: candy, chronicle: chronicle, mypc: mypc, bin: bin, mines: mines, music: music, settings: settings };
+    /* ── Pinbols 98: a pinball table of our own (not Space Cadet: its pictures and
+       sounds are Microsoft's). As a 90s game: one fixed 320×480 canvas shown at a
+       whole multiple, every shape set pixel by pixel (no smoothing, no gradients),
+       the still table painted once, the physics in fixed small steps so the ball
+       never tunnels on a slow PC. Z / Shift / ← and / / Shift / → the flippers,
+       Space or ↓ held pulls the plunger; the mouse's left and right buttons too. */
+    var PIN_KEY = 'minkaPinball98';
+    function pinball() {
+      if (wins.pinball) { front('pinball'); return; }
+      var PW = 320, PH = 480, rr = root.getBoundingClientRect();
+      // a whole number of screen pixels per game pixel (on a 2× screen 1.5 here is 3 real
+      // pixels: still crisp); if that leaves it small, it fills the height (nearest-neighbour)
+      var dpr = window.devicePixelRatio || 1, availH = rr.height - (opts.solo ? 96 : 132), availW = rr.width - 60;   // the taskbar's room on the desktop
+      var kd = Math.max(1, Math.floor(Math.min(availH * dpr / PH, availW * dpr / PW))), k = kd / dpr;
+      if (PH * k < availH * 0.8) k = Math.max(1, Math.min(availH / PH, availW / PW));
+      k = Math.round(k * PH) / PH;
+      var w = win('pinball', 'Pinbols 98', 'pinball',
+        '<div class="pc98-pin"><div class="pc98-cbar"><span>Punkti <b class="pc98-pscore">0</b></span><span>Bumba <b class="pc98-pball">1/3</b></span><span>× <b class="pc98-pmul">1</b></span><span>Rekords <b class="pc98-pbest">0</b></span></div>'
+        + '<div class="pc98-well"><canvas class="pc98-pcv" width="' + PW + '" height="' + PH + '" style="width:' + Math.round(PW * k) + 'px;height:' + Math.round(PH * k) + 'px"></canvas></div>'
+        + '<div class="pc98-pmsg">Atstarpe: atspere. Z un /: plaukstiņas. X un .: pagrūst galdu.</div></div>',
+        Math.round(PW * k) + 22, Math.max(6, (rr.width - PW * k - 22) / 2), Math.max(4, (rr.height - (opts.solo ? 0 : 34) - PH * k - 92) / 2));
+      var cv = w.el.querySelector('.pc98-pcv'), g = cv.getContext('2d');
+      g.imageSmoothingEnabled = false;
+      var msgEl = w.el.querySelector('.pc98-pmsg');
+      var best = 0; try { best = +localStorage.getItem(PIN_KEY) || 0; } catch (_e) {}
+      w.el.querySelector('.pc98-pbest').textContent = best;
+
+      // pixel drawing: a rect, a Bresenham line, a filled circle
+      function R(c, x, y, ww, hh, col) { c.fillStyle = col; c.fillRect(x | 0, y | 0, ww, hh); }
+      function line(c, x0, y0, x1, y1, col, t) {
+        x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1); t = t || 1;
+        var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
+        c.fillStyle = col;
+        for (var guard = 0; guard < 2000; guard++) {
+          c.fillRect(x0 - (t >> 1), y0 - (t >> 1), t, t);
+          if (x0 === x1 && y0 === y1) break;
+          var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; }
+        }
+      }
+      function disc(c, cx, cy, r, col) { c.fillStyle = col; for (var y = -r; y <= r; y++) { var hw = Math.floor(Math.sqrt(r * r - y * y + r * 0.6)); c.fillRect(cx - hw, cy + y, hw * 2 + 1, 1); } }
+      function sprite(n, draw) { var c = canvas(n, n), x = c.getContext('2d'); draw(x); return c; }
+
+      // the table (logical px): walls as segments, the ball comes up the lane on the right
+      var WALLS = [
+        [12, 70, 20, 40], [20, 40, 40, 20], [40, 20, 70, 12], [70, 12, 250, 12], [250, 12, 280, 20], [280, 20, 300, 40], [300, 40, 308, 80],
+        [308, 80, 308, 470], [12, 70, 12, 360], [284, 120, 284, 470], [12, 360, 84, 414], [284, 360, 212, 414],
+        [34, 300, 34, 356], [34, 356, 62, 372], [262, 300, 262, 356], [262, 356, 234, 372]
+      ];
+      var KICK = [[34, 300, 62, 372, 1], [262, 300, 234, 372, -1]];        // the slingshots' kicking faces
+      var BUMP = [[112, 150], [184, 150], [148, 206]], BR = 15;
+      var ROLL = [[100, 58], [148, 50], [196, 58]];
+      var FL = [{ px: 88, py: 418, dir: 1, a: 0.5, w: 0, up: false }, { px: 208, py: 418, dir: -1, a: 0.5, w: 0, up: false }];
+      var FLEN = 46, REST = 0.5, UP = -0.45;
+      var PAL = { bg: '#0b1030', wall: '#c8ccd4', wall2: '#5a6478', lane: '#141c48', star: '#ffffff', star2: '#6f80d8', orange: '#ff8a1f', yellow: '#ffd23f', red: '#e0303a', ink: '#000000' };
+
+      // the still table: drawn once
+      var bg = canvas(PW, PH), b = bg.getContext('2d');
+      R(b, 0, 0, PW, PH, PAL.bg);
+      var sr = rng(seedOf('pinball-stars'));
+      for (var i = 0; i < 140; i++) R(b, (sr() * PW) | 0, (sr() * PH) | 0, 1, 1, sr() < 0.3 ? PAL.star : PAL.star2);
+      // a ringed planet, in flat bands
+      disc(b, 236, 268, 22, '#2c5fd0'); disc(b, 232, 264, 18, '#3f7af0');
+      for (var py = 252; py < 286; py += 6) R(b, 216, py, 40, 2, '#2c5fd0');
+      line(b, 196, 282, 278, 254, PAL.yellow, 2);
+      R(b, 285, 120, 23, 360, PAL.lane);
+      WALLS.forEach(function (sgm) { line(b, sgm[0], sgm[1], sgm[2], sgm[3], PAL.wall2, 4); });
+      WALLS.forEach(function (sgm) { line(b, sgm[0], sgm[1], sgm[2], sgm[3], PAL.wall, 2); });
+      KICK.forEach(function (kk) { line(b, kk[0], kk[1], kk[2], kk[3], PAL.red, 3); });   // the slingshots' rubber
+      // the arrows of the inlanes, the center's mark
+      for (i = 0; i < 3; i++) { R(b, 40 + i * 8, 330 - i * 4, 4, 4, PAL.orange); R(b, 252 - i * 8, 330 - i * 4, 4, 4, PAL.orange); }
+      R(b, 146, 440, 4, 4, PAL.red);
+
+      var ballS = sprite(13, function (x) { disc(x, 6, 6, 6, '#5a6478'); disc(x, 6, 6, 5, '#c8ccd4'); R(x, 3, 3, 3, 2, '#ffffff'); });
+      var bumpS = [false, true].map(function (lit) { return sprite(BR * 2 + 1, function (x) { disc(x, BR, BR, BR, PAL.ink); disc(x, BR, BR, BR - 1, lit ? '#ffffff' : PAL.yellow); disc(x, BR, BR, BR - 5, lit ? PAL.yellow : PAL.orange); disc(x, BR, BR, 3, lit ? '#ffffff' : PAL.red); }); });
+
+      var G = null, keys = { l: false, r: false, p: false }, raf = 0, last = 0, acc = 0;
+      /* Feedback in tiers (game-feel): small = flash + click; medium = + "+100" in pixel
+         digits and a 1 px shake; large = + a 2–3 px shake and a jingle. The shake is
+         whole pixels of the picture only, the ball's world never moves. Sounds vary a
+         few percent each time (audio-design: no machine-gun repeats). */
+      var trauma = 0, shakeT = 0, pops = [];
+      var PIXFONT = { '0': [7, 5, 5, 5, 7], '1': [2, 6, 2, 2, 7], '2': [7, 1, 7, 4, 7], '3': [7, 1, 3, 1, 7], '4': [5, 5, 7, 1, 1], '5': [7, 4, 7, 1, 7], '6': [7, 4, 7, 5, 7], '7': [7, 1, 2, 2, 2], '8': [7, 5, 7, 5, 7], '9': [7, 5, 7, 1, 7], '+': [0, 2, 7, 2, 0] };
+      function digits(c, text, x, y, col) {
+        c.fillStyle = col;
+        for (var i = 0; i < text.length; i++) {
+          var rows = PIXFONT[text[i]]; if (!rows) continue;
+          for (var ry = 0; ry < 5; ry++) for (var rx = 0; rx < 3; rx++) if (rows[ry] & (4 >> rx)) c.fillRect(x + i * 4 + rx, y + ry, 1, 1);
+        }
+      }
+      function sfx(f, d, t, v) { blip(f * (0.96 + Math.random() * 0.08), d, t, v); }
+      function feel(tier, x, y, n) {
+        if (tier >= 2) trauma = Math.min(1, trauma + (tier === 2 ? 0.25 : 0.6));
+        if (n) pops.push({ x: Math.round(x), y: Math.round(y), t: '+' + n, life: 0.6 });
+        if (pops.length > 12) pops.shift();
+      }
+      function newGame() {
+        G = { score: 0, balls: 3, ball: 1, mul: 1, lit: [0, 0, 0], bumps: 0, flash: [0, 0, 0], kick: [0, 0], charge: 0, over: false, still: 0 };
+        serve(); paint();
+      }
+      function serve() { G.x = 296; G.y = 440; G.vx = 0; G.vy = 0; G.inLane = true; say('Atstarpe vai ↓: atspere. Z un /: plaukstiņas. X un .: pagrūst.'); }
+      function say(t) { msgEl.textContent = t; }
+      function paint() {
+        w.el.querySelector('.pc98-pscore').textContent = G.score;
+        w.el.querySelector('.pc98-pball').textContent = Math.min(G.ball, 3) + '/3';
+        w.el.querySelector('.pc98-pmul').textContent = G.mul;
+      }
+      function add(n) { G.score += n * G.mul; paint(); }
+
+      // one fixed physics step (1/480 s)
+      var STEP = 1 / 480, GRAV = 560, RB = 6;
+      function collideSeg(x0, y0, x1, y1, e, rad) {
+        var dx = x1 - x0, dy = y1 - y0, L = dx * dx + dy * dy, t = L ? ((G.x - x0) * dx + (G.y - y0) * dy) / L : 0;
+        t = Math.max(0, Math.min(1, t));
+        var qx = x0 + dx * t, qy = y0 + dy * t, nx = G.x - qx, ny = G.y - qy, d = Math.hypot(nx, ny), lim = RB + (rad || 1);
+        if (d >= lim || d === 0) return null;
+        nx /= d; ny /= d; G.x = qx + nx * lim; G.y = qy + ny * lim;
+        var vn = G.vx * nx + G.vy * ny;
+        if (vn < 0) { G.vx -= (1 + e) * vn * nx; G.vy -= (1 + e) * vn * ny; }
+        return [nx, ny, qx, qy];
+      }
+      function tip(f) { var an = f.dir > 0 ? f.a : Math.PI - f.a; return [f.px + Math.cos(an) * FLEN, f.py + Math.sin(an) * FLEN]; }
+      function step() {
+        // flippers turn fast towards up or rest (the angle is mirrored for the right one)
+        FL.forEach(function (f, i) {
+          var target = f.up ? UP : REST, sp = 28, old = f.a;
+          f.a += Math.max(-sp * STEP, Math.min(sp * STEP, target - f.a));
+          f.w = (f.a - old) / STEP * f.dir;                          // + is clockwise on screen
+        });
+        if (G.inLane) {                                             // on the plunger
+          G.y = 440 + G.charge * 14; G.vy = 0; G.vx = 0;
+          return;
+        }
+        G.vy += GRAV * STEP;
+        var sp2 = Math.hypot(G.vx, G.vy); if (sp2 > 900) { G.vx *= 900 / sp2; G.vy *= 900 / sp2; }
+        G.x += G.vx * STEP; G.y += G.vy * STEP;
+        WALLS.forEach(function (sgm) { collideSeg(sgm[0], sgm[1], sgm[2], sgm[3], 0.45); });
+        KICK.forEach(function (kk, i) {
+          var hit = collideSeg(kk[0], kk[1], kk[2], kk[3], 0.45);
+          if (hit && Math.hypot(G.vx, G.vy) > 60 && G.kick[i] <= 0) { G.vx += hit[0] * 260; G.vy += hit[1] * 260; G.kick[i] = 0.12; add(10); sfx(520, 0.04, 'square', 0.035); feel(1); }
+        });
+        BUMP.forEach(function (bp, i) {
+          var nx = G.x - bp[0], ny = G.y - bp[1], d = Math.hypot(nx, ny), lim = RB + BR;
+          if (d >= lim || d === 0) return;
+          nx /= d; ny /= d; G.x = bp[0] + nx * lim; G.y = bp[1] + ny * lim;
+          var vn = G.vx * nx + G.vy * ny; G.vx += (380 - Math.min(vn, 0)) * nx * 0.9; G.vy += (380 - Math.min(vn, 0)) * ny * 0.9;
+          if (G.flash[i] <= 0) {
+            G.flash[i] = 0.1; add(100); sfx(880 + i * 90, 0.05, 'square', 0.04); feel(2, bp[0] - 6, bp[1] - BR - 8, 100 * G.mul);
+            if (++G.bumps % 25 === 0) { add(2500); say('Orbīta! +2500'); jingle(); feel(3, 136, 100, 2500 * G.mul); }
+          }
+        });
+        FL.forEach(function (f) {
+          var t = tip(f), hit = collideSeg(f.px, f.py, t[0], t[1], 0, 5);
+          if (!hit) return;
+          // the flipper's own speed where the ball touches: ω × r
+          var rx = hit[2] - f.px, ry = hit[3] - f.py, cvx = -f.w * ry, cvy = f.w * rx;
+          var rvx = G.vx - cvx, rvy = G.vy - cvy, rvn = rvx * hit[0] + rvy * hit[1];
+          if (rvn < 0) { G.vx -= 1.3 * rvn * hit[0]; G.vy -= 1.3 * rvn * hit[1]; }
+        });
+        ROLL.forEach(function (rl, i) {
+          if (!G.lit[i] && Math.abs(G.x - rl[0]) < 8 && Math.abs(G.y - rl[1]) < 8) {
+            G.lit[i] = 1; add(50); sfx(1200, 0.04, 'triangle', 0.03); feel(1, rl[0] - 6, rl[1] + 6, 50 * G.mul);
+            if (G.lit[0] && G.lit[1] && G.lit[2]) { G.lit = [0, 0, 0]; G.mul = Math.min(5, G.mul + 1); add(1000); say('Visas trīs! Reizinātājs × ' + G.mul); paint(); jingle(); feel(3, 132, 70, 1000 * (G.mul - 1 || 1)); }
+          }
+        });
+        if (G.x > 286 && G.y > 438 && G.vy > 0) { G.inLane = true; G.charge = 0; }   // fell back down the lane: onto the plunger again
+        if (G.y > PH + 10) drain();
+      }
+      function jingle() { [660, 880, 1320].forEach(function (f, i) { setTimeout(function () { blip(f, 0.06, 'square', 0.035); }, i * 70); }); }
+      function drain() {
+        blip(110, 0.4, 'sawtooth', 0.05); feel(3);
+        G.ball++; G.mul = 1;
+        if (G.ball > 3) { G.over = true; gameOver(); return; }
+        paint(); serve();
+      }
+      function gameOver() {
+        var rec = G.score > best;
+        if (rec) { best = G.score; try { localStorage.setItem(PIN_KEY, String(best)); } catch (_e) {} w.el.querySelector('.pc98-pbest').textContent = best; }
+        say('Spēle beigusies. ' + (rec ? 'Jauns rekords! ' : '') + 'Atstarpe: jauna spēle.');
+        blip(330, 0.2, 'square', 0.04); setTimeout(function () { blip(220, 0.3, 'square', 0.04); }, 180);
+      }
+      function launch() {
+        if (!G.inLane) return;
+        G.inLane = false; G.vy = -(380 + G.charge * 520); G.vx = 0; G.charge = 0;
+        blip(200, 0.1, 'sawtooth', 0.035); say('');
+      }
+
+      // the flipper: rasterized every frame (distance to its axis, wide at the pivot, thin at the tip)
+      function drawFlipper(f) {
+        var t = tip(f), x0 = Math.min(f.px, t[0]) - 8, x1 = Math.max(f.px, t[0]) + 8, y0 = Math.min(f.py, t[1]) - 8, y1 = Math.max(f.py, t[1]) + 8;
+        var dx = t[0] - f.px, dy = t[1] - f.py, L = dx * dx + dy * dy;
+        for (var y = y0 | 0; y <= y1; y++) for (var x = x0 | 0; x <= x1; x++) {
+          var u = Math.max(0, Math.min(1, ((x + 0.5 - f.px) * dx + (y + 0.5 - f.py) * dy) / L));
+          var d = Math.hypot(x + 0.5 - f.px - dx * u, y + 0.5 - f.py - dy * u), rad = 6 - u * 3;
+          if (d <= rad) { g.fillStyle = d > rad - 1.3 ? PAL.ink : (u < 0.15 ? PAL.yellow : PAL.orange); g.fillRect(x, y, 1, 1); }
+        }
+      }
+      function draw(dt) {
+        trauma = Math.max(0, trauma - (dt || 0) * 1.6); shakeT += (dt || 0) * 30;
+        var sh = trauma * trauma, ox = Math.round(3 * sh * Math.sin(shakeT * 1.7)), oy = Math.round(2 * sh * Math.sin(shakeT * 2.3));
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        if (ox || oy) { g.fillStyle = '#000'; g.fillRect(0, 0, PW, PH); }
+        g.setTransform(1, 0, 0, 1, ox, oy);
+        g.drawImage(bg, 0, 0);
+        ROLL.forEach(function (rl, i) { R(g, rl[0] - 5, rl[1] - 3, 10, 6, PAL.ink); R(g, rl[0] - 4, rl[1] - 2, 8, 4, G.lit[i] ? PAL.yellow : '#3a3f5a'); });
+        BUMP.forEach(function (bp, i) { g.drawImage(bumpS[G.flash[i] > 0 ? 1 : 0], bp[0] - BR, bp[1] - BR); });
+        KICK.forEach(function (kk, i) { if (G.kick[i] > 0) line(g, kk[0], kk[1], kk[2], kk[3], PAL.yellow, 2); });
+        FL.forEach(drawFlipper);
+        // the plunger, pulled down while held
+        var pz = 452 + Math.round(G.charge * 14);
+        R(g, 291, pz, 10, 4, PAL.red); R(g, 294, pz + 4, 4, 470 - pz, PAL.wall);
+        g.drawImage(ballS, Math.round(G.x) - 6, Math.round(G.y) - 6);
+        // "+100" in 3×5 pixel digits, rising in whole pixels, blinking off at the end
+        pops.forEach(function (p) {
+          p.life -= dt || 0;
+          if (p.life > 0 && (p.life > 0.15 || ((p.life * 40) | 0) % 2)) { var yy = p.y - Math.round((0.6 - p.life) * 20); digits(g, p.t, p.x + 1, yy + 1, '#000'); digits(g, p.t, p.x, yy, '#ffffff'); }
+        });
+        pops = pops.filter(function (p) { return p.life > 0; });
+      }
+      function frame(now) {
+        raf = 0;
+        if (!wins.pinball) return;
+        var dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016); last = now;
+        if (!G.over) {
+          if (G.inLane && keys.p) G.charge = Math.min(1, G.charge + dt * 1.6);
+          acc += dt;
+          while (acc >= STEP) { step(); acc -= STEP; if (G.over) break; }
+          for (var i = 0; i < 3; i++) G.flash[i] -= dt;
+          G.kick[0] -= dt; G.kick[1] -= dt;
+          // a ball resting somewhere with no way out gets a nudge
+          if (!G.inLane && Math.hypot(G.vx, G.vy) < 8) { G.still += dt; if (G.still > 2.5) { G.vy = -260; G.vx = (Math.random() - 0.5) * 120; G.still = 0; } } else G.still = 0;
+        }
+        draw(dt);
+        raf = requestAnimationFrame(frame);
+      }
+
+      // the keys: the computer's own Esc handler stays; these only for the table
+      function setKey(e, down) {
+        if (!wins.pinball || !wins.pinball.el.classList || wins.pinball.el.classList.contains('is-off')) return;
+        var c = e.code, hit = true;
+        if (c === 'KeyZ' || c === 'ShiftLeft' || c === 'ArrowLeft') { if (down && !keys.l) sfx(160, 0.04, 'square', 0.03); keys.l = down; FL[0].up = down; }
+        else if (c === 'Slash' || c === 'ShiftRight' || c === 'ArrowRight' || c === 'KeyM') { if (down && !keys.r) sfx(170, 0.04, 'square', 0.03); keys.r = down; FL[1].up = down; }
+        else if ((c === 'KeyX' || c === 'Period') && down) {                // a nudge, as on the real table: once in a while
+          if (!G.inLane && !G.over && (G.nudgeAt || 0) < performance.now() - 700) { G.nudgeAt = performance.now(); G.vx += c === 'KeyX' ? 70 : -70; G.vy -= 40; trauma = Math.min(1, trauma + 0.35); sfx(90, 0.08, 'square', 0.04); }
+        }
+        else if (c === 'Space' || c === 'ArrowDown' || c === 'Enter') {
+          if (down && G.over) { newGame(); } else if (!down && keys.p) launch();
+          keys.p = down;
+        } else hit = false;
+        if (hit) e.preventDefault();
+      }
+      var kd = function (e) { if (!e.repeat) setKey(e, true); else if (/^(Space|ArrowDown|Slash|KeyZ)$/.test(e.code)) e.preventDefault(); };
+      var ku = function (e) { setKey(e, false); };
+      window.addEventListener('keydown', kd, true);
+      window.addEventListener('keyup', ku, true);
+      // the mouse: left button the left flipper, right button the right one; on the plunger both pull it
+      cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+      cv.addEventListener('pointerdown', function (e) {
+        e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_e) {}
+        if (G.over) { newGame(); return; }
+        if (G.inLane) { keys.p = true; return; }
+        var r = cv.getBoundingClientRect(), right = e.pointerType === 'mouse' ? e.button === 2 : e.clientX > r.left + r.width / 2;
+        var f = FL[right ? 1 : 0]; f.up = true; f.ptr = e.pointerId; blip(right ? 170 : 160, 0.04, 'square', 0.03);
+      });
+      var up = function (e) {
+        if (keys.p) { keys.p = false; launch(); }
+        FL.forEach(function (f) { if (f.ptr === e.pointerId || e.pointerType === 'mouse') { f.up = false; f.ptr = null; } });
+      };
+      cv.addEventListener('pointerup', up);
+      cv.addEventListener('pointercancel', up);
+
+      w.onClose = function () { if (raf) cancelAnimationFrame(raf); raf = 0; window.removeEventListener('keydown', kd, true); window.removeEventListener('keyup', ku, true); };
+      newGame();
+      raf = requestAnimationFrame(frame);
+    }
+
+    var OPEN = { candy: candy, chronicle: chronicle, mypc: mypc, bin: bin, mines: mines, pinball: pinball, music: music, settings: settings };
     desk.addEventListener('dblclick', function (e) { var b = e.target.closest('[data-open]'); if (b) OPEN[b.dataset.open](); });
     desk.addEventListener('click', function (e) {
       var b = e.target.closest('[data-open]');
@@ -1030,8 +1345,9 @@
     // the boot screen, then the day's error and (the first time today) the new chapter
     if (opts.solo) {                                                // the arcade: straight into the game, the gallery's dither round it
       $('.pc98-boot').remove();
-      candy();
-      if (window.MinkaDitherBackdrop && wins.candy) window.MinkaDitherBackdrop.attach(root, { box: wins.candy.el });
+      (OPEN[opts.app] || candy)();
+      var game = wins[opts.app] || wins.candy;
+      if (window.MinkaDitherBackdrop && game) window.MinkaDitherBackdrop.attach(root, { box: game.el });
       openNow = { close: close };
       return openNow;
     }
