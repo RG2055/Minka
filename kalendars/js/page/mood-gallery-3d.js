@@ -60,7 +60,7 @@
     main: [[7.6, 3.2], [8.9, 3.1], [9.35, 1.5], [11.4, 3.3], [9.6, 4.4], [7.7, 5.4], [11.5, 2.4], [8.6, 4.8], [10.9, 4.2]],
     nmp: [[7.45, 7.4], [9.6, 7.35], [7.45, 9.6], [9.6, 9.65], [7.5, 8.5]]
   };
-  var CATS = [['Rudais', 0, 'main'], ['Melnais', 1, 'main'], ['Pelēkais', 2, 'nmp']];
+  var CATS = [['Rudais', 0, 'main'], ['Melnais', 1, 'main'], ['Pelēkais', 2, 'nmp'], ['Klibais', 1, 'hall']];
   var CAT_FW = 85, CAT_FH = 48, CAT_H = 0.17, CAT_SPEED = 0.42;
   var HELD_V = '?v=20261002h3d1';
   var ART = 'assets/gallery/', ART_V = '?v=20261001a', CAT_V = '?v=20261001c1', MUSIC_V = '?v=20261001m1';
@@ -115,7 +115,7 @@
   var MUSIC_CREDIT = 'Ieraksti: PM Music, diriģents Philip Milman (pmmusic.pro), CC BY 3.0';
   var CREDITS = 'Mūzika: PM Music, diriģents Philip Milman, CC BY 3.0. Roka: WebXR rokas modelis (webxr-input-profiles, MIT). '
     + 'White Monster: TurnOnTheNight, CC0. Leonardo, Mikelandželo, Frīdrihs, Mīlo Venēra (foto Jastrow): publiskais domēns.';
-  var MUSIC_VOL = 0.3, MUSIC_KEY = 'minkaGalleryMusicV1', QUALITY_KEY = 'minkaGalleryWidthV3';
+  var MUSIC_VOL = 0.08, MUSIC_KEY = 'minkaGalleryMusicV1', QUALITY_KEY = 'minkaGalleryWidthV4';   // V4: the old lowered values (from the flicker) are not read
   var root = null, state = null;
 
   /* ── Palīgi ───────────────────────────────────────────────────────────── */
@@ -192,6 +192,21 @@
           else set(x, y, 104 + g, 72 + g, 46 + g);
         } else if (y >= 14 && y < 17) set(x, y, y === 14 ? 236 : 168, y === 14 ? 228 : 156, y === 14 ? 214 : 138);   // picture rail
         else set(x, y, 214 + n, 206 + n, 190 + n);
+      }
+    });
+  }
+  /* The world outside (the critic: "the gallery floats in nothing"): the hall's skylight,
+     day or night as the clock says, painted once (a texture like any other). */
+  function isNightNow() { var h = new Date().getHours(); return h < 7 || h >= 20; }
+  function skyCeilCanvas(night) {
+    var r = rnd(53);
+    return pixels(function (set) {
+      for (var y = 0; y < HALF; y++) for (var x = 0; x < HALF; x++) {
+        var bar = x % 32 < 2 || y % 64 < 2, c;
+        if (bar) c = [138, 144, 153];
+        else if (night) c = r() < 0.004 ? [220, 230, 255] : [12, 20, 46];
+        else { var cl = Math.sin(x * 0.09 + y * 0.03) + Math.sin(y * 0.11 - x * 0.02) > 1.35; c = cl ? [240, 244, 250] : [150, 198, 238]; }
+        set(x, y, c[0], c[1], c[2]);
       }
     });
   }
@@ -664,22 +679,30 @@
       lv = t.tex.levels[L]; lw = lv.w; lh = lv.h; lpx = lv.px;
     }
     var col = t.col ? px(t.col, lut) : 0;
+    // The weights are linear in x and y: w = k + e·y + f·x. Each row's span inside the triangle
+    // is solved for at once and walked with additions (the bounding box's empty corners and
+    // the per-pixel products were most of a close-up model's cost).
+    var f0 = ia * (B[1] - C[1]), e0 = ia * (C[0] - B[0]), k0 = ia * (B[0] * C[1] - B[1] * C[0]);
+    var f1 = ia * (C[1] - A[1]), e1 = ia * (A[0] - C[0]), k1 = ia * (C[0] * A[1] - C[1] * A[0]);
+    var f2 = -f0 - f1, EPS = 1e-5;
+    var dz = f0 * A[2] + f1 * B[2] + f2 * C[2], du = f0 * A[3] + f1 * B[3] + f2 * C[3], dv = f0 * A[4] + f1 * B[4] + f2 * C[4];
     for (var y = minY; y <= maxY; y++) {
-      var py = y + 0.5, row = y * W;
-      for (var x = minX; x <= maxX; x++) {
-        var qx = x + 0.5;
-        var w0 = ((B[0] - qx) * (C[1] - py) - (B[1] - py) * (C[0] - qx)) * ia;
-        if (w0 < -1e-5) continue;
-        var w1 = ((C[0] - qx) * (A[1] - py) - (C[1] - py) * (A[0] - qx)) * ia;
-        if (w1 < -1e-5) continue;
-        var w2 = 1 - w0 - w1;
-        if (w2 < -1e-5) continue;
-        var iz = w0 * A[2] + w1 * B[2] + w2 * C[2], d = 1 / iz, i = row + x;
+      var py = y + 0.5, b0 = k0 + e0 * py, b1 = k1 + e1 * py, b2 = 1 - b0 - b1, lo = minX + 0.5, hi = maxX + 0.5;
+      // each weight ≥ 0 bounds qx from one side (or empties the row)
+      if (f0 > 0) lo = Math.max(lo, (-EPS - b0) / f0); else if (f0 < 0) hi = Math.min(hi, (-EPS - b0) / f0); else if (b0 < -EPS) continue;
+      if (f1 > 0) lo = Math.max(lo, (-EPS - b1) / f1); else if (f1 < 0) hi = Math.min(hi, (-EPS - b1) / f1); else if (b1 < -EPS) continue;
+      if (f2 > 0) lo = Math.max(lo, (-EPS - b2) / f2); else if (f2 < 0) hi = Math.min(hi, (-EPS - b2) / f2); else if (b2 < -EPS) continue;
+      var x0 = Math.max(minX, Math.ceil(lo - 0.5)), x1 = Math.min(maxX, Math.floor(hi - 0.5));
+      if (x0 > x1) continue;
+      var qx = x0 + 0.5, w0 = b0 + f0 * qx, w1 = b1 + f1 * qx, w2 = 1 - w0 - w1;
+      var iz = w0 * A[2] + w1 * B[2] + w2 * C[2], un = w0 * A[3] + w1 * B[3] + w2 * C[3], vn = w0 * A[4] + w1 * B[4] + w2 * C[4];
+      var row = y * W;
+      for (var x = x0; x <= x1; x++, iz += dz, un += du, vn += dv) {
+        var d = 1 / iz, i = row + x;
         if (d >= zb[x] || d >= pd[i]) continue;
         var c = col;
         if (lpx) {
-          var u = (w0 * A[3] + w1 * B[3] + w2 * C[3]) * d, v = (w0 * A[4] + w1 * B[4] + w2 * C[4]) * d;
-          var tx = (u * lw) | 0, ty = (v * lh) | 0;
+          var tx = (un * d * lw) | 0, ty = (vn * d * lh) | 0;
           if (tx < 0) tx = 0; else if (tx >= lw) tx = lw - 1;
           if (ty < 0) ty = 0; else if (ty >= lh) ty = lh - 1;
           var s = lpx[ty * lw + tx];
@@ -692,15 +715,19 @@
       }
     }
   }
-  // a polygon cut at the near plane (so a face you stand right at does not tear)
-  function clipNear(poly) {
-    var out = [];
-    for (var i = 0; i < poly.length; i++) {
-      var a = poly[i], b = poly[(i + 1) % poly.length], ina = a[1] >= NEAR, inb = b[1] >= NEAR;
-      if (ina) out.push(a);
-      if (ina !== inb) { var k = (NEAR - a[1]) / (b[1] - a[1]); out.push(a.map(function (v, j) { return v + (b[j] - v) * k; })); }
+  // A triangle cut at the near plane (so a face you stand right at does not tear), into
+  // scratch arrays: nothing is allocated per triangle (the garbage collector's pauses
+  // were a visible hitch on the weak PCs). A vertex is [across, ahead, up, u, v].
+  var CAM = [new Float64Array(5), new Float64Array(5), new Float64Array(5)], CLIP = [], SCR = [];
+  for (var _i = 0; _i < 4; _i++) { CLIP.push(new Float64Array(5)); SCR.push(new Float64Array(5)); }
+  function clipNear3() {
+    var n = 0;
+    for (var i = 0; i < 3; i++) {
+      var a = CAM[i], b = CAM[(i + 1) % 3], ina = a[1] >= NEAR, inb = b[1] >= NEAR;
+      if (ina) { CLIP[n].set(a); n++; }
+      if (ina !== inb) { var k = (NEAR - a[1]) / (b[1] - a[1]), o = CLIP[n]; for (var j = 0; j < 5; j++) o[j] = a[j] + (b[j] - a[j]) * k; n++; }
     }
-    return out;
+    return n;
   }
   var PROP_SPAN = { top: null, bot: null };
   function drawProps3D(st, dirX, dirY, plX, plY) {
@@ -710,26 +737,33 @@
       if (p.hidden || !p.mesh) return;
       var dx = p.x - st.x, dy = p.y - st.y, tYc = inv * (-plY * dx + plX * dy), rad = p.radius || 0.55;
       if (tYc < -rad || tYc > 24) return;
+      // out to the side of the view: not one of its triangles is worked out
+      // (across is in screen units, |across / ahead| ≤ 1 on screen; the margin is generous)
+      var tXc = inv * (dirY * dx - dirX * dy), reach = rad * 1.6 / Math.max(0.2, Math.hypot(plX, plY));
+      if (tXc - reach > tYc + rad * 1.6 || tXc + reach < -(tYc + rad * 1.6)) return;
       var cosF = Math.cos(p.facing), sinF = Math.sin(p.facing);
       var night = !!zoneAt(st.map, p.x, p.y), base = (night ? lampOff : 0) + lightAt(st, p.x, p.y);
       var pp = PROP_SPAN; pp.top.fill(32767); pp.bot.fill(-1);
-      p.mesh.tris.forEach(function (t) {
-        // to the camera: across (tX), ahead (tY), height over the eye; the picture's place
-        var cam = t.v.map(function (q, k) {
-          var wx = p.x + q[0] * cosF - q[1] * sinF - st.x, wy = p.y + q[0] * sinF + q[1] * cosF - st.y;
-          return [inv * (dirY * wx - dirX * wy), inv * (-plY * wx + plX * wy), q[2] - z, t.uv[k][0], t.uv[k][1], wx, wy];
-        });
-        var n = [t.n[0] * cosF - t.n[1] * sinF, t.n[0] * sinF + t.n[1] * cosF, t.n[2]];
-        var toward = n[0] * (cam[0][5] + cam[1][5] + cam[2][5]) + n[1] * (cam[0][6] + cam[1][6] + cam[2][6]) + n[2] * (cam[0][2] + cam[1][2] + cam[2][2]);
-        if (toward >= 0 && !t.two) return;                          // its back to us
-        var poly = clipNear(cam);
-        if (poly.length < 3) return;
-        var dAvg = (cam[0][1] + cam[1][1] + cam[2][1]) / 3;
-        var lit = Math.max(0, Math.abs(dot3(n, LIGHT3)) * (toward < 0 ? 1 : 0.7));
+      var tris = p.mesh.tris;
+      for (var ti = 0; ti < tris.length; ti++) {
+        var t = tris[ti], sxw = 0, syw = 0, szw = 0;
+        // to the camera: across, ahead, height over the eye; the picture's place
+        for (var k = 0; k < 3; k++) {
+          var q = t.v[k], wx = p.x + q[0] * cosF - q[1] * sinF - st.x, wy = p.y + q[0] * sinF + q[1] * cosF - st.y, c = CAM[k];
+          c[0] = inv * (dirY * wx - dirX * wy); c[1] = inv * (-plY * wx + plX * wy); c[2] = q[2] - z; c[3] = t.uv[k][0]; c[4] = t.uv[k][1];
+          sxw += wx; syw += wy; szw += c[2];
+        }
+        var n0 = t.n[0] * cosF - t.n[1] * sinF, n1 = t.n[0] * sinF + t.n[1] * cosF, n2 = t.n[2];
+        var toward = n0 * sxw + n1 * syw + n2 * szw;
+        if (toward >= 0 && !t.two) continue;                        // its back to us
+        var nc = clipNear3();
+        if (nc < 3) continue;
+        var dAvg = (CAM[0][1] + CAM[1][1] + CAM[2][1]) / 3;
+        var lit = Math.max(0, Math.abs(n0 * LIGHT3[0] + n1 * LIGHT3[1] + n2 * LIGHT3[2]) * (toward < 0 ? 1 : 0.7));
         var lut = lutAt(shadeLevel(Math.max(0, dAvg), 0) + base + Math.round((1 - lit) * t.soft * 60), night);
-        var scr = poly.map(function (c) { var iz = 1 / c[1]; return [(W / 2) * (1 + c[0] * iz), half - c[2] * P * iz, iz, c[3] * iz, c[4] * iz]; });
-        for (var k = 1; k < scr.length - 1; k++) rasterTri(st, scr[0], scr[k], scr[k + 1], t, lut, pp);
-      });
+        for (k = 0; k < nc; k++) { var cv = CLIP[k], iz = 1 / cv[1], o = SCR[k]; o[0] = (W / 2) * (1 + cv[0] * iz); o[1] = half - cv[2] * P * iz; o[2] = iz; o[3] = cv[3] * iz; o[4] = cv[4] * iz; }
+        for (k = 1; k < nc - 1; k++) rasterTri(st, SCR[0], SCR[k], SCR[k + 1], t, lut, pp);
+      }
       // what the crosshair and a click find: the columns it covers, nearer than what is there
       for (var x = 0; x < W; x++) {
         if (pp.bot[x] < 0) continue;
@@ -761,9 +795,9 @@
   /* Props made in Blender with their light baked in (scripts/blender/gallery_props.py), as the cats'
      statue: once their mesh and texture are in, they replace the simple boxes; the model's own parts
      (a cup brewing in the machine) are drawn with them. Loaded once, kept for the next visit. */
-  var BAKED_V = '?v=20261005p4', BAKED_KINDS = { arcade: 1, arcademines: 1, pinball: 1, oldpc: 1, machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
+  var BAKED_V = '?v=20261005p6', BAKED_KINDS = { arcade: 1, arcademines: 1, pinball: 1, bench: 1, oldpc: 1, machine: 1, chair: 1, table: 1, easel: 1, gramophone: 1, monsterbox: 1, bed: 1 }, baked = {};
   function isBaked(kind) { return !!(baked[kind] && baked[kind].tris); }
-  var BAKED_SCALE = { arcade: 0.8, arcademines: 0.62, pinball: 0.56 };  // smaller than built; the pinball's glass under the eye
+  var BAKED_SCALE = { arcade: 0.8, arcademines: 0.62, pinball: 0.56, bench: 1.35 };  // smaller than built; the pinball's glass under the eye
   function bakedMesh(m, img, sc) {
     var tex = texOf(imgCanvas(img)), q = (sc || 1) / m.q, uq = 1 / m.uq, tris = [];
     for (var i = 0; i < m.f.length; i += 3) {
@@ -924,6 +958,8 @@
     ];
     return isBaked('arcade') ? out : box(-0.2 * k, 0.2 * k, -0.21 * k, 0.21 * k, 0, 1.18 * k, { all: { color: '#8f6ad8' } }).concat(out);
   }
+  // a gallery bench: all in the model (a plain box till it has loaded)
+  function benchModel() { var k = BAKED_SCALE.bench; return isBaked('bench') ? [] : box(-0.15 * k, 0.15 * k, -0.46 * k, 0.46 * k, 0, 0.16 * k, { all: { color: '#6b4428' } }); }
   // Mīnas 98: the same cabinet, smaller, in Windows teal; its screen a minefield half swept
   var minesTex = null;
   function arcadeMinesModel() {
@@ -1447,7 +1483,10 @@
     });
     // the aquarium on the hall's end wall, by the White Monster corner (cells 4, 3, 2 as you face it)
     var aquarium = { y: H - 1, cell1: 4, x0: 5 - (AQ_IN[2] + 1) / TEX, x1: 5 - AQ_IN[0] / TEX };
-    return { w: Wm, h: H, grid: grid, zone: zone, doors: doors, doorAt: doorAt, segs: segs, slots: slots, aquarium: aquarium };
+    // a skylight down the middle of the hall
+    var sky = new Uint8Array(Wm * H);
+    for (var wy = LEO_Y0; wy < H - 2; wy++) sky[wy * Wm + 3] = 1;   // (wall windows were tried and taken out: not liked)
+    return { w: Wm, h: H, grid: grid, zone: zone, doors: doors, doorAt: doorAt, segs: segs, slots: slots, aquarium: aquarium, sky: sky };
   }
   // which side of a door you are on decides the room
   function zoneAt(map, x, y) {
@@ -1653,6 +1692,7 @@
       var foot = Math.max(rd * 2 * FOV / W, rd * rd / (eyeH * P)) * TEX, Lf = mipOf(foot, MIPS);
       var own = fl ? (pz ? T.nightFloor : T.floor) : (pz ? T.nightCeil : T.ceil), oth = fl ? (pz ? T.floor : T.nightFloor) : (pz ? T.ceil : T.nightCeil);
       var ol = own.mips[Lf], al = oth.mips[Lf], opx = ol.px, apx = al.px, S = ol.w, m = S - 1, sbf = TB - Lf;
+      var SK = !fl && !pz ? map.sky : null, kpx = SK ? T.sky.mips[Lf].px : null;
       var lutf = shade(rd, 0, pz), luta = shade(rd, 0, !pz), o = y * W;
       var lvO = shadeLevel(rd, 0) + (pz ? lampOff : 0), lvA = shadeLevel(rd, 0) + (pz ? 0 : lampOff), LG = st.light, LWd = st.lightW;
       for (x = 0; x < W; x++) {
@@ -1660,6 +1700,7 @@
         var wx = fx0 + x * sx, wy = fy0 + x * sy;
         var ti = ((((wy * S) | 0) & m) << sbf) | (((wx * S) | 0) & m);
         var other = cr[x] >= 0 && rd > cr[x], lg = LG ? LG[((wy * 4) | 0) * LWd + ((wx * 4) | 0)] | 0 : 0;
+        if (SK && !other && SK[(wy | 0) * mw + (wx | 0)]) { buf[o + x] = px(kpx[ti], lutf); continue; }   // the skylight
         buf[o + x] = lg ? (other ? px(apx[ti], lutAt(lvA + lg, !pz)) : px(opx[ti], lutAt(lvO + lg, pz))) : other ? px(apx[ti], luta) : px(opx[ti], lutf);
       }
     }
@@ -1814,7 +1855,7 @@
     }
     switch (a.kind) {
       case 'machine': return ['E', st.brew ? 'Kafija top…' : 'Izvēlēties kafiju'];
-      case 'table': case 'chair': return st.seated ? ['W', 'Piecelties'] : ['E', 'Apsēsties'];
+      case 'table': case 'chair': case 'bench': return st.seated ? ['W', 'Piecelties'] : ['E', 'Apsēsties'];
       case 'gramophone': return ['E', st.musicOn ? 'Izslēgt mūziku' : 'Ieslēgt mūziku'];
       case 'easel': return ['E', 'Zīmēt'];
       case 'statue': return ['E', 'Apskatīt: ' + VENUS.title];
@@ -2449,19 +2490,24 @@
     }
     return true;
   }
-  // a slow computer: draw a smaller picture; once frames are cheap again (a
-  // busy moment has passed), a bigger one again. Remembered for next time.
+  // The picture's size never changes while you walk: lowering it when a heavy moment came (a
+  // model right in front of you) and raising it again when it passed was the flicker. Only a
+  // computer that stays slow for a long stretch (about 2 s of frames over 14 ms, never in the
+  // first seconds while things load) gets a smaller picture, once; a computer that runs light
+  // for a long while gets a bigger one remembered for its next visit, not now.
   function keepUp(st) {
-    if (st.frames < 24 || st.loweredAt > st.frames - 24) return;
-    var next = 0;
-    if (st.cost >= 14 && st.cap > 320) next = Math.max(320, st.cap - 80);
-    else if (st.cost < 6 && st.cap < maxWidth() && st.frames - st.loweredAt > 240) next = Math.min(maxWidth(), st.cap + 80);
-    if (!next) return;
-    try { localStorage.setItem(QUALITY_KEY, String(next)); } catch (_e) {}
-    st.cap = next;
-    setSize(st);
-    st.loweredAt = st.frames;
-    st.cost = 0;
+    if (st.frames < 240) return;
+    st.slow = st.lastMs >= 14 ? (st.slow || 0) + 1 : Math.max(0, (st.slow || 0) - 2);
+    if (!st.loweredOnce && st.slow >= 120) {
+      var next = Math.max(320, st.cap - 160);
+      try { localStorage.setItem(QUALITY_KEY, String(next)); } catch (_e) {}
+      st.cap = next; setSize(st); st.loweredOnce = true; st.slow = 0; st.cost = 0;
+      return;
+    }
+    if (!st.raisedNext && !st.loweredOnce && st.frames > 1800 && st.cost < 6 && st.cap < maxWidth()) {
+      st.raisedNext = true;
+      try { localStorage.setItem(QUALITY_KEY, String(Math.min(maxWidth(), st.cap + 80))); } catch (_e) {}
+    }
   }
   function say(st, text) {
     st.msg = text; st.msgUntil = performance.now() + 3600; st.msgShown = true;
@@ -2579,6 +2625,13 @@
     st.dirty = true;
   }
   function sitDown(st, prop) {
+    if (prop.kind === 'bench') {                                   // on the bench, facing the wall on your side (its drawings)
+      var east = st.x > prop.x;
+      st.x = prop.x + (east ? 0.45 : -0.45); st.y = Math.max(prop.y - 0.4, Math.min(prop.y + 0.4, st.y));
+      st.a = east ? 0 : Math.PI; st.seated = true; st.goal = null; st.dirty = true;
+      say(st, st.cup ? 'Tu apsēdies. C: malks, W: piecelties' : 'Tu apsēdies. W: piecelties');
+      return;
+    }
     var table = st.props.find(function (p) { return p.kind === 'table'; });
     var chairs = st.props.filter(function (p) { return p.kind === 'chair'; });
     if (!table || !chairs.length) return;
@@ -2606,7 +2659,7 @@
     }
     switch (ref.kind) {
       case 'easel': if (st.onDraw) st.onDraw({}); return;
-      case 'table': case 'chair': if (!st.seated) sitDown(st, ref); return;
+      case 'table': case 'chair': case 'bench': if (!st.seated) sitDown(st, ref); return;
       case 'gramophone': setMusic(st, !st.musicOn); return;
       case 'machine': if (!st.brew) menu(true); return;
       case 'statue': look({ src: ART + 'venus-milo.webp' + ART_V, caption: VENUS.caption, more: WIKI + MORE.venus }); earn(st, 'venus'); return;
@@ -3090,6 +3143,8 @@
       var p = toCanvas(e);
       clickAt(state, p[0], p[1]);
     });
+    // a clicked side button gives its focus back at once (Space then never presses it again)
+    root.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button'); if (b) setTimeout(function () { b.blur(); }, 0); }, true);
     window.addEventListener('keydown', function (e) {
       var st = state;
       if (!st || st.closed || root.hidden) return;
@@ -3113,7 +3168,11 @@
       }
       if (st.viewing) return;
       if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') {
-        if (e.target && e.target.closest && e.target.closest('button') && e.code !== 'KeyE') return;
+        // a focused button (the one that opened the gallery, a side button just clicked) must not be
+        // pressed again by Space: that reopened the gallery. Enter on a button still presses it.
+        var ctl = e.target && e.target.closest && e.target.closest('button, a, input, textarea, select, [contenteditable="true"]');
+        if (ctl && (e.code === 'Enter' || /^(INPUT|TEXTAREA|SELECT)$/.test(ctl.tagName) || ctl.isContentEditable)) return;
+        if (ctl && ctl.blur) ctl.blur();
         if (st.aim) interact(st.aim);
         e.preventDefault();
         return;
@@ -3209,9 +3268,10 @@
   }
   // The widest picture: 800 on a strong computer, else 640 (the slow-machine
   // check lowers it further, and raises it again when frames are cheap).
-  // one width for every computer (the same picture everywhere, fast on the weak work PCs too);
-  // only a frame over 14 ms lowers it for that computer, so a slow moment never sticks
-  function maxWidth() { return 800; }
+  // one width for every computer (the same picture everywhere); 960 since the models are drawn
+  // in row spans without allocations (1.3–2.2× cheaper): on a 2× screen 3 screen pixels per
+  // picture pixel instead of 4, on the work PCs' 1× screens the same width as before, cheaper
+  function maxWidth() { return 960; }
   function savedCap() {
     var cap = 0;
     try { cap = +localStorage.getItem(QUALITY_KEY) || 0; } catch (_e) {}
@@ -3264,7 +3324,7 @@
     return { tris: tris, bills: [] };
   }
   // the old computer's Windows 98 (js/page/mood-gallery-pc.js), loaded the first time it is switched on
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261005pb2', pcLoad = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261005gx5', pcLoad = null;
   function openPC(st, app) {
     freeMouse();
     if (!pcLoad) pcLoad = new Promise(function (ok, no) {
@@ -3291,6 +3351,7 @@
   function imgCanvas(img) { var c = canvas(img.naturalWidth, img.naturalHeight); c.getContext('2d').drawImage(img, 0, 0); return c; }
   function loadImage(src, done) { var img = new Image(); img.decoding = 'async'; img.onload = function () { done(img); }; img.src = src; return img; }
   function open(opts, keep) {
+    try { var fe = document.activeElement; if (fe && fe !== document.body && fe.blur) fe.blur(); } catch (_e) {}   // the opener's focus off (Space would press it again)
     if (!root) build();
     if (!luts) makeLuts();
     var origin = opts.origin;
@@ -3326,8 +3387,18 @@
     props.push({ kind: 'statue', x: 3.0, y: (LEO_Y0 + LEO_Y1) / 2 + 0.5, h: 0.82, solid: 0.38, reach: 2.8, shade: 0.2 });
     // the cats' monument in the middle of the hall, between the pillars at the Leonardo hall's end
     props.push({ kind: 'catstatue', x: 3.5, y: LEO_Y1 + 1.5, h: 0.62, solid: 0.36, reach: 2.6, shade: 0.24 });
+    // benches down the middle of the hall, one at each day's pillar line (not where a statue stands)
+    [LEO_Y1 + 1].concat(map.segs.slice(1).map(function (sg) { return sg.y1; })).forEach(function (py) {
+      if (py >= map.h - 2) return;
+      var bx = 3.5, by = py + 0.5;
+      if (props.some(function (p) { return Math.hypot(p.x - bx, p.y - by) < 1.1; })) return;
+      props.push({ kind: 'bench', x: bx, y: by, h: 0.22, solid: 0.2, reach: 2.2, shade: 0.12 });
+    });
     var gold = goldSpot(map, props, opts.today);
     if (gold) props.push({ kind: 'goldcup', x: gold[0], y: gold[1], h: 0.14, reach: 1.8, shade: 0.06 });
+    // the hall cat's way: down the middle line (no pillars there), into the lobby and back; on the benches too
+    CAT_WAYS.hall = [[3.4, 3.6], [2.6, 4.6]];
+    for (var cy = LEO_Y0 + 0.5; cy < map.h - 3; cy += 2.5) CAT_WAYS.hall.push([3.3 + ((cy * 7) % 5) * 0.1, cy]);
     var cats = CATS.map(function (c, i) {
       var way = CAT_WAYS[c[2]][(i * 3) % CAT_WAYS[c[2]].length];
       return { kind: 'cat', name: c[0], coat: c[1], room: c[2], x: way[0], y: way[1], h: CAT_H, reach: 2.2, shade: 0.07, vx: 1, vy: 0, mode: 'sit', until: performance.now() + 800 + i * 900, t: i, flip: i === 1 };
@@ -3349,6 +3420,7 @@
       tex: keep && keep.tex ? keep.tex : {
         plaster: wallTex(plasterC), plasterCanvas: plasterC, stone: wallTex(stoneCanvas()), jamb: wallTex(jambCanvas()), marble: wallTex(marbleCanvas()),
         nightWall: wallTex(nightWallC), nightWallCanvas: nightWallC, glass: wallTex(glassCanvas()),
+        sky: wallTex(skyCeilCanvas(isNightNow())),
         floor: wallTex(floorCanvas()), ceil: wallTex(ceilCanvas()), nightFloor: wallTex(nightFloorCanvas()), nightCeil: wallTex(nightCeilCanvas())
       },
       artTex: keep && keep.artTex || {},
@@ -3356,7 +3428,7 @@
     };
     // which way each thing faces (the map runs y down): the chairs the table, the
     // machine, the easel and the gramophone the room, the beds their foot to the room
-    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4, table: 0, oldpc: Math.PI * 0.72, goldcup: 0.6, arcade: 0, arcademines: 0, pinball: Math.PI };
+    var FACING = { machine: 0, easel: 0, gramophone: Math.PI / 4, monsterbox: -Math.PI / 4, table: 0, oldpc: Math.PI * 0.72, goldcup: 0.6, arcade: 0, arcademines: 0, pinball: Math.PI, bench: 0 };
     var bedFacing = [Math.PI / 2, Math.PI / 2, -Math.PI / 2, Math.PI];
     var makeSprites = function () {
       props.forEach(function (p) {
@@ -3365,7 +3437,7 @@
           : p.kind === 'gramophone' ? function () { return gramophoneModel(st.musicOn); }
           : p.kind === 'easel' ? easelModel : p.kind === 'chair' ? chairModel : p.kind === 'monsterbox' ? monsterBoxModel
           : p.kind === 'bed' ? function () { return bedModel(p.person); } : p.kind === 'table' && isBaked('table') ? function () { return []; }
-          : p.kind === 'oldpc' ? oldpcModel : p.kind === 'goldcup' ? goldcupModel : p.kind === 'arcade' ? arcadeModel : p.kind === 'arcademines' ? arcadeMinesModel : p.kind === 'pinball' ? pinballModel : null;
+          : p.kind === 'oldpc' ? oldpcModel : p.kind === 'goldcup' ? goldcupModel : p.kind === 'arcade' ? arcadeModel : p.kind === 'arcademines' ? arcadeMinesModel : p.kind === 'pinball' ? pinballModel : p.kind === 'bench' ? benchModel : null;
         if (model) {
           p.facing = p.kind === 'chair' ? (p.x < 3.1 ? 0 : Math.PI) : p.kind === 'bed' ? bedFacing[p.bed] : FACING[p.kind];
           p.parts = model();
@@ -3428,7 +3500,7 @@
       loadBaked(kind, function () {
         if (state !== st) return;
         var make = { machine: function () { return machineModel(!!st.brew); }, chair: chairModel, easel: easelModel, gramophone: function () { return gramophoneModel(st.musicOn); },
-          monsterbox: monsterBoxModel, table: function () { return []; }, oldpc: oldpcModel, arcade: arcadeModel, arcademines: arcadeMinesModel, pinball: pinballModel };
+          monsterbox: monsterBoxModel, table: function () { return []; }, oldpc: oldpcModel, arcade: arcadeModel, arcademines: arcadeMinesModel, pinball: pinballModel, bench: benchModel };
         st.props.forEach(function (p) {
           if (p.kind !== kind) return;
           if (kind === 'bed') { var pp = p; remodel(p, function () { return bedModel(pp.person); }); return; }

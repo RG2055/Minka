@@ -412,7 +412,26 @@ def pinball():
     return parts, 1.44
 
 
-BUILD = {'arcade': arcade, 'arcademines': arcademines, 'pinball': pinball, 'oldpc': oldpc, 'machine': machine, 'chair': chair, 'table': table, 'easel': easel, 'gramophone': gramophone, 'monsterbox': monsterbox, 'bed': bed}
+def bench():
+    """a gallery bench: a slatted walnut seat on two black steel frames, no back; few faces (it is drawn
+    by a software rasterizer on old PCs, several of them down the hall)"""
+    wood = mat('wood', hexc('#6b4428'), rough=0.45, coat=0.35)
+    wood2 = mat('wood2', hexc('#4e301b'), rough=0.5)
+    steel = mat('steel', hexc('#202226'), rough=0.35, metal=0.6)
+    parts = []
+    L, D = 0.46, 0.15                                                  # half length (b), half depth (a)
+    for i in range(3):                                                  # three slats with gaps
+        a0 = -D + i * (2 * D / 3)
+        parts.append(gbox('slat', a0 + 0.006, a0 + 2 * D / 3 - 0.006, -L, L, 0.135, 0.158, wood))
+    parts.append(gbox('rail', -D + 0.01, D - 0.01, -L + 0.03, L - 0.03, 0.118, 0.135, wood2))
+    for b0 in (-L + 0.07, L - 0.07):
+        parts.append(gbox('frame', -D, D, b0 - 0.014, b0 + 0.014, 0.1, 0.118, steel))
+        for a0 in (-D + 0.012, D - 0.012):
+            parts.append(gbox('leg', a0 - 0.012, a0 + 0.012, b0 - 0.012, b0 + 0.012, 0, 0.1, steel))
+    return parts, 0.158
+
+
+BUILD = {'arcade': arcade, 'bench': bench, 'arcademines': arcademines, 'pinball': pinball, 'oldpc': oldpc, 'machine': machine, 'chair': chair, 'table': table, 'easel': easel, 'gramophone': gramophone, 'monsterbox': monsterbox, 'bed': bed}
 TILE_MIN = {}
 
 

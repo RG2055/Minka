@@ -70,10 +70,11 @@
     else if (kind === 'mine') { R(9, 9, 14, 14, '#000'); R(7, 13, 18, 6, '#000'); R(13, 7, 6, 18, '#000'); R(15, 4, 2, 24, '#000'); R(4, 15, 24, 2, '#000'); R(11, 11, 4, 4, '#fff'); }
     else if (kind === 'music') { R(11, 5, 3, 18, '#2a1d48'); R(22, 3, 3, 18, '#2a1d48'); R(11, 3, 14, 4, '#2a1d48'); R(5, 19, 9, 7, '#ff5fb0'); R(16, 17, 9, 7, '#5aa8ff'); R(7, 20, 3, 2, '#ffc0d0'); R(18, 18, 3, 2, '#bfe0ff'); }
     else if (kind === 'gear') { R(12, 3, 8, 26, '#8f7ab8'); R(3, 12, 26, 8, '#8f7ab8'); R(6, 6, 20, 20, '#8f7ab8'); R(11, 11, 10, 10, '#d8c8f0'); R(14, 14, 4, 4, '#2a1d48'); }
-    else if (kind === 'face' || kind === 'faceWin' || kind === 'faceDead') {                 // the minesweeper's face: a black cat
+    else if (kind === 'face' || kind === 'faceWin' || kind === 'faceDead' || kind === 'faceO') {                 // the minesweeper's face: a black cat
       R(6, 4, 4, 7, '#1d1a22'); R(22, 4, 4, 7, '#1d1a22'); R(6, 9, 20, 17, '#1d1a22'); R(4, 12, 24, 11, '#1d1a22');
       if (kind === 'faceWin') { R(8, 13, 7, 4, '#000'); R(17, 13, 7, 4, '#000'); R(9, 14, 2, 1, '#888'); R(18, 14, 2, 1, '#888'); R(15, 14, 2, 1, '#000'); }
       else if (kind === 'faceDead') { R(10, 13, 1, 1, '#d7dd55'); R(12, 15, 1, 1, '#d7dd55'); R(12, 13, 1, 1, '#d7dd55'); R(10, 15, 1, 1, '#d7dd55'); R(11, 14, 1, 1, '#d7dd55'); R(20, 13, 1, 1, '#d7dd55'); R(22, 15, 1, 1, '#d7dd55'); R(22, 13, 1, 1, '#d7dd55'); R(20, 15, 1, 1, '#d7dd55'); R(21, 14, 1, 1, '#d7dd55'); }
+      else if (kind === 'faceO') { R(8, 12, 5, 5, '#d7dd55'); R(19, 12, 5, 5, '#d7dd55'); R(10, 14, 1, 1, '#000'); R(21, 14, 1, 1, '#000'); R(14, 21, 4, 3, '#000'); }   // pressing: eyes wide, an "o"
       else { R(9, 13, 4, 4, '#d7dd55'); R(19, 13, 4, 4, '#d7dd55'); R(10, 14, 2, 2, '#000'); R(20, 14, 2, 2, '#000'); }
       R(15, 19, 2, 2, '#ff8a9a');
     }
@@ -82,6 +83,45 @@
     var big = canvas(n, n), bg = big.getContext('2d'); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, n, n);
     return (iconCache[key] = big.toDataURL('image/png'));
   }
+  /* 1-bit lettering: a word drawn small with the system font, its soft edges cut to on/off,
+     an outline round it, kept; drawn at a whole multiple it is 90s bitmap type */
+  var wordCache = {};
+  function rgbOf(h) { var n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function pixWord(text, col, outline) {
+    var key = text + '|' + col + '|' + (outline || ''); if (wordCache[key]) return wordCache[key];
+    var m = canvas(4, 4).getContext('2d'); m.font = '700 10px Tahoma, Verdana, sans-serif';
+    var wd = Math.ceil(m.measureText(text).width) + 4, ht = 15, c = canvas(wd, ht), q = c.getContext('2d');
+    q.font = m.font; q.textBaseline = 'top'; q.fillStyle = '#000'; q.fillText(text, 2, 2);
+    var d = q.getImageData(0, 0, wd, ht), src = d.data, out = q.createImageData(wd, ht), o = out.data, ci = rgbOf(col), oi = outline ? rgbOf(outline) : null;
+    var on = function (x, y) { return x >= 0 && y >= 0 && x < wd && y < ht && src[(y * wd + x) * 4 + 3] > 120; };
+    for (var y = 0; y < ht; y++) for (var x = 0; x < wd; x++) {
+      var i = (y * wd + x) * 4, use = on(x, y) ? ci : oi && (on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1)) ? oi : null;
+      if (use) { o[i] = use[0]; o[i + 1] = use[1]; o[i + 2] = use[2]; o[i + 3] = 255; }
+    }
+    q.putImageData(out, 0, 0);
+    if (Object.keys(wordCache).length > 80) wordCache = {};
+    return (wordCache[key] = c);
+  }
+  function drawWord(g, text, col, outline, cx, cy, z) {           // centred, at a whole scale, on whole pixels
+    var c = pixWord(text, col, outline), ww = c.width * z, hh = c.height * z;
+    g.drawImage(c, Math.round(cx - ww / 2), Math.round(cy - hh / 2), ww, hh);
+  }
+  function pxLine(g, x0, y0, x1, y1, col, t) {                   // Bresenham, square pen
+    x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1); t = t || 1;
+    var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
+    g.fillStyle = col;
+    for (var guard = 0; guard < 4000; guard++) {
+      g.fillRect(x0 - (t >> 1), y0 - (t >> 1), t, t);
+      if (x0 === x1 && y0 === y1) break;
+      var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; }
+    }
+  }
+  function dotted(g, x, y, w, h, col, phase) {                   // the Windows focus rectangle: 1 px dots
+    g.fillStyle = col; phase = phase || 0;
+    for (var i = phase; i < w; i += 2) { g.fillRect(x + i, y, 1, 1); g.fillRect(x + i, y + h - 1, 1, 1); }
+    for (i = phase; i < h; i += 2) { g.fillRect(x, y + i, 1, 1); g.fillRect(x + w - 1, y + i, 1, 1); }
+  }
+
   function img(kind, n) { return '<img class="pc98-pix" src="' + pix(kind, n) + '" width="' + n + '" height="' + n + '" alt="" draggable="false">'; }
 
   // the six pieces (16×16 pixel art, drawn crisp at the cell's size): coffee, Monster, cat, heart, star, pill
@@ -138,8 +178,12 @@
     document.body.appendChild(root);
     var $ = function (s) { return root.querySelector(s); };
     var WALL_KEY = 'minkaPC98Wall';
-    try { root.dataset.wall = localStorage.getItem(WALL_KEY) || 'vapor'; } catch (_e) { root.dataset.wall = 'vapor'; }
+    try { root.dataset.wall = localStorage.getItem(WALL_KEY) || 'teal'; } catch (_e) { root.dataset.wall = 'teal'; }   // the classic 98 teal first
     if (window.MinkaGallery3D && window.MinkaGallery3D.pause) window.MinkaGallery3D.pause(true);
+    // a clicked button gives its focus back: otherwise Space (the pinball's plunger, or just a key)
+    // pressed it again and "Jauna spēle" or the cat's face restarted the game
+    var inDialog = function (el) { var wnd = el.closest('.pc98-win'); return !!(wnd && wnd.querySelector('.pc98-dlg')); };
+    root.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && !inDialog(b)) setTimeout(function () { b.blur(); }, 0); }, true);
 
     // the desktop's icons
     var desk = $('.pc98-desk');
@@ -214,34 +258,47 @@
     var PCOL = ['#c9a77a', '#c8ccc8', '#3a3346', '#ff4f7a', '#ffd23f', '#5aa8ff'];
     var PNAME = ['kafijas', 'Monster', 'kaķu', 'siržu', 'zvaigžņu', 'tablešu'];
     var WORDS = ['Lieliski!', 'Super!', 'Fantastiski!', 'Neticami!'];
+    // "Dienas maiņa": the board is the day's for everyone; each weekday changes one rule
+    var CANDY_RULES = {
+      1: ['Pirmdiena', 'parasta maiņa', {}], 2: ['Otrdiena', 'kafijas diena: mērķis ir kafija', { goal: 0 }],
+      3: ['Trešdiena', 'ātrā maiņa: 15 gājieni', { moves: 15 }], 4: ['Ceturtdiena', 'želejas diena', { jelly: 2 }],
+      5: ['Piektdiena', 'biežāk zelta krūzītes', { gold: 3 }], 6: ['Sestdiena', 'brīvdiena: 25 gājieni', { moves: 25 }], 0: ['Svētdiena', 'brīvdiena: 25 gājieni', { moves: 25 }]
+    };
+    var CANDY_WEEK_KEY = 'minkaCandyWeekV1';
     function candy() {
       if (wins.candy) { front('candy'); return; }
       var rr0 = root.getBoundingClientRect();
-      CELL = Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 212) / N)));
+      CELL = Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 236) / N)));
       var size = N * CELL;
       var w = win('candy', 'Konfektes 98', 'candy',
         '<div class="pc98-candy"><div class="pc98-cbar"><span>Punkti <b class="pc98-score">0</b></span><span>Gājieni <b class="pc98-moves">' + MOVES + '</b></span>'
         + '<span class="pc98-goal" title="Dienas mērķis"><i class="pc98-gico"></i><b class="pc98-gnum">0/0</b></span><span class="pc98-jelly" title="Želeja"><i class="pc98-jico"></i><b class="pc98-jnum">0</b></span></div>'
         + '<div class="pc98-stars"><i class="pc98-sfill"></i><b data-s="0">★</b><b data-s="1">★</b><b data-s="2">★</b></div>'
         + '<div class="pc98-well"><canvas class="pc98-board" width="' + size + '" height="' + size + '"></canvas></div>'
-        + '<div class="pc98-cfoot"><button type="button" class="pc98-btn" data-c="new">Jauna spēle</button><button type="button" class="pc98-btn" data-c="table">Dienas tabula</button><button type="button" class="pc98-btn" data-c="help">Kā spēlēt?</button><button type="button" class="pc98-btn pc98-mbtn" data-c="music" title="Mūzika">♪</button><span class="pc98-hint">Rekords šodien: <b class="pc98-best">0</b></span></div></div>',
-        size + 34, Math.max(100, (rr0.width - size - 34) / 2), Math.max(6, (rr0.height - size - 192) / 2));
+        + '<div class="pc98-cfoot"><button type="button" class="pc98-btn" data-c="new">Jauna spēle</button><button type="button" class="pc98-btn" data-c="table">Dienas tabula</button><button type="button" class="pc98-btn" data-c="help">Kā spēlēt?</button><button type="button" class="pc98-btn pc98-mbtn" data-c="music" title="Mūzika">♪</button></div><div class="pc98-cstat"><span class="pc98-crule"></span><span class="pc98-week" title="Šīs nedēļas zvaigznes"></span><span>Rekords šodien: <b class="pc98-best">0</b></span></div></div>',
+        size + 34, Math.max(100, (rr0.width - size - 34) / 2), Math.max(6, (rr0.height - size - 216) / 2));
       var cv = w.el.querySelector('.pc98-board'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
-      var G = {}, anim = [], fx = { parts: [], floats: [], beams: [], rings: [], bubbles: [], pix: [], flash: 0, shake: 0, word: null, stopUntil: 0 }, raf = 0, busy = false, sel = null, drag = null;
+      var G = {}, anim = [], fx = { parts: [], floats: [], beams: [], rings: [], bubbles: [], pix: [], chunks: [], fly: [], stamp: null, flash: 0, shake: 0, word: null, stopUntil: 0 }, raf = 0, busy = false, sel = null, drag = null, hov = null;
       var hint = null, idleAt = performance.now(), swapOff = null;
       var best = 0; try { var b0 = JSON.parse(localStorage.getItem(BEST_KEY) || '{}'); best = b0.day === today ? b0.score : 0; } catch (_e) {}
       w.el.querySelector('.pc98-best').textContent = best;
       function newGame() {
         var r = rng(seedOf('candy:' + today));
-        G = { rnd: r, board: [], score: 0, moves: MOVES, over: false, chain: 0, goal: { t: (seedOf('goal:' + today) % 6), need: 24, got: 0, done: false }, stars: 0 };
+        var rule = CANDY_RULES[new Date(today + 'T12:00:00Z').getUTCDay()], rx = rule[2];
+        G = { rnd: r, board: [], score: 0, moves: rx.moves || MOVES, over: false, chain: 0, goal: { t: 0, need: 24, got: 0, done: false }, stars: 0, rule: rx };
+        w.el.querySelector('.pc98-crule').textContent = rule[0] + ': ' + rule[1];
         // the day's jelly: a mirrored patch under the pieces; matching on it clears it (+2000 for all)
         var jr = rng(seedOf('jelly:' + today)); G.jelly = []; G.jellyLeft = 0; G.jellyDone = false;
         for (var jy = 0; jy < N; jy++) { G.jelly.push([]); for (var jx = 0; jx < N; jx++) G.jelly[jy].push(0); }
-        for (jy = 1; jy < N - 1; jy++) for (jx = 0; jx < N / 2; jx++) if (jr() < (jy > 2 && jy < 6 ? 0.55 : 0.25)) { G.jelly[jy][jx] = G.jelly[jy][N - 1 - jx] = 1; }
+        for (jy = 1; jy < N - 1; jy++) for (jx = 0; jx < N / 2; jx++) if (jr() < (jy > 2 && jy < 6 ? 0.55 : 0.25) * (rx.jelly || 1)) { G.jelly[jy][jx] = G.jelly[jy][N - 1 - jx] = 1; }
         G.jelly.forEach(function (row) { row.forEach(function (v) { G.jellyLeft += v; }); });
         for (var y = 0; y < N; y++) { G.board.push([]); for (var x = 0; x < N; x++) G.board[y].push(fresh(x, y, true)); }
         if (!hasMove()) shuffle();
-        fx.parts = []; fx.floats = []; fx.beams = []; fx.rings = []; fx.bubbles = []; fx.pix = []; fx.word = null; hint = null; idleAt = performance.now();
+        // the goal: the day's rule, else the piece the board has least of (so it takes aiming)
+        if (rx.goal != null) G.goal.t = rx.goal;
+        else { var cnt = [0, 0, 0, 0, 0, 0]; G.board.forEach(function (row) { row.forEach(function (c) { if (c.t >= 0) cnt[c.t]++; }); }); G.goal.t = cnt.indexOf(Math.min.apply(null, cnt)); }
+        paintWeek();
+        fx.parts = []; fx.floats = []; fx.beams = []; fx.rings = []; fx.bubbles = []; fx.pix = []; fx.chunks = []; fx.fly = []; fx.stamp = null; fx.word = null; hint = null; idleAt = performance.now();
         w.el.querySelector('.pc98-gico').style.backgroundImage = 'url(' + PIECES[G.goal.t].toDataURL() + ')';
         paintBar(); draw();
       }
@@ -249,7 +306,7 @@
         var t, guard = 0;
         do { t = (G.rnd() * 6) | 0; guard++; } while (noMatch && guard < 20 && ((x >= 2 && G.board[y][x - 1].t === t && G.board[y][x - 2].t === t) || (y >= 2 && G.board[y - 1][x].t === t && G.board[y - 2][x].t === t)));
         var c = { t: t, s: '', dy: 0, k: 1, a: 1, sq: 0 };
-        if (!noMatch && G.rnd() < 0.022) c.gold = true;             // now and then a golden cup (+2 moves)
+        if (!noMatch && G.rnd() < 0.022 * ((G.rule && G.rule.gold) || 1)) c.gold = true;   // now and then a golden cup (+2 moves)
         return c;
       }
       function paintBar() {
@@ -263,7 +320,16 @@
         var STAR = [1500, 3000, 5000], got = STAR.filter(function (v) { return G.score >= v; }).length;
         w.el.querySelector('.pc98-sfill').style.width = Math.min(100, G.score / STAR[2] * 100) + '%';
         w.el.querySelectorAll('.pc98-stars b').forEach(function (b, i) { b.classList.toggle('is-on', i < got); });
-        if (got > G.stars) { G.stars = got; blip(988 + got * 120, 0.12, 'triangle', 0.05); setTimeout(function () { blip(1318 + got * 120, 0.14, 'triangle', 0.045); }, 90); }
+        if (got > G.stars) { G.stars = got; blip(988 + got * 120, 0.12, 'triangle', 0.05); setTimeout(function () { blip(1318 + got * 120, 0.14, 'triangle', 0.045); }, 90); saveWeek(got); }
+      }
+      // the week: seven boxes, Monday first, each with the stars that day earned on this computer
+      function weekStore() { try { return JSON.parse(localStorage.getItem(CANDY_WEEK_KEY) || '{}') || {}; } catch (_e) { return {}; } }
+      function saveWeek(n) { var st = weekStore(); if ((st[today] || 0) >= n) return; st[today] = n; var keys = Object.keys(st).sort(); while (keys.length > 21) delete st[keys.shift()]; try { localStorage.setItem(CANDY_WEEK_KEY, JSON.stringify(st)); } catch (_e) {} paintWeek(); }
+      function paintWeek() {
+        var st = weekStore(), d = new Date(today + 'T12:00:00Z'), dow = (d.getUTCDay() + 6) % 7, html = '', L = ['P', 'O', 'T', 'C', 'P', 'S', 'S'];
+        d.setUTCDate(d.getUTCDate() - dow);
+        for (var i = 0; i < 7; i++) { var key = d.toISOString().slice(0, 10), n = st[key] || 0; html += '<i data-n="' + n + '"' + (i === dow ? ' class="is-today"' : '') + '><b>' + L[i] + '</b>' + '★★★'.slice(0, n) + '</i>'; d.setUTCDate(d.getUTCDate() + 1); }
+        w.el.querySelector('.pc98-week').innerHTML = html;
       }
       var at = function (x, y) { return x >= 0 && y >= 0 && x < N && y < N ? G.board[y][x] : null; };
       function runs() {
@@ -374,6 +440,11 @@
         });
         var tier = spawn.length || G.chain >= 3 ? (spawn.some(function (s) { return s.s === 'b'; }) || G.chain >= 4 ? 'large' : 'medium') : G.chain >= 2 ? 'medium' : 'small';
         if (G.chain >= 3) word(Math.min(3, G.chain - 2));
+        if (G.chain >= 2) {                                           // a cascade: "x2", "x3" stamped where it fell, rising in pitch
+          var sx = 0, sy = 0; kill.forEach(function (c) { sx += c[0]; sy += c[1]; });
+          fx.stamp = { t: 'x' + G.chain, x: (sx / kill.length + 0.5) * CELL, y: (sy / kill.length + 0.5) * CELL, life: 0.4 };
+          blip(420 + G.chain * 140, 0.05, 'square', 0.035); if (G.chain >= 3) fx.shake = Math.max(fx.shake, 0.45);
+        }
         clearCells(kill, spawn, [], tier, function () { resolve(null); });
       }
       // clear these cells; a special among them goes off and takes its line / box / colour with it
@@ -398,9 +469,9 @@
         list.forEach(function (c) { add(c[0], c[1]); });
         var chain = Math.max(1, G.chain), gain = 0;
         cells.forEach(function (c) {
-          if (G.jelly[c[1]][c[0]]) { G.jelly[c[1]][c[0]] = 0; G.jellyLeft--; gain += 50; for (var jb = 0; jb < 6; jb++) burst(c[0], c[1], '#ff9ad2', 1); }
+          if (G.jelly[c[1]][c[0]]) { G.jelly[c[1]][c[0]] = 0; G.jellyLeft--; gain += 50; jellyBreak(c[0], c[1]); }
           var p = G.board[c[1]][c[0]];
-          if (!spawnAt[c[0] + ',' + c[1]] && p.t === G.goal.t) G.goal.got++;
+          if (!spawnAt[c[0] + ',' + c[1]] && p.t === G.goal.t) { G.goal.got++; if (fx.fly.length < 4) fx.fly.push({ t: p.t, x: c[0], y: c[1], age: 0 }); }
           gain += 10 * chain;
         });
         gain += (spawn || []).length * 60;
@@ -518,13 +589,20 @@
         }
         if (fx.parts.length > 400) fx.parts.splice(0, fx.parts.length - 400);
       }
+      // a cleared jelly: a white edge for a frame, then four chunks fall, darker each step
+      function jellyBreak(x, y) {
+        var q = (CELL / 4) | 0;
+        fx.chunks.push({ edge: true, x: x * CELL, y: y * CELL, life: 0.05 });
+        [[0, 0, -1], [2, 0, 1], [0, 2, -1], [2, 2, 1]].forEach(function (o) { fx.chunks.push({ x: x * CELL + o[0] * q + 2, y: y * CELL + o[1] * q + 2, s: q, vx: o[2] * 40, vy: -60, life: 0.25 }); });
+        blip(1500, 0.02, 'square', 0.02);
+      }
       function floatText(x, y, text, col, scale) { fx.floats.push({ x: (x + 0.5) * CELL, y: (y + 0.5) * CELL, text: text, col: col, s: scale || 1, life: 1 }); kick(); }
       function word(i) { fx.word = { text: i < 0 ? 'Saldais finālis!' : WORDS[Math.max(0, Math.min(WORDS.length - 1, i))], life: 1 }; kick(); }
       /* A move: 8-bit rings ripple out from between the two pieces in stepped
          frames (14 a second, no smooth tween), the colours stepping round the
          ring each frame, and pixel crosses flung out with them. Squares on
          one grid, a few dozen fillRects a frame: nothing for an old PC. */
-      var PIX_COLS = ['#ff3d96', '#6a3fd0', '#16b4dc', '#ffb800', '#2fc95a'], PIX_STEP = 70, PIX_FRAMES = 9;   // on the light board: no white
+      var PIX_COLS = ['#ff3d96', '#000080', '#16b4dc', '#ffb800', '#2fc95a'], PIX_STEP = 70, PIX_FRAMES = 9;   // on the light board: no white
       function pixelTada(x, y) {
         var crosses = [];
         for (var i = 0; i < 7; i++) crosses.push({ a: i / 7 * Math.PI * 2 + Math.random() * 0.6, d: 0.8 + Math.random() * 0.7, c: (Math.random() * PIX_COLS.length) | 0 });
@@ -555,7 +633,7 @@
           });
         });
       }
-      function fxActive() { return fx.pix.length || fx.parts.length || fx.floats.length || fx.beams.length || fx.rings.length || fx.bubbles.length || fx.flash > 0 || fx.shake > 0.01 || fx.word || hint; }
+      function fxActive() { return fx.chunks.length || fx.fly.length || fx.stamp || fx.pix.length || fx.parts.length || fx.floats.length || fx.beams.length || fx.rings.length || fx.bubbles.length || fx.flash > 0 || fx.shake > 0.01 || fx.word || hint; }
       function kick() { if (!raf) raf = requestAnimationFrame(tick); }
 
       /* ── drawing (only while something moves, sparks fly or a hint shows) ── */
@@ -563,16 +641,18 @@
         now = now || performance.now();
         var sh = fx.shake * fx.shake * 7, ox = sh ? Math.sin(now * 0.09) * sh : 0, oy = sh ? Math.cos(now * 0.11) * sh : 0;
         g.setTransform(1, 0, 0, 1, 0, 0);
-        g.fillStyle = '#efe6fb'; g.fillRect(0, 0, size, size);
-        g.setTransform(1, 0, 0, 1, ox, oy);
-        for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if ((x + y) & 1) { g.fillStyle = '#e4d8f6'; g.fillRect(x * CELL, y * CELL, CELL, CELL); }
-        for (y = 0; y < N; y++) for (x = 0; x < N; x++) if (G.jelly[y][x]) {   // jelly: a soft pink tile with a shine
+        g.fillStyle = '#ece9e1'; g.fillRect(0, 0, size, size);
+        g.setTransform(1, 0, 0, 1, Math.round(ox), Math.round(oy));
+        for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if ((x + y) & 1) { g.fillStyle = '#dedad0'; g.fillRect(x * CELL, y * CELL, CELL, CELL); }
+        for (y = 0; y < N; y++) for (x = 0; x < N; x++) if (G.jelly[y][x]) {   // jelly: flat pink, a 1 px darker edge, a dithered corner
           var jx0 = x * CELL + 2, jy0 = y * CELL + 2, js = CELL - 4;
-          var jg = g.createLinearGradient(0, jy0, 0, jy0 + js); jg.addColorStop(0, 'rgba(255,170,215,.85)'); jg.addColorStop(1, 'rgba(240,110,180,.75)');
-          g.fillStyle = jg; g.beginPath(); g.roundRect(jx0, jy0, js, js, CELL * 0.18); g.fill();
-          g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.roundRect(jx0 + js * 0.12, jy0 + js * 0.08, js * 0.5, js * 0.14, js * 0.07); g.fill();
+          g.fillStyle = '#d0307f'; g.fillRect(jx0, jy0, js, js);
+          g.fillStyle = '#ffaad7'; g.fillRect(jx0 + 1, jy0 + 1, js - 2, js - 2);
+          g.fillStyle = '#ffffff'; for (var dy2 = 0; dy2 < 6; dy2++) for (var dx2 = (dy2 & 1); dx2 < 6 - dy2; dx2 += 2) g.fillRect(jx0 + 2 + dx2, jy0 + 2 + dy2, 1, 1);
         }
-        if (sel) { g.fillStyle = 'rgba(122,92,255,.28)'; g.fillRect(sel[0] * CELL, sel[1] * CELL, CELL, CELL); }
+        // the pointer's cell and the chosen one: the Windows focus rectangle
+        if (hov && !busy && (!sel || hov[0] !== sel[0] || hov[1] !== sel[1])) dotted(g, hov[0] * CELL + 2, hov[1] * CELL + 2, CELL - 4, CELL - 4, '#808080');
+        if (sel) { dotted(g, sel[0] * CELL + 1, sel[1] * CELL + 1, CELL - 2, CELL - 2, '#000000'); dotted(g, sel[0] * CELL + 2, sel[1] * CELL + 2, CELL - 4, CELL - 4, '#000000', 1); }
         var hw = hint ? Math.sin(now / 110) * 0.08 : 0;
         for (y = 0; y < N; y++) for (x = 0; x < N; x++) {
           var c = G.board[y][x]; if (!c) continue;
@@ -585,72 +665,73 @@
           if (hinted) { px += (x === hint[0] && y === hint[1] ? hint[2] - hint[0] : hint[0] - hint[2]) * hw; py += (x === hint[0] && y === hint[1] ? hint[3] - hint[1] : hint[1] - hint[3]) * hw; }
           piece(c, px * CELL, py * CELL, now, hinted);
         }
-        if (hint) {                                                   // a soft ring round the two pieces of the hinted move
-          g.strokeStyle = 'rgba(255,255,255,' + (0.55 + Math.sin(now / 140) * 0.35) + ')'; g.lineWidth = 3;
+        if (hint) {                                                   // the hinted move: the focus rectangle round both, blinking in steps
           var hx = Math.min(hint[0], hint[2]) * CELL + 3, hy = Math.min(hint[1], hint[3]) * CELL + 3;
-          g.strokeRect(hx, hy, (Math.abs(hint[2] - hint[0]) + 1) * CELL - 6, (Math.abs(hint[3] - hint[1]) + 1) * CELL - 6);
+          if (((now / 300) | 0) % 2) dotted(g, hx, hy, (Math.abs(hint[2] - hint[0]) + 1) * CELL - 6, (Math.abs(hint[3] - hint[1]) + 1) * CELL - 6, '#000080');
         }
-        // light: added on top ('lighter'), so it glows over the candy
-        g.globalCompositeOperation = 'lighter';
-        fx.bubbles.forEach(function (b) {
-          var cx = (b.x + 0.5) * CELL, cy = (b.y + 0.5) * CELL, r = CELL * (0.35 + (1 - b.life) * 0.25);
-          var gb = g.createRadialGradient(cx, cy, 0, cx, cy, r); gb.addColorStop(0, 'rgba(255,255,255,' + (0.95 * b.life) + ')'); gb.addColorStop(0.55, 'rgba(255,240,255,' + (0.6 * b.life) + ')'); gb.addColorStop(1, 'rgba(255,255,255,0)');
-          g.fillStyle = gb; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
-        });
+        var Z = Math.max(2, Math.round(CELL / 26));                   // the whole scale for pixel lettering here
         fx.beams.forEach(function (b) {
           var L = Math.max(0, b.life);
-          if (b.kind === 'row' || b.kind === 'col') {
-            var horiz = b.kind === 'row', mid = (b.i + 0.5) * CELL, half = CELL * 0.5 * L;
-            var gr = horiz ? g.createLinearGradient(0, mid - half, 0, mid + half) : g.createLinearGradient(mid - half, 0, mid + half, 0);
-            gr.addColorStop(0, 'rgba(120,180,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,' + L + ')'); gr.addColorStop(1, 'rgba(255,120,210,0)');
-            g.fillStyle = gr; if (horiz) g.fillRect(0, mid - half, size, half * 2); else g.fillRect(mid - half, 0, half * 2, size);
-          } else {                                                    // lightning from the bomb: a jagged bolt, new each frame
+          if (b.kind === 'row' || b.kind === 'col') {                 // a flat beam that narrows in steps: white core, blue edges
+            var horiz = b.kind === 'row', mid = Math.round((b.i + 0.5) * CELL), half = Math.max(2, Math.round(CELL * 0.4 * L / 4) * 4) / 2;
+            g.fillStyle = '#5aa8ff'; if (horiz) g.fillRect(0, mid - half - 2, size, half * 2 + 4); else g.fillRect(mid - half - 2, 0, half * 2 + 4, size);
+            g.fillStyle = '#ffffff'; if (horiz) g.fillRect(0, mid - half, size, half * 2); else g.fillRect(mid - half, 0, half * 2, size);
+          } else {                                                    // lightning from the bomb: a jagged pixel bolt, new each frame
             var x0 = (b.p[0] + 0.5) * CELL, y0 = (b.p[1] + 0.5) * CELL, x1 = (b.p[2] + 0.5) * CELL, y1 = (b.p[3] + 0.5) * CELL;
-            var segs = 7, nx = -(y1 - y0), ny = x1 - x0, nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl;
-            [[6, 'rgba(150,120,255,' + (0.45 * L) + ')'], [2.2, 'rgba(255,255,255,' + L + ')']].forEach(function (st) {
-              g.strokeStyle = st[1]; g.lineWidth = st[0]; g.beginPath(); g.moveTo(x0, y0);
-              for (var k = 1; k < segs; k++) { var f = k / segs, j2 = (Math.random() - 0.5) * CELL * 0.45; g.lineTo(x0 + (x1 - x0) * f + nx * j2, y0 + (y1 - y0) * f + ny * j2); }
-              g.lineTo(x1, y1); g.stroke();
-            });
+            var segs = 7, nx = -(y1 - y0), ny = x1 - x0, nl = Math.hypot(nx, ny) || 1, pts = [[x0, y0]]; nx /= nl; ny /= nl;
+            for (var k = 1; k < segs; k++) { var f = k / segs, j2 = (Math.random() - 0.5) * CELL * 0.45; pts.push([x0 + (x1 - x0) * f + nx * j2, y0 + (y1 - y0) * f + ny * j2]); }
+            pts.push([x1, y1]);
+            for (k = 1; k < pts.length; k++) pxLine(g, pts[k - 1][0], pts[k - 1][1], pts[k][0], pts[k][1], '#000080', 4);
+            for (k = 1; k < pts.length; k++) pxLine(g, pts[k - 1][0], pts[k - 1][1], pts[k][0], pts[k][1], '#ffffff', 2);
           }
         });
-        fx.rings.forEach(function (r) {
-          var L = Math.max(0, r.life), rad = (r.r + 0.5) * CELL * (1.25 - L * 0.6), cx = (r.x + 0.5) * CELL, cy = (r.y + 0.5) * CELL;
-          var gr2 = g.createRadialGradient(cx, cy, rad * 0.6, cx, cy, rad); gr2.addColorStop(0, 'rgba(255,210,63,0)'); gr2.addColorStop(0.8, 'rgba(255,230,140,' + L + ')'); gr2.addColorStop(1, 'rgba(255,255,255,0)');
-          g.fillStyle = gr2; g.beginPath(); g.arc(cx, cy, rad, 0, Math.PI * 2); g.fill();
+        fx.rings.forEach(function (r) {                               // the wrapped blast: a stepped ring of squares
+          var rad = (r.r + 0.5) * CELL * (1.25 - Math.max(0, r.life) * 0.6), cx = (r.x + 0.5) * CELL, cy = (r.y + 0.5) * CELL, P = Math.max(4, Math.round(CELL * 0.1));
+          var n = Math.max(12, Math.round(rad * 2 * Math.PI / (P * 1.4)));
+          for (var i = 0; i < n; i++) { var an = i / n * Math.PI * 2; g.fillStyle = i % 2 ? '#ffd23f' : '#ffffff'; g.fillRect(Math.round((cx + Math.cos(an) * rad) / P) * P - (P >> 1), Math.round((cy + Math.sin(an) * rad) / P) * P - (P >> 1), P - 1, P - 1); }
         });
-        fx.parts.forEach(function (p) {
-          g.globalAlpha = Math.max(0, p.life); g.fillStyle = p.star ? '#fff6c8' : p.col;
-          if (p.star) { var m = p.s + 1; g.fillRect(p.x - m, p.y, m * 2 + 1, 1); g.fillRect(p.x, p.y - m, 1, m * 2 + 1); g.fillRect(p.x - 1, p.y - 1, 3, 3); }
-          else g.fillRect(p.x | 0, p.y | 0, p.s, p.s);
+        fx.parts.forEach(function (p) {                               // sparks: whole pixels, gone at once (no fading)
+          if (p.life < 0.12 && ((p.life * 60) | 0) % 2) return;
+          g.fillStyle = p.star ? '#ffffff' : p.col;
+          var px0 = Math.round(p.x), py0 = Math.round(p.y);
+          if (p.star) { var m = p.s + 1; g.fillRect(px0 - m, py0, m * 2 + 1, 1); g.fillRect(px0, py0 - m, 1, m * 2 + 1); }
+          else g.fillRect(px0, py0, p.s, p.s);
         });
-        g.globalCompositeOperation = 'source-over';
-        g.globalAlpha = 1; drawPixelTada(now);
-        // the points of each cleared piece, in its glow
-        g.textAlign = 'center'; g.textBaseline = 'middle';
-        fx.bubbles.forEach(function (b) {
-          if (b.life < 0.15) return;
-          g.globalAlpha = Math.min(1, b.life * 1.4); g.font = '900 ' + Math.round(CELL * 0.28) + 'px Tahoma, sans-serif';
-          g.fillStyle = '#7a3fd0'; g.fillText(b.n, (b.x + 0.5) * CELL, (b.y + 0.5) * CELL - (1 - b.life) * 6);
+        fx.chunks.forEach(function (c) {                              // the jelly breaking: an edge, then four chunks stepping darker
+          if (c.edge) { dotted(g, Math.round(c.x), Math.round(c.y), CELL, CELL, '#ffffff'); return; }
+          g.fillStyle = c.life > 0.17 ? '#ffaad7' : c.life > 0.08 ? '#f06eb4' : '#d0307f'; g.fillRect(Math.round(c.x), Math.round(c.y), c.s, c.s);
         });
-        g.globalAlpha = 1;
-        g.textAlign = 'center'; g.textBaseline = 'middle';
-        fx.floats.forEach(function (f) {
-          g.globalAlpha = Math.min(1, f.life * 1.6);
-          g.font = '900 ' + Math.round(CELL * 0.36 * f.s) + 'px Tahoma, sans-serif';
-          g.fillStyle = '#2a1d48'; g.fillText(f.text, f.x + 2, f.y + 2); g.fillStyle = f.col; g.fillText(f.text, f.x, f.y);
+        drawPixelTada(now);
+        // each cleared piece's points: pixel digits with a dark edge, rising a pixel at a time
+        fx.bubbles.forEach(function (b) { if (b.life < 0.15) return; drawWord(g, String(b.n), '#ffffff', '#000080', (b.x + 0.5) * CELL, (b.y + 0.5) * CELL - Math.round((1 - b.life) * 6) * Z, Z); });
+        fx.floats.forEach(function (f) { drawWord(g, f.text, f.col, '#000000', f.x, f.y, Math.max(2, Math.round(Z * f.s))); });
+        // the goal's pieces jump to the counter above in six steps
+        fx.fly.forEach(function (f) {
+          var gc = w.el.querySelector('.pc98-goal'), cr = cv.getBoundingClientRect(), gr = gc.getBoundingClientRect(), sc = size / cr.width;
+          var tx = (gr.left + 12 - cr.left) * sc, ty = (gr.top + gr.height / 2 - cr.top) * sc, k = Math.min(6, Math.floor(f.age / 0.05)) / 6;
+          var sx0 = (f.x + 0.5) * CELL, sy0 = (f.y + 0.5) * CELL, fx2 = sx0 + (tx - sx0) * k, fy2 = sy0 + (ty - sy0) * k - Math.sin(k * Math.PI) * CELL, s2 = 32;
+          g.drawImage(PIECES[f.t], Math.round(fx2 - s2 / 2), Math.round(fy2 - s2 / 2), s2, s2);
         });
-        if (fx.word) {
-          var wl = fx.word.life, ws = wl > 0.8 ? backOut((1 - wl) / 0.2) : 1;
-          g.globalAlpha = Math.min(1, wl * 2.5);
-          g.font = '900 ' + Math.round(CELL * 0.85 * ws) + 'px Tahoma, sans-serif';
-          g.lineWidth = 6; g.strokeStyle = '#2a1d48'; g.strokeText(fx.word.text, size / 2, size * 0.42);
-          var gr = g.createLinearGradient(0, size * 0.36, 0, size * 0.48); gr.addColorStop(0, '#ffe0f0'); gr.addColorStop(1, '#ff5fb0');
-          g.fillStyle = gr; g.fillText(fx.word.text, size / 2, size * 0.42);
+        if (fx.stamp) {                                               // "x2": 1×, 2×, 1× in three frames, then held
+          var age = 0.4 - fx.stamp.life, zz = age < 0.05 ? Z : age < 0.1 ? Z * 2 : Z;
+          drawWord(g, fx.stamp.t, '#ffd23f', '#000000', fx.stamp.x, fx.stamp.y, zz);
         }
-        g.globalAlpha = 1;
+        if (fx.word) {                                                // the praise word: 1-bit lettering popping in whole steps
+          var wl = fx.word.life, zw = Math.max(3, Math.round(CELL / 14));
+          drawWord(g, fx.word.text, '#ff5fb0', '#000000', size / 2, Math.round(size * 0.42), wl > 0.9 ? zw + 2 : wl > 0.8 ? zw + 1 : zw);
+        }
         g.setTransform(1, 0, 0, 1, 0, 0);
-        if (fx.flash > 0) { g.fillStyle = 'rgba(255,255,255,' + fx.flash + ')'; g.fillRect(0, 0, size, size); }
+        if (fx.flash > 0.25) { g.fillStyle = 'rgba(255,255,255,0.5)'; g.fillRect(0, 0, size, size); }
+      }
+      // the MR bomb as pixel art: a dark disc, the six colours stepping round it, "MR" in 3×5 letters
+      var bombFrames = [];
+      function bombFrame(i) {
+        if (bombFrames[i]) return bombFrames[i];
+        var c = canvas(16, 16), q = c.getContext('2d'), R = function (x, y, w2, h2, col) { q.fillStyle = col; q.fillRect(x, y, w2, h2); };
+        for (var y = 0; y < 16; y++) { var hw = Math.floor(Math.sqrt(64 - (y - 7.5) * (y - 7.5))); R(8 - hw, y, hw * 2, 1, '#1b1530'); }
+        for (var k = 0; k < 6; k++) { var an = (k + i) / 6 * Math.PI * 2; R(Math.round(7 + Math.cos(an) * 5) - 1, Math.round(7 + Math.sin(an) * 5) - 1, 3, 3, PCOL[k]); }
+        [[5, 7, 7, 5, 5], [6, 5, 6, 5, 5]].forEach(function (rows, li) { for (var ry = 0; ry < 5; ry++) for (var rx = 0; rx < 3; rx++) if (rows[ry] & (4 >> rx)) R(4 + li * 4 + rx, 6 + ry, 1, 1, '#ffffff'); });
+        return (bombFrames[i] = c);
       }
       var striped = {};
       function stripedOf(t, dir) {
@@ -670,12 +751,9 @@
         var k = c.k || 1, sq = c.sq || 0, s = Math.round(CELL * 0.74 * k);
         var sw = s * (1 + sq * 0.14), shh = s * (1 - sq * 0.14), ox = (CELL - sw) / 2, oy = CELL - (CELL - s) / 2 - shh;   // squash from the bottom
         g.globalAlpha = c.a == null ? 1 : Math.max(0, c.a);
-        if (c.gold) { g.fillStyle = 'rgba(255,207,58,' + (0.35 + Math.sin(now / 200) * 0.15) + ')'; g.beginPath(); g.arc(px + CELL / 2, py + CELL / 2, CELL * 0.46, 0, Math.PI * 2); g.fill(); }
+        if (c.gold && ((now / 250) | 0) % 2) { g.fillStyle = '#ffcf3a'; g.fillRect(Math.round(px) + 3, Math.round(py) + 3, CELL - 6, 2); g.fillRect(Math.round(px) + 3, Math.round(py) + CELL - 5, CELL - 6, 2); g.fillRect(Math.round(px) + 3, Math.round(py) + 3, 2, CELL - 6); g.fillRect(Math.round(px) + CELL - 5, Math.round(py) + 3, 2, CELL - 6); }
         if (c.t < 0) {                                                // the MR bomb: a dark disc with the six colours turning round it
-          var cx = px + CELL / 2, cy = py + CELL / 2, r = sw / 2;
-          g.fillStyle = '#1b1530'; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
-          for (var i = 0; i < 6; i++) { var an = now / 400 + i * Math.PI / 3; g.fillStyle = PCOL[i]; g.beginPath(); g.arc(cx + Math.cos(an) * r * 0.58, cy + Math.sin(an) * r * 0.58, r * 0.2, 0, Math.PI * 2); g.fill(); }
-          g.fillStyle = '#fff'; g.font = '900 ' + Math.round(r * 0.6) + 'px Tahoma, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MR', cx, cy + 1);
+          g.drawImage(bombFrame(((now / 120) | 0) % 6), px + ox, py + oy, sw, shh);   // 16×16, six frames, drawn nearest
         } else {
           if (c.s === 'w') {                                          // wrapped: a pink-and-yellow wrapper with twists at the sides
             g.fillStyle = '#ff9ad2'; g.fillRect(px + ox - sw * 0.08, py + oy + shh * 0.1, sw * 1.16, shh * 0.8);
@@ -684,9 +762,6 @@
             g.beginPath(); g.moveTo(px + ox + sw * 1.08, py + oy + shh / 2); g.lineTo(px + ox + sw * 1.28, py + oy + shh * 0.2); g.lineTo(px + ox + sw * 1.28, py + oy + shh * 0.8); g.fill();
             g.drawImage(PIECES[c.t], px + ox + sw * 0.15, py + oy + shh * 0.15, sw * 0.7, shh * 0.7);
           } else if (c.s === 'h' || c.s === 'v') {                    // an X-ray: the candy itself striped, a soft glow round it
-            var gl = g.createRadialGradient(px + CELL / 2, py + CELL / 2, 2, px + CELL / 2, py + CELL / 2, CELL * 0.5);
-            gl.addColorStop(0, 'rgba(255,255,255,.75)'); gl.addColorStop(1, 'rgba(255,255,255,0)');
-            g.fillStyle = gl; g.fillRect(px, py, CELL, CELL);
             g.drawImage(stripedOf(c.t, c.s), px + ox, py + oy, sw, shh);
           } else g.drawImage(PIECES[c.t], px + ox, py + oy, sw, shh);
           if (c.gold) { g.fillStyle = '#ffcf3a'; g.font = '900 ' + Math.round(CELL * 0.3) + 'px Tahoma, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('★', px + CELL * 0.8, py + CELL * 0.2); }
@@ -709,6 +784,10 @@
         fx.pix = fx.pix.filter(function (t) { return now - t.t0 < PIX_STEP * PIX_FRAMES; });
         fx.rings.forEach(function (r) { r.life -= dt * 2.4; }); fx.rings = fx.rings.filter(function (r) { return r.life > 0; });
         fx.bubbles.forEach(function (b) { b.life -= dt * 2.2; }); fx.bubbles = fx.bubbles.filter(function (b) { return b.life > 0; });
+        fx.chunks.forEach(function (c) { c.life -= dt; if (!c.edge) { c.x += c.vx * dt; c.y += c.vy * dt; c.vy += 900 * dt; } }); fx.chunks = fx.chunks.filter(function (c) { return c.life > 0; });
+        fx.fly.forEach(function (f) { f.age += dt; if (f.age >= 0.3 && !f.done) { f.done = true; var gc = w.el.querySelector('.pc98-goal'); gc.classList.add('is-hit'); setTimeout(function () { gc.classList.remove('is-hit'); }, 80); } });
+        fx.fly = fx.fly.filter(function (f) { return f.age < 0.3; });
+        if (fx.stamp) { fx.stamp.life -= dt; if (fx.stamp.life <= 0) fx.stamp = null; }
         fx.flash = Math.max(0, fx.flash - dt * 3); fx.shake = Math.max(0, fx.shake - dt * 2.2);
         if (fx.word) { fx.word.life -= dt * 0.9; if (fx.word.life <= 0) fx.word = null; }
         // the hint: after 5 s with nothing pressed, the best move wobbles
@@ -730,6 +809,7 @@
         sel = c; drag = { c: c, x: ev.clientX, y: ev.clientY }; blip(520, 0.03, 'square', 0.02); kick();
       });
       cv.addEventListener('pointermove', function (ev) {
+        if (ev.pointerType === 'mouse' && !drag) { var hc = cellAt(ev); if (!hov || hc[0] !== hov[0] || hc[1] !== hov[1]) { hov = hc[0] >= 0 && hc[1] >= 0 && hc[0] < N && hc[1] < N ? hc : null; kick(); } }
         if (!drag || busy) return;
         var dx = ev.clientX - drag.x, dy = ev.clientY - drag.y, r = cv.getBoundingClientRect(), th = r.width / N * 0.35;
         if (Math.max(Math.abs(dx), Math.abs(dy)) < th) return;
@@ -738,6 +818,7 @@
         if (t[0] >= 0 && t[1] >= 0 && t[0] < N && t[1] < N) trySwap(c[0], c[1], t[0], t[1]); else kick();
       });
       cv.addEventListener('pointerup', function () { drag = null; });
+      cv.addEventListener('pointerleave', function () { if (hov) { hov = null; kick(); } });
       w.el.querySelector('[data-c="new"]').addEventListener('click', function () { if (!busy) newGame(); });
       w.el.querySelector('[data-c="table"]').addEventListener('click', function () { table(); });
       w.el.querySelector('[data-c="help"]').addEventListener('click', help);
@@ -746,7 +827,7 @@
         if (tune) return;
         actx = actx || new (window.AudioContext || window.webkitAudioContext)();
         if (actx.state === 'suspended') actx.resume();
-        tuneGain = tuneGain || (function () { var gn = actx.createGain(); gn.gain.value = 0.5; gn.connect(actx.destination); return gn; })();
+        tuneGain = tuneGain || (function () { var gn = actx.createGain(); gn.gain.value = 0.15; gn.connect(actx.destination); return gn; })();
         var loop = function () { tune = chipPlay(CHIP[0], tuneGain, function () { tune = null; if (tuneOn && wins.candy) loop(); }); };
         loop();
       }
@@ -762,7 +843,7 @@
 
     /* ── Iestatījumi: the desktop's wallpaper (as YesterPlayOS lets you change it) ── */
     function settings() {
-      var WALLS = [['vapor', 'Vaporwave'], ['teal', 'Klasiskā zaļganzilā'], ['sunset', 'Saulriets'], ['grid', 'Sintvilnis']];
+      var WALLS = [['teal', 'Klasiskā zaļganzilā'], ['vapor', 'Vaporwave'], ['sunset', 'Saulriets'], ['grid', 'Sintvilnis']];
       var w = win('settings', 'Iestatījumi', 'gear', '<div class="pc98-set"><p>Fona tapete:</p><div class="pc98-walls">'
         + WALLS.map(function (x) { return '<button type="button" class="pc98-wall" data-wall="' + x[0] + '"><i data-wall="' + x[0] + '"></i><span>' + x[1] + '</span></button>'; }).join('')
         + '</div></div><div class="pc98-btns"><button type="button" class="pc98-btn is-default" data-s="ok">Labi</button></div>', 380, 200, 80);
@@ -776,102 +857,226 @@
     }
 
     /* ── Mīnas 98: the classic, a black cat for the face ── */
-    var MINE_LEVELS = [['Iesācējs', 9, 9, 10], ['Vidējs', 16, 16, 40], ['Eksperts', 30, 16, 99]], MINE_KEY = 'minkaMinesBestV1';
+    /* ── Mīnas 98: the classic rules (first click safe, chording, flags, best times) and
+       "Dienas": one 16×16 board a day, the same for everyone and solvable without a
+       guess from its marked start (a small solver checks each candidate board); the
+       first try of the day counts and keeps the streak, later ones are practice.
+       Every press answers at once: the cell sinks, the cat opens its mouth, an empty
+       field opens in waves, a lost board shows its mines one by one. */
+    var MINE_LEVELS = [['Iesācējs', 9, 9, 10], ['Vidējs', 16, 16, 40], ['Eksperts', 30, 16, 99], ['Dienas', 16, 16, 40]], MINE_KEY = 'minkaMinesBestV1';
+    var MINE_DAILY_KEY = 'minkaMinesDailyV1', MINE_LV_KEY = 'minkaMinesLevelV1', DAILY = 3;
+    function mineNear(w, h, k, fn) { var x = k % w, y = (k / w) | 0; for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) { var nx = x + dx, ny = y + dy; if ((dx || dy) && nx >= 0 && ny >= 0 && nx < w && ny < h) fn(ny * w + nx); } }
+    // can the board be cleared from `start` by logic alone (single cells, then pairs of cells)?
+    function mineSolvable(w, h, mine, near, start) {
+      var N = w * h, open = new Uint8Array(N), flag = new Uint8Array(N), left = N - mine.reduce(function (a, b) { return a + b; }, 0), opened = 0;
+      function reveal(k) { var st = [k]; while (st.length) { var i = st.pop(); if (open[i] || flag[i]) continue; if (mine[i]) return false; open[i] = 1; opened++; if (!near[i]) mineNear(w, h, i, function (n) { if (!open[n]) st.push(n); }); } return true; }
+      reveal(start);
+      var unk = function (k) { var u = []; mineNear(w, h, k, function (n) { if (!open[n] && !flag[n]) u.push(n); }); return u; };
+      var flags = function (k) { var f = 0; mineNear(w, h, k, function (n) { if (flag[n]) f++; }); return f; };
+      for (var guard = 0; guard < 400 && opened < left; guard++) {
+        var moved = false, front = [];
+        for (var k = 0; k < N; k++) {
+          if (!open[k] || !near[k]) continue;
+          var u = unk(k); if (!u.length) continue;
+          var rem = near[k] - flags(k);
+          if (rem === 0) { u.forEach(reveal); moved = true; }
+          else if (rem === u.length) { u.forEach(function (n) { flag[n] = 1; }); moved = true; }
+          else front.push(k);
+        }
+        if (moved) continue;
+        // pairs: if A's unknowns are all B's, the rest of B's is settled by the difference
+        for (var a = 0; a < front.length && !moved; a++) {
+          var A = front[a], ua = unk(A), ra = near[A] - flags(A);
+          for (var b2 = 0; b2 < front.length && !moved; b2++) {
+            var B = front[b2]; if (A === B || Math.abs(A % w - B % w) > 2 || Math.abs(((A / w) | 0) - ((B / w) | 0)) > 2) continue;
+            var ub = unk(B), rb = near[B] - flags(B);
+            if (!ua.every(function (n) { return ub.indexOf(n) >= 0; })) continue;
+            var diff = ub.filter(function (n) { return ua.indexOf(n) < 0; }); if (!diff.length) continue;
+            if (rb - ra === 0) { diff.forEach(reveal); moved = true; }
+            else if (rb - ra === diff.length) { diff.forEach(function (n) { flag[n] = 1; }); moved = true; }
+          }
+        }
+        if (!moved) return false;
+      }
+      return opened >= left;
+    }
+    function mineDailyBoard(day, w, h, n) {
+      var start = ((h >> 1) * w) + (w >> 1), N = w * h, mine, near;
+      for (var attempt = 0; attempt < 500; attempt++) {
+        var r = rng(seedOf('mines:' + day + ':' + attempt)), keep = {}; keep[start] = 1; mineNear(w, h, start, function (q) { keep[q] = 1; });
+        var free = []; for (var k = 0; k < N; k++) if (!keep[k]) free.push(k);
+        mine = new Array(N).fill(0);
+        for (var i = 0; i < n; i++) { var j = i + ((r() * (free.length - i)) | 0), t = free[i]; free[i] = free[j]; free[j] = t; mine[free[i]] = 1; }
+        near = new Array(N).fill(0); for (k = 0; k < N; k++) mineNear(w, h, k, function (q) { if (mine[q]) near[k]++; });
+        if (mineSolvable(w, h, mine, near, start)) break;
+      }
+      return { mine: mine, start: start };
+    }
+    function mineDailyStore() { try { return JSON.parse(localStorage.getItem(MINE_DAILY_KEY) || '{}') || {}; } catch (_e) { return {}; } }
+    function mineStreak(store, today) {
+      var d = new Date(today + 'T12:00:00Z'), n = 0;
+      if (!(store[today] && store[today].won)) d.setUTCDate(d.getUTCDate() - 1);   // not yet today: count up to yesterday
+      for (var i = 0; i < 400; i++) { var key = d.toISOString().slice(0, 10); if (!(store[key] && store[key].won)) break; n++; d.setUTCDate(d.getUTCDate() - 1); }
+      return n;
+    }
     function mines() {
       if (wins.mines) { front('mines'); return; }
-      var lv = 0, M, timer = 0, tStart = 0;
+      var lv = DAILY, M, timer = 0, tStart = 0, waves = [];
+      try { var saved = localStorage.getItem(MINE_LV_KEY); if (saved !== null && MINE_LEVELS[+saved]) lv = +saved; } catch (_e) {}
       var w = win('mines', 'Mīnas 98', 'mine', '<nav class="pc98-menu pc98-mlevels">' + MINE_LEVELS.map(function (l, i) { return '<button type="button" data-lv="' + i + '">' + l[0] + '</button>'; }).join('') + '</nav>'
-        + '<div class="pc98-mines"><div class="pc98-mtop"><span class="pc98-led pc98-mleft">010</span><button type="button" class="pc98-face">' + img('face', 26) + '</button><span class="pc98-led pc98-mtime">000</span></div><div class="pc98-mgrid"></div></div>', 260, 160, 30);
-      var grid = w.el.querySelector('.pc98-mgrid'), face = w.el.querySelector('.pc98-face');
+        + '<div class="pc98-mines"><div class="pc98-mtop"><span class="pc98-led pc98-mleft">010</span><button type="button" class="pc98-face">' + img('face', 26) + '</button><span class="pc98-led pc98-mtime">000</span></div><div class="pc98-mgrid"></div><div class="pc98-mstat"><span class="pc98-mst1"></span><span class="pc98-mst2"></span></div></div>', 260, 160, 30);
+      var grid = w.el.querySelector('.pc98-mgrid'), face = w.el.querySelector('.pc98-face'), timeEl = w.el.querySelector('.pc98-mtime'), leftEl = w.el.querySelector('.pc98-mleft');
       var led = function (n) { n = Math.max(-99, Math.min(999, n | 0)); return (n < 0 ? '-' + String(-n).padStart(2, '0') : String(n).padStart(3, '0')); };
       var setFace = function (k) { face.innerHTML = img(k, 26); };
+      function bestOf() { try { return JSON.parse(localStorage.getItem(MINE_KEY) || '{}') || {}; } catch (_e) { return {}; } }
+      function stat() {
+        var s1 = w.el.querySelector('.pc98-mst1'), s2 = w.el.querySelector('.pc98-mst2');
+        if (lv === DAILY) {
+          var st = mineDailyStore(), d = st[today], streak = mineStreak(st, today);
+          s1.textContent = 'Sērija: ' + streak + (streak === 1 ? ' diena' : ' dienas');
+          s2.textContent = d ? (d.won ? 'Šodien: ' + d.time + ' s' : 'Šodien: zaudēts') + (M && M.practice ? ', treniņš' : '') : 'Šodienas laukums';
+        } else {
+          var b = bestOf()[lv]; s1.textContent = MINE_LEVELS[lv][0]; s2.textContent = b ? 'Labākais: ' + b + ' s' : 'Labākā vēl nav';
+        }
+      }
+      // in the arcade the window grows by a whole number when there is room (crisp, nearest)
+      function fit() {
+        if (!opts.solo) return;
+        w.el.style.zoom = ''; var rr = root.getBoundingClientRect(), z = Math.max(1, Math.min(3, Math.floor(Math.min((rr.height - 40) / w.el.offsetHeight, (rr.width - 40) / w.el.offsetWidth))));
+        w.el.style.zoom = z > 1 ? String(z) : '';
+        if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(root, { box: w.el });
+      }
       function start(i) {
-        lv = i; var L = MINE_LEVELS[lv];
-        M = { w: L[1], h: L[2], n: L[3], cells: [], placed: false, over: false, open: 0, flags: 0 };
+        lv = i; try { localStorage.setItem(MINE_LV_KEY, String(i)); } catch (_e) {}
+        var L = MINE_LEVELS[lv];
+        waves.forEach(clearTimeout); waves = [];
+        M = { w: L[1], h: L[2], n: L[3], cells: [], placed: false, over: false, open: 0, flags: 0, start: -1, practice: false };
         for (var k = 0; k < M.w * M.h; k++) M.cells.push({ mine: false, open: false, flag: false, near: 0 });
+        if (lv === DAILY) {
+          var day = mineDailyBoard(today, M.w, M.h, M.n);
+          day.mine.forEach(function (m, k) { M.cells[k].mine = !!m; });
+          M.cells.forEach(function (c, k) { mineNear(M.w, M.h, k, function (n) { if (M.cells[n].mine) c.near++; }); });
+          M.start = day.start; M.practice = !!mineDailyStore()[today];
+        }
         clearInterval(timer); timer = 0; tStart = 0;
-        w.el.querySelector('.pc98-mtime').textContent = '000';
+        timeEl.textContent = '000'; timeEl.classList.remove('is-best'); leftEl.classList.remove('is-blink'); timeEl.classList.remove('is-blink');
         w.el.style.width = (M.w * 24 + 34) + 'px';
         grid.style.gridTemplateColumns = 'repeat(' + M.w + ', 24px)';
-        grid.innerHTML = M.cells.map(function (_c, k) { return '<i data-k="' + k + '"></i>'; }).join('');
+        grid.innerHTML = M.cells.map(function (_c, k) { return '<i data-k="' + k + '"' + (k === M.start ? ' class="is-start"' : '') + '></i>'; }).join('');
         w.el.querySelectorAll('[data-lv]').forEach(function (b) { b.classList.toggle('is-on', +b.dataset.lv === lv); });
-        setFace('face'); paintLeft();
+        setFace('face'); paintLeft(); stat(); fit();
       }
-      function around(k, fn) { var x = k % M.w, y = (k / M.w) | 0; for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) { var nx = x + dx, ny = y + dy; if ((dx || dy) && nx >= 0 && ny >= 0 && nx < M.w && ny < M.h) fn(ny * M.w + nx); } }
+      function around(k, fn) { mineNear(M.w, M.h, k, fn); }
       function place(safe) {                                        // the first click is never a mine, nor its neighbours
-        var keep = { }; keep[safe] = 1; around(safe, function (n) { keep[n] = 1; });
-        var free = []; for (var k = 0; k < M.cells.length; k++) if (!keep[k]) free.push(k);
-        for (var i = 0; i < M.n; i++) { var j = i + ((Math.random() * (free.length - i)) | 0), t = free[i]; free[i] = free[j]; free[j] = t; M.cells[free[i]].mine = true; }
-        M.cells.forEach(function (c, k) { around(k, function (n) { if (M.cells[n].mine) c.near++; }); });
+        if (lv !== DAILY) {
+          var keep = { }; keep[safe] = 1; around(safe, function (n) { keep[n] = 1; });
+          var free = []; for (var k = 0; k < M.cells.length; k++) if (!keep[k]) free.push(k);
+          for (var i = 0; i < M.n; i++) { var j = i + ((Math.random() * (free.length - i)) | 0), t = free[i]; free[i] = free[j]; free[j] = t; M.cells[free[i]].mine = true; }
+          M.cells.forEach(function (c, k) { around(k, function (n) { if (M.cells[n].mine) c.near++; }); });
+        }
         M.placed = true; tStart = Date.now();
-        timer = setInterval(function () { w.el.querySelector('.pc98-mtime').textContent = led((Date.now() - tStart) / 1000); }, 500);
+        timer = setInterval(function () { timeEl.textContent = led((Date.now() - tStart) / 1000); }, 500);
       }
-      function paintCell(k) {
+      function paintCell(k, fresh) {
         var c = M.cells[k], e = grid.children[k];
-        e.className = c.open ? 'is-open' + (c.mine ? ' is-boom' : '') : c.flag ? 'is-flag' : '';
+        e.className = (c.open ? 'is-open' + (c.mine ? ' is-boom' : '') : c.flag ? 'is-flag' : (k === M.start && !M.placed ? 'is-start' : '')) + (fresh ? ' is-fresh' : '');
         e.textContent = c.open && !c.mine && c.near ? c.near : '';
         if (c.open && c.near) e.dataset.n = c.near;
       }
-      function paintLeft() { w.el.querySelector('.pc98-mleft').textContent = led(M.n - M.flags); }
+      function paintLeft() { leftEl.textContent = led(M.n - M.flags); }
+      // an empty field opens in waves, one ring of cells per frame (all within ~150 ms)
       function reveal(k) {
-        var stack = [k];
-        while (stack.length) {
-          var i = stack.pop(), c = M.cells[i];
+        var queue = [[k, 0]], rings = [];
+        while (queue.length) {
+          var q = queue.shift(), i = q[0], c = M.cells[i];
           if (c.open || c.flag) continue;
-          c.open = true; M.open++; paintCell(i);
-          if (!c.mine && !c.near) around(i, function (n) { if (!M.cells[n].open) stack.push(n); });
+          c.open = true; M.open++;
+          (rings[q[1]] = rings[q[1]] || []).push(i);
+          if (!c.mine && !c.near) around(i, function (n) { if (!M.cells[n].open) queue.push([n, q[1] + 1]); });
         }
+        var step = rings.length > 1 ? Math.min(16, 150 / rings.length) : 0;
+        rings.forEach(function (ring, d) {
+          var show = function () { ring.forEach(function (i) { paintCell(i, true); }); setTimeout(function () { ring.forEach(function (i) { var e = grid.children[i]; if (e) e.classList.remove('is-fresh'); }); }, 40); };
+          if (!d) show(); else waves.push(setTimeout(show, d * step));
+        });
       }
       function lose(k) {
-        M.over = true; clearInterval(timer); setFace('faceDead'); blip(120, 0.3, 'sawtooth', 0.06);
-        M.cells.forEach(function (c, i) { if (c.mine) { c.open = true; paintCell(i); } else if (c.flag) grid.children[i].className = 'is-wrong'; });
+        M.over = true; clearInterval(timer); setFace('faceDead'); blip(90, 0.06, 'square', 0.06);
         grid.children[k].classList.add('is-hit');
+        w.el.style.marginTop = '1px'; setTimeout(function () { w.el.style.marginTop = ''; }, 70);   // the window jolts a pixel
+        var rest = []; M.cells.forEach(function (c, i) { if (c.mine && !c.open) rest.push(i); else if (c.flag && !c.mine) grid.children[i].className = 'is-wrong'; });
+        var gap = Math.min(25, 600 / Math.max(1, rest.length));
+        rest.forEach(function (i, n) { waves.push(setTimeout(function () { M.cells[i].open = true; paintCell(i); }, (n + 1) * gap)); });
+        recordDaily(false);
+      }
+      function recordDaily(won, secs) {
+        if (lv !== DAILY || M.practice) { stat(); return; }
+        var st = mineDailyStore(); st[today] = { won: won, time: won ? secs : null }; M.practice = true;
+        try { localStorage.setItem(MINE_DAILY_KEY, JSON.stringify(st)); } catch (_e) {}
+        stat();
       }
       function checkWin() {
         if (M.open !== M.cells.length - M.n) return;
         M.over = true; clearInterval(timer); setFace('faceWin');
         M.cells.forEach(function (c, i) { if (c.mine && !c.flag) { c.flag = true; paintCell(i); } }); M.flags = M.n; paintLeft();
-        var secs = Math.round((Date.now() - tStart) / 1000), best = {};
-        try { best = JSON.parse(localStorage.getItem(MINE_KEY) || '{}') || {}; } catch (_e) {}
-        var record = !best[lv] || secs < best[lv];
-        if (record) { best[lv] = secs; try { localStorage.setItem(MINE_KEY, JSON.stringify(best)); } catch (_e) {} }
+        var secs = Math.round((Date.now() - tStart) / 1000), best = bestOf(), record = false;
+        timeEl.textContent = led(secs);
+        if (lv !== DAILY) {
+          record = !best[lv] || secs < best[lv];
+          if (record) { best[lv] = secs; try { localStorage.setItem(MINE_KEY, JSON.stringify(best)); } catch (_e) {} }
+        }
+        leftEl.classList.add('is-blink'); timeEl.classList.add(record ? 'is-best' : 'is-blink');
         blip(660, 0.15, 'triangle', 0.06); setTimeout(function () { blip(990, 0.2, 'triangle', 0.06); }, 140);
-        dialog('Mīnas 98', (record ? 'Jauns rekords! ' : '') + MINE_LEVELS[lv][0] + ': ' + secs + ' s. Labākais: ' + best[lv] + ' s.', 'info');
+        recordDaily(true, secs);
       }
       function open1(k) {
         var c = M.cells[k]; if (M.over || c.flag) return;
+        if (!M.placed && lv === DAILY && k !== M.start) {             // the day's board starts at its marked cell
+          var s = grid.children[M.start]; s.classList.remove('is-nudge'); void s.offsetWidth; s.classList.add('is-nudge'); blip(140, 0.04, 'square', 0.03); return;
+        }
         if (!M.placed) place(k);
         if (c.open) {                                               // a number with its flags around it: open the rest
           var f = 0; around(k, function (n) { if (M.cells[n].flag) f++; });
-          if (c.near && f === c.near) around(k, function (n) { var d = M.cells[n]; if (!d.open && !d.flag) { if (d.mine) { reveal(n); lose(n); } else reveal(n); } });
-        } else if (c.mine) { reveal(k); lose(k); return; }
+          if (c.near && f === c.near) around(k, function (n) { var d = M.cells[n]; if (!d.open && !d.flag) { if (d.mine) { d.open = true; M.open++; paintCell(n); if (!M.over) lose(n); } else reveal(n); } });
+        } else if (c.mine) { c.open = true; M.open++; paintCell(k); lose(k); return; }
         else { reveal(k); blip(700, 0.02, 'square', 0.02); }
         if (!M.over) checkWin();
       }
       function flag(k) {
         var c = M.cells[k]; if (M.over || c.open) return;
-        c.flag = !c.flag; M.flags += c.flag ? 1 : -1; paintCell(k); paintLeft(); blip(c.flag ? 900 : 500, 0.03, 'square', 0.02);
+        c.flag = !c.flag; M.flags += c.flag ? 1 : -1; paintCell(k, c.flag); paintLeft(); blip(c.flag ? 900 : 500, 0.03, 'square', 0.02);
+        if (c.flag) setTimeout(function () { var e = grid.children[k]; if (e) e.classList.remove('is-fresh'); }, 40);
       }
-      var press = null;
+      // the press: the cell (or the 3×3 under a number) sinks while held, the cat says "o"
+      var press = null, sunk = [];
+      function sink(k) {
+        unsink();
+        var c = M.cells[k];
+        var list = c.open ? [] : [k]; if (c.open && c.near) around(k, function (n) { if (!M.cells[n].open && !M.cells[n].flag) list.push(n); });
+        list.forEach(function (i) { if (!M.cells[i].flag) grid.children[i].classList.add('is-press'); }); sunk = list;
+      }
+      function unsink() { sunk.forEach(function (i) { var e = grid.children[i]; if (e) e.classList.remove('is-press'); }); sunk = []; }
       grid.addEventListener('contextmenu', function (e) { e.preventDefault(); });
       grid.addEventListener('pointerdown', function (e) {
         var t = e.target.closest('[data-k]'); if (!t || M.over) return;
         var k = +t.dataset.k;
         if (e.button === 2) { flag(k); return; }
-        setFace('faceWin'); face.firstChild.style.opacity = '.85';
-        press = { k: k, at: Date.now(), timer: e.pointerType === 'touch' ? setTimeout(function () { flag(k); press = null; setFace('face'); }, 420) : 0 };
+        setFace('faceO'); sink(k);
+        press = { k: k, at: Date.now(), timer: e.pointerType === 'touch' ? setTimeout(function () { unsink(); flag(k); press = null; setFace('face'); }, 420) : 0 };
       });
+      grid.addEventListener('pointerover', function (e) { if (!press || e.pointerType === 'touch') return; var t = e.target.closest('[data-k]'); if (t) { press.k = +t.dataset.k; sink(press.k); } });
+      grid.addEventListener('pointerleave', function () { unsink(); });
       grid.addEventListener('pointerup', function (e) {
         if (!press) return;
-        clearTimeout(press.timer);
+        clearTimeout(press.timer); unsink();
         var t = e.target.closest('[data-k]'), k = press.k; press = null;
         if (!M.over) setFace('face');
         if (t && +t.dataset.k === k) open1(k);
       });
       face.addEventListener('click', function () { start(lv); });
       w.el.querySelector('.pc98-mlevels').addEventListener('click', function (e) { var b = e.target.closest('[data-lv]'); if (b) start(+b.dataset.lv); });
-      w.onClose = function () { clearInterval(timer); };
-      start(0);
+      w.onClose = function () { clearInterval(timer); waves.forEach(clearTimeout); };
+      start(lv);
     }
 
     /* ── Mūzika 98: a player in Spotify's manner (playlists, a big cover, the now-playing bar,
@@ -1035,8 +1240,12 @@
        whole multiple, every shape set pixel by pixel (no smoothing, no gradients),
        the still table painted once, the physics in fixed small steps so the ball
        never tunnels on a slow PC. Z / Shift / ← and / / Shift / → the flippers,
-       Space or ↓ held pulls the plunger; the mouse's left and right buttons too. */
-    var PIN_KEY = 'minkaPinball98';
+       Space or ↓ held pulls the plunger, X and . nudge; the mouse's buttons too.
+       Missions and ranks as on a real table: each mission is a target on the
+       playfield (the drop bank, the planet, the bumpers, the lanes); done, the
+       rank goes up and every ball ends with a rank bonus. */
+    var PIN_KEY = 'minkaPinball98', PIN_RANK_KEY = 'minkaPinball98Rank';
+    var RANKS = ['Kadets', 'Pilots', 'Kapteinis', 'Majors', 'Komandieris', 'Admirālis'];
     function pinball() {
       if (wins.pinball) { front('pinball'); return; }
       var PW = 320, PH = 480, rr = root.getBoundingClientRect();
@@ -1047,15 +1256,16 @@
       if (PH * k < availH * 0.8) k = Math.max(1, Math.min(availH / PH, availW / PW));
       k = Math.round(k * PH) / PH;
       var w = win('pinball', 'Pinbols 98', 'pinball',
-        '<div class="pc98-pin"><div class="pc98-cbar"><span>Punkti <b class="pc98-pscore">0</b></span><span>Bumba <b class="pc98-pball">1/3</b></span><span>× <b class="pc98-pmul">1</b></span><span>Rekords <b class="pc98-pbest">0</b></span></div>'
+        '<div class="pc98-pin"><div class="pc98-cbar"><span>Punkti <b class="pc98-pscore">0</b></span><span>Bumba <b class="pc98-pball">1/3</b></span><span>Reiz. <b class="pc98-pmul">×1</b></span><span>Rangs <b class="pc98-prank">Kadets</b></span><span>Rekords <b class="pc98-pbest">0</b></span></div>'
         + '<div class="pc98-well"><canvas class="pc98-pcv" width="' + PW + '" height="' + PH + '" style="width:' + Math.round(PW * k) + 'px;height:' + Math.round(PH * k) + 'px"></canvas></div>'
-        + '<div class="pc98-pmsg">Atstarpe: atspere. Z un /: plaukstiņas. X un .: pagrūst galdu.</div></div>',
-        Math.round(PW * k) + 22, Math.max(6, (rr.width - PW * k - 22) / 2), Math.max(4, (rr.height - (opts.solo ? 0 : 34) - PH * k - 92) / 2));
+        + '<div class="pc98-pmsg"></div></div>',
+        Math.max(Math.round(PW * k) + 22, 420), Math.max(6, (rr.width - Math.max(PW * k + 22, 420)) / 2), Math.max(4, (rr.height - (opts.solo ? 0 : 34) - PH * k - 92) / 2));
       var cv = w.el.querySelector('.pc98-pcv'), g = cv.getContext('2d');
       g.imageSmoothingEnabled = false;
       var msgEl = w.el.querySelector('.pc98-pmsg');
-      var best = 0; try { best = +localStorage.getItem(PIN_KEY) || 0; } catch (_e) {}
-      w.el.querySelector('.pc98-pbest').textContent = best;
+      var best = 0, bestRank = 0;
+      try { best = +localStorage.getItem(PIN_KEY) || 0; bestRank = +localStorage.getItem(PIN_RANK_KEY) || 0; } catch (_e) {}
+      w.el.querySelector('.pc98-pbest').textContent = best + (bestRank ? ' (' + RANKS[Math.min(bestRank, RANKS.length - 1)] + ')' : '');
 
       // pixel drawing: a rect, a Bresenham line, a filled circle
       function R(c, x, y, ww, hh, col) { c.fillStyle = col; c.fillRect(x | 0, y | 0, ww, hh); }
@@ -1070,71 +1280,106 @@
         }
       }
       function disc(c, cx, cy, r, col) { c.fillStyle = col; for (var y = -r; y <= r; y++) { var hw = Math.floor(Math.sqrt(r * r - y * y + r * 0.6)); c.fillRect(cx - hw, cy + y, hw * 2 + 1, 1); } }
-      function sprite(n, draw) { var c = canvas(n, n), x = c.getContext('2d'); draw(x); return c; }
+      function sprite(ww, hh, draw) { var c = canvas(ww, hh), x = c.getContext('2d'); draw(x); return c; }
+      // a 3×5 bitmap font: digits, signs and the letters the table writes
+      var PIXFONT = { '0': [7, 5, 5, 5, 7], '1': [2, 6, 2, 2, 7], '2': [7, 1, 7, 4, 7], '3': [7, 1, 3, 1, 7], '4': [5, 5, 7, 1, 1], '5': [7, 4, 7, 1, 7], '6': [7, 4, 7, 5, 7], '7': [7, 1, 2, 2, 2], '8': [7, 5, 7, 5, 7], '9': [7, 5, 7, 1, 7], '+': [0, 2, 7, 2, 0], 'x': [0, 5, 2, 5, 0],
+        P: [6, 5, 6, 4, 4], I: [7, 2, 2, 2, 7], N: [5, 7, 7, 5, 5], B: [6, 5, 6, 5, 6], O: [7, 5, 5, 5, 7], L: [4, 4, 4, 4, 7], S: [7, 4, 7, 1, 7], ' ': [0, 0, 0, 0, 0] };
+      function text(c, s, x, y, col, z) {
+        z = z || 1; c.fillStyle = col;
+        for (var i = 0; i < s.length; i++) {
+          var rows = PIXFONT[s[i]]; if (!rows) continue;
+          for (var ry = 0; ry < 5; ry++) for (var rx = 0; rx < 3; rx++) if (rows[ry] & (4 >> rx)) c.fillRect(x + (i * 4 + rx) * z, y + ry * z, z, z);
+        }
+      }
 
       // the table (logical px): walls as segments, the ball comes up the lane on the right
       var WALLS = [
         [12, 70, 20, 40], [20, 40, 40, 20], [40, 20, 70, 12], [70, 12, 250, 12], [250, 12, 280, 20], [280, 20, 300, 40], [300, 40, 308, 80],
         [308, 80, 308, 470], [12, 70, 12, 360], [284, 120, 284, 470], [12, 360, 84, 414], [284, 360, 212, 414],
-        [34, 300, 34, 356], [34, 356, 62, 372], [262, 300, 262, 356], [262, 356, 234, 372]
+        [34, 300, 34, 356], [34, 356, 62, 372], [262, 300, 262, 356], [262, 356, 234, 372],
+        // the guide posts between the three top lanes
+        [124, 40, 124, 64], [172, 40, 172, 64], [76, 46, 76, 70], [220, 46, 220, 70]
       ];
       var KICK = [[34, 300, 62, 372, 1], [262, 300, 234, 372, -1]];        // the slingshots' kicking faces
       var BUMP = [[112, 150], [184, 150], [148, 206]], BR = 15;
-      var ROLL = [[100, 58], [148, 50], [196, 58]];
+      var ROLL = [[100, 54], [148, 50], [196, 54]];
+      var DROP = [[14, 168], [14, 190], [14, 212]], DW = 5, DH = 16;       // the drop bank on the left flank
+      var PLANET = [234, 270], PR = 20;
       var FL = [{ px: 88, py: 418, dir: 1, a: 0.5, w: 0, up: false }, { px: 208, py: 418, dir: -1, a: 0.5, w: 0, up: false }];
       var FLEN = 46, REST = 0.5, UP = -0.45;
-      var PAL = { bg: '#0b1030', wall: '#c8ccd4', wall2: '#5a6478', lane: '#141c48', star: '#ffffff', star2: '#6f80d8', orange: '#ff8a1f', yellow: '#ffd23f', red: '#e0303a', ink: '#000000' };
+      var PAL = { bg: '#0b1030', shade: '#050818', wall: '#c8ccd4', wall2: '#5a6478', lane: '#141c48', star: '#ffffff', star2: '#6f80d8', orange: '#ff8a1f', yellow: '#ffd23f', red: '#e0303a', dark: '#5a1418', ink: '#000000', blue: '#3f7af0', blue2: '#2c5fd0' };
+      // the ring round the planet: its pixels, so a mission's end can run a marquee round it
+      var RING = [];
+      (function () { var x0 = 204, y0 = 282, x1 = 266, y1 = 258, n = 40; for (var i = 0; i <= n; i++) RING.push([Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n)]); })();
 
       // the still table: drawn once
       var bg = canvas(PW, PH), b = bg.getContext('2d');
       R(b, 0, 0, PW, PH, PAL.bg);
       var sr = rng(seedOf('pinball-stars'));
       for (var i = 0; i < 140; i++) R(b, (sr() * PW) | 0, (sr() * PH) | 0, 1, 1, sr() < 0.3 ? PAL.star : PAL.star2);
-      // a ringed planet, in flat bands
-      disc(b, 236, 268, 22, '#2c5fd0'); disc(b, 232, 264, 18, '#3f7af0');
-      for (var py = 252; py < 286; py += 6) R(b, 216, py, 40, 2, '#2c5fd0');
-      line(b, 196, 282, 278, 254, PAL.yellow, 2);
+      // the planet: a shadow, flat bands
+      disc(b, PLANET[0] + 2, PLANET[1] + 2, PR, PAL.shade); disc(b, PLANET[0], PLANET[1], PR, PAL.blue2); disc(b, PLANET[0] - 3, PLANET[1] - 3, PR - 4, PAL.blue);
+      for (var py = PLANET[1] - 14; py < PLANET[1] + 16; py += 6) R(b, PLANET[0] - 18, py, 36, 2, PAL.blue2);
       R(b, 285, 120, 23, 360, PAL.lane);
-      WALLS.forEach(function (sgm) { line(b, sgm[0], sgm[1], sgm[2], sgm[3], PAL.wall2, 4); });
-      WALLS.forEach(function (sgm) { line(b, sgm[0], sgm[1], sgm[2], sgm[3], PAL.wall, 2); });
+      // rails: a dark base, a light top
+      WALLS.forEach(function (sgm) { line(b, sgm[0] + 1, sgm[1] + 1, sgm[2] + 1, sgm[3] + 1, PAL.shade, 4); });
+      WALLS.forEach(function (sgm) { line(b, sgm[0], sgm[1], sgm[2], sgm[3], PAL.wall2, 3); });
+      WALLS.forEach(function (sgm) { line(b, sgm[0], sgm[1], sgm[2], sgm[3], PAL.wall, 1); });
       KICK.forEach(function (kk) { line(b, kk[0], kk[1], kk[2], kk[3], PAL.red, 3); });   // the slingshots' rubber
-      // the arrows of the inlanes, the center's mark
       for (i = 0; i < 3; i++) { R(b, 40 + i * 8, 330 - i * 4, 4, 4, PAL.orange); R(b, 252 - i * 8, 330 - i * 4, 4, 4, PAL.orange); }
-      R(b, 146, 440, 4, 4, PAL.red);
+      // the apron, in the dead corners under the inlanes: the table's name, the gauge's frame
+      text(b, 'PINBOLS', 16, 452, PAL.shade, 2); text(b, 'PINBOLS', 15, 451, PAL.yellow, 2);
+      text(b, '98', 46, 466, PAL.orange, 2);
+      R(b, 223, 455, 56, 12, PAL.ink); R(b, 224, 456, 54, 10, PAL.lane);
 
-      var ballS = sprite(13, function (x) { disc(x, 6, 6, 6, '#5a6478'); disc(x, 6, 6, 5, '#c8ccd4'); R(x, 3, 3, 3, 2, '#ffffff'); });
-      var bumpS = [false, true].map(function (lit) { return sprite(BR * 2 + 1, function (x) { disc(x, BR, BR, BR, PAL.ink); disc(x, BR, BR, BR - 1, lit ? '#ffffff' : PAL.yellow); disc(x, BR, BR, BR - 5, lit ? PAL.yellow : PAL.orange); disc(x, BR, BR, 3, lit ? '#ffffff' : PAL.red); }); });
+      var ballS = sprite(15, 15, function (x) { disc(x, 8, 8, 6, PAL.shade); disc(x, 6, 6, 6, '#5a6478'); disc(x, 6, 6, 5, '#c8ccd4'); R(x, 3, 3, 3, 2, '#ffffff'); });
+      var bumpS = [false, true].map(function (lit) { return sprite(BR * 2 + 4, BR * 2 + 4, function (x) { disc(x, BR + 2, BR + 2, BR, PAL.shade); disc(x, BR, BR, BR, PAL.ink); disc(x, BR, BR, BR - 1, lit ? '#ffffff' : PAL.yellow); disc(x, BR, BR, BR - 5, lit ? PAL.yellow : PAL.orange); disc(x, BR, BR, 3, lit ? '#ffffff' : PAL.red); }); });
 
       var G = null, keys = { l: false, r: false, p: false }, raf = 0, last = 0, acc = 0;
       /* Feedback in tiers (game-feel): small = flash + click; medium = + "+100" in pixel
          digits and a 1 px shake; large = + a 2–3 px shake and a jingle. The shake is
          whole pixels of the picture only, the ball's world never moves. Sounds vary a
          few percent each time (audio-design: no machine-gun repeats). */
-      var trauma = 0, shakeT = 0, pops = [];
-      var PIXFONT = { '0': [7, 5, 5, 5, 7], '1': [2, 6, 2, 2, 7], '2': [7, 1, 7, 4, 7], '3': [7, 1, 3, 1, 7], '4': [5, 5, 7, 1, 1], '5': [7, 4, 7, 1, 7], '6': [7, 4, 7, 5, 7], '7': [7, 1, 2, 2, 2], '8': [7, 5, 7, 5, 7], '9': [7, 5, 7, 1, 7], '+': [0, 2, 7, 2, 0] };
-      function digits(c, text, x, y, col) {
-        c.fillStyle = col;
-        for (var i = 0; i < text.length; i++) {
-          var rows = PIXFONT[text[i]]; if (!rows) continue;
-          for (var ry = 0; ry < 5; ry++) for (var rx = 0; rx < 3; rx++) if (rows[ry] & (4 >> rx)) c.fillRect(x + i * 4 + rx, y + ry, 1, 1);
-        }
-      }
+      var trauma = 0, shakeT = 0, pops = [], dust = [];
       function sfx(f, d, t, v) { blip(f * (0.96 + Math.random() * 0.08), d, t, v); }
       function feel(tier, x, y, n) {
         if (tier >= 2) trauma = Math.min(1, trauma + (tier === 2 ? 0.25 : 0.6));
-        if (n) pops.push({ x: Math.round(x), y: Math.round(y), t: '+' + n, life: 0.6 });
-        if (pops.length > 12) pops.shift();
+        if (n) pops.push({ x: Math.round(x), y: Math.round(y), t: '+' + n, life: 0.9 });
+        if (pops.length > 10) pops.shift();
+      }
+      function jingle() { [660, 880, 1320].forEach(function (f, i) { setTimeout(function () { blip(f, 0.06, 'square', 0.035); }, i * 70); }); }
+
+      // the missions, in turn; each lap round them asks a little more
+      var MISSIONS = [['drop', 'Asteroīdi', 'nogāz mērķus kreisajā malā', 2], ['planet', 'Planēta', 'trāpi planētai', 6], ['bump', 'Bumperi', 'atsitieni', 15], ['lanes', 'Lampas', 'iededz visas trīs augšā', 2]];
+      function mission() { var m = MISSIONS[G.mi % MISSIONS.length]; return { key: m[0], name: m[1], what: m[2], need: Math.round(m[3] * (1 + 0.5 * Math.floor(G.mi / MISSIONS.length))) }; }
+      function progress(key) {
+        var m = mission(); if (m.key !== key || G.over) return;
+        G.mp++;
+        if (G.mp >= m.need) {
+          var bonus = 5000 * (G.rank + 1); add(bonus); G.rank = Math.min(RANKS.length - 1, G.rank + 1); G.mi++; G.mp = 0; G.chase = 0.6;
+          jingle(); feel(3, 200, 230, bonus * G.mul);
+          say('Misija izpildīta! Rangs: ' + RANKS[G.rank]); G.sayUntil = performance.now() + 2500;
+        }
+        paint();
       }
       function newGame() {
-        G = { score: 0, balls: 3, ball: 1, mul: 1, lit: [0, 0, 0], bumps: 0, flash: [0, 0, 0], kick: [0, 0], charge: 0, over: false, still: 0 };
+        G = { score: 0, ball: 1, mul: 1, lit: [0, 0, 0], litBlink: 0, bumps: 0, flash: [0, 0, 0], kick: [0, 0], charge: 0, over: false, still: 0,
+          drop: [1, 1, 1], dropAnim: [0, 0, 0], dropFlash: [0, 0, 0], dropReset: 0, planetFlash: 0, mi: 0, mp: 0, rank: 0, chase: 0, sayUntil: 0 };
         serve(); paint();
       }
-      function serve() { G.x = 296; G.y = 440; G.vx = 0; G.vy = 0; G.inLane = true; say('Atstarpe vai ↓: atspere. Z un /: plaukstiņas. X un .: pagrūst.'); }
-      function say(t) { msgEl.textContent = t; }
+      function serve() { G.x = 296; G.y = 440; G.vx = 0; G.vy = 0; G.inLane = true; G.charge = 0; }
+      function say(t) { if (msgEl.textContent !== t) msgEl.textContent = t; }
       function paint() {
         w.el.querySelector('.pc98-pscore').textContent = G.score;
         w.el.querySelector('.pc98-pball').textContent = Math.min(G.ball, 3) + '/3';
-        w.el.querySelector('.pc98-pmul').textContent = G.mul;
+        w.el.querySelector('.pc98-pmul').textContent = '×' + G.mul;
+        w.el.querySelector('.pc98-prank').textContent = RANKS[G.rank];
+      }
+      function status() {                                         // the message line: the mission while playing
+        if (performance.now() < G.sayUntil) return;
+        if (G.over) return;
+        if (G.inLane) { say('Atstarpe vai ↓: atspere. Z un /: plaukstiņas. X un .: pagrūst.'); return; }
+        var m = mission(); say('Misija: ' + m.name + ' ' + G.mp + '/' + m.need + ' (' + m.what + ')');
       }
       function add(n) { G.score += n * G.mul; paint(); }
 
@@ -1148,20 +1393,23 @@
         nx /= d; ny /= d; G.x = qx + nx * lim; G.y = qy + ny * lim;
         var vn = G.vx * nx + G.vy * ny;
         if (vn < 0) { G.vx -= (1 + e) * vn * nx; G.vy -= (1 + e) * vn * ny; }
-        return [nx, ny, qx, qy];
+        return [nx, ny, qx, qy, vn];
+      }
+      function collideCircle(cx, cy, r) {
+        var nx = G.x - cx, ny = G.y - cy, d = Math.hypot(nx, ny), lim = RB + r;
+        if (d >= lim || d === 0) return null;
+        nx /= d; ny /= d; G.x = cx + nx * lim; G.y = cy + ny * lim;
+        return [nx, ny, G.vx * nx + G.vy * ny];
       }
       function tip(f) { var an = f.dir > 0 ? f.a : Math.PI - f.a; return [f.px + Math.cos(an) * FLEN, f.py + Math.sin(an) * FLEN]; }
       function step() {
         // flippers turn fast towards up or rest (the angle is mirrored for the right one)
-        FL.forEach(function (f, i) {
+        FL.forEach(function (f) {
           var target = f.up ? UP : REST, sp = 28, old = f.a;
           f.a += Math.max(-sp * STEP, Math.min(sp * STEP, target - f.a));
           f.w = (f.a - old) / STEP * f.dir;                          // + is clockwise on screen
         });
-        if (G.inLane) {                                             // on the plunger
-          G.y = 440 + G.charge * 14; G.vy = 0; G.vx = 0;
-          return;
-        }
+        if (G.inLane) { G.y = 440 + G.charge * 14; G.vy = 0; G.vx = 0; return; }   // on the plunger
         G.vy += GRAV * STEP;
         var sp2 = Math.hypot(G.vx, G.vy); if (sp2 > 900) { G.vx *= 900 / sp2; G.vy *= 900 / sp2; }
         G.x += G.vx * STEP; G.y += G.vy * STEP;
@@ -1170,16 +1418,31 @@
           var hit = collideSeg(kk[0], kk[1], kk[2], kk[3], 0.45);
           if (hit && Math.hypot(G.vx, G.vy) > 60 && G.kick[i] <= 0) { G.vx += hit[0] * 260; G.vy += hit[1] * 260; G.kick[i] = 0.12; add(10); sfx(520, 0.04, 'square', 0.035); feel(1); }
         });
-        BUMP.forEach(function (bp, i) {
-          var nx = G.x - bp[0], ny = G.y - bp[1], d = Math.hypot(nx, ny), lim = RB + BR;
-          if (d >= lim || d === 0) return;
-          nx /= d; ny /= d; G.x = bp[0] + nx * lim; G.y = bp[1] + ny * lim;
-          var vn = G.vx * nx + G.vy * ny; G.vx += (380 - Math.min(vn, 0)) * nx * 0.9; G.vy += (380 - Math.min(vn, 0)) * ny * 0.9;
-          if (G.flash[i] <= 0) {
-            G.flash[i] = 0.1; add(100); sfx(880 + i * 90, 0.05, 'square', 0.04); feel(2, bp[0] - 6, bp[1] - BR - 8, 100 * G.mul);
-            if (++G.bumps % 25 === 0) { add(2500); say('Orbīta! +2500'); jingle(); feel(3, 136, 100, 2500 * G.mul); }
+        // the drop bank: a standing target is a short wall; hit, it drops into the table
+        DROP.forEach(function (d, i) {
+          if (!G.drop[i]) return;
+          var hit = collideSeg(d[0] + DW, d[1], d[0] + DW, d[1] + DH, 0.35);
+          if (hit && hit[4] < -40) {
+            G.drop[i] = 0; G.dropFlash[i] = 0.035; G.dropAnim[i] = 0.07; add(250); sfx(300, 0.05, 'square', 0.04); feel(2, d[0] + 8, d[1] - 2, 250 * G.mul);
+            for (var q = 0; q < 4; q++) dust.push({ x: d[0] + 1 + q, y: d[1] + DH, vy: 20 + q * 12, life: 0.1 });
+            if (!G.drop[0] && !G.drop[1] && !G.drop[2]) { add(1500); G.dropReset = 1.5; feel(3, 30, 150, 1500 * G.mul); jingle(); progress('drop'); }
           }
         });
+        BUMP.forEach(function (bp, i) {
+          var hit = collideCircle(bp[0], bp[1], BR); if (!hit) return;
+          var vn = hit[2]; G.vx += (380 - Math.min(vn, 0)) * hit[0] * 0.9; G.vy += (380 - Math.min(vn, 0)) * hit[1] * 0.9;
+          if (G.flash[i] <= 0) {
+            G.flash[i] = 0.06; add(100); sfx(880 + i * 90, 0.05, 'square', 0.04); feel(2, bp[0] - 8, bp[1] - BR - 12, 100 * G.mul);
+            if (++G.bumps % 25 === 0) { add(2500); jingle(); feel(3, 136, 100, 2500 * G.mul); }
+            progress('bump');
+          }
+        });
+        // the planet: solid, a dull bounce, it counts its hits
+        var ph = collideCircle(PLANET[0], PLANET[1], PR);
+        if (ph && ph[2] < 0) {
+          G.vx -= 1.6 * ph[2] * ph[0]; G.vy -= 1.6 * ph[2] * ph[1];
+          if (ph[2] < -60 && G.planetFlash <= 0) { G.planetFlash = 0.08; add(75); sfx(240, 0.06, 'triangle', 0.04); feel(1, PLANET[0] - 8, PLANET[1] - PR - 10, 75 * G.mul); progress('planet'); }
+        }
         FL.forEach(function (f) {
           var t = tip(f), hit = collideSeg(f.px, f.py, t[0], t[1], 0, 5);
           if (!hit) return;
@@ -1189,41 +1452,45 @@
           if (rvn < 0) { G.vx -= 1.3 * rvn * hit[0]; G.vy -= 1.3 * rvn * hit[1]; }
         });
         ROLL.forEach(function (rl, i) {
-          if (!G.lit[i] && Math.abs(G.x - rl[0]) < 8 && Math.abs(G.y - rl[1]) < 8) {
-            G.lit[i] = 1; add(50); sfx(1200, 0.04, 'triangle', 0.03); feel(1, rl[0] - 6, rl[1] + 6, 50 * G.mul);
-            if (G.lit[0] && G.lit[1] && G.lit[2]) { G.lit = [0, 0, 0]; G.mul = Math.min(5, G.mul + 1); add(1000); say('Visas trīs! Reizinātājs × ' + G.mul); paint(); jingle(); feel(3, 132, 70, 1000 * (G.mul - 1 || 1)); }
+          if (!G.lit[i] && G.litBlink <= 0 && Math.abs(G.x - rl[0]) < 8 && Math.abs(G.y - rl[1]) < 9) {
+            G.lit[i] = 1; add(50); sfx(1200, 0.04, 'triangle', 0.03); feel(1, rl[0] - 6, rl[1] + 8, 50 * G.mul);
+            if (G.lit[0] && G.lit[1] && G.lit[2]) { G.litBlink = 0.6; G.mul = Math.min(5, G.mul + 1); add(1000); paint(); jingle(); feel(3, 132, 70, 1000); progress('lanes'); }
           }
         });
         if (G.x > 286 && G.y > 438 && G.vy > 0) { G.inLane = true; G.charge = 0; }   // fell back down the lane: onto the plunger again
         if (G.y > PH + 10) drain();
       }
-      function jingle() { [660, 880, 1320].forEach(function (f, i) { setTimeout(function () { blip(f, 0.06, 'square', 0.035); }, i * 70); }); }
       function drain() {
         blip(110, 0.4, 'sawtooth', 0.05); feel(3);
-        G.ball++; G.mul = 1;
-        if (G.ball > 3) { G.over = true; gameOver(); return; }
+        var bonus = G.rank * 1000;
+        if (bonus) { G.score += bonus; say('Bumba beigusies. Ranga bonuss +' + bonus); G.sayUntil = performance.now() + 2200; }
+        G.ball++; G.mul = 1; G.lit = [0, 0, 0];
+        if (G.ball > 3) { G.over = true; paint(); gameOver(); return; }
         paint(); serve();
       }
       function gameOver() {
+        G.overAt = performance.now(); keys.p = false;
         var rec = G.score > best;
-        if (rec) { best = G.score; try { localStorage.setItem(PIN_KEY, String(best)); } catch (_e) {} w.el.querySelector('.pc98-pbest').textContent = best; }
-        say('Spēle beigusies. ' + (rec ? 'Jauns rekords! ' : '') + 'Atstarpe: jauna spēle.');
+        if (rec) { best = G.score; try { localStorage.setItem(PIN_KEY, String(best)); } catch (_e) {} }
+        if (G.rank > bestRank) { bestRank = G.rank; try { localStorage.setItem(PIN_RANK_KEY, String(bestRank)); } catch (_e) {} }
+        w.el.querySelector('.pc98-pbest').textContent = best + (bestRank ? ' (' + RANKS[bestRank] + ')' : '');
+        G.sayUntil = 0; say('Spēle beigusies. Rangs: ' + RANKS[G.rank] + '. ' + (rec ? 'Jauns rekords! ' : '') + 'Atstarpe: jauna spēle.');
         blip(330, 0.2, 'square', 0.04); setTimeout(function () { blip(220, 0.3, 'square', 0.04); }, 180);
       }
       function launch() {
         if (!G.inLane) return;
         G.inLane = false; G.vy = -(380 + G.charge * 520); G.vx = 0; G.charge = 0;
-        blip(200, 0.1, 'sawtooth', 0.035); say('');
+        blip(200, 0.1, 'sawtooth', 0.035);
       }
 
-      // the flipper: rasterized every frame (distance to its axis, wide at the pivot, thin at the tip)
-      function drawFlipper(f) {
-        var t = tip(f), x0 = Math.min(f.px, t[0]) - 8, x1 = Math.max(f.px, t[0]) + 8, y0 = Math.min(f.py, t[1]) - 8, y1 = Math.max(f.py, t[1]) + 8;
+      // the flipper: rasterized every frame (distance to its axis, wide at the pivot, thin at the tip), its shadow first
+      function drawFlipper(f, shadow) {
+        var t = tip(f), o = shadow ? 2 : 0, x0 = Math.min(f.px, t[0]) - 8, x1 = Math.max(f.px, t[0]) + 8, y0 = Math.min(f.py, t[1]) - 8, y1 = Math.max(f.py, t[1]) + 8;
         var dx = t[0] - f.px, dy = t[1] - f.py, L = dx * dx + dy * dy;
         for (var y = y0 | 0; y <= y1; y++) for (var x = x0 | 0; x <= x1; x++) {
           var u = Math.max(0, Math.min(1, ((x + 0.5 - f.px) * dx + (y + 0.5 - f.py) * dy) / L));
           var d = Math.hypot(x + 0.5 - f.px - dx * u, y + 0.5 - f.py - dy * u), rad = 6 - u * 3;
-          if (d <= rad) { g.fillStyle = d > rad - 1.3 ? PAL.ink : (u < 0.15 ? PAL.yellow : PAL.orange); g.fillRect(x, y, 1, 1); }
+          if (d <= rad) { g.fillStyle = shadow ? PAL.shade : d > rad - 1.3 ? PAL.ink : (u < 0.15 ? PAL.yellow : PAL.orange); g.fillRect(x + o, y + o, 1, 1); }
         }
       }
       function draw(dt) {
@@ -1233,18 +1500,36 @@
         if (ox || oy) { g.fillStyle = '#000'; g.fillRect(0, 0, PW, PH); }
         g.setTransform(1, 0, 0, 1, ox, oy);
         g.drawImage(bg, 0, 0);
-        ROLL.forEach(function (rl, i) { R(g, rl[0] - 5, rl[1] - 3, 10, 6, PAL.ink); R(g, rl[0] - 4, rl[1] - 2, 8, 4, G.lit[i] ? PAL.yellow : '#3a3f5a'); });
+        // the lanes' lamps: dark red unlit, yellow lit; all three blink together when done
+        var blinkOn = G.litBlink > 0 && ((G.litBlink * 10) | 0) % 2 === 0;
+        ROLL.forEach(function (rl, i) { R(g, rl[0] - 5, rl[1] - 3, 10, 6, PAL.ink); R(g, rl[0] - 4, rl[1] - 2, 8, 4, G.litBlink > 0 ? (blinkOn ? '#ffffff' : PAL.yellow) : G.lit[i] ? PAL.yellow : PAL.dark); });
+        // the drop bank: standing targets, a white flash when hit, then they sink a row at a time
+        DROP.forEach(function (d, i) {
+          if (G.drop[i]) { R(g, d[0] + 1, d[1] + 1, DW, DH, PAL.shade); R(g, d[0], d[1], DW, DH, PAL.ink); R(g, d[0] + 1, d[1] + 1, DW - 2, DH - 2, PAL.orange); R(g, d[0] + 1, d[1] + 1, DW - 2, 2, PAL.yellow); }
+          else if (G.dropFlash[i] > 0) R(g, d[0], d[1], DW, DH, '#ffffff');
+          else if (G.dropAnim[i] > 0) { var hh = Math.max(1, Math.round(DH * G.dropAnim[i] / 0.07)); R(g, d[0], d[1] + DH - hh, DW, hh, PAL.dark); }
+          else R(g, d[0], d[1] + DH - 2, DW, 2, PAL.dark);
+        });
+        dust.forEach(function (p) { R(g, p.x, p.y, 1, 1, PAL.wall); });
+        if (G.planetFlash > 0) { disc(g, PLANET[0], PLANET[1], PR, '#ffffff'); }
+        // the planet's ring; after a mission a white marquee runs round it
+        RING.forEach(function (p, i) { var on = G.chase > 0 && ((i + Math.floor((0.6 - G.chase) * 60)) % 8) < 3; R(g, p[0], p[1], 2, 2, on ? '#ffffff' : PAL.yellow); });
         BUMP.forEach(function (bp, i) { g.drawImage(bumpS[G.flash[i] > 0 ? 1 : 0], bp[0] - BR, bp[1] - BR); });
-        KICK.forEach(function (kk, i) { if (G.kick[i] > 0) line(g, kk[0], kk[1], kk[2], kk[3], PAL.yellow, 2); });
-        FL.forEach(drawFlipper);
-        // the plunger, pulled down while held
+        KICK.forEach(function (kk, i) { if (G.kick[i] > 0) line(g, kk[0], kk[1], kk[2], kk[3], '#ffffff', 3); });
+        FL.forEach(function (f) { drawFlipper(f, true); });
+        FL.forEach(function (f) { drawFlipper(f, false); });
+        // the plunger, pulled down while held, and its gauge on the apron: eight cells filling
         var pz = 452 + Math.round(G.charge * 14);
         R(g, 291, pz, 10, 4, PAL.red); R(g, 294, pz + 4, 4, 470 - pz, PAL.wall);
+        var cells = Math.round(G.charge * 8);
+        for (var c = 0; c < 8; c++) R(g, 226 + c * 6 + 1, 458, 4, 6, c < cells ? (c < 5 ? PAL.yellow : c < 7 ? PAL.orange : PAL.red) : '#1c2660');
+        // the rank lamps on the apron
+        for (c = 0; c < RANKS.length - 1; c++) R(g, 226 + c * 10, 470, 6, 4, c < G.rank ? PAL.yellow : PAL.dark);
         g.drawImage(ballS, Math.round(G.x) - 6, Math.round(G.y) - 6);
-        // "+100" in 3×5 pixel digits, rising in whole pixels, blinking off at the end
+        // "+100" in 3×5 pixel digits at 2×, rising in whole pixels, blinking off at the end
         pops.forEach(function (p) {
           p.life -= dt || 0;
-          if (p.life > 0 && (p.life > 0.15 || ((p.life * 40) | 0) % 2)) { var yy = p.y - Math.round((0.6 - p.life) * 20); digits(g, p.t, p.x + 1, yy + 1, '#000'); digits(g, p.t, p.x, yy, '#ffffff'); }
+          if (p.life > 0 && (p.life > 0.2 || ((p.life * 40) | 0) % 2)) { var yy = p.y - Math.round((0.9 - p.life) * 16); text(g, p.t, p.x + 1, yy + 1, '#000', 2); text(g, p.t, p.x, yy, '#ffffff', 2); }
         });
         pops = pops.filter(function (p) { return p.life > 0; });
       }
@@ -1256,10 +1541,14 @@
           if (G.inLane && keys.p) G.charge = Math.min(1, G.charge + dt * 1.6);
           acc += dt;
           while (acc >= STEP) { step(); acc -= STEP; if (G.over) break; }
-          for (var i = 0; i < 3; i++) G.flash[i] -= dt;
-          G.kick[0] -= dt; G.kick[1] -= dt;
+          for (var i = 0; i < 3; i++) { G.flash[i] -= dt; G.dropFlash[i] -= dt; if (G.dropFlash[i] <= 0) G.dropAnim[i] -= dt; }
+          G.kick[0] -= dt; G.kick[1] -= dt; G.planetFlash -= dt; G.chase = Math.max(0, G.chase - dt);
+          if (G.litBlink > 0) { G.litBlink -= dt; if (G.litBlink <= 0) G.lit = [0, 0, 0]; }
+          if (G.dropReset > 0) { G.dropReset -= dt; if (G.dropReset <= 0) { G.drop = [1, 1, 1]; sfx(500, 0.05, 'square', 0.03); } }
+          dust.forEach(function (p) { p.y += p.vy * dt; p.life -= dt; }); dust = dust.filter(function (p) { return p.life > 0; });
           // a ball resting somewhere with no way out gets a nudge
           if (!G.inLane && Math.hypot(G.vx, G.vy) < 8) { G.still += dt; if (G.still > 2.5) { G.vy = -260; G.vx = (Math.random() - 0.5) * 120; G.still = 0; } } else G.still = 0;
+          status();
         }
         draw(dt);
         raf = requestAnimationFrame(frame);
@@ -1267,7 +1556,7 @@
 
       // the keys: the computer's own Esc handler stays; these only for the table
       function setKey(e, down) {
-        if (!wins.pinball || !wins.pinball.el.classList || wins.pinball.el.classList.contains('is-off')) return;
+        if (!wins.pinball || wins.pinball.el.classList.contains('is-off')) return;
         var c = e.code, hit = true;
         if (c === 'KeyZ' || c === 'ShiftLeft' || c === 'ArrowLeft') { if (down && !keys.l) sfx(160, 0.04, 'square', 0.03); keys.l = down; FL[0].up = down; }
         else if (c === 'Slash' || c === 'ShiftRight' || c === 'ArrowRight' || c === 'KeyM') { if (down && !keys.r) sfx(170, 0.04, 'square', 0.03); keys.r = down; FL[1].up = down; }
@@ -1275,7 +1564,7 @@
           if (!G.inLane && !G.over && (G.nudgeAt || 0) < performance.now() - 700) { G.nudgeAt = performance.now(); G.vx += c === 'KeyX' ? 70 : -70; G.vy -= 40; trauma = Math.min(1, trauma + 0.35); sfx(90, 0.08, 'square', 0.04); }
         }
         else if (c === 'Space' || c === 'ArrowDown' || c === 'Enter') {
-          if (down && G.over) { newGame(); } else if (!down && keys.p) launch();
+          if (down && G.over) { if (performance.now() - G.overAt > 1500) newGame(); } else if (!down && keys.p) launch();   // a held plunger key at the end does not start the next game
           keys.p = down;
         } else hit = false;
         if (hit) e.preventDefault();
@@ -1288,10 +1577,10 @@
       cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
       cv.addEventListener('pointerdown', function (e) {
         e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_e) {}
-        if (G.over) { newGame(); return; }
+        if (G.over) { if (performance.now() - G.overAt > 1500) newGame(); return; }
         if (G.inLane) { keys.p = true; return; }
         var r = cv.getBoundingClientRect(), right = e.pointerType === 'mouse' ? e.button === 2 : e.clientX > r.left + r.width / 2;
-        var f = FL[right ? 1 : 0]; f.up = true; f.ptr = e.pointerId; blip(right ? 170 : 160, 0.04, 'square', 0.03);
+        var f = FL[right ? 1 : 0]; f.up = true; f.ptr = e.pointerId; sfx(right ? 170 : 160, 0.04, 'square', 0.03);
       });
       var up = function (e) {
         if (keys.p) { keys.p = false; launch(); }
@@ -1325,6 +1614,8 @@
     // the keys stay here; Esc closes the window in front, then the computer
     function onKey(e) {
       e.stopPropagation();
+      var fb = e.target && e.target.closest && e.target.closest('.pc98-win button');   // Space never presses a game's button
+      if ((e.key === ' ' || e.code === 'Space') && fb && !inDialog(fb)) e.preventDefault();
       if (e.key === 'Escape') { e.preventDefault(); var ids = Object.keys(wins); if (ids.length) { var top = ids.reduce(function (a, b) { return +wins[a].el.style.zIndex > +wins[b].el.style.zIndex ? a : b; }); closeWin(top); } else close(); }
       else if (e.key === 'Enter') { var d = root.querySelector('.pc98-win:last-child .pc98-btn.is-default'); if (d) { e.preventDefault(); d.click(); } }
     }
