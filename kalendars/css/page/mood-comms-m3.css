@@ -962,6 +962,8 @@
 /* Pārējām reakcijām nosaukums parādās, kad tā ir izvēlēta; šai — kad uz tās
    uzej, jo citādi neviens neuzzina, kas tā par pogu. Virs pogas: tekošās
    maiņas kompaktā kartīte beidzas tieši zem burbuļiem un nogrieztu to. */
+/* Poga ar uzrakstu virs komandas līknes (tās emoji citādi gulstas pāri tekstam). */
+#grafiks-list .rg-feedback-card .rg-pulse-own:is(:hover, :focus-visible) { z-index: 30 !important; }
 #grafiks-list .rg-feedback-card .rg-pulse-own:hover .rg-pulse-name,
 #grafiks-list .rg-feedback-card .rg-pulse-own:focus-visible .rg-pulse-name {
   display: block !important;
