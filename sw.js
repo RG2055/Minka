@@ -1,4 +1,4 @@
-const CACHE = 'minka-4.7.031-fx1';
+const CACHE = 'minka-4.7.032-au1';
 const APP_ROOT = new URL('./', self.registration.scope);
 const appUrl = relativePath => new URL(relativePath, APP_ROOT).href;
 
@@ -207,7 +207,9 @@ self.addEventListener('fetch', event => {
           return response;
         })
         // ?app=rad pages are the same files: match them without the query.
-        .catch(async () => (await caches.match(request)) || (await caches.match(request, { ignoreSearch: true })) || (await caches.match(appUrl('index.html'))) || new Response('', { status: 503, statusText: 'Offline' }))
+        // The shell stands in only for the top-level page: inside the calendar
+        // iframe it would draw the whole app a second time.
+        .catch(async () => (await caches.match(request)) || (await caches.match(request, { ignoreSearch: true })) || (request.destination === 'document' && await caches.match(appUrl('index.html'))) || new Response('', { status: 503, statusText: 'Offline' }))
     );
     return;
   }
@@ -251,6 +253,10 @@ self.addEventListener('fetch', event => {
     const isVersioned = /[?&]v=/.test(url);
     event.respondWith(
       caches.match(request).then(cached => {
+        // A versioned file never changes under its URL, and every release
+        // drops all cached code on activate: the copy is final. Refreshing it
+        // anyway re-downloaded and re-wrote ~170 files on every page load.
+        if (cached && isVersioned) return cached;
         const network = (isVersioned ? fetch(request) : revalidatingFetch(request))
           .then(response => {
             event.waitUntil(safeCachePut(request, response.clone()));
@@ -272,7 +278,9 @@ self.addEventListener('fetch', event => {
       if (cached) return cached;
       try {
         const response = await fetch(request);
-        event.waitUntil(safeCachePut(request, response.clone()));
+        // An opaque reply may be an error page whose status cannot be seen;
+        // kept cache-first it would stay "the file" until the next release.
+        if (response.type !== 'opaque') event.waitUntil(safeCachePut(request, response.clone()));
         return response;
       } catch (_e) {
         return new Response('', { status: 503, statusText: 'Offline' });

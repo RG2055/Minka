@@ -14,6 +14,8 @@ const steps=[
   ...(live?[['offline',['offline.mjs',live]]]:[]),
 ];
 let failed=0;
+// A stale result file must never be asserted on if the capture step fails.
+fs.rmSync('out/shift-states.json',{force:true});
 for(const [name,args] of steps){ const r=spawnSync(process.execPath,args,{stdio:'inherit'}); if(r.status){ failed++; console.log(`✖ ${name} failed`); } }
 if(!live) console.log('(offline check skipped — pass a local-live-server URL as the 2nd argument)');
 console.log(failed?`\n${failed} step(s) failed`:'\nALL E2E STEPS PASSED'); process.exit(failed?1:0);

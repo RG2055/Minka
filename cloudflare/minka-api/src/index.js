@@ -744,7 +744,19 @@ const worker = {
     ctx.waitUntil(refreshSchedule(env));
   },
 
+  // A thrown error (Google answering with an HTML page, a D1 hiccup) must
+  // still reach the page as JSON with CORS headers, not as a network failure.
   async fetch(request, env, ctx) {
+    try {
+      return await route(request, env, ctx);
+    } catch (error) {
+      console.error(JSON.stringify({ message: "Unhandled error", path: new URL(request.url).pathname, error: String(error && error.stack || error).slice(0, 500) }));
+      return json(request, { ok: false, error: "Server error" }, 502);
+    }
+  }
+};
+
+async function route(request, env, ctx) {
     const url = new URL(request.url);
     const method = request.method;
 
@@ -1422,8 +1434,7 @@ const worker = {
     }
 
     return json(request, { ok: false, error: "Not found" }, 404);
-  }
-};
+}
 
 export default worker;
 
@@ -1516,7 +1527,7 @@ function cors(request) {
     ...(origin ? { "access-control-allow-origin": origin } : {}),
     "access-control-allow-methods": "GET,POST,OPTIONS",
     "access-control-allow-headers": "content-type, authorization",
-    "access-control-expose-headers": "x-minka-token",
+    "access-control-expose-headers": "x-minka-token, x-schedule-age",
     // Without this the browser re-sends the OPTIONS preflight before nearly
     // every authorised call, which was half of this worker's traffic.
     "access-control-max-age": "86400",

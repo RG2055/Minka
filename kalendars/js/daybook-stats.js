@@ -227,6 +227,7 @@
             var details = readJson(COFFEE_DETAILS_KEY);
             details[date] = C ? C.details(value.details) : (value.details || {});
             writeJson(COFFEE_DETAILS_KEY, details);
+            try { window.dispatchEvent(new Event('minka:coffee-store-written')); } catch (_e) {}
             coffee.loaded[day] = true;
             delete coffee.failed[day];
           } catch (_e) { coffee.failed[day] = true; }

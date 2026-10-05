@@ -1371,8 +1371,9 @@ function filterFullList(btn) {
       days.forEach(day => {
         const p = String(day && day.date || '').split('.').map(Number);
         if (p.length !== 3 || !p[0] || !p[1] || !p[2] || !Array.isArray(day.workers)) return;
-        const date = new Date(p[2], p[1] - 1, p[0]);
-        entries.push({ key: date.getTime(), day });
+        // UTC keys: a local-midnight key minus 24 h misses the day after a
+        // clock change (25 h Sunday in October, 23 h in March).
+        entries.push({ key: Date.UTC(p[2], p[1] - 1, p[0]), day });
       });
     }
     const byKey = new Map(entries.map(e => [e.key, e.day]));
@@ -1704,8 +1705,9 @@ function filterFullList(btn) {
       const r = window.MinkaApi
         ? await window.MinkaApi.apiFetch(SCHEDULE_PATH, { signal: controller ? controller.signal : undefined })
         : await fetch(API_URL + '?_=' + Date.now(), { cache: 'no-store', signal: controller ? controller.signal : undefined });
-      if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
+      // The timeout stays armed while the body is read (cleared in finally):
+      // a stalled body used to leave the refresh "busy" until a reload.
       const d = await r.json();
       if (!d.knownCarryovers || typeof d.knownCarryovers !== 'object' || Array.isArray(d.knownCarryovers)) throw new Error('Schedule exceptions unavailable');
       const remoteFingerprint = __gScheduleFingerprint(d);
@@ -6049,6 +6051,10 @@ function filterFullList(btn) {
         clearTimeout(coffeeStorageRefresh);
         coffeeStorageRefresh = setTimeout(() => refreshVisibleCoffeeRows(getCoffeeDayKey()), 0);
       });
+      // The statistics window writes past days into the same keys from this
+      // document ("storage" only fires in other tabs). Without re-reading, the
+      // next cup saved the older copy over them.
+      window.addEventListener('minka:coffee-store-written', function () { coffeeStoreCache = null; coffeeDetailCache = null; });
       coffeeStorageListening = true;
     } catch(e) {}
 
@@ -6159,7 +6165,10 @@ function filterFullList(btn) {
       try {
         const data = getCoffeeAddOrderStore();
         // Keep only the recent days so this hint can never grow without bound.
-        Object.keys(data).sort().slice(0, -14).forEach(k => { delete data[k]; });
+        // Keys are DD.MM.YYYY: order them as dates, not as text, or "10.10" is
+        // dropped before "27.09"; today's entry is never the one removed.
+        const ymd = k => k.split('.').reverse().join('');
+        Object.keys(data).sort((a, b) => ymd(a) < ymd(b) ? -1 : ymd(a) > ymd(b) ? 1 : 0).slice(0, -14).forEach(k => { if (k !== day) delete data[k]; });
         if (!data[day]) data[day] = {};
         data[day][key] = (list || []).slice(-64);
         localStorage.setItem(coffeeAddOrderKey, JSON.stringify(data));

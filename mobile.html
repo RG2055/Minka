@@ -722,8 +722,8 @@ html.mk-low-spec #calendarEmbed {
 <body>
   <div id="calendarEmbed">
     <iframe
-      src="kalendars/index.html?mobile=1&cv=20261003fx1"
-      data-base-src="kalendars/index.html?mobile=1&cv=20261003fx1"
+      src="kalendars/index.html?mobile=1&cv=20261005au1"
+      data-base-src="kalendars/index.html?mobile=1&cv=20261005au1"
       id="calIframe"
       title="Mobilais dežūru grafiks"
       allow="fullscreen"
@@ -915,6 +915,21 @@ html.mk-low-spec #calendarEmbed {
     const MINKA_APP_VERSION = '2026.09.15-mobile-v2';
     const MINKA_VERSION_KEY = 'minka_mobile_app_version';
     const MINKA_RELOAD_KEY = 'minka_mobile_sw_reloading';
+    const MINKA_SW_VERSION_KEY = 'minka_mobile_sw_version_reloading';
+    // As in index.html: one reload per worker version, so a second release in
+    // the same session also lands; the first-ever takeover (nothing older to
+    // replace) does not reload.
+    const firstTakeover = { message: !navigator.serviceWorker.controller, change: !navigator.serviceWorker.controller };
+    navigator.serviceWorker.addEventListener('message', event => {
+      const data = (event && event.data) || {};
+      if (data.type !== 'MINKA_SW_ACTIVATED' || !data.version || !navigator.serviceWorker.controller) return;
+      try {
+        if (firstTakeover.message) { firstTakeover.message = false; sessionStorage.setItem(MINKA_SW_VERSION_KEY, data.version); return; }
+        if (sessionStorage.getItem(MINKA_SW_VERSION_KEY) === data.version) return;
+        sessionStorage.setItem(MINKA_SW_VERSION_KEY, data.version);
+      } catch (_e) { return; }
+      if (window.__mkUpdates) window.__mkUpdates.reloadWhenSafe(); else location.reload();
+    });
     function clearMinkaRuntimeCaches() {
       try {
         localStorage.removeItem('minka_schedule_cache_v2');
@@ -942,6 +957,7 @@ html.mk-low-spec #calendarEmbed {
           else if (r.waiting) r.waiting.postMessage({ type: 'SKIP_WAITING' });
 
           navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (firstTakeover.change) { firstTakeover.change = false; return; }
             try {
               if (sessionStorage.getItem(MINKA_RELOAD_KEY) === MINKA_APP_VERSION) return;
               sessionStorage.setItem(MINKA_RELOAD_KEY, MINKA_APP_VERSION);

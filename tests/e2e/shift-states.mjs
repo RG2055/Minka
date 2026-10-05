@@ -8,7 +8,7 @@ const b=await chromium.launch(); const out={};
 async function open(time,{live=false,vp={width:1440,height:900},q=''}={}){ const ctx=await b.newContext({viewport:vp,timezoneId:TZ}); const p=await ctx.newPage(); const errs=[];
   p.on('pageerror',e=>errs.push(e.message.slice(0,140)));
   await ctx.route('**/__fixture.js',async r=>{ const res=await r.fetch(); let js=await res.text(); const before=js;
-    js=js.replace("workers:names.map(name=>({name,shift:'24'}))","workers:"+WORKERS); if(js===before) throw new Error('fixture pattern not found'); await r.fulfill({response:res,body:js}); });
+    js=js.replace(/workers:names\.map\(name=>\(\{name,shift:'24'[^}]*\}\)\)/,"workers:"+WORKERS); if(js===before) throw new Error('fixture pattern not found'); await r.fulfill({response:res,body:js}); });
   if(live){ await p.clock.install({time:new Date(time)}); await p.clock.resume(); } else await p.clock.setFixedTime(new Date(time));
   await p.goto(BASE+'/kalendars/index.html'+q,{waitUntil:'load'}); await p.waitForTimeout(6000); p.__errs=errs; return p; }
 const snap=p=>p.evaluate(()=>{ const t=e=>e?e.textContent.replace(/\s+/g,' ').trim():null;
