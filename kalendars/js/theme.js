@@ -267,9 +267,12 @@
         return (src.match(/[?&]v=([\w.-]+)/) || [])[1] || '';
       } catch (e) { return ''; }
     };
-    const builds = [['Kalendārs', scriptBuild('calendar.js')], ['Kartītes', scriptBuild('card-faces.js')]]
+    // Shown as a date only: the internal release tags after it mean nothing to
+    // a reader and can look alarming (a tag once read as "rat").
+    const asDate = v => { const m = String(v).match(/^(\d{4})(\d{2})(\d{2})/); return m ? m[3] + '.' + m[2] + '.' + m[1] : ''; };
+    const builds = [['Kalendārs', asDate(scriptBuild('calendar.js'))], ['kartītes', asDate(scriptBuild('card-faces.js'))]]
       .filter(pair => pair[1]).map(pair => pair[0] + ' ' + pair[1]);
-    if (sub) sub.textContent = builds.join(' · ');
+    if (sub) sub.textContent = builds.join(', ');
 
     let months = 0, saved = '';
     try { months = Object.keys(window.__grafiksStore || {}).length; } catch (e) {}
@@ -297,8 +300,9 @@
 
     if (ver && 'caches' in window && caches.keys) {
       caches.keys().then(function (keys) {
-        const mk = keys.filter(function (k) { return /^minka-/.test(k); }).sort();
-        ver.textContent = mk.length ? mk[mk.length - 1].replace('minka-', 'v') : '–';
+        const mk = keys.filter(function (k) { return /^minka-\d/.test(k); }).sort(); // not minka-fx-… (picture store)
+        // Number only ("v4.7.039"), without the internal tag after it.
+        ver.textContent = mk.length ? 'v' + mk[mk.length - 1].replace(/^minka-/, '').replace(/-[a-z][\w]*$/i, '') : '–';
       }).catch(function () { ver.textContent = '–'; });
     }
   }
