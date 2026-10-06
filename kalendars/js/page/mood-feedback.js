@@ -3228,7 +3228,7 @@
   /* Galerija kā Doom (js/page/mood-gallery-3d.js, ielādējas tikai pirmajā
      reizē): pastaiga pa zāli ar zīmējumiem uz sienām. Ja tā neielādējas,
      paliek parastā galerija (režģis augstāk). */
-  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261006gl9';
+  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261006rat1';
   var gallery3dLoad = null;
   // the gallery's own paint window (js/page/mood-gallery-paint.js): only for the
   // gallery's frames; everywhere else the usual editor (js/skin-draw.js)

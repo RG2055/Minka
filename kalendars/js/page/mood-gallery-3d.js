@@ -66,9 +66,13 @@
   // the cat lies, in the atlas's pixels (48 of them = CAT_H, a sitting cat 44); per coat (ginger,
   // black, grey: the Nakts cats as they were; Špricētājs, the procedural one) its pace, one stride
   // (the old ones' 8 frames at 11 a second over 0.42), and its sitting and washing frames a second
-  // Kaķis ar balonu: the hand drawing made a model (scripts/blender/balloon_cat.py), 8 sides by 16
-  // frames of its float; how tall its picture stands (units), its pace down the hall, how high it floats
-  var BCAT = { name: 'Kaķis ar balonu', frames: 16, fps: 8, hu: 0.463, speed: 0.3, lift: 0.42 };
+  // Žurka Miltons (the dancing rat of the meme): "Dancing Rat" by toothboi (Sketchfab, CC BY 4.0) in
+  // red-black sneakers (scripts/blender/dancing_rat.py): 8 sides by 40 frames, the meme's dance (32: a
+  // loop of 4 beats at 100 a minute), then standing with its arms down (8, `idleFps` a second). By a
+  // wall halfway down the hall; come near and it dances and a party starts (music made here, coloured
+  // lights, a disco ball over it), go away and it stops. near/far: where it starts and where it ends
+  var RAT = { name: 'Miltons', frames: 32, idle: 8, idleFps: 4, beats: 4, bpm: 100, hu: 0.31, near: 2.1, far: 2.6 };
+  var RAT_V = '?v=20261006r2';
   var CAT3D = { fw: 123, fh: 87, drop: 18, speed: [0.42, 0.42, 0.42, 0.3], stride: [86.3, 86.3, 86.3, 47.7], sitFps: [4, 4, 4, 4], groomFps: [8, 8, 8, 3] };
   var HELD_V = '?v=20261002h3d1';
   var ART = 'assets/gallery/', ART_V = '?v=20261001a', CAT_V = '?v=20261006c4', MUSIC_V = '?v=20261001m1';
@@ -122,7 +126,7 @@
   ];
   var MUSIC_CREDIT = 'Ieraksti: PM Music, diriģents Philip Milman (pmmusic.pro), CC BY 3.0';
   var CREDITS = 'Mūzika: PM Music, diriģents Philip Milman, CC BY 3.0. Roka: WebXR rokas modelis (webxr-input-profiles, MIT). '
-    + 'White Monster: TurnOnTheNight, CC0. Leonardo, Mikelandželo, Frīdrihs, Mīlo Venēra (foto Jastrow): publiskais domēns.';
+    + 'White Monster: TurnOnTheNight, CC0. Žurka Miltons: "Dancing Rat", toothboi (Sketchfab), CC BY 4.0.Leonardo, Mikelandželo, Frīdrihs, Mīlo Venēra (foto Jastrow): publiskais domēns.';
   var MUSIC_VOL = 0.08, MUSIC_KEY = 'minkaGalleryMusicV1', QUALITY_KEY = 'minkaGalleryWidthV4';   // V4: the old lowered values (from the flicker) are not read
   var root = null, state = null;
 
@@ -1208,23 +1212,212 @@
     };
     return A;
   }
-  // it floats up and down the hall on a long slow figure (never near the pillars), a little up and
-  // down, turned the way it drifts; which of its sides you see, as the cats'
-  function updateFlyer(st, dt) {
-    var c = st.flyer;
-    if (!c) return;
-    var y0 = LEO_Y0 + 1, y1 = st.map.h - 3, A = (y1 - y0) / 2, w = BCAT.speed / A;
-    c.t += dt;
-    var nx = 3.5 + 0.85 * Math.sin(c.t * w * 2.7 + 1.3), ny = y0 + A - A * Math.cos(c.t * w);
-    var vx = nx - c.x, vy = ny - c.y;
-    if (vx * vx + vy * vy > 1e-8) c.hd = Math.atan2(vy, vx);
-    c.x = nx; c.y = ny;
-    c.lift = BCAT.lift + 0.05 * Math.sin(c.t * 0.9);
-    if (!st.flyAtlas) return;
-    var ex = st.x - c.x, ey = st.y - c.y, hx = Math.cos(c.hd), hy = Math.sin(c.hd);
-    // (its sides were drawn round by its right: the other way from the cats')
-    var side = (8 - (Math.round(Math.atan2(-(hx * ey - hy * ex), hx * ex + hy * ey) / (Math.PI / 4)) & 7)) & 7;
-    c.spr = st.flyAtlas.frame(side, ((c.t * BCAT.fps) | 0) % BCAT.frames);
+  /* ── Žurka Miltons un ballīte ─────────────────────────────────────────── */
+  // By the left wall halfway down the hall: on the day wall nearest the hall's middle, between its
+  // first two frames (no picture behind it), its face to the hall
+  function ratSpot(map) {
+    var want = (LEO_Y1 + 2 + map.h - 2) / 2, best = null;
+    map.segs.slice(1).forEach(function (sg) { if (!best || Math.abs(sg.y0 + 2.5 - want) < Math.abs(best.y0 + 2.5 - want)) best = sg; });
+    return [1.42, best ? best.y0 + 2.5 : LEO_Y1 + 4.5];
+  }
+  // which side of it you see (its sides drawn round by its left, as the cats'), the frame on the beat
+  function updateRat(st, dt) {
+    var r = st.rat;
+    if (!r) return;
+    var d = Math.hypot(st.x - r.x, st.y - r.y), on = !!st.party;
+    if (on ? d > RAT.far : d < RAT.near) { if (on) partyOff(st, true); else partyOn(st); }
+    // the dance's clock: the music's own while it plays (every step on its beat), else its own
+    var m = st.party && st.party.music, clock = m && m.clock();
+    if (clock != null) r.dance = clock;
+    else { r.dance += dt; if (m) m.anchor(r.dance); }
+    r.t += dt;
+    // the lights come straight on, go out a little slower
+    var k0 = st.partyK || 0, k = st.party ? Math.min(1, k0 + dt * 8) : Math.max(0, k0 - dt * 3);
+    if (k !== k0) { st.partyK = k; st.dirty = true; }
+    if (m) m.level(d < 1.2 ? 1 : 1 - 0.45 * Math.min(1, (d - 1.2) / (RAT.far - 1.2)));
+    var beat = r.dance * RAT.bpm / 60;
+    if (st.disco) { var ds = discoSprites(); st.disco.spr = ds[(((beat * 2) | 0) % ds.length + ds.length) % ds.length]; }
+    if (!st.ratAtlas) return;
+    var ex = st.x - r.x, ey = st.y - r.y, fx = Math.cos(r.hd), fy = Math.sin(r.hd);
+    var side = Math.round(Math.atan2(ex * fy - ey * fx, ex * fx + ey * fy) / (Math.PI / 4)) & 7;
+    // dancing at the party, standing with its arms down otherwise
+    var f = st.party ? ((Math.floor(beat / RAT.beats * RAT.frames) % RAT.frames) + RAT.frames) % RAT.frames
+      : RAT.frames + ((r.t * RAT.idleFps) | 0) % RAT.idle;
+    r.spr = st.ratAtlas.frame(side, f);
+  }
+  function partyOn(st) {
+    st.party = { at: performance.now(), music: null };
+    if (st.rat) st.rat.dance = -0.12;                                // (the first beat just after it starts)
+    // the gallery's music waits (paused where it was) while the party plays
+    if (st.musicOn) { musicStop(false); st.party.music = partyMusic(st); }
+    st.dirty = true;
+  }
+  // back: the gallery's music goes on where it was (not when the gallery closes)
+  function partyOff(st, resume) {
+    var p = st.party;
+    if (!p) return;
+    st.party = null;
+    if (p.music) p.music.stop();
+    if (resume && st.musicOn && state === st) musicStart();
+    st.dirty = true;
+  }
+  // the disco ball over it: mirror tiles on a wire from the ceiling, the glints moving round
+  var DISCO = null;
+  function discoSprites() {
+    if (DISCO) return DISCO;
+    var out = DISCO = [];
+    for (var v = 0; v < 4; v++) {
+      var w = 22, h = 40, c = canvas(w, h), g = c.getContext('2d'), cx = 11, cy = 29, R = 10;
+      g.fillStyle = '#4b4f57'; g.fillRect(cx, 0, 1, cy - R);
+      for (var y = -R; y <= R; y++) for (var x = -R; x <= R; x++) {
+        var dd = (x * x + y * y) / (R * R);
+        if (dd > 1) continue;
+        var tile = ((Math.floor((x + R + v) / 2.6) + Math.floor((y + R) / 2.6)) & 1), lit = 1 - dd * 0.55 - (x + y) * 0.018;
+        var gv = Math.max(40, Math.min(235, Math.round((tile ? 150 : 112) * lit)));
+        g.fillStyle = 'rgb(' + gv + ',' + gv + ',' + (gv + 8) + ')';
+        g.fillRect(cx + x, cy + y, 1, 1);
+      }
+      g.fillStyle = '#fff';
+      [[-5, -4], [3, -6], [6, 2], [-2, 4], [-7, 1], [1, -1], [4, 6], [-4, -8]].forEach(function (q, i) {
+        if ((i + v) % 3) return;
+        g.fillRect(cx + q[0], cy + q[1], 1, 1); g.fillRect(cx + q[0] - 1, cy + q[1], 3, 1); g.fillRect(cx + q[0], cy + q[1] - 1, 1, 3);
+      });
+      var s = makeSprite(c); s.hu = 0.2; out.push(s);
+    }
+    return out;
+  }
+  // the club's colours (no violet): red, orange, yellow, green, cyan, blue
+  var PARTY_COLORS = [[255, 46, 46], [255, 138, 0], [255, 214, 0], [57, 255, 20], [0, 229, 255], [41, 121, 255]];
+  // the glints off the ball: fixed on it, so they sweep round the room as it turns
+  var GLINTS = (function () {
+    var r = rnd(77), g = [];
+    for (var i = 0; i < 46; i++) g.push({ az: r() * Math.PI * 2, el: (r() - 0.35) * 1.1, c: (r() * PARTY_COLORS.length) | 0, s: r() < 0.3 ? 3 : 2 });
+    return g;
+  })();
+  // the lights over the picture (both renderers): the room dimmer, coloured beams sweeping from above
+  // that change colour on the beat, the ball's glints going round
+  function drawParty(st) {
+    var k = st.partyK, c = st.ctx, H = VIEW_H, half = H / 2 + st.pitch, Pp = W / (2 * FOV);
+    var t = st.rat ? st.rat.dance : 0, beat = t * RAT.bpm / 60, b = beat - Math.floor(beat), hit = Math.exp(-b * 5), n = PARTY_COLORS.length;
+    c.save();
+    c.globalAlpha = 1;
+    c.fillStyle = 'rgba(6,8,26,' + (0.34 * k).toFixed(3) + ')';
+    c.fillRect(0, 0, W, H);
+    for (var i = 0; i < 5; i++) {
+      var az = st.rat ? Math.atan2(st.rat.y - st.y, st.rat.x - st.x) : st.a;
+      az += (i - 2) * 0.55 + 0.5 * Math.sin(t * 0.9 + i * 1.7);
+      var diff = Math.atan2(Math.sin(az - st.a), Math.cos(az - st.a));
+      if (Math.abs(diff) > 1.2) continue;
+      var x = W / 2 * (1 + Math.tan(diff) / FOV), top = -H * 0.1, wd = W * (0.07 + 0.03 * Math.sin(t * 1.3 + i));
+      var col = PARTY_COLORS[((i + Math.floor(beat)) % n + n) % n], a = (0.13 + 0.09 * hit) * k;
+      var gr = c.createLinearGradient(0, top, 0, H);
+      gr.addColorStop(0, 'rgba(' + col + ',' + (a * 1.4).toFixed(3) + ')');
+      gr.addColorStop(1, 'rgba(' + col + ',' + (a * 0.5).toFixed(3) + ')');
+      c.fillStyle = gr;
+      var lean = W * 0.18 * Math.sin(t * 0.7 + i * 2.1);
+      c.beginPath(); c.moveTo(x - wd * 0.08, top); c.lineTo(x + wd * 0.08, top); c.lineTo(x + lean + wd, H); c.lineTo(x + lean - wd, H); c.closePath(); c.fill();
+    }
+    var spin = t * 0.45, sz = Math.max(1, Math.round(W / 640));
+    for (var j = 0; j < GLINTS.length; j++) {
+      var gl = GLINTS[j], d2 = Math.atan2(Math.sin(gl.az + spin - st.a), Math.cos(gl.az + spin - st.a));
+      if (Math.abs(d2) > FOV * 0.95) continue;
+      var gx = Math.round(W / 2 * (1 + Math.tan(d2) / FOV)), gy = Math.round(half - Math.tan(gl.el) * Pp);
+      if (gy < 0 || gy >= H) continue;
+      var gc = PARTY_COLORS[((gl.c + Math.floor(beat / 2)) % n + n) % n];
+      c.fillStyle = 'rgba(' + gc + ',' + (0.75 * k).toFixed(3) + ')';
+      c.fillRect(gx, gy, gl.s * sz, gl.s * sz);
+    }
+    c.restore();
+  }
+  // The party's music, made here note by note (Web Audio, no file): a house beat at the dance's
+  // tempo (kick on every beat, claps on 2 and 4, hats between), an off-beat bass, a plucked
+  // arpeggio, and every other four bars a hook over Am F C G. Its time is the dance's: the rat's
+  // steps fall on its beats. Scheduled a little ahead; nothing while the tab is hidden.
+  function partyMusic(st) {
+    var a = audioCtx();
+    if (!a || !noiseBuf) return null;
+    if (a.state === 'suspended' && a.resume) a.resume();
+    var bus = a.createGain(), comp = a.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.ratio.value = 3.5; comp.attack.value = 0.004; comp.release.value = 0.18;
+    bus.gain.value = 0;
+    bus.connect(comp).connect(a.destination);
+    var VOL = 0.34, lvl = 1;
+    bus.gain.setTargetAtTime(VOL, a.currentTime, 0.04);
+    var step = 60 / RAT.bpm / 4, t0 = a.currentTime - (st.rat ? st.rat.dance : 0);
+    var next = Math.ceil((a.currentTime + 0.05 - t0) / step), stopped = false;
+    var hz = function (m) { return 440 * Math.pow(2, (m - 69) / 12); };
+    var CH = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]];          // Am F C G
+    var HOOK = [
+      [[0, 76, 2], [2, 76, 2], [4, 81, 2], [6, 79, 1], [7, 76, 3], [10, 74, 2], [12, 76, 4]],
+      [[0, 72, 2], [2, 72, 2], [4, 77, 2], [6, 76, 1], [7, 72, 3], [10, 69, 2], [12, 72, 4]],
+      [[0, 79, 2], [2, 79, 2], [4, 76, 2], [6, 74, 1], [7, 72, 3], [10, 74, 2], [12, 76, 4]],
+      [[0, 74, 2], [2, 71, 2], [4, 74, 2], [6, 79, 2], [8, 81, 2], [10, 79, 2], [12, 74, 2], [14, 71, 2]]
+    ];
+    function env(g, t, peak, dur, att) {
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + (att || 0.003));
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    }
+    function osc(t, type, f, dur, peak, cut, att, detune) {
+      var o = a.createOscillator(), g = a.createGain(), fl = a.createBiquadFilter();
+      o.type = type; o.frequency.setValueAtTime(f, t); if (detune) o.detune.value = detune;
+      fl.type = 'lowpass'; fl.frequency.setValueAtTime(cut, t); fl.Q.value = 0.7;
+      env(g, t, peak, dur, att);
+      o.connect(fl).connect(g).connect(bus); o.start(t); o.stop(t + dur + 0.03);
+      return fl;
+    }
+    function hiss(t, dur, peak, type, f, q) {
+      var n = a.createBufferSource(), fl = a.createBiquadFilter(), g = a.createGain();
+      n.buffer = noiseBuf; fl.type = type; fl.frequency.value = f; fl.Q.value = q || 0.7;
+      env(g, t, peak, dur, 0.002);
+      n.connect(fl).connect(g).connect(bus); n.start(t, Math.random() * 0.4); n.stop(t + dur + 0.03);
+    }
+    function kick(t) {
+      var o = a.createOscillator(), g = a.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(44, t + 0.12);
+      env(g, t, 0.95, 0.3, 0.002);
+      o.connect(g).connect(bus); o.start(t); o.stop(t + 0.33);
+      hiss(t, 0.012, 0.25, 'highpass', 3000);
+    }
+    function play(i, t) {
+      var s = ((i % 128) + 128) % 128, bar = s >> 4, inBar = s & 15, ch = CH[bar & 3], root = ch[0] - 24;
+      var fill = bar === 7 && inBar >= 12;                                   // the eighth bar ends on a clap roll
+      if (!(inBar & 3) && !fill) kick(t);
+      if (inBar === 4 || inBar === 12 || (fill && inBar !== 12)) { hiss(t, 0.16, fill ? 0.18 + 0.05 * (inBar - 12) : 0.32, 'bandpass', 1500, 1.2); hiss(t + 0.012, 0.12, 0.2, 'bandpass', 1300, 1.2); }
+      if ((inBar & 3) === 2) hiss(t, 0.11, 0.09, 'highpass', 7800);
+      else if (inBar & 1) hiss(t, 0.03, 0.04, 'highpass', 9000);
+      if ((inBar & 3) === 2) osc(t, 'sawtooth', hz(root + ((inBar === 14) ? 12 : 0)), step * 1.7, 0.3, 520, 0.004);
+      if (inBar === 0) osc(t, 'sawtooth', hz(root), step * 0.9, 0.18, 380, 0.004);
+      var arp = ch[[0, 1, 2, 1][inBar & 3]] + 12 + ((inBar >> 3) & 1 ? 12 : 0);
+      osc(t, 'square', hz(arp), step * 0.8, 0.035, 2400, 0.002);
+      if (bar >= 4) HOOK[bar & 3].forEach(function (h) {
+        if (h[0] !== inBar) return;
+        osc(t, 'square', hz(h[1]), step * h[2] * 0.92, 0.055, 3400, 0.006, -6);
+        osc(t, 'square', hz(h[1]), step * h[2] * 0.92, 0.04, 3000, 0.006, 7);
+      });
+    }
+    function sched() {
+      if (stopped) return;
+      var now = a.currentTime;
+      if (document.hidden || a.state !== 'running') { next = Math.ceil((now + 0.05 - t0) / step); return; }
+      if (t0 + next * step < now) next = Math.ceil((now + 0.02 - t0) / step);   // (fell behind: on from now)
+      while (t0 + next * step < now + 0.16) { play(next, t0 + next * step); next++; }
+    }
+    var timer = setInterval(sched, 40);
+    sched();
+    return {
+      // the music's time while the sound runs (none while the browser holds it back): the dance keeps
+      // its own then, and the music is set to it
+      clock: function () { return a.state === 'running' ? a.currentTime - t0 : null; },
+      anchor: function (t) { t0 = a.currentTime - t; },
+      level: function (v) { if (Math.abs(v - lvl) > 0.02) { lvl = v; bus.gain.setTargetAtTime(VOL * v, a.currentTime, 0.1); } },
+      stop: function () {
+        if (stopped) return;
+        stopped = true; clearInterval(timer);
+        bus.gain.cancelScheduledValues(a.currentTime);
+        bus.gain.setTargetAtTime(0, a.currentTime, 0.07);
+        setTimeout(function () { try { bus.disconnect(); comp.disconnect(); } catch (_e) {} }, 700);
+      }
+    };
   }
 
   /* ── Akvārijs ─────────────────────────────────────────────────────────── */
@@ -1836,6 +2029,7 @@
     c.fillStyle = st.aim ? '#ffd166' : 'rgba(255,255,255,.6)';
     c.fillRect(W / 2 - s, mid - 6 * s, 2 * s, 4 * s); c.fillRect(W / 2 - s, mid + 2 * s, 2 * s, 4 * s);
     c.fillRect(W / 2 - 6 * s, mid - s, 4 * s, 2 * s); c.fillRect(W / 2 + 2 * s, mid - s, 4 * s, 2 * s);
+    if (st.partyK > 0) drawParty(st);
     paintPrompt(st);
     drawMinimap(st);
     var ms = performance.now() - t0;
@@ -1892,7 +2086,7 @@
           drew = true;
         }
         if (!drew) continue;
-        if (p.kind === 'cat' || p.kind === 'flycat') st.catsSeen = true;
+        if (p.kind === 'cat' || p.kind === 'rat') st.catsSeen = true;
         if (!st.pickRef[x] || st.pickDist[x] > tY) {
           st.pickRef[x] = p.owner || p; st.pickDist[x] = tY; st.pickY0[x] = y0; st.pickY1[x] = y1; st.pickWX[x] = p.x; st.pickWY[x] = p.y;
         }
@@ -1967,7 +2161,7 @@
       case 'arcade': return ['E', 'Spēlēt Konfektes 98'];
       case 'arcademines': return ['E', 'Spēlēt Mīnas 98'];
       case 'pinball': return ['E', 'Spēlēt Pinbols 98'];
-      case 'cat': case 'flycat': return ['E', 'Paglaudīt: ' + a.name];
+      case 'cat': return ['E', 'Paglaudīt: ' + a.name];
       case 'aquarium': return ['E', 'Pabarot zivtiņas'];
       case 'monster': return ['E', 'Paņemt White Monster'];
       case 'monsterbox': return ['E', 'Paņemt bundžu no kastes'];
@@ -2088,7 +2282,9 @@
   function setMusic(st, on) {
     st.musicOn = on;
     musicRemember(on);
-    if (on) musicStart(); else musicStop(false);
+    // at the party: its own music on or off (the gallery's waits till you go)
+    if (st.party) { if (st.party.music) { st.party.music.stop(); st.party.music = null; } if (on) st.party.music = partyMusic(st); }
+    else if (on) musicStart(); else musicStop(false);
     var g = st.props.find(function (p) { return p.kind === 'gramophone'; });
     if (g) remodel(g, function () { return gramophoneModel(on); });
     say(st, on ? 'Skan ' + MUSIC[musicIdx].title : 'Mūzika izslēgta. M: ieslēgt');
@@ -2427,7 +2623,7 @@
   }
   // cats: walk to a free spot of their room, sit or wash a while, walk on
   function catGo(st, c) {
-    var ways = CAT_WAYS[c.room], beds = st.props.filter(function (p) { return p.kind === 'bed'; });
+    var ways = CAT_WAYS[c.room], beds = st.props.filter(function (p) { return p.kind === 'bed' || p.kind === 'rat'; });   // (round the beds and Miltons)
     for (var tries = 0; tries < 10; tries++) {
       var w = ways[(Math.random() * ways.length) | 0], dx = w[0] - c.x, dy = w[1] - c.y, len = Math.hypot(dx, dy);
       if (len < 0.8) continue;
@@ -2552,7 +2748,7 @@
       }
     });
     updateCats(st, dt, now);
-    updateFlyer(st, dt);
+    updateRat(st, dt);
     // the night rooms' light is steady (a breathing light read as flicker)
     if (lampOff) { lampOff = 0; moved = true; }
     var aq = st.aqua, aquaTick = aq && st.aquaSeen && !st.viewing && now - aq.at >= (aq.food.length ? 32 : 48);
@@ -2573,7 +2769,7 @@
     if (st.msgShown && now >= st.msgUntil) { st.msgShown = false; root.querySelector('.mx-doom-msg').hidden = true; }
     // nothing changed: nothing is drawn; a cat in sight is drawn 30 times a second
     var roomy = st.cost && st.cost < 4;                              // a frame costs little here
-    var catTick = st.catsSeen && now - st.drawnAt >= (roomy ? 0 : 32);
+    var catTick = (st.catsSeen || st.partyK > 0) && now - st.drawnAt >= (roomy ? 0 : 32);
     if (!moved && !st.dirty && !catTick && !aquaTick) {
       return;
     }
@@ -2789,10 +2985,6 @@
       case 'pinball': openPC(st, 'pinball'); return;
       case 'aquarium': feedFish(st, ref.at); return;
       case 'monster': case 'monsterbox': takeCan(st); return;
-      case 'flycat':
-        say(st, ref.name + ': murr! (tas lido)');
-        earnPart(st, 'cats', ref.name, 3);
-        return;
       case 'cat':
         ref.mode = 'sit'; ref.until = performance.now() + 5000; ref.t = 0;
         say(st, ref.name + ': murr!');
@@ -3467,7 +3659,7 @@
     st.dirty = true;
   }
   // cats and the statue: loaded once, kept for the next visit
-  var catImg = null, catAtlasMade = null, flyImg = null, flyAtlasMade = null, bustImg = null, catStatue = null;
+  var catImg = null, catAtlasMade = null, ratImg = null, ratAtlasMade = null, bustImg = null, catStatue = null;
   // the statue's mesh in the parts' triangles (local a, b, z; its front +a), once both files are in
   function catStatueMesh(m, img) {
     var tex = texOf(imgCanvas(img)), q = 1 / m.q, uq = 1 / m.uq, tris = [];
@@ -3543,6 +3735,11 @@
     props.push({ kind: 'statue', x: 3.0, y: (LEO_Y0 + LEO_Y1) / 2 + 0.5, h: 0.82, solid: 0.38, reach: 2.8, shade: 0.2 });
     // the cats' monument in the middle of the hall, between the pillars at the Leonardo hall's end
     props.push({ kind: 'catstatue', x: 3.5, y: LEO_Y1 + 1.5, h: 0.62, solid: 0.36, reach: 2.6, shade: 0.24 });
+    // Miltons dancing in the middle of the hall, the disco ball over it
+    var ratAt = ratSpot(map);
+    var rat = { kind: 'rat', name: RAT.name, x: ratAt[0], y: ratAt[1], h: RAT.hu, solid: 0.22, reach: 0.01, shade: 0.09, t: 0, dance: 0, hd: 0, spr: null };
+    var disco = { kind: 'disco', x: ratAt[0] + 0.45, y: ratAt[1], h: 0.2, lift: 0.8, reach: 0.01, shade: 0, spr: null };
+    props.push(rat, disco);
     // benches down the middle of the hall, one at each day's pillar line (not where a statue stands)
     [LEO_Y1 + 1].concat(map.segs.slice(1).map(function (sg) { return sg.y1; })).forEach(function (py) {
       if (py >= map.h - 2) return;
@@ -3559,13 +3756,12 @@
       var way = CAT_WAYS[c[2]][(i * 3) % CAT_WAYS[c[2]].length];
       return { kind: 'cat', name: c[0], coat: c[1], room: c[2], x: way[0], y: way[1], h: CAT_H, reach: 2.2, shade: 0.07, vx: 1, vy: 0, mode: 'sit', until: performance.now() + 800 + i * 900, t: i, hd: i * 1.9, ph: 0, flip: false };
     });
-    var flyer = { kind: 'flycat', name: BCAT.name, x: 3.5, y: LEO_Y0 + 1, h: BCAT.hu, lift: BCAT.lift, reach: 2.6, shade: 0.05, t: 0, hd: Math.PI / 2, flip: false, spr: null };
-    props = props.concat(cats, [flyer]);
+    props = props.concat(cats);
     var st = state = {
       map: map, x: 4.3, y: 4.55, a: -2.75, z: EYE, keys: {}, dragTurn: 0, walk: 0, sips: 0, sip: 0, seated: false,
       pitch: 0, dPitch: 0, vx: 0, vy: 0, cap: 0, mapOn: null, mmBase: null, msgShown: false, mouseFreedAt: 0, noLock: false,
       artAt: new Array(map.w * map.h * 4), aim: null, dirty: true, closed: false, frames: 0, cost: 0, loweredAt: -99, drawnAt: 0,
-      props: props, cats: cats, flyer: flyer, flyAtlas: null, catAtlas: null, cup: null, brew: null, goal: null, promptKey: '',
+      props: props, cats: cats, rat: rat, disco: disco, ratAtlas: null, party: null, partyK: 0, catAtlas: null, cup: null, brew: null, goal: null, promptKey: '',
       aqua: null, aquaSeen: true,
       musicOn: false, today: opts.today, sleepers: sleepers, bedPeople: bedPeople, items: items,
       me: opts.me || {},
@@ -3589,7 +3785,7 @@
     var bedFacing = [Math.PI / 2, Math.PI / 2, -Math.PI / 2, Math.PI];
     var makeSprites = function () {
       props.forEach(function (p) {
-        if (p.kind === 'cat' || p.kind === 'flycat') return;
+        if (p.kind === 'cat' || p.kind === 'rat' || p.kind === 'disco') return;
         var model = p.kind === 'machine' ? function () { return machineModel(!!st.brew); }
           : p.kind === 'gramophone' ? function () { return gramophoneModel(st.musicOn); }
           : p.kind === 'easel' ? easelModel : p.kind === 'chair' ? chairModel : p.kind === 'monsterbox' ? monsterBoxModel
@@ -3656,13 +3852,13 @@
       updateCats(st, 0, performance.now()); st.dirty = true;
     };
     if (!catImg) catImg = loadImage(ART + 'cats3d.webp' + CAT_V, withCats);
-    var withFlyer = function () {
-      if (state !== st || !flyImg || !flyImg.naturalWidth) return;
-      if (!flyAtlasMade) flyAtlasMade = sideAtlas(flyImg, 8, BCAT.frames, BCAT.hu, 'flycat');
-      st.flyAtlas = flyAtlasMade; updateFlyer(st, 0); st.dirty = true;
+    var withRat = function () {
+      if (state !== st || !ratImg || !ratImg.naturalWidth) return;
+      if (!ratAtlasMade) ratAtlasMade = sideAtlas(ratImg, 8, RAT.frames + RAT.idle, RAT.hu, 'rat');
+      st.ratAtlas = ratAtlasMade; updateRat(st, 0); st.dirty = true;
     };
-    if (!flyImg) flyImg = loadImage(ART + 'balloon-cat.webp' + CAT_V, withFlyer);
-    withFlyer();
+    if (!ratImg) ratImg = loadImage(ART + 'dancing-rat.webp' + RAT_V, withRat);
+    withRat();
     withCats();
     var withBust = function (img) { if (state !== st) return; var p = props.find(function (q) { return q.kind === 'statue'; }); p.spr = statueSprite(img); st.dirty = true; };
     if (!(bustImg && bustImg.complete && bustImg.naturalWidth)) bustImg = loadImage(ART + 'venus-milo.webp' + ART_V, withBust);
@@ -3729,6 +3925,7 @@
     root.querySelector('.mx-doom-msg').hidden = true;
     introEnd(st);
     if (!keepMusic) root.querySelector('.mx-doom-minimap').hidden = true;
+    partyOff(st, false);
     state = null;
     if (!keepMusic) musicStop(true);
     var box = root.querySelector('.mx-doom-look');
@@ -3740,7 +3937,7 @@
     if (keepMusic) return;
     glRelease();
     if (catAtlasMade) catAtlasMade.free();
-    if (flyAtlasMade) flyAtlasMade.free();
+    if (ratAtlasMade) ratAtlasMade.free();
     var screen = root.querySelector('.mx-doom');
     var done = function () { root.hidden = true; root.classList.remove('is-closing'); };
     if (now !== true && window.MinkaMotion && st.originEl) {
@@ -3769,7 +3966,7 @@
     state.x = x; state.y = y; state.a = a; state.goal = null; state.dirty = true;
     render(state);
     var p = promptFor(state);
-    return { aim: state.aim && (state.aim.isArt ? (state.aim.plan ? 'plan' : state.aim.empty ? 'empty' : 'art') : state.aim.kind), prompt: p && p.join(' '), w: W, mapH: state.map.h, cats: state.cats.map(function (c) { return [c.name, +c.x.toFixed(2), +c.y.toFixed(2), c.mode, !!c.spr, +(c.hd || 0).toFixed(2)]; }), flyer: state.flyer ? [+state.flyer.x.toFixed(2), +state.flyer.y.toFixed(2), +state.flyer.lift.toFixed(2), !!state.flyer.spr] : null };
+    return { aim: state.aim && (state.aim.isArt ? (state.aim.plan ? 'plan' : state.aim.empty ? 'empty' : 'art') : state.aim.kind), prompt: p && p.join(' '), w: W, mapH: state.map.h, cats: state.cats.map(function (c) { return [c.name, +c.x.toFixed(2), +c.y.toFixed(2), c.mode, !!c.spr, +(c.hd || 0).toFixed(2)]; }), rat: state.rat ? [state.rat.x, state.rat.y, !!state.rat.spr, +state.rat.dance.toFixed(2)] : null, party: !!state.party, partyMusic: !!(state.party && state.party.music), partyK: state.partyK };
   }
   function act(what) {
     var st = state;
@@ -4167,7 +4364,7 @@
     gl.uniform4f(U.fix, 1, 0, 0, 1); gl.uniform1f(U.blend, 1);        // raw: the disc multiplies the floor as it is
     var shv = [], stex = glTexture(R, [SHADOW_TEX], 'shadow', false);
     var sprites = glSprites(st, R, dirX, dirY);
-    st.catsSeen = sprites.some(function (s) { var k = s.p.kind; return (k === 'cat' || k === 'flycat') && (s.p.x - st.x) * dirX + (s.p.y - st.y) * dirY > 0.1; });   // (they move: drawn again)
+    st.catsSeen = sprites.some(function (s) { var k = s.p.kind; return (k === 'cat' || k === 'rat') && (s.p.x - st.x) * dirX + (s.p.y - st.y) * dirY > 0.1; });   // (they move: drawn again)
     sprites.forEach(function (s) {
       var r = s.p.shade || 0; if (!r) return;
       var x0 = s.p.x - r, x1 = s.p.x + r, y0 = s.p.y - r, y1 = s.p.y + r, h = 0.002;
