@@ -60,10 +60,18 @@
     main: [[7.6, 3.2], [8.9, 3.1], [9.35, 1.5], [11.4, 3.3], [9.6, 4.4], [7.7, 5.4], [11.5, 2.4], [8.6, 4.8], [10.9, 4.2]],
     nmp: [[7.45, 7.4], [9.6, 7.35], [7.45, 9.6], [9.6, 9.65], [7.5, 8.5]]
   };
-  var CATS = [['Rudais', 0, 'main'], ['Melnais', 1, 'main'], ['Pelēkais', 2, 'nmp'], ['Klibais', 1, 'hall']];
-  var CAT_FW = 85, CAT_FH = 48, CAT_H = 0.17, CAT_SPEED = 0.42;
+  var CATS = [['Rudais', 0, 'main'], ['Melnais', 1, 'main'], ['Pelēkais', 2, 'nmp'], ['Klibais', 1, 'hall'], ['Špricētājs', 3, 'hall']];
+  var CAT_H = 0.17, CAT_TURN = 7;
+  // cats3d.webp (scripts/build-gallery-cat.*): the frame, how far under its bottom edge the ground below
+  // the cat lies, in the atlas's pixels (48 of them = CAT_H, a sitting cat 44); per coat (ginger,
+  // black, grey: the Nakts cats as they were; Špricētājs, the procedural one) its pace, one stride
+  // (the old ones' 8 frames at 11 a second over 0.42), and its sitting and washing frames a second
+  // Kaķis ar balonu: the hand drawing made a model (scripts/blender/balloon_cat.py), 8 sides by 16
+  // frames of its float; how tall its picture stands (units), its pace down the hall, how high it floats
+  var BCAT = { name: 'Kaķis ar balonu', frames: 16, fps: 8, hu: 0.463, speed: 0.3, lift: 0.42 };
+  var CAT3D = { fw: 123, fh: 87, drop: 18, speed: [0.42, 0.42, 0.42, 0.3], stride: [86.3, 86.3, 86.3, 47.7], sitFps: [4, 4, 4, 4], groomFps: [8, 8, 8, 3] };
   var HELD_V = '?v=20261002h3d1';
-  var ART = 'assets/gallery/', ART_V = '?v=20261001a', CAT_V = '?v=20261001c1', MUSIC_V = '?v=20261001m1';
+  var ART = 'assets/gallery/', ART_V = '?v=20261001a', CAT_V = '?v=20261006c4', MUSIC_V = '?v=20261001m1';
   var LEONARDO = 'Leonardo da Vinči';
   var CLASSICS = {
     'mona-lisa': ['Mona Liza', 'ap. 1503–1519'], 'vitruvian': ['Vitrūvija cilvēks', 'ap. 1490'],
@@ -614,7 +622,7 @@
   }
   function dot3(p, v) { return p[0] * v[0] + p[1] * v[1] + p[2] * v[2]; }
   function abgr(css) { var c = rgbOf(css, [128, 128, 128]); return (255 << 24 | c[2] << 16 | c[1] << 8 | c[0]) >>> 0; }
-  var texCache = new Map();
+  var texCache = new WeakMap();                                   // (weak: the models draw new canvases each visit; the old ones go)
   function texOf(c) { var t = texCache.get(c); if (!t) { t = { levels: mipChain(data(c), c.width, c.height, 5) }; texCache.set(c, t); } return t; }
   // the parts as triangles: corners (local), their place on the picture (0..1), a picture or a colour
   function meshOf(p, parts) {
@@ -1119,25 +1127,104 @@
     return parts.concat(box(-D / 2, D / 2, -Wd / 2, Wd / 2, 0, h, { front: { tex: front }, back: { tex: front }, left: { tex: side }, right: { tex: side }, top: { color: '#dfe3df' } }));
   }
 
-  // the cats' frames, cut from the atlas (rows per coat: walk, sit, groom)
-  function catFrames(img) {
-    var c = canvas(img.naturalWidth || img.width, img.naturalHeight || img.height);
-    c.getContext('2d').drawImage(img, 0, 0);
-    var all = data(c), cw = c.width, out = [];
-    for (var coat = 0; coat < 3; coat++) {
-      var rows = [];
-      for (var r = 0; r < 3; r++) {
-        var frames = [];
-        for (var f = 0; f < 8; f++) {
-          var px = new Uint32Array(CAT_FW * CAT_FH), oy = (coat * 3 + r) * CAT_FH, ox = f * CAT_FW;
-          for (var y = 0; y < CAT_FH; y++) for (var x = 0; x < CAT_FW; x++) px[y * CAT_FW + x] = all[(oy + y) * cw + ox + x];
-          frames.push({ w: CAT_FW, h: CAT_FH, levels: [{ w: CAT_FW, h: CAT_FH, px: px }] });
-        }
-        rows.push(frames);
+  // The cats, Doom's way, from 5 sides (its face, round by its left side to its back), the right side
+  // the left one mirrored: the Nakts cats from their own front, side and back pictures; Špricētājs
+  // drawn from a 3D cat (Majid Manzarpour's procedural animals, MIT).
+  // Rows per cat: (walk | sit | groom) × side, 8 frames across. A frame is cut out the first time
+  // it is shown, not the whole atlas at once (a fifth of it is ever on screen).
+  function catAtlas(img) {
+    var fw = CAT3D.fw, fh = CAT3D.fh, hu = CAT_H * fh / 48, drop = CAT_H * CAT3D.drop / 48;
+    var coats = Math.floor((img.naturalHeight || img.height) / (fh * 15)), sheets = [], frames = new Map(), pxs = new Map(), PX_MAX = 96;
+    var sheet = function (coat) {
+      if (!sheets[coat]) {
+        var sc = canvas(fw * 8, fh * 15);
+        sc.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, coat * 15 * fh, fw * 8, fh * 15, 0, 0, fw * 8, fh * 15);
+        sheets[coat] = sc;
       }
-      out.push(rows);
-    }
-    return out;
+      return sheets[coat];
+    };
+    // the software renderer's pixels of a frame: cut when first drawn, the 96 last drawn kept
+    var levels = function (fr) {
+      var lv = pxs.get(fr);
+      if (lv) { pxs.delete(fr); pxs.set(fr, lv); return lv; }
+      var d = sheet(fr.coat).getContext('2d', { willReadFrequently: true }).getImageData(fr.sx, fr.sy, fw, fh);
+      lv = [{ w: fw, h: fh, px: new Uint32Array(d.data.buffer) }];
+      pxs.set(fr, lv);
+      if (pxs.size > PX_MAX) pxs.delete(pxs.keys().next().value);
+      return lv;
+    };
+    var A = {
+      coats: coats,
+      frame: function (coat, row, side, f) {
+        var key = ((coat * 3 + row) * 5 + side) * 8 + f, fr = frames.get(key);
+        if (!fr) {
+          var y = (row * 5 + side) * fh;
+          // (WebGL draws it from its cat's one sheet: the frame's place on it)
+          fr = { w: fw, h: fh, hu: hu, drop: drop, atlas: A, coat: coat, sx: f * fw, sy: y, uv: [f / 8, y / (fh * 15), (f + 1) / 8, (y + fh) / (fh * 15)] };
+          Object.defineProperty(fr, 'levels', { get: function () { return levels(fr); } });
+          frames.set(key, fr);
+        }
+        return fr;
+      },
+      // one cat's 120 frames on one canvas: one texture for WebGL instead of one a frame
+      sheet: sheet,
+      // WebGL has it: the canvas let go (made again from the picture if the software renderer needs it)
+      release: function (coat) { if (sheets[coat]) { sheets[coat].width = 0; sheets[coat] = null; } },
+      free: function () { for (var k = 0; k < sheets.length; k++) A.release(k); pxs.clear(); }
+    };
+    return A;
+  }
+
+  // a picture of sides × frames (Kaķis ar balonu): the same two ways as the cats' (pixels for the
+  // software renderer cut when first drawn; one texture for WebGL)
+  function sideAtlas(img, sides, cols, hu, key) {
+    var fw = Math.floor((img.naturalWidth || img.width) / cols), fh = Math.floor((img.naturalHeight || img.height) / sides);
+    var sheet = null, frames = new Map(), pxs = new Map();
+    var A = {
+      key: key,
+      sheet: function () {
+        if (!sheet) { sheet = canvas(fw * cols, fh * sides); sheet.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0); }
+        return sheet;
+      },
+      release: function () { if (sheet) { sheet.width = 0; sheet = null; } },
+      free: function () { A.release(); pxs.clear(); },
+      frame: function (side, f) {
+        var k = side * cols + f, fr = frames.get(k);
+        if (!fr) {
+          fr = { w: fw, h: fh, hu: hu, atlas: A, coat: 0, sx: f * fw, sy: side * fh, uv: [f / cols, side / sides, (f + 1) / cols, (side + 1) / sides] };
+          Object.defineProperty(fr, 'levels', { get: function () {
+            var lv = pxs.get(fr);
+            if (!lv) {
+              lv = [{ w: fw, h: fh, px: new Uint32Array(A.sheet().getContext('2d', { willReadFrequently: true }).getImageData(fr.sx, fr.sy, fw, fh).data.buffer) }];
+              pxs.set(fr, lv);
+              if (pxs.size > 48) pxs.delete(pxs.keys().next().value);
+            }
+            return lv;
+          } });
+          frames.set(k, fr);
+        }
+        return fr;
+      }
+    };
+    return A;
+  }
+  // it floats up and down the hall on a long slow figure (never near the pillars), a little up and
+  // down, turned the way it drifts; which of its sides you see, as the cats'
+  function updateFlyer(st, dt) {
+    var c = st.flyer;
+    if (!c) return;
+    var y0 = LEO_Y0 + 1, y1 = st.map.h - 3, A = (y1 - y0) / 2, w = BCAT.speed / A;
+    c.t += dt;
+    var nx = 3.5 + 0.85 * Math.sin(c.t * w * 2.7 + 1.3), ny = y0 + A - A * Math.cos(c.t * w);
+    var vx = nx - c.x, vy = ny - c.y;
+    if (vx * vx + vy * vy > 1e-8) c.hd = Math.atan2(vy, vx);
+    c.x = nx; c.y = ny;
+    c.lift = BCAT.lift + 0.05 * Math.sin(c.t * 0.9);
+    if (!st.flyAtlas) return;
+    var ex = st.x - c.x, ey = st.y - c.y, hx = Math.cos(c.hd), hy = Math.sin(c.hd);
+    // (its sides were drawn round by its right: the other way from the cats')
+    var side = (8 - (Math.round(Math.atan2(-(hx * ey - hy * ex), hx * ex + hy * ey) / (Math.PI / 4)) & 7)) & 7;
+    c.spr = st.flyAtlas.frame(side, ((c.t * BCAT.fps) | 0) % BCAT.frames);
   }
 
   /* ── Akvārijs ─────────────────────────────────────────────────────────── */
@@ -1588,10 +1675,25 @@
   function px(c, lut) { return (255 << 24 | lut.b[(c >> 16) & 255] << 16 | lut.g[(c >> 8) & 255] << 8 | lut.r[c & 255]) >>> 0; }
   // mip level for how many texels one pixel covers: from 1.5 on the next level
   // (from 2 on, the walls just past 1:1 still shimmered)
+  // the windows side by side are one window: across all of them the frame's left edge to its right
+  function glassU(map, cx, y) {
+    var w = map.w, g = map.grid, y0 = Math.floor(y), y1 = y0;
+    while (y0 > 0 && g[(y0 - 1) * w + cx] === GLASS) y0--;
+    while (g[(y1 + 1) * w + cx] === GLASS) y1++;
+    return Math.min(0.999, (y - y0) / (y1 - y0 + 1));
+  }
   function mipOf(step, max) { if (step < 1.5) return 0; var L = 31 - Math.clz32((step * 1.34) | 0); return L >= max ? max - 1 : L; }
 
   function render(st) {
     var t0 = performance.now();
+    if (st.gl) {                                                     // Galerija GL: the card draws the hall, this the rest
+      glRender(st);
+      st.pickRef.fill(null); st.aquaSeen = !!st.aqua;
+      glPick(st, W >> 1);
+      st.ctx.clearRect(0, 0, W, VIEW_H);
+      renderOverlay(st, t0);
+      return;
+    }
     var buf = st.buf, H = VIEW_H, half = H / 2 + st.pitch, map = st.map, mw = map.w, mh = map.h, grid = map.grid, zone = map.zone, T = st.tex;
     var z = st.z + (st.seated ? 0 : Math.sin(st.walk * 2) * 0.006);
     var dirX = Math.cos(st.a), dirY = Math.sin(st.a), plX = -dirY * FOV, plY = dirX * FOV;
@@ -1625,7 +1727,7 @@
         }
         if (cross < 0 && cell !== WALL && cell !== PILLAR && zone[ci] !== pz) cross = side ? sdy - ddy : sdx - ddx;
         if (cell === GLASS) {
-          if (glass < 0) { glass = side ? sdy - ddy : sdx - ddx; gside = side; gwall = side === 0 ? st.y + glass * ry : st.x + glass * rx; }
+          if (glass < 0) { glass = side ? sdy - ddy : sdx - ddx; gside = side; gwall = side === 0 ? glassU(map, mx, st.y + glass * ry) : st.x + glass * rx; }
           continue;
         }
         if (cell === PILLAR) {
@@ -1709,10 +1811,6 @@
     var list = [];
     st.props.forEach(function (p) {
       if (p.hidden || !p.spr) return;
-      if (p.kind === 'cat') {
-        var s = p.vx * plX + p.vy * plY;                       // walking right or left on the screen
-        if (p.mode === 'walk' && Math.abs(s) > 0.02) p.flip = s < 0;
-      }
       var dx = p.x - st.x, dy = p.y - st.y;
       list.push({ p: p, d: dx * dx + dy * dy });
       if (p.mesh) p.mesh.bills.forEach(function (b) { var bx = b.x - st.x, by = b.y - st.y; list.push({ p: b, d: bx * bx + by * by }); });
@@ -1724,6 +1822,10 @@
     drawGlass(st);
     drawSprites(st, list, dirX, dirY, plX, plY, 1);
     st.ctx.putImageData(st.img, 0, 0);
+    renderOverlay(st, t0);
+  }
+  // what both renderers draw over the picture: the hand, the crosshair, the prompt, the map; the aim
+  function renderOverlay(st, t0) {
     drawHand(st);
     var c = st.ctx, mid = VIEW_H / 2, s = W / 512;
     var cx = W >> 1, ref = st.pickRef[cx];
@@ -1790,7 +1892,7 @@
           drew = true;
         }
         if (!drew) continue;
-        if (p.kind === 'cat') st.catsSeen = true;
+        if (p.kind === 'cat' || p.kind === 'flycat') st.catsSeen = true;
         if (!st.pickRef[x] || st.pickDist[x] > tY) {
           st.pickRef[x] = p.owner || p; st.pickDist[x] = tY; st.pickY0[x] = y0; st.pickY1[x] = y1; st.pickWX[x] = p.x; st.pickWY[x] = p.y;
         }
@@ -1865,7 +1967,7 @@
       case 'arcade': return ['E', 'Spēlēt Konfektes 98'];
       case 'arcademines': return ['E', 'Spēlēt Mīnas 98'];
       case 'pinball': return ['E', 'Spēlēt Pinbols 98'];
-      case 'cat': return ['E', 'Paglaudīt: ' + a.name];
+      case 'cat': case 'flycat': return ['E', 'Paglaudīt: ' + a.name];
       case 'aquarium': return ['E', 'Pabarot zivtiņas'];
       case 'monster': return ['E', 'Paņemt White Monster'];
       case 'monsterbox': return ['E', 'Paņemt bundžu no kastes'];
@@ -2346,11 +2448,25 @@
       if (c.mode === 'walk') {
         var dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy);
         if (d < 0.04) { c.mode = Math.random() < 0.55 ? 'sit' : 'groom'; c.until = now + 2600 + Math.random() * 4200; c.t = 0; }
-        else { var sp = Math.min(d, CAT_SPEED * dt); c.vx = dx / d; c.vy = dy / d; c.x += c.vx * sp; c.y += c.vy * sp; }
+        else {
+          // it turns to where it goes first (a quick turn on the spot), then walks; the legs by the way
+          // walked, a stride a cycle, so the paws never slide
+          c.vx = dx / d; c.vy = dy / d;
+          var want = Math.atan2(dy, dx), turn = Math.atan2(Math.sin(want - c.hd), Math.cos(want - c.hd)), mx = CAT_TURN * dt;
+          c.hd += Math.max(-mx, Math.min(mx, turn));
+          var sp = Math.min(d, (CAT3D.speed[c.coat] || 0.42) * dt * Math.max(0, Math.cos(turn)));
+          c.x += c.vx * sp; c.y += c.vy * sp;
+          c.ph += (sp + Math.min(Math.abs(turn), mx) * 0.05) / (CAT_H * (CAT3D.stride[c.coat] || 86.3) / 48) * 8;   // (turning steps too)
+        }
       } else if (now > c.until) catGo(st, c);
-      if (st.catFrames) {
-        var row = c.mode === 'walk' ? 0 : c.mode === 'sit' ? 1 : 2, fps = c.mode === 'walk' ? 11 : c.mode === 'sit' ? 4 : 8;
-        c.spr = st.catFrames[c.coat][row][((c.t * fps) | 0) % 8];
+      if (st.catAtlas) {
+        // which side of it you see: the angle from its heading to you (+ its left), 45° a side
+        var row = c.mode === 'walk' ? 0 : c.mode === 'sit' ? 1 : 2, fps = (c.mode === 'sit' ? CAT3D.sitFps : CAT3D.groomFps)[c.coat] || 4;
+        var vx = st.x - c.x, vy = st.y - c.y, hx = Math.cos(c.hd), hy = Math.sin(c.hd);
+        var side = Math.round(Math.atan2(-(hx * vy - hy * vx), hx * vx + hy * vy) / (Math.PI / 4)) & 7;
+        var f = row === 0 ? (c.ph | 0) & 7 : ((c.t * fps) | 0) % 8;
+        c.flip = side > 4;
+        c.spr = st.catAtlas.frame(c.coat < st.catAtlas.coats ? c.coat : 1, row, side > 4 ? 8 - side : side, f);
       }
     }
   }
@@ -2358,6 +2474,7 @@
     var st = state;
     if (!st || st.closed) return;
     st.raf = requestAnimationFrame(frame);
+    st.rafPrev = st.rafNow; st.rafNow = now;
     statsTick(now);
     if (document.hidden || st.viewing || st.paused) {
       st.last = now; st.vx = st.vy = 0; st.dragTurn = st.dPitch = 0;
@@ -2404,12 +2521,12 @@
     // speed builds up and settles over ~0.1 s instead of jumping on and off
     var tvx = 0, tvy = 0;
     if (fwd || strafe) {
-      var spd = k.ShiftLeft || k.ShiftRight || st.padRun ? RUN : MOVE, ca = Math.cos(st.a), sa = Math.sin(st.a), len = Math.max(1, Math.hypot(fwd, strafe));
+      var spd = (k.ShiftLeft || k.ShiftRight || st.padRun ? RUN : MOVE) * (st.gl ? GL_SPEED : 1), ca = Math.cos(st.a), sa = Math.sin(st.a), len = Math.max(1, Math.hypot(fwd, strafe));
       tvx = (ca * fwd - sa * strafe) / len * spd; tvy = (sa * fwd + ca * strafe) / len * spd;
     }
     if (st.goal) { st.vx = st.vy = 0; moved = walkGoal(st, dt) || moved; }
     else {
-      var acc = 1 - Math.exp(-dt * (fwd || strafe ? 13 : 17));   // the same feel at 30 and at 144 frames a second
+      var acc = 1 - Math.exp(-dt * (st.gl ? (fwd || strafe ? 9 : 7) : (fwd || strafe ? 13 : 17)));   // the same feel at 30 and at 144 frames a second; GL glides a little (q1k3's friction)
       st.vx += (tvx - st.vx) * acc; st.vy += (tvy - st.vy) * acc;
       if (Math.abs(st.vx) + Math.abs(st.vy) > 0.03) {
         var hit = tryMove(st, st.x + st.vx * dt, st.y + st.vy * dt);
@@ -2435,6 +2552,7 @@
       }
     });
     updateCats(st, dt, now);
+    updateFlyer(st, dt);
     // the night rooms' light is steady (a breathing light read as flicker)
     if (lampOff) { lampOff = 0; moved = true; }
     var aq = st.aqua, aquaTick = aq && st.aquaSeen && !st.viewing && now - aq.at >= (aq.food.length ? 32 : 48);
@@ -2466,7 +2584,7 @@
     st.dirty = false;
     render(st);
     statsFrame(st.lastMs || 0);
-    keepUp(st);
+    if (st.gl) glKeepUp(st, now); else keepUp(st);
   }
   // click-to-walk: turn towards the spot and walk; at a thing, use it on arrival
   function walkGoal(st, dt) {
@@ -2671,6 +2789,10 @@
       case 'pinball': openPC(st, 'pinball'); return;
       case 'aquarium': feedFish(st, ref.at); return;
       case 'monster': case 'monsterbox': takeCan(st); return;
+      case 'flycat':
+        say(st, ref.name + ': murr! (tas lido)');
+        earnPart(st, 'cats', ref.name, 3);
+        return;
       case 'cat':
         ref.mode = 'sit'; ref.until = performance.now() + 5000; ref.t = 0;
         say(st, ref.name + ': murr!');
@@ -2691,7 +2813,9 @@
   function clickAt(st, cx, cy) {
     var hc = st.cup && st.cup.canvas;
     if (hc && !st.cup.outAt && cy > VIEW_H - hc.show && cx > W - hc.width) { sip(st); return; }
-    var x = Math.max(0, Math.min(W - 1, cx | 0)), ref = st.pickRef[x];
+    var x = Math.max(0, Math.min(W - 1, cx | 0));
+    if (st.gl) glPick(st, x);
+    var ref = st.pickRef[x];
     if (ref && ref.aquarium && !inTank(st, st.pickWX[x])) ref = null;
     if (ref && ref.aquarium) ref.at = st.pickWX[x];
     if (ref && cy >= st.pickY0[x] - 4 && cy <= st.pickY1[x] + 4) {
@@ -3123,7 +3247,9 @@
       if (!state) return;
       if (state.joy && e.pointerId === state.joy.id) { joyMove(e); return; }
       if (!drag) {                                               // a hand over things you can use
-        var p = toCanvas(e), x = Math.max(0, Math.min(W - 1, p[0] | 0)), ref = state.pickRef[x];
+        var p = toCanvas(e), x = Math.max(0, Math.min(W - 1, p[0] | 0));
+        if (state.gl) glPick(state, x);
+        var ref = state.pickRef[x];
         var over = ref && p[1] >= state.pickY0[x] && p[1] <= state.pickY1[x];
         view.classList.toggle('is-over', !!over);
         return;
@@ -3275,7 +3401,8 @@
   function savedCap() {
     var cap = 0;
     try { cap = +localStorage.getItem(QUALITY_KEY) || 0; } catch (_e) {}
-    return Math.max(320, Math.min(maxWidth(), cap || maxWidth()));
+    var T = glWanted() ? GL_TIERS[glTier()] : null;                  // a weak card's smaller picture
+    return Math.max(320, Math.min(maxWidth(), (T && T.cap) || 1e9, cap || maxWidth()));
   }
   // The picture is shown a whole number of screen pixels per picture pixel
   // (2× on most screens): every pixel column as wide as the next, so nothing
@@ -3296,7 +3423,36 @@
     view.style.height = (VIEW_H * fit.k / fit.dpr) + 'px';
     st.mmBase = null;
     placeSide();
-    st.ctx = view.getContext('2d', { alpha: false });
+    if (glWanted() && GLR !== false) {
+      // the card's picture and this one in one box of the picture's size: always exactly over each other
+      var stack = view.parentNode.classList.contains('mx-doom-stack') ? view.parentNode : null;
+      if (!stack) { stack = document.createElement('div'); stack.className = 'mx-doom-stack'; view.parentNode.insertBefore(stack, view); stack.appendChild(view); }
+      stack.style.cssText = 'position:relative;margin:0 auto;width:' + view.style.width + ';height:' + view.style.height;
+      var gc = stack.querySelector('.mx-doom-gl');
+      if (!gc) {
+        gc = document.createElement('canvas'); gc.className = 'mx-doom-gl'; stack.insertBefore(gc, view);
+        // the graphics card lost (a driver reset, a computer waking up): the software renderer at once,
+        // never a black picture; WebGL again, built anew, when the card comes back
+        gc.addEventListener('webglcontextlost', function (e) {
+          e.preventDefault();
+          if (GLR && GLR.canvas !== gc) return;                      // (an old canvas let go on closing)
+          GLR = null;
+          if (state) { state.gl = null; state.dirty = true; }
+          gc.style.visibility = 'hidden';
+        });
+        gc.addEventListener('webglcontextrestored', function () {
+          if (!gc.isConnected) return;
+          GLR = glCreate(gc) || false;
+          if (state && GLR && glWanted()) { state.gl = GLR; state.dirty = true; gc.style.visibility = ''; }
+        });
+      }
+      gc.width = W; gc.height = VIEW_H;
+      gc.style.cssText = 'position:absolute;left:0;top:0;pointer-events:none;image-rendering:pixelated;width:100%;height:100%';
+      view.style.position = 'relative';
+      if (!GLR) GLR = glCreate(gc) || false;
+      st.gl = GLR || null;
+    }
+    st.ctx = view.getContext('2d', { alpha: glWanted() });
     st.img = st.ctx.createImageData(W, VIEW_H);
     st.buf = new Uint32Array(st.img.data.buffer);
     ['zbuf', 'glassCols', 'glassX', 'cross', 'pickDist', 'pickWX', 'pickWY'].forEach(function (k) { st[k] = new Float32Array(W); });
@@ -3311,7 +3467,7 @@
     st.dirty = true;
   }
   // cats and the statue: loaded once, kept for the next visit
-  var catImg = null, bustImg = null, catStatue = null;
+  var catImg = null, catAtlasMade = null, flyImg = null, flyAtlasMade = null, bustImg = null, catStatue = null;
   // the statue's mesh in the parts' triangles (local a, b, z; its front +a), once both files are in
   function catStatueMesh(m, img) {
     var tex = texOf(imgCanvas(img)), q = 1 / m.q, uq = 1 / m.uq, tris = [];
@@ -3401,14 +3557,15 @@
     for (var cy = LEO_Y0 + 0.5; cy < map.h - 3; cy += 2.5) CAT_WAYS.hall.push([3.3 + ((cy * 7) % 5) * 0.1, cy]);
     var cats = CATS.map(function (c, i) {
       var way = CAT_WAYS[c[2]][(i * 3) % CAT_WAYS[c[2]].length];
-      return { kind: 'cat', name: c[0], coat: c[1], room: c[2], x: way[0], y: way[1], h: CAT_H, reach: 2.2, shade: 0.07, vx: 1, vy: 0, mode: 'sit', until: performance.now() + 800 + i * 900, t: i, flip: i === 1 };
+      return { kind: 'cat', name: c[0], coat: c[1], room: c[2], x: way[0], y: way[1], h: CAT_H, reach: 2.2, shade: 0.07, vx: 1, vy: 0, mode: 'sit', until: performance.now() + 800 + i * 900, t: i, hd: i * 1.9, ph: 0, flip: false };
     });
-    props = props.concat(cats);
+    var flyer = { kind: 'flycat', name: BCAT.name, x: 3.5, y: LEO_Y0 + 1, h: BCAT.hu, lift: BCAT.lift, reach: 2.6, shade: 0.05, t: 0, hd: Math.PI / 2, flip: false, spr: null };
+    props = props.concat(cats, [flyer]);
     var st = state = {
       map: map, x: 4.3, y: 4.55, a: -2.75, z: EYE, keys: {}, dragTurn: 0, walk: 0, sips: 0, sip: 0, seated: false,
       pitch: 0, dPitch: 0, vx: 0, vy: 0, cap: 0, mapOn: null, mmBase: null, msgShown: false, mouseFreedAt: 0, noLock: false,
       artAt: new Array(map.w * map.h * 4), aim: null, dirty: true, closed: false, frames: 0, cost: 0, loweredAt: -99, drawnAt: 0,
-      props: props, cats: cats, catFrames: null, cup: null, brew: null, goal: null, promptKey: '',
+      props: props, cats: cats, flyer: flyer, flyAtlas: null, catAtlas: null, cup: null, brew: null, goal: null, promptKey: '',
       aqua: null, aquaSeen: true,
       musicOn: false, today: opts.today, sleepers: sleepers, bedPeople: bedPeople, items: items,
       me: opts.me || {},
@@ -3432,7 +3589,7 @@
     var bedFacing = [Math.PI / 2, Math.PI / 2, -Math.PI / 2, Math.PI];
     var makeSprites = function () {
       props.forEach(function (p) {
-        if (p.kind === 'cat') return;
+        if (p.kind === 'cat' || p.kind === 'flycat') return;
         var model = p.kind === 'machine' ? function () { return machineModel(!!st.brew); }
           : p.kind === 'gramophone' ? function () { return gramophoneModel(st.musicOn); }
           : p.kind === 'easel' ? easelModel : p.kind === 'chair' ? chairModel : p.kind === 'monsterbox' ? monsterBoxModel
@@ -3487,13 +3644,26 @@
     paintMusic();
     paintBadges();
     drawHud(st);
-    if (keep && keep.catFrames) st.catFrames = keep.catFrames;
+    if (keep && keep.catAtlas) st.catAtlas = keep.catAtlas;
     if (!keep) say(st, props.some(function (p) { return p.kind === 'goldcup'; })
       ? 'Laipni lūgti galerijā! Šodien kaut kur zālē paslēpta zelta krūzīte'
       : 'Laipni lūgti galerijā! Pa kreisi Löfbergs kafija, pa labi durvis uz Nakts istabu');
     // the cats and the statue (cached by the browser and kept here after the first visit)
-    var withCats = function (img) { if (state !== st) return; st.catFrames = catFrames(img); updateCats(st, 0, performance.now()); st.dirty = true; };
-    if (catImg && catImg.complete && catImg.naturalWidth) withCats(catImg); else catImg = loadImage(ART + 'cats.webp' + CAT_V, withCats);
+    var withCats = function () {
+      if (state !== st || !catImg || !catImg.naturalWidth) return;
+      if (!catAtlasMade) catAtlasMade = catAtlas(catImg);
+      st.catAtlas = catAtlasMade;
+      updateCats(st, 0, performance.now()); st.dirty = true;
+    };
+    if (!catImg) catImg = loadImage(ART + 'cats3d.webp' + CAT_V, withCats);
+    var withFlyer = function () {
+      if (state !== st || !flyImg || !flyImg.naturalWidth) return;
+      if (!flyAtlasMade) flyAtlasMade = sideAtlas(flyImg, 8, BCAT.frames, BCAT.hu, 'flycat');
+      st.flyAtlas = flyAtlasMade; updateFlyer(st, 0); st.dirty = true;
+    };
+    if (!flyImg) flyImg = loadImage(ART + 'balloon-cat.webp' + CAT_V, withFlyer);
+    withFlyer();
+    withCats();
     var withBust = function (img) { if (state !== st) return; var p = props.find(function (q) { return q.kind === 'statue'; }); p.spr = statueSprite(img); st.dirty = true; };
     if (!(bustImg && bustImg.complete && bustImg.naturalWidth)) bustImg = loadImage(ART + 'venus-milo.webp' + ART_V, withBust);
     Object.keys(BAKED_KINDS).forEach(function (kind) {
@@ -3568,6 +3738,9 @@
     root.querySelector('.mx-doom-all').hidden = true;
     root.querySelector('.mx-doom-prompt').hidden = true;
     if (keepMusic) return;
+    glRelease();
+    if (catAtlasMade) catAtlasMade.free();
+    if (flyAtlasMade) flyAtlasMade.free();
     var screen = root.querySelector('.mx-doom');
     var done = function () { root.hidden = true; root.classList.remove('is-closing'); };
     if (now !== true && window.MinkaMotion && st.originEl) {
@@ -3580,7 +3753,7 @@
     var st = state;
     if (!st) return;
     open(Object.assign({}, opts, { origin: null }), {
-      w: W, x: st.x, y: st.y, a: st.a, z: st.z, pitch: st.pitch, tex: st.tex, artTex: st.artTex, aqua: st.aqua, catFrames: st.catFrames, lightsOff: st.lightsOff, sips: st.sips, cup: st.cup, seated: st.seated, musicOn: st.musicOn, mapOn: st.mapOn, origin: st.originEl
+      w: W, x: st.x, y: st.y, a: st.a, z: st.z, pitch: st.pitch, tex: st.tex, artTex: st.artTex, aqua: st.aqua, catAtlas: st.catAtlas, lightsOff: st.lightsOff, sips: st.sips, cup: st.cup, seated: st.seated, musicOn: st.musicOn, mapOn: st.mapOn, origin: st.originEl
     });
   }
   // For measuring: draws n frames turning on the spot, returns ms a frame.
@@ -3596,7 +3769,7 @@
     state.x = x; state.y = y; state.a = a; state.goal = null; state.dirty = true;
     render(state);
     var p = promptFor(state);
-    return { aim: state.aim && (state.aim.isArt ? (state.aim.plan ? 'plan' : state.aim.empty ? 'empty' : 'art') : state.aim.kind), prompt: p && p.join(' '), w: W, mapH: state.map.h };
+    return { aim: state.aim && (state.aim.isArt ? (state.aim.plan ? 'plan' : state.aim.empty ? 'empty' : 'art') : state.aim.kind), prompt: p && p.join(' '), w: W, mapH: state.map.h, cats: state.cats.map(function (c) { return [c.name, +c.x.toFixed(2), +c.y.toFixed(2), c.mode, !!c.spr, +(c.hd || 0).toFixed(2)]; }), flyer: state.flyer ? [+state.flyer.x.toFixed(2), +state.flyer.y.toFixed(2), +state.flyer.lift.toFixed(2), !!state.flyer.spr] : null };
   }
   function act(what) {
     var st = state;
@@ -3607,6 +3780,471 @@
     var gold = st.props.find(function (p) { return p.kind === 'goldcup' && !p.hidden; });
     return { seated: st.seated, music: st.musicOn, z: +st.z.toFixed(2), cup: st.cup && st.cup.kind.name, left: st.cup && st.cup.left, brewing: !!st.brew, viewing: !!st.viewing, gold: gold ? [+gold.x.toFixed(2), +gold.y.toFixed(2)] : null };
   }
+  /* ── Galerija GL: the same hall drawn by the graphics card (WebGL 1, after phoboslab's q1k3,
+     MIT: everything in a few buffers, one small shader). The same picture as the software
+     renderer: the same camera and Doom-style shear for looking up, the same shade steps by
+     distance and fog (the LUT formula in the shader), the same tile light (a little texture),
+     the same textures with their own hard mip levels. The processor only builds buffers once
+     and sends a few dozen draws a frame. No WebGL, or a slow one: the software renderer. ── */
+  var GLR = null, GL_IDS = new WeakMap(), GL_ID = 0;
+  function glWanted() {
+    var flag = function (search) { var q = new URLSearchParams(search || ''); return q.has('gl') ? q.get('gl') !== '0' : null; };
+    try {
+      var own = flag(location.search), top = null;
+      try { if (window.parent !== window) top = flag(window.parent.location.search); } catch (_e) {}   // ?gl=1 on the app's own address too
+      var v = own != null ? own : top;
+      if (v != null) { try { localStorage.setItem('minkaGalleryGL', v ? '1' : '0'); } catch (_e) {} }
+      else v = localStorage.getItem('minkaGalleryGL') === '1';
+      return v && !GL_TIERS[glTier()].cpu;
+    } catch (_e) { return false; }
+  }
+  // A weak graphics card is found out by the time between two pictures drawn in back-to-back
+  // frames (what the card costs never shows on the processor's clock). Under 25 a second for about
+  // 2 s (a 30 Hz battery saver is not slow), once the first seconds have passed: a step down,
+  // remembered for this computer, and another after a fresh look if still slow. 16 lights, 8, then 4 and a smaller picture; under 17 a second
+  // even then, the software renderer. Never back up in a visit.
+  var GL_TIER_KEY = 'minkaGalleryGLTierV1', GL_TIERS = [{ lights: 16 }, { lights: 8 }, { lights: 4, cap: 720 }, { cpu: true }], glTierV = null;
+  function glTier() {
+    if (glTierV == null) { glTierV = 0; try { glTierV = Math.max(0, Math.min(GL_TIERS.length - 1, +localStorage.getItem(GL_TIER_KEY) || 0)); } catch (_e) {} }
+    return glTierV;
+  }
+  function glKeepUp(st, now) {
+    var back = st.glDrawnAt != null && st.glDrawnAt === st.rafPrev;
+    st.glDrawnAt = now;
+    st.glFrames = (st.glFrames || 0) + 1;
+    if (!back || st.glFrames < 240) return;
+    var gap = now - st.rafPrev, tier = glTier(), limit = GL_TIERS[tier + 1].cpu ? 60 : 40;
+    st.glSlow = gap > limit ? (st.glSlow || 0) + 1 : Math.max(0, (st.glSlow || 0) - 1);
+    if (st.glSlow < 50) return;
+    glTierV = tier + 1; st.glSlow = 0; st.glFrames = 120;      // the next step only after a fresh look
+    try { localStorage.setItem(GL_TIER_KEY, String(glTierV)); } catch (_e) {}
+    var T = GL_TIERS[glTierV];
+    if (T.cpu) {                                                     // the card can't: the software renderer, as without WebGL
+      var gc = root.querySelector('.mx-doom-gl');
+      if (gc) gc.style.display = 'none';
+      st.gl = null;
+    }
+    if (T.cap && (st.cap || savedCap()) > T.cap) st.cap = T.cap;
+    setSize(st);
+  }
+  // the gallery closed: everything on the card given back at once (the context let go, its canvas
+  // out); opening again makes a fresh one
+  function glRelease() {
+    if (!GLR) return;
+    var R = GLR, gc = R.canvas;
+    GLR = null;
+    try { var ext = R.gl.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext(); } catch (_e) {}
+    if (gc && gc.parentNode) gc.parentNode.removeChild(gc);
+  }
+  function glCreate(canvasEl) {
+    var gl = null;
+    try { gl = canvasEl.getContext('webgl', { antialias: false, alpha: false, depth: true, failIfMajorPerformanceCaveat: true, powerPreference: 'low-power' }); } catch (_e) {}
+    if (!gl) return null;
+    // q1k3's way (phoboslab, MIT): per-pixel point lights, light ∝ (n·l) / d², a gamma of 0.75, the
+    // colour cut to steps (32 a channel, an ordered 4×4 dither between them, so the dark wood keeps
+    // its hue); under it our own distance shade and fog (the LUT formula), darker, so the lights make
+    // the room; the floor lighter and a little sharper far off, as the software one. Looking up and down turns the view (not Doom's shear).
+    var VS = 'precision highp float;attribute vec3 p;attribute vec2 t;attribute vec3 c;attribute float o;attribute vec3 nm;'
+      + 'uniform vec3 cam;uniform vec2 dir;uniform vec3 pr;'          // pr: 1/FOV, aspect/FOV, pitch angle
+      + 'varying vec2 vt;varying vec3 vc,vn,vp;varying float vo,vz;varying vec2 vw;'
+      + 'void main(){vec2 d=p.xy-cam.xy;float Z=d.x*dir.x+d.y*dir.y,X=-d.x*dir.y+d.y*dir.x,Y=p.z-cam.z;'
+      + 'float cp=cos(pr.z),sp=sin(pr.z),Zr=Z*cp+Y*sp,Yr=Y*cp-Z*sp;'
+      + 'vt=t;vc=c;vo=o;vz=Z;vn=nm;vp=p;vw=p.xy-normalize(d+vec2(1e-6))*0.04;'   // the tile light just in front of the surface
+      + 'gl_Position=vec4(X*pr.x,Yr*pr.y,Zr*1.000667-0.04001,Zr);}';
+    var FS = 'precision highp float;uniform sampler2D s;uniform sampler2D lt;uniform vec2 ls;uniform vec4 fix;uniform vec3 fogD,fogN;uniform float blend,quant,amb;'
+      + 'uniform vec3 lp[16];uniform vec3 lc[16];uniform int ln;'
+      + 'varying vec2 vt;varying vec3 vc,vn,vp;varying float vo,vz;varying vec2 vw;'
+      + 'void main(){vec3 n=normalize(vn+vec3(1e-6));float fl=step(0.5,n.z);'
+      + 'vec4 x=texture2D(s,vt,-0.6*fl);if(blend<0.5&&x.a<0.5)discard;if(fix.w>0.5){gl_FragColor=x;return;}'
+      + 'vec4 L=fix.x>0.5?vec4(fix.y,fix.z,0.,0.):texture2D(lt,vw*4./ls);'
+      + 'float light=fix.x>0.5?fix.y:floor(L.r*255.+0.5)-128.;float night=fix.x>0.5?fix.z:step(0.5,L.a);'
+      + 'float l=min(63.,floor(max(vz,0.)*5.6)+floor(vo+0.5))+light;l=clamp(l,-16.,63.);'
+      + 'float f=l<0.?1.-0.022*l:1.-0.76*l/63.;float w=clamp((l-10.)/20.,0.,1.);float k=l<0.?0.:(1.-f)*w;'
+      + 'vec3 dl=vec3(0.);'
+      + 'for(int i=0;i<16;i++){if(i>=ln)break;vec3 v=lp[i]-vp;float dd=max(dot(v,v),0.16);dl+=max(dot(n,v*inversesqrt(dd)),0.)/dd*lc[i];}'
+      + 'float a=mix(amb,0.86,fl);vec3 lit=x.rgb*vc*(f*a+pow(dl,vec3(0.75))*mix(1.,0.55,fl));'
+      + 'vec3 fog=night>0.5?fogN:fogD;vec3 o=min(vec3(1.),lit+fog*k*a);'
+      + 'if(quant>0.5){vec2 q=mod(floor(gl_FragCoord.xy),4.),q1=mod(q,2.),q2=floor(q/2.);'
+      + 'float th=(4.*mod(2.*q1.x+3.*q1.y,4.)+mod(2.*q2.x+3.*q2.y,4.)+0.5)/16.;o=floor(o*32.+th)/32.;}'
+      + 'gl_FragColor=vec4(o,blend>0.5?x.a:1.);}';
+    function sh(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+    var prog = gl.createProgram();
+    try { gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); } catch (e) { if (window.console) console.warn('gallery GL', e && e.message); return null; }
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
+    gl.useProgram(prog);
+    var A = { p: gl.getAttribLocation(prog, 'p'), t: gl.getAttribLocation(prog, 't'), c: gl.getAttribLocation(prog, 'c'), o: gl.getAttribLocation(prog, 'o'), nm: gl.getAttribLocation(prog, 'nm') };
+    var U = {}; ['cam', 'dir', 'pr', 's', 'lt', 'ls', 'fix', 'fogD', 'fogN', 'blend', 'quant', 'amb', 'lp', 'lc', 'ln'].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
+    gl.uniform1i(U.s, 0); gl.uniform1i(U.lt, 1);
+    gl.uniform3f(U.fogD, FOG[0] / 255, FOG[1] / 255, FOG[2] / 255); gl.uniform3f(U.fogN, FOG_NIGHT[0] / 255, FOG_NIGHT[1] / 255, FOG_NIGHT[2] / 255);
+    gl.uniform1f(U.amb, GL_AMB);
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);
+    return { gl: gl, prog: prog, A: A, U: U, tex: new Map(), noMip: new Set(), white: null, world: null, props: new Map(), dyn: gl.createBuffer(), light: null, lightSrc: null, canvas: canvasEl, aquaAt: -1, lights: [] };
+  }
+  var GL_AMB = 0.62, GL_SPEED = 1.3, GL_LP = new Float32Array(48), GL_LC = new Float32Array(48);
+  // a texture from our own levels (hard pixels, the same mips as the software renderer; the chain
+  // is finished down to 1×1 for WebGL, nearest everywhere)
+  function glTexture(R, levels, key, wrap) {
+    var gl = R.gl, t = R.tex.get(key);
+    if (t) return t;
+    t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); t.usedAt = R.frame;
+    var w = levels[0].w, h = levels[0].h, pot = !(w & (w - 1)) && !(h & (h - 1)) && !R.noMip.has(key);
+    var lv = levels.slice();
+    if (pot) {                                                       // finish the chain by halving
+      var last = lv[lv.length - 1];
+      while (last.w > 1 || last.h > 1) {
+        var nw = Math.max(1, last.w >> 1), nh = Math.max(1, last.h >> 1), np = new Uint32Array(nw * nh);
+        for (var y = 0; y < nh; y++) for (var x = 0; x < nw; x++) np[y * nw + x] = last.px[Math.min(last.h - 1, y * 2) * last.w + Math.min(last.w - 1, x * 2)];
+        last = { w: nw, h: nh, px: np }; lv.push(last);
+      }
+      lv.forEach(function (L, i) { gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA, L.w, L.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(L.px.buffer, L.px.byteOffset, L.w * L.h * 4)); });
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap ? gl.REPEAT : gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap ? gl.REPEAT : gl.CLAMP_TO_EDGE);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(levels[0].px.buffer, levels[0].px.byteOffset, w * h * 4));
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    R.tex.set(key, t);
+    return t;
+  }
+  // a cat's sheet as it is, hard pixels; once on the card, the canvas is let go
+  function glCatSheet(R, atlas, coat) {
+    var gl = R.gl, key = (atlas.key || 'cats') + coat, t = R.tex.get(key);
+    if (t) return t;
+    t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, atlas.sheet(coat));
+    [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]].forEach(function (q) { gl.texParameteri(gl.TEXTURE_2D, q[0], q[1]); });
+    t.usedAt = R.frame;
+    R.tex.set(key, t);
+    atlas.release(coat);
+    return t;
+  }
+  function glWallTex(R, wt) { return glTexture(R, wt.mips, wt, true); }
+  function glWhite(R) {
+    if (!R.white) R.white = glTexture(R, [{ w: 1, h: 1, px: new Uint32Array([0xffffffff]) }], 'white', true);
+    return R.white;
+  }
+  // a batch: vertices [x,y,z, u,v, r,g,b, off, nx,ny,nz] per texture
+  var GL_STRIDE = 12;
+  function batchAdd(groups, tex, a, b, c, ua, ub, uc, col, off, n) {
+    var g = groups.get(tex); if (!g) { g = []; groups.set(tex, g); }
+    var cr = col ? col[0] : 1, cg = col ? col[1] : 1, cb = col ? col[2] : 1, nx = n[0], ny = n[1], nz = n[2];
+    g.push(a[0], a[1], a[2], ua[0], ua[1], cr, cg, cb, off, nx, ny, nz, b[0], b[1], b[2], ub[0], ub[1], cr, cg, cb, off, nx, ny, nz, c[0], c[1], c[2], uc[0], uc[1], cr, cg, cb, off, nx, ny, nz);
+  }
+  function quadAdd(groups, tex, p0, p1, p2, p3, u0, u1, u2, u3, off, n, col) { batchAdd(groups, tex, p0, p1, p2, u0, u1, u2, col, off, n); batchAdd(groups, tex, p0, p2, p3, u0, u2, u3, col, off, n); }
+  function toBuffers(R, groups, artSet) {
+    var gl = R.gl, out = [];
+    groups.forEach(function (arr, tex) { var b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW); out.push({ tex: tex, buf: b, n: arr.length / GL_STRIDE, art: !!(artSet && artSet.has(tex)) }); });
+    return out;
+  }
+  // the hall as triangles: floors and ceilings per cell (the night rooms' own, the skylight),
+  // the walls' faces (pictures where they hang), the round pillars, the glass, the doors' frames;
+  // and its lights: one over every picture, the skylight's, the lobby's, the glowing things'
+  function glBuildWorld(st, R) {
+    var map = st.map, T = st.tex, mw = map.w, mh = map.h, grid = map.grid, zone = map.zone, glass = new Map(), artTex = new Set(), lights = [];
+    var G = new Map(), add = function (wt, p0, p1, p2, p3, u0, u1, u2, u3, off, n) { quadAdd(G, glWallTex(R, wt), p0, p1, p2, p3, u0, u1, u2, u3, off || 0, n); };
+    var isOpen = function (c) { return c === EMPTY || c === DOOR || c === GLASS || c === PILLAR; };
+    var night = isNightNow();
+    for (var y = 0; y < mh; y++) for (var x = 0; x < mw; x++) {
+      var ci = y * mw + x, c = grid[ci];
+      if (!isOpen(c)) continue;
+      var halves = [[x, x + 1, zone[ci]]];
+      if (c === DOOR) {                                              // a door's cell: each half with its room's floor
+        var d = map.doors[map.doorAt[ci]];
+        halves = d.axis === 0 ? [[x, x + 0.5, zone[ci - 1]], [x + 0.5, x + 1, zone[ci + 1]]] : [[x, x + 1, zone[ci - mw]]];
+      }
+      halves.forEach(function (h) {
+        var nz = h[2], x0 = h[0], x1 = h[1], u0 = x0 - x, u1 = x1 - x;
+        var fl = nz ? T.nightFloor : T.floor, ce = nz ? T.nightCeil : (map.sky && map.sky[ci] ? T.sky : T.ceil);
+        add(fl, [x0, y, 0], [x1, y, 0], [x1, y + 1, 0], [x0, y + 1, 0], [u0, 0], [u1, 0], [u1, 1], [u0, 1], 0, [0, 0, 1]);
+        add(ce, [x0, y + 1, 1], [x1, y + 1, 1], [x1, y, 1], [x0, y, 1], [u0, 1], [u1, 1], [u1, 0], [u0, 0], 0, [0, 0, -1]);
+      });
+      // faces of the walls round this cell (face: the wall cell's side that looks at us)
+      [[0, -1, 2], [1, 0, 3], [0, 1, 0], [-1, 0, 1]].forEach(function (n) {
+        var wx = x + n[0], wy = y + n[1];
+        if (wx < 0 || wy < 0 || wx >= mw || wy >= mh) return;
+        var wi = wy * mw + wx, wc = grid[wi], nrm = [-n[0], -n[1], 0];
+        if (wc === GLASS && c !== GLASS) {                           // a window into the night room: one pane, on the hall's side (seen from both)
+          if (zone[ci]) return;
+          var gx0 = n[0] ? (n[0] > 0 ? x + 1 : x) : x, gy0 = n[1] ? (n[1] > 0 ? y + 1 : y) : y;
+          var a0 = n[0] ? [gx0, y, 1] : [x, gy0, 1], a1 = n[0] ? [gx0, y + 1, 1] : [x + 1, gy0, 1];
+          var ga = n[0] ? glassU(map, wx, y) : 0, gb = n[0] ? glassU(map, wx, y + 0.999) : 1;
+          quadAdd(glass, glWallTex(R, T.glass), a0, a1, [a1[0], a1[1], 0], [a0[0], a0[1], 0], [ga, 0], [gb, 0], [gb, 1], [ga, 1], n[1] ? 8 : 0, nrm);
+          return;
+        }
+        if (wc !== WALL) return;
+        var face = n[2], art = st.artAt[wi * 4 + face] || null;
+        var tex = art ? art.tex : c === DOOR ? T.jamb : zone[ci] ? T.nightWall : T.plaster;
+        if (art && art.tex) artTex.add(glWallTex(R, art.tex));
+        // a warm light in front of every picture (the aquarium a blue one, the switches none)
+        if (art && art.tex && art.kind !== 'switch') {
+          var fcx = face === 3 ? wx : face === 1 ? wx + 1 : wx + 0.5, fcy = face === 0 ? wy : face === 2 ? wy + 1 : wy + 0.5;
+          lights.push({ x: fcx + nrm[0] * 0.7, y: fcy + nrm[1] * 0.7, z: 0.74, c: art.aquarium ? [0.05, 0.16, 0.22] : zone[ci] ? [0.07, 0.055, 0.04] : [0.11, 0.09, 0.065] });
+        }
+        var off = n[1] ? 8 : 0;                                       // the y-facing walls a little darker (as the software side)
+        var L, Rr;                                                     // the face's left and right edge as you look at it (u 0 → 1)
+        if (face === 3) { L = [wx, wy]; Rr = [wx, wy + 1]; }
+        else if (face === 1) { L = [wx + 1, wy + 1]; Rr = [wx + 1, wy]; }
+        else if (face === 0) { L = [wx + 1, wy]; Rr = [wx, wy]; }
+        else { L = [wx, wy + 1]; Rr = [wx + 1, wy + 1]; }
+        add(tex, [L[0], L[1], 1], [Rr[0], Rr[1], 1], [Rr[0], Rr[1], 0], [L[0], L[1], 0], [0, 0], [1, 0], [1, 1], [0, 1], off, nrm);
+      });
+      if (c === PILLAR) {                                            // a round column, the stone twice round, lit from one side
+        var cx = x + 0.5, cy = y + 0.5, N = 20;
+        for (var i = 0; i < N; i++) {
+          var a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2, am = (a0 + a1) / 2;
+          var p0 = [cx + Math.cos(a0) * PILLAR_R, cy + Math.sin(a0) * PILLAR_R], p1 = [cx + Math.cos(a1) * PILLAR_R, cy + Math.sin(a1) * PILLAR_R];
+          var po = Math.round((1 - Math.max(0, Math.cos(am) * 0.55 - Math.sin(am) * 0.83)) * 9);
+          var ua = ((Math.atan2(Math.sin(a0), Math.cos(a0)) / (2 * Math.PI) + 0.5) * 2) % 1, ub = ua + 2 / N;
+          add(T.marble, [p1[0], p1[1], 1], [p0[0], p0[1], 1], [p0[0], p0[1], 0], [p1[0], p1[1], 0], [ub, 0], [ua, 0], [ua, 1], [ub, 1], po, [Math.cos(am), Math.sin(am), 0]);
+        }
+      }
+      // the skylight's light down the hall: daylight, or the night's blue
+      if (map.sky && map.sky[ci] && y % 3 === 0) lights.push({ x: x + 0.5, y: y + 0.5, z: 0.82, c: night ? [0.05, 0.07, 0.13] : [0.16, 0.16, 0.15] });
+    }
+    // the lobby's ceiling lamps; the glowing things (the screens, the aquarium's water, the machine), the beds' lamps
+    [[2, 2], [4, 2], [2, 4.2], [4.4, 4.2]].forEach(function (q) { lights.push({ x: q[0], y: q[1], z: 0.82, c: [0.13, 0.115, 0.095] }); });
+    st.props.forEach(function (p) {
+      var glow = { arcade: [0.16, 0.05, 0.12], arcademines: [0.04, 0.14, 0.12], pinball: [0.16, 0.08, 0.02], machine: [0.12, 0.07, 0.03], bed: [0.06, 0.04, 0.02], oldpc: [0.04, 0.06, 0.14] }[p.kind];
+      if (!glow) return;
+      var fx = Math.cos(p.facing || 0), fy = Math.sin(p.facing || 0), z = p.kind === 'bed' ? 0.45 : p.kind === 'pinball' ? 0.5 : 0.62;
+      lights.push({ x: p.x + fx * 0.32, y: p.y + fy * 0.32, z: z, c: glow });
+    });
+    [R.oldWorld, R.oldGlass].forEach(function (bs) { (bs || []).forEach(function (b) { R.gl.deleteBuffer(b.buf); }); });   // the old ones freed
+    R.world = toBuffers(R, G, artTex); R.glassBufs = toBuffers(R, glass); R.oldWorld = R.world; R.oldGlass = R.glassBufs;
+    R.lights = lights; R.lpKey = null;
+    R.worldKey = st.map;
+  }
+  // the sixteen lights nearest the eye go to the shader (a far light adds nothing you would see)
+  function glPickLights(R, x, y) {
+    var key = ((x * 4) | 0) + ',' + ((y * 4) | 0) + ',' + glTier() + ',' + R.lights.length;
+    if (key === R.lpKey) return;                                     // (the program keeps them)
+    R.lpKey = key;
+    var ls = R.lights.slice().sort(function (a, b) { return (a.x - x) * (a.x - x) + (a.y - y) * (a.y - y) - ((b.x - x) * (b.x - x) + (b.y - y) * (b.y - y)); }).slice(0, GL_TIERS[glTier()].lights);
+    ls.forEach(function (l, i) { GL_LP[i * 3] = l.x; GL_LP[i * 3 + 1] = l.y; GL_LP[i * 3 + 2] = l.z; GL_LC[i * 3] = l.c[0]; GL_LC[i * 3 + 1] = l.c[1]; GL_LC[i * 3 + 2] = l.c[2]; });
+    var gl = R.gl; gl.uniform3fv(R.U.lp, GL_LP); gl.uniform3fv(R.U.lc, GL_LC); gl.uniform1i(R.U.ln, ls.length);
+  }
+  function glBuildLight(st, R) {
+    var gl = R.gl, map = st.map, Wl = map.w * 4, Hl = map.h * 4, data = new Uint8Array(Wl * Hl * 2), L = st.light;
+    for (var j = 0; j < Hl; j++) for (var i = 0; i < Wl; i++) {
+      var k = j * Wl + i, v = L ? (L[k] | 0) : 0;
+      data[k * 2] = Math.max(0, Math.min(255, v + 128));
+      data[k * 2 + 1] = map.zone[((j / 4) | 0) * map.w + ((i / 4) | 0)] ? 255 : 0;
+    }
+    if (!R.light) R.light = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, R.light);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE_ALPHA, Wl, Hl, 0, gl.LUMINANCE_ALPHA, gl.UNSIGNED_BYTE, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform2f(R.U.ls, Wl, Hl);
+    R.lightSrc = st.light;
+  }
+  // a prop's own triangles in the hall, by picture; built once (again when its model changes)
+  function glBuildProp(R, p) {
+    var G = new Map(), cosF = Math.cos(p.facing || 0), sinF = Math.sin(p.facing || 0);
+    p.mesh.tris.forEach(function (t) {
+      var w = t.v.map(function (q) { return [p.x + q[0] * cosF - q[1] * sinF, p.y + q[0] * sinF + q[1] * cosF, q[2]]; });
+      var n0 = t.n[0] * cosF - t.n[1] * sinF, n1 = t.n[0] * sinF + t.n[1] * cosF;
+      var lit = Math.max(0, Math.abs(n0 * LIGHT3[0] + n1 * LIGHT3[1] + t.n[2] * LIGHT3[2]));
+      var off = Math.round((1 - lit) * t.soft * 60), tex, col = null;
+      if (t.tex) tex = glTexture(R, t.tex.levels, t.tex, false);
+      else { tex = glWhite(R); var cc = t.col; col = [(cc & 255) / 255, (cc >> 8 & 255) / 255, (cc >> 16 & 255) / 255]; }
+      batchAdd(G, tex, w[0], w[1], w[2], t.uv[0], t.uv[1], t.uv[2], col, off, [n0, n1, t.n[2]]);
+    });
+    return { mesh: p.mesh, bufs: toBuffers(R, G) };
+  }
+  function glAttribs(R) {
+    var gl = R.gl, A = R.A, B = GL_STRIDE * 4;
+    gl.vertexAttribPointer(A.p, 3, gl.FLOAT, false, B, 0); gl.vertexAttribPointer(A.t, 2, gl.FLOAT, false, B, 12);
+    gl.vertexAttribPointer(A.c, 3, gl.FLOAT, false, B, 20); gl.vertexAttribPointer(A.o, 1, gl.FLOAT, false, B, 32);
+    gl.vertexAttribPointer(A.nm, 3, gl.FLOAT, false, B, 36);
+  }
+  function glDrawBufs(R, bufs) {
+    var gl = R.gl;
+    bufs.forEach(function (b) {
+      gl.uniform1f(R.U.quant, b.art ? 0 : 1);                         // the pictures keep all their colours
+      gl.bindTexture(gl.TEXTURE_2D, b.tex); b.tex.usedAt = R.frame;
+      gl.bindBuffer(gl.ARRAY_BUFFER, b.buf); glAttribs(R);
+      gl.drawArrays(gl.TRIANGLES, 0, b.n);
+    });
+  }
+  // the things drawn as pictures facing you (cats, the statue, the props' little pictures) and the shadows on the floor
+  var SHADOW_TEX = (function () { var n = 32, px = new Uint32Array(n * n); for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) { var d = Math.hypot(x + 0.5 - n / 2, y + 0.5 - n / 2) / (n / 2); px[y * n + x] = d < 1 ? 0xffdfdfdf : 0xffffffff; } return { w: n, h: n, px: px }; })();
+  function glSprites(st, R, dirX, dirY) {
+    var rx = -dirY, ry = dirX, plX = -dirY * FOV, plY = dirX * FOV;
+    var list = [];
+    st.props.forEach(function (p) {
+      if (p.hidden || !p.spr) return;
+      list.push(p);
+      if (p.mesh) p.mesh.bills.forEach(function (b) { list.push(b); });
+    });
+    return list.map(function (p) {
+      var spr = p.spr, hgt = spr.hu || p.h || 0.3, wid = hgt * spr.w / spr.h, cx = spr.cx == null ? 0.5 : spr.cx;
+      var z0 = (p.lift || 0) - (spr.drop || 0), lx = p.x - rx * wid * cx, ly = p.y - ry * wid * cx, Rx = p.x + rx * wid * (1 - cx), Ry = p.y + ry * wid * (1 - cx);
+      var u0 = p.flip ? 1 : 0, u1 = p.flip ? 0 : 1;
+      return { p: p, spr: spr, quad: spr === SHADOW_ONLY || spr.w <= 1 ? null : [lx, ly, z0 + hgt, Rx, Ry, z0 + hgt, Rx, Ry, z0, lx, ly, z0], u: [u0, u1] };
+    });
+  }
+  // a dynamic quad list: [x,y,z, u,v] corners, one normal for all
+  function glQuad(v, a, b, c, d, ua, ub, uc, ud, n) {
+    [[a, ua], [b, ub], [c, uc], [a, ua], [c, uc], [d, ud]].forEach(function (q) { v.push(q[0][0], q[0][1], q[0][2], q[1][0], q[1][1], 1, 1, 1, 0, n[0], n[1], n[2]); });
+  }
+  // (one scratch array for them all, grown when it must be: no new array a draw)
+  function glDrawDyn(R, verts, tex) {
+    var gl = R.gl, n = verts.length;
+    if (!R.scratch || R.scratch.length < n) R.scratch = new Float32Array(Math.max(n, 4096));
+    R.scratch.set(verts);
+    gl.uniform1f(R.U.quant, 1);
+    gl.bindTexture(gl.TEXTURE_2D, tex); tex.usedAt = R.frame;
+    gl.bindBuffer(gl.ARRAY_BUFFER, R.dyn); gl.bufferData(gl.ARRAY_BUFFER, R.scratch.subarray(0, n), gl.DYNAMIC_DRAW);
+    glAttribs(R);
+    gl.drawArrays(gl.TRIANGLES, 0, verts.length / GL_STRIDE);
+  }
+  function glRender(st) {
+    var R = st.gl, gl = R.gl, U = R.U, A = R.A, map = st.map;
+    R.frame = (R.frame || 0) + 1;
+    // a new hall (new drawings, the gallery opened again): the old things' buffers freed
+    if (R.worldKey !== map) { R.world = null; R.props.forEach(function (c) { c.bufs.forEach(function (b) { gl.deleteBuffer(b.buf); }); }); R.props.clear(); R.lpKey = null; }
+    // what has not been drawn for 600 pictures (an old drawing, the machine's other look, a door
+    // left open) leaves the card; it is made again if it is needed again
+    if (R.frame % 120 === 0) R.tex.forEach(function (t, k) { if (R.frame - (t.usedAt || 0) > 600) { gl.deleteTexture(t); t.dead = true; R.tex.delete(k); } });
+    var dead = function (bs) { return bs && bs.some(function (b) { return b.tex.dead; }); };
+    if (dead(R.world) || dead(R.glassBufs)) R.world = null;
+    // the pictures come in after the hall is built (and change): the hall again when what hangs changes
+    var sig = 0, aa = st.artAt;
+    for (var i = 0; i < aa.length; i++) { var a = aa[i]; if (a && a.tex) { var id = GL_IDS.get(a.tex); if (!id) { id = ++GL_ID; GL_IDS.set(a.tex, id); } sig = (sig * 31 + id * (i + 1)) | 0; } }
+    if (sig !== R.artSig) { R.artSig = sig; R.world = null; }
+    if (!R.world) glBuildWorld(st, R);
+    if (R.lightSrc !== st.light) glBuildLight(st, R);
+    // the aquarium's three pictures change while you watch it: their first level sent again when they do
+    if (st.aqua) {
+      st.aqua.cells.forEach(function (wt) { R.noMip.add(wt); });
+      if (st.aqua.at !== R.aquaAt) {
+        R.aquaAt = st.aqua.at;
+        st.aqua.cells.forEach(function (wt) {
+          var t = R.tex.get(wt); if (!t) return;
+          var L0 = wt.mips[0]; gl.bindTexture(gl.TEXTURE_2D, t);
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, L0.w, L0.h, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(L0.px.buffer, L0.px.byteOffset, L0.w * L0.h * 4));
+        });
+      }
+    }
+    var z = st.z + (st.seated ? 0 : Math.sin(st.walk * 2) * 0.006), dirX = Math.cos(st.a), dirY = Math.sin(st.a);
+    gl.viewport(0, 0, R.canvas.width, R.canvas.height);
+    gl.clearColor(FOG[0] / 255, FOG[1] / 255, FOG[2] / 255, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(R.prog);
+    [A.p, A.t, A.c, A.o, A.nm].forEach(function (a) { gl.enableVertexAttribArray(a); });
+    gl.uniform3f(U.cam, st.x, st.y, z); gl.uniform2f(U.dir, dirX, dirY);
+    // the same projection as the software renderer: x by 1/FOV, y by the aspect; looking up turns the view
+    gl.uniform3f(U.pr, 1 / FOV, (W / VIEW_H) / FOV, Math.atan(st.pitch / P));
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, R.light); gl.activeTexture(gl.TEXTURE0);
+    glPickLights(R, st.x, st.y);
+    gl.uniform4f(U.fix, 0, 0, 0, 0); gl.uniform1f(U.blend, 0);
+    gl.disable(gl.CULL_FACE);                                       // (the depth test sorts it; no winding to get wrong)
+    glDrawBufs(R, R.world);
+    // the doors: the leaf from where it has slid to; shaded in the room you stand in (as the software one)
+    gl.uniform4f(U.fix, 1, 0, zoneAt(map, st.x, st.y) ? 1 : 0, 0);
+    map.doors.forEach(function (d) {
+      var o = d.open; if (o >= 0.999) return;
+      var v = [], flip = d.axis === 0 ? st.x > d.x + 0.5 : st.y < d.y + 0.5, ua = flip ? 1 : 0, ub = flip ? o : 1 - o;
+      var n = d.axis === 0 ? [st.x > d.x + 0.5 ? 1 : -1, 0, 0] : [0, st.y > d.y + 0.5 ? 1 : -1, 0];
+      if (d.axis === 0) { var px0 = d.x + 0.5; glQuad(v, [px0, d.y + o, 1], [px0, d.y + 1, 1], [px0, d.y + 1, 0], [px0, d.y + o, 0], [ua, 0], [ub, 0], [ub, 1], [ua, 1], n); }
+      else { var py0 = d.y + 0.5; glQuad(v, [d.x + o, py0, 1], [d.x + 1, py0, 1], [d.x + 1, py0, 0], [d.x + o, py0, 0], [ua, 0], [ub, 0], [ub, 1], [ua, 1], n); }
+      glDrawDyn(R, v, glWallTex(R, d.tex));
+    });
+    // the props: their own light (as the software renderer: the light where they stand)
+    st.props.forEach(function (p) {
+      if (p.hidden || !p.mesh) return;
+      var c = R.props.get(p);
+      if (!c || c.mesh !== p.mesh || dead(c.bufs)) { if (c) c.bufs.forEach(function (b) { gl.deleteBuffer(b.buf); }); c = glBuildProp(R, p); R.props.set(p, c); }   // (a thing hidden long: its pictures made again)
+      gl.uniform4f(U.fix, 1, lightAt(st, p.x, p.y), zoneAt(map, p.x, p.y) ? 1 : 0, 0);
+      glDrawBufs(R, c.bufs);
+    });
+    // shadows under things: the floor darker by an eighth, in a disc
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ZERO, gl.SRC_COLOR); gl.depthMask(false);
+    gl.uniform4f(U.fix, 1, 0, 0, 1); gl.uniform1f(U.blend, 1);        // raw: the disc multiplies the floor as it is
+    var shv = [], stex = glTexture(R, [SHADOW_TEX], 'shadow', false);
+    var sprites = glSprites(st, R, dirX, dirY);
+    st.catsSeen = sprites.some(function (s) { var k = s.p.kind; return (k === 'cat' || k === 'flycat') && (s.p.x - st.x) * dirX + (s.p.y - st.y) * dirY > 0.1; });   // (they move: drawn again)
+    sprites.forEach(function (s) {
+      var r = s.p.shade || 0; if (!r) return;
+      var x0 = s.p.x - r, x1 = s.p.x + r, y0 = s.p.y - r, y1 = s.p.y + r, h = 0.002;
+      glQuad(shv, [x0, y0, h], [x1, y0, h], [x1, y1, h], [x0, y1, h], [0, 0], [1, 0], [1, 1], [0, 1], [0, 0, 1]);
+    });
+    if (shv.length) glDrawDyn(R, shv, stex);
+    gl.disable(gl.BLEND); gl.depthMask(true); gl.uniform1f(U.blend, 0);
+    // the pictures facing you: cats (their frame), the statue, the props' little pictures
+    sprites.forEach(function (s) {
+      if (!s.quad) return;
+      var q = s.quad, u0 = s.u[0], u1 = s.u[1], v = [];
+      gl.uniform4f(U.fix, 1, lightAt(st, s.p.x, s.p.y), zoneAt(map, s.p.x, s.p.y) ? 1 : 0, 0);
+      var sp = s.spr, tex, v0 = 0, v1 = 1;
+      if (sp.atlas) {                                                 // a cat: its frame on its sheet
+        var uv = sp.uv; tex = glCatSheet(R, sp.atlas, sp.coat);
+        u0 = uv[0] + u0 * (uv[2] - uv[0]); u1 = uv[0] + u1 * (uv[2] - uv[0]); v0 = uv[1]; v1 = uv[3];
+      } else tex = glTexture(R, sp.levels, sp, false);
+      glQuad(v, [q[0], q[1], q[2]], [q[3], q[4], q[5]], [q[6], q[7], q[8]], [q[9], q[10], q[11]], [u0, v0], [u1, v0], [u1, v1], [u0, v1], [-dirX, -dirY, 0.35]);
+      glDrawDyn(R, v, tex);
+    });
+    // the glass last, see-through
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    gl.uniform4f(U.fix, 0, 0, 0, 0); gl.uniform1f(U.blend, 1);
+    glDrawBufs(R, R.glassBufs);
+    gl.disable(gl.BLEND); gl.depthMask(true); gl.uniform1f(U.blend, 0);
+  }
+  function glPick(st, x) {
+    var map = st.map, mw = map.w, mh = map.h, grid = map.grid, z = st.z, H = VIEW_H, half = H / 2 + st.pitch;
+    var dirX = Math.cos(st.a), dirY = Math.sin(st.a), plX = -dirY * FOV, plY = dirX * FOV;
+    var cam = 2 * x / W - 1, rx = dirX + plX * cam, ry = dirY + plY * cam;
+    var mx = st.x | 0, my = st.y | 0, ddx = Math.abs(1 / rx), ddy = Math.abs(1 / ry), stepX, stepY, sdx, sdy, side = 0, ci = 0, glass = false, perp = 1e9, art = null;
+    if (rx < 0) { stepX = -1; sdx = (st.x - mx) * ddx; } else { stepX = 1; sdx = (mx + 1 - st.x) * ddx; }
+    if (ry < 0) { stepY = -1; sdy = (st.y - my) * ddy; } else { stepY = 1; sdy = (my + 1 - st.y) * ddy; }
+    for (var guard = 0; guard < 200; guard++) {
+      if (sdx < sdy) { sdx += ddx; mx += stepX; side = 0; } else { sdy += ddy; my += stepY; side = 1; }
+      if (mx < 0 || my < 0 || mx >= mw || my >= mh) break;
+      ci = my * mw + mx; var cell = grid[ci];
+      if (cell === DOOR) {
+        var d = map.doors[map.doorAt[ci]], t, along;
+        if (d.axis === 0) { t = (mx + 0.5 - st.x) / rx; along = st.y + t * ry - my; } else { t = (my + 0.5 - st.y) / ry; along = st.x + t * rx - mx; }
+        if (t > 0 && along >= 0 && along < 1 && along >= d.open) { perp = t; break; }
+        continue;
+      }
+      if (cell === GLASS) { glass = true; continue; }
+      if (cell === PILLAR) {
+        var pox = st.x - mx - 0.5, poy = st.y - my - 0.5, pb = pox * rx + poy * ry, pa = rx * rx + ry * ry, pdisc = pb * pb - pa * (pox * pox + poy * poy - PILLAR_R * PILLAR_R);
+        if (pdisc >= 0) { var pt = (-pb - Math.sqrt(pdisc)) / pa; if (pt > 0) { perp = pt; break; } }
+        continue;
+      }
+      if (cell) {
+        perp = side ? sdy - ddy : sdx - ddx;
+        var face = side === 0 ? (stepX > 0 ? 3 : 1) : (stepY > 0 ? 0 : 2);
+        art = cell === WALL ? st.artAt[ci * 4 + face] || null : null;
+        break;
+      }
+    }
+    st.pickRef[x] = null; st.pickDist[x] = 1e9;
+    if (art && !glass) {
+      var lineH = P / perp, top = half - (1 - z) * lineH;
+      st.pickRef[x] = art; st.pickDist[x] = perp; st.pickY0[x] = Math.max(0, Math.ceil(top)); st.pickY1[x] = Math.min(H - 1, Math.floor(half + z * lineH));
+      st.pickWX[x] = st.x + perp * rx; st.pickWY[x] = st.y + perp * ry;
+    }
+    st.props.forEach(function (p) {
+      if (p.hidden || (!p.mesh && (!p.spr || p.spr === SHADOW_ONLY))) return;
+      var dx = p.x - st.x, dy = p.y - st.y, tY = dx * dirX + dy * dirY;
+      if (tY <= 0.12 || tY >= perp) return;
+      var tX = (-dx * dirY + dy * dirX) / FOV, sx = (W / 2) * (1 + tX / tY);
+      var spr = p.spr, hgt = p.mesh ? (p.h || 0.5) : (spr.hu || p.h || 0.3), rad = p.mesh ? (p.radius || 0.45) * 0.8 : hgt * spr.w / spr.h / 2;
+      if (Math.abs(x - sx) > P * rad / tY) return;
+      if (st.pickRef[x] && st.pickDist[x] <= tY) return;
+      st.pickRef[x] = p.owner || p; st.pickDist[x] = tY;
+      var lift = (p.lift || 0) - ((spr && spr.drop) || 0);           // (a thing up in the air: its own height)
+      st.pickY0[x] = Math.max(0, Math.round(half - (lift + hgt - z) * P / tY)); st.pickY1[x] = Math.min(H - 1, Math.round(half - (lift - z) * P / tY));
+      st.pickWX[x] = p.x; st.pickWY[x] = p.y;
+    });
+  }
+
   window.MinkaGallery3D = {
     open: function (opts) { open(opts, null); }, close: function () { close(); }, refresh: refresh, bench: bench, pose: pose, act: act,
     isOpen: function () { return !!state; },
