@@ -267,3 +267,70 @@
 :root.mk-mobile-shell.mk-mobile-v2 #mkNamedayBar { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; min-width: 0 !important; }
 /* Iestatījumu aizvēršana: pirkstam pietiekami liela poga. */
 :root.mk-mobile-shell.mk-mobile-v2 #tk-panel .tk-close { width: 44px !important; height: 44px !important; min-width: 44px !important; border-radius: 50% !important; font-size: 18px !important; }
+
+/* ── Telefons, 2026-10-06 ─────────────────────────────────────────────── */
+/* Meklēšana: lauks redzams galvenē datuma vietā (agrāk tas palika 1 px liels un
+   caurspīdīgs, un ierakstītais teksts nebija redzams). 16 px — iOS nepietuvina. */
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBar.search-open #mkSearchDate { display: none !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBar.search-open #minkaBarInner #minkaBarInput {
+  position: relative !important; z-index: 1 !important; grid-column: 1 !important; grid-row: 1 !important; align-self: center !important;
+  top: auto !important; left: auto !important; width: auto !important; min-width: 0 !important; height: 44px !important;
+  margin: 0 !important; padding: 0 14px !important; border-radius: 14px !important; background: rgba(255, 255, 255, .12) !important;
+  opacity: 1 !important; pointer-events: auto !important; overflow: hidden !important; white-space: nowrap !important;
+  font: 500 16px/44px var(--mv2-font) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; caret-color: var(--mv2-accent) !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBar.search-open #minkaBarInner #minkaBarInput:empty::before {
+  content: "Mekl\000113 noda\00013Cu, numuru vai darbinieku" !important;
+  color: var(--mv2-faint) !important; -webkit-text-fill-color: var(--mv2-faint) !important; pointer-events: none !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #minkaBar.search-open #minkaBarInner { min-height: 64px !important; }
+
+/* Mazais kalendārs (galvenes ikona): pilnā platumā zem galvenes, pirkstam
+   lielas dienas, tās pašas krāsas kā dienu lentē (šodiena gredzens, izvēlētā balta). */
+:root.mk-mobile-shell.mk-mobile-v2 #miniCalPopup {
+  box-sizing: border-box !important; min-width: 0 !important; padding: 12px 12px 14px !important;
+  border: 1px solid rgba(255, 255, 255, .14) !important; border-radius: 24px !important;
+  background: rgba(14, 22, 35, .90) !important; -webkit-backdrop-filter: blur(24px) saturate(160%) !important; backdrop-filter: blur(24px) saturate(160%) !important;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .10) !important;
+  font-family: var(--mv2-font) !important; color: var(--mv2-ink) !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .mc-scrim { position: fixed; inset: 0; z-index: 999998; background: rgba(0, 0, 0, .32); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-head { display: flex; align-items: center; gap: 4px; margin: 0 0 6px; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-title { flex: 1 1 auto; padding-left: 6px; font: 700 17px/1.2 var(--mv2-font); letter-spacing: -.01em; color: #fff; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-nav,
+:root.mk-mobile-shell.mk-mobile-v2 .mc-today {
+  display: inline-flex; align-items: center; justify-content: center; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 14px;
+  background: transparent; color: var(--mv2-ink); font: 600 14px/1 var(--mv2-font); cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .mc-nav { width: 44px; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-nav svg { width: 22px; height: 22px; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-today { padding: 0 12px; color: var(--mv2-accent); }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-nav:active,
+:root.mk-mobile-shell.mk-mobile-v2 .mc-today:active { background: rgba(255, 255, 255, .08); }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-nav:disabled { opacity: .25; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-wd { height: 24px; font: 600 12px/24px var(--mv2-font); text-align: center; color: var(--mv2-faint); }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-wd.is-weekend { color: rgba(255, 176, 138, .7); }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-day {
+  justify-self: center; width: 44px; max-width: 100%; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 22px; background: transparent;
+  font: 600 16px/44px var(--mv2-font); font-variant-numeric: tabular-nums; text-align: center; color: var(--mv2-ink);
+  cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+:root.mk-mobile-shell.mk-mobile-v2 .mc-day.is-weekend { color: #ffb08a; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-day.is-past { color: var(--mv2-dim); }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-day.is-weekend.is-past { color: rgba(255, 176, 138, .62); }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-day:active { background: rgba(255, 255, 255, .10); }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-day.is-today { box-shadow: inset 0 0 0 1.5px var(--mv2-accent); }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-day.is-active { background: #fff; color: #0b1220; font-weight: 800; }
+:root.mk-mobile-shell.mk-mobile-v2 .mc-day.is-active.is-today { box-shadow: 0 0 0 2px var(--mv2-accent); }
+
+/* Darbinieka logs, Nogurums: virsraksts, Diena/Nedēļa/Mēnesis un fakti
+   viens zem otra (trīs kolonnās telefonā tie gāja viens pār otru). */
+:root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-month-head,
+:root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-month-head:has(.fh-range) {
+  display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 10px !important; margin-bottom: 12px !important;
+}
+:root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-month-head h3 { font-size: 17px !important; font-weight: 600 !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-range { display: flex !important; align-self: stretch !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-range > button { flex: 1 1 0 !important; min-height: 42px !important; font-size: 14px !important; }
+:root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-month-head:has(.fh-range) .fh-month-facts { justify-self: auto !important; flex-wrap: wrap !important; gap: 4px 16px !important; }

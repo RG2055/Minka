@@ -2115,7 +2115,12 @@ function filterFullList(btn) {
     if (g_dayVT) { try { g_dayVT.skipTransition(); } catch (_e) {} }
     root.classList.add('mk-day-vt');
     const vt = g_dayVT = document.startViewTransition(() => { g_selectDay(date); return g_dayReady(); });
+    // A held switch must never outlive its hold: while the transition lives, its
+    // layer takes every touch, so a stuck one reads as a frozen app. Past the
+    // hold plus a generous margin it is cut and the new day shows at once.
+    const vtGuard = setTimeout(() => { try { vt.skipTransition(); } catch (_e) {} }, DAY_HOLD_MS + 1200);
     vt.finished.catch(() => {}).then(() => {
+      clearTimeout(vtGuard);
       if (g_dayVT !== vt) return;
       g_dayVT = null;
       root.classList.remove('mk-day-vt');
@@ -7538,6 +7543,7 @@ function filterFullList(btn) {
   window.g_updatePanelsForDate = g_updatePanelsForDate;
   window.g_selectDay = g_selectDay;
   window.g_selectDayHeld = g_selectDayHeld;
+  window.__lvHolidaySet = lvHolidaySet;
   window.g_stepDay = g_stepDay;
   // Pāriet uz jebkuru datumu ar grafiku (arī citā mēnesī); false = tāda nav.
   window.g_goToDate = g_selectDateWithMonthSync;
@@ -8561,6 +8567,16 @@ function positionMiniCalPopup() {
   if (pop.parentNode !== document.body) document.body.appendChild(pop);
   pop.style.position = 'fixed';
   pop.style.zIndex = '999999';
+  if (miniCalIsPhone()) {
+    // Phone: the full width under the header, so every day is a finger-sized target.
+    const head = document.getElementById('minkaBarWrap');
+    const below = head ? head.getBoundingClientRect().bottom : btn.getBoundingClientRect().bottom;
+    pop.style.top = Math.round(Math.max(12, below + 8)) + 'px';
+    pop.style.left = '16px';
+    pop.style.right = 'auto';
+    pop.style.width = Math.max(260, window.innerWidth - 32) + 'px';
+    return;
+  }
   const popW = 272;
   const btnR = btn.getBoundingClientRect();
   const top = Math.min(window.innerHeight - 16 - Math.max(pop.offsetHeight || 0, 320), btnR.bottom + 8);
@@ -8583,6 +8599,7 @@ function toggleMiniCal(e) {
     renderMiniCal();
     positionMiniCalPopup();
     pop.style.display = 'block';
+    miniCalScrim(true);
     // Grows out of its button and returns into it (js/mk-motion.js).
     if (window.MinkaMotion) window.MinkaMotion.openSurface(pop, { key: 'minical', origin: document.getElementById('miniCalBtn') });
   } else {
@@ -8590,20 +8607,50 @@ function toggleMiniCal(e) {
   }
 }
 
+function miniCalIsPhone() {
+  return document.documentElement.classList.contains('mk-mobile-v2');
+}
+
+// Phone: a dim layer under the open calendar. A tap outside only closes it,
+// it never also presses the card or button underneath.
+function miniCalScrim(on) {
+  let scrim = document.getElementById('miniCalScrim');
+  if (!on || !miniCalIsPhone()) { if (scrim) scrim.remove(); return; }
+  if (!scrim) {
+    scrim = document.createElement('div');
+    scrim.id = 'miniCalScrim';
+    scrim.className = 'mc-scrim';
+    scrim.addEventListener('click', function (e) { e.stopPropagation(); closeMiniCal(); });
+    document.body.appendChild(scrim);
+  }
+}
+
 function closeMiniCal(instant) {
   const pop = document.getElementById('miniCalPopup');
+  miniCalScrim(false);
   if (!pop || pop.style.display === 'none' || pop.classList.contains('is-closing')) return;
-  if (instant || !window.MinkaMotion) { pop.style.display = 'none'; return; }
-  pop.classList.add('is-closing');
-  window.MinkaMotion.closeSurface(pop, { key: 'minical', origin: document.getElementById('miniCalBtn') }, function () {
+  if (instant || !window.MinkaMotion) {
+    if (window.MinkaMotion && window.MinkaMotion.stopSurface) window.MinkaMotion.stopSurface('minical');
     pop.classList.remove('is-closing');
     pop.style.display = 'none';
-  });
+    return;
+  }
+  pop.classList.add('is-closing');
+  const hide = function () {
+    if (!pop.classList.contains('is-closing')) return;
+    pop.classList.remove('is-closing');
+    pop.style.display = 'none';
+  };
+  window.MinkaMotion.closeSurface(pop, { key: 'minical', origin: document.getElementById('miniCalBtn') }, hide);
+  // If the animation is cut short the popup would stay as an invisible layer
+  // over the screen and swallow every touch: hide it regardless.
+  setTimeout(hide, 900);
 }
 
 function renderMiniCal() {
   const pop = document.getElementById('miniCalPopup');
   if (!pop) return;
+  if (miniCalIsPhone()) { renderMiniCalPhone(pop); return; }
   const lower = String(window.__activeMonth || '').toLowerCase().trim();
   const yearMatch = lower.match(/(20\d{2})/);
   const year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
@@ -8657,8 +8704,78 @@ function renderMiniCal() {
   pop.innerHTML = html;
 }
 
+// Phone version of the month: real buttons, 44 px days, the day strip's colours
+// (today = ring, chosen day = white, weekends and holidays tinted).
+function renderMiniCalPhone(pop) {
+  const lower = String(window.__activeMonth || '').toLowerCase().trim();
+  const yearMatch = lower.match(/(20\d{2})/);
+  const year = yearMatch ? parseInt(yearMatch[1], 10) : new Date().getFullYear();
+  const months = ['janv\u0101ris','febru\u0101ris','marts','apr\u012blis','maijs','j\u016bnijs','j\u016blijs','augusts','septembris','oktobris','novembris','decembris'];
+  const plain = ['janvaris','februaris','marts','aprilis','maijs','junijs','julijs','augusts','septembris','oktobris','novembris','decembris'];
+  const token = lower.split(/\s+/)[0] || '';
+  let monthIdx = months.indexOf(token);
+  if (monthIdx < 0) monthIdx = plain.indexOf(token);
+  if (monthIdx < 0) monthIdx = new Date().getMonth();
+  const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+  const firstWeekday = new Date(year, monthIdx, 1).getDay();
+  const startOffset = firstWeekday === 0 ? 6 : firstWeekday - 1;
+  const pad = n => String(n).padStart(2, '0');
+  const today = String(window.__g_todayStr || g_todayStr || '');
+  const active = String(window.__activeDateStr || activeDateStr || '');
+  const tm = today.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  const todayKey = tm ? +tm[3] * 10000 + +tm[2] * 100 + +tm[1] : 0;
+  let holidays = null;
+  try { holidays = window.__lvHolidaySet ? window.__lvHolidaySet(year) : null; } catch (_e) {}
+  const picker = document.getElementById('grafiks-monthPicker');
+  const canPrev = !!picker && picker.selectedIndex > 0;
+  const canNext = !!picker && picker.selectedIndex < picker.options.length - 1;
+  const title = months[monthIdx].charAt(0).toUpperCase() + months[monthIdx].slice(1) + ' ' + year;
+  const chev = d => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  let html = '<div class="mc-head">'
+    + '<span class="mc-title">' + title + '</span>'
+    + (today && active !== today ? '<button type="button" class="mc-today" onclick="miniCalGoToday()">\u0160odien</button>' : '')
+    + '<button type="button" class="mc-nav" aria-label="Iepriek\u0161\u0113jais m\u0113nesis" onclick="miniCalPrevMonth()"' + (canPrev ? '' : ' disabled') + '>' + chev('M15 5l-7 7 7 7') + '</button>'
+    + '<button type="button" class="mc-nav" aria-label="N\u0101kamais m\u0113nesis" onclick="miniCalNextMonth()"' + (canNext ? '' : ' disabled') + '>' + chev('M9 5l7 7-7 7') + '</button>'
+    + '</div><div class="mc-grid" role="grid">';
+  ['P','O','T','C','P','S','Sv'].forEach(function (d, i) {
+    html += '<div class="mc-wd' + (i >= 5 ? ' is-weekend' : '') + '" aria-hidden="true">' + d + '</div>';
+  });
+  for (let i = 0; i < startOffset; i++) html += '<div></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = pad(d) + '.' + pad(monthIdx + 1) + '.' + year;
+    const wd = (startOffset + d - 1) % 7;
+    const key = year * 10000 + (monthIdx + 1) * 100 + d;
+    let cls = 'mc-day';
+    if (wd >= 5 || (holidays && holidays.has(pad(monthIdx + 1) + '-' + pad(d)))) cls += ' is-weekend';
+    if (todayKey && key < todayKey) cls += ' is-past';
+    if (dateStr === today) cls += ' is-today';
+    if (dateStr === active) cls += ' is-active';
+    html += '<button type="button" class="' + cls + '" onclick="miniCalSelectDay(\'' + dateStr + '\')"'
+      + (dateStr === active ? ' aria-current="date"' : '') + '>' + d + '</button>';
+  }
+  html += '</div>';
+  pop.innerHTML = html;
+}
+
+// "Šodien": also switches the month when today is in another one.
+function miniCalGoToday() {
+  const today = String(window.__g_todayStr || g_todayStr || '');
+  const m = today.match(/^\d{2}\.(\d{2})\.(\d{4})$/);
+  const picker = document.getElementById('grafiks-monthPicker');
+  if (m && picker) {
+    const names = ['JANV\u0100RIS','FEBRU\u0100RIS','MARTS','APR\u012aLIS','MAIJS','J\u016aNIJS','J\u016aLIJS','AUGUSTS','SEPTEMBRIS','OKTOBRIS','NOVEMBRIS','DECEMBRIS'];
+    const want = names[+m[1] - 1] + ' ' + m[2];
+    const idx = Array.prototype.findIndex.call(picker.options, o => String(o.value).toUpperCase().trim() === want);
+    if (idx >= 0 && idx !== picker.selectedIndex) { picker.selectedIndex = idx; g_changeMonth(); }
+  }
+  miniCalSelectDay(today);
+}
+
 function miniCalSelectDay(dateStr) {
-  closeMiniCal();
+  // The popup goes at once: its closing animation must not run under the held
+  // day switch (the page is frozen while the switch is held).
+  closeMiniCal(true);
   g_selectDayHeld(dateStr);
 }
 
