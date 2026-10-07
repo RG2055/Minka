@@ -1785,22 +1785,38 @@
   }
 
   /* ── Zīmēšana ─────────────────────────────────────────────────────────── */
-  // Distance fades into a colour, not into black: the hall's warm museum dusk,
-  // the night rooms' blue. One table per channel and level, so it costs the same.
+  // Distance fades into a colour, not into black: the hall's deep blue dusk, the
+  // night rooms' blue. One table per channel and level, so it costs the same.
   // LIGHT_UP: levels brighter than the drawing itself (under a lamp, in front of a picture)
+  // The look (as Minecraft: Story Mode's): the light warm, the shade and the distance cool,
+  // more contrast, the blacks a deep blue, not grey; worked into the same tables (the same
+  // numbers in the WebGL shader, gradeGL)
   var SHADES = 64, LIGHT_UP = 16, luts = null, lutsNight = null;
-  var FOG = [58, 44, 31], FOG_NIGHT = [8, 13, 30];
+  var FOG = [20, 27, 58], FOG_NIGHT = [8, 13, 30];
+  // a level's light colour: warm where it is brighter than the drawing, cooler as it darkens
+  function tintOf(l) {
+    var wm = Math.max(0, Math.min(1, (12 - l) / 24)), cl = Math.max(0, Math.min(1, (l - 20) / 30));
+    return [1 + 0.22 * wm - 0.12 * cl, 1 + 0.06 * wm - 0.05 * cl, 1 - 0.2 * wm + 0.08 * cl];
+  }
+  // the grade, a channel at a time: an S-curve, the highlights warmer, the shadows bluer
+  var GRADE_HI = [0.08, 0.02, -0.1], GRADE_LO = [-0.03, 0, 0.06];
+  function gradeCh(v, ch) {
+    var sm = v * v * (3 - 2 * v), s = v + (sm - v) * 0.45;
+    var hi = v <= 0.45 ? 0 : v >= 1 ? 1 : ((v - 0.45) / 0.55) * ((v - 0.45) / 0.55) * (3 - 2 * (v - 0.45) / 0.55);
+    var lo = v >= 0.45 ? 0 : 1 - (v / 0.45) * (v / 0.45) * (3 - 2 * v / 0.45);
+    return Math.max(0, Math.min(1, s * (1 + GRADE_HI[ch] * hi) + GRADE_LO[ch] * lo));
+  }
   function lutSet(fog) {
     var set = [];
     for (var l = -LIGHT_UP; l < SHADES; l++) {
       // the fog starts a few steps away (as untrustedlife's FOG_START_FRAC): near, only a
       // little darker in its own colour; the colour of the fog takes over further off
       var f = l < 0 ? 1 - 0.022 * l : 1 - 0.76 * l / (SHADES - 1), w = l < 10 ? 0 : l > 30 ? 1 : (l - 10) / 20;
-      var k = l < 0 ? 0 : (1 - f) * w, t = { r: new Uint8Array(256), g: new Uint8Array(256), b: new Uint8Array(256) };
+      var k = l < 0 ? 0 : (1 - f) * w, tn = tintOf(l), t = { r: new Uint8Array(256), g: new Uint8Array(256), b: new Uint8Array(256) };
       for (var i = 0; i < 256; i++) {
-        t.r[i] = Math.min(255, Math.round(i * f + fog[0] * k));
-        t.g[i] = Math.min(255, Math.round(i * f + fog[1] * k));
-        t.b[i] = Math.min(255, Math.round(i * f + fog[2] * k));
+        t.r[i] = Math.round(255 * gradeCh(Math.min(255, i * f * tn[0] + fog[0] * k) / 255, 0));
+        t.g[i] = Math.round(255 * gradeCh(Math.min(255, i * f * tn[1] + fog[1] * k) / 255, 1));
+        t.b[i] = Math.round(255 * gradeCh(Math.min(255, i * f * tn[2] + fog[2] * k) / 255, 2));
       }
       set.push(t);
     }
@@ -1819,28 +1835,56 @@
      in front of every picture, the aquarium's and the machine's glow, darker
      corners; the night rooms dim, a small lamp by each bed, their own switch by
      the door. Smoothed, so it reads as light, not as tiles. */
-  function lightAt(st, x, y) { var L = st.light; return L ? L[((y * 4) | 0) * st.lightW + ((x * 4) | 0)] | 0 : 0; }
+  var LRES = 8;                                            // light cells a cell (fine: no visible squares)
+  function lightAt(st, x, y) { var L = st.light; return L ? L[((y * LRES) | 0) * st.lightW + ((x * LRES) | 0)] | 0 : 0; }
+  // the same, blended between its cells (a wall column, a thing): no steps along a wall
+  function lightAtF(st, x, y) {
+    var L = st.light;
+    if (!L) return 0;
+    var Wl = st.lightW, Hl = L.length / Wl, fx = x * LRES - 0.5, fy = y * LRES - 0.5;
+    var i = Math.max(0, Math.min(Wl - 2, Math.floor(fx))), j = Math.max(0, Math.min(Hl - 2, Math.floor(fy)));
+    var u = Math.max(0, Math.min(1, fx - i)), v = Math.max(0, Math.min(1, fy - j)), k = j * Wl + i;
+    return Math.round((L[k] * (1 - u) + L[k + 1] * u) * (1 - v) + (L[k + Wl] * (1 - u) + L[k + Wl + 1] * u) * v);
+  }
   function buildLight(st) {
-    var map = st.map, Wl = map.w * 4, Hl = map.h * 4, f = new Float32Array(Wl * Hl), off = st.lightsOff || {};
+    var map = st.map, R = LRES, Wl = map.w * R, Hl = map.h * R, f = new Float32Array(Wl * Hl), off = st.lightsOff || {};
     var pool = function (cx, cy, r, s) {
-      for (var j = Math.max(0, ((cy - r) * 4) | 0); j < Math.min(Hl, Math.ceil((cy + r) * 4)); j++)
-        for (var i = Math.max(0, ((cx - r) * 4) | 0); i < Math.min(Wl, Math.ceil((cx + r) * 4)); i++) {
-          var d = Math.hypot((i + 0.5) / 4 - cx, (j + 0.5) / 4 - cy);
+      for (var j = Math.max(0, ((cy - r) * R) | 0); j < Math.min(Hl, Math.ceil((cy + r) * R)); j++)
+        for (var i = Math.max(0, ((cx - r) * R) | 0); i < Math.min(Wl, Math.ceil((cx + r) * R)); i++) {
+          var d = Math.hypot((i + 0.5) / R - cx, (j + 0.5) / R - cy);
           if (d < r) f[j * Wl + i] += s * (1 - d / r) * (1 - d / r);
         }
     };
+    var solid = function (x, y) { if (x < 0 || y < 0 || x >= map.w || y >= map.h) return true; var g = map.grid[y * map.w + x]; return g === WALL || g === PILLAR; };
     for (var j = 0; j < Hl; j++) for (var i = 0; i < Wl; i++) {
-      var cx = (i / 4) | 0, cy = (j / 4) | 0, ci = cy * map.w + cx;
-      if (map.zone[ci]) { var room = roomAt(map, cx + 0.5, cy + 0.5); f[j * Wl + i] = room && off[room === NMP ? 'nmp' : 'main'] ? 24 : -2; }
+      var cx = (i / R) | 0, cy = (j / R) | 0, ci = cy * map.w + cx;
+      if (map.zone[ci]) { var room = roomAt(map, cx + 0.5, cy + 0.5); f[j * Wl + i] = room && off[room === NMP ? 'nmp' : 'main'] ? 24 : -2; continue; }
+      // the hall in a dusk between its lights; darker into the corners and along the walls' feet
+      var px = (i + 0.5) / R - cx, py = (j + 0.5) / R - cy, d = 1;
+      if (solid(cx - 1, cy)) d = Math.min(d, px);
+      if (solid(cx + 1, cy)) d = Math.min(d, 1 - px);
+      if (solid(cx, cy - 1)) d = Math.min(d, py);
+      if (solid(cx, cy + 1)) d = Math.min(d, 1 - py);
+      var ao = Math.max(0, 1 - d / 0.45);
+      f[j * Wl + i] = 15 + 8 * ao * ao;
     }
-    // the hall's floor has no pools of light: they came out as pale squares that moved as you walked
-    st.props.forEach(function (p) {
-      if (p.kind !== 'bed') return;
-      var room = p.bed === 3 ? 'nmp' : 'main';
-      pool(p.x, p.y, 1.35, off[room] ? -9 : -15);                   // the bedside lamp (a night light when the room is dark)
+    // a warm pool of light in front of every picture (as a gallery's picture lights)
+    map.slots.forEach(function (sl) {
+      if (sl.night) return;
+      var c = sl.face === 'e' ? [sl.x + 1.3, sl.y + 0.5] : sl.face === 'w' ? [sl.x - 0.3, sl.y + 0.5] : sl.face === 's' ? [sl.x + 0.5, sl.y + 1.3] : [sl.x + 0.5, sl.y - 0.3];
+      pool(c[0], c[1], 1.35, sl.item || sl.plan ? -30 : -16);
     });
-    // smoothed twice, then whole levels
-    for (var pass = 0; pass < 2; pass++) {
+    // daylight down the skylight
+    for (var wy = LEO_Y0; wy < map.h - 2; wy++) pool(3.5, wy + 0.5, 1.1, -2.2);
+    st.props.forEach(function (p) {
+      if (p.kind === 'bed') {
+        var room = p.bed === 3 ? 'nmp' : 'main';
+        pool(p.x, p.y, 1.35, off[room] ? -9 : -15);                 // the bedside lamp (a night light when the room is dark)
+      } else if (p.kind === 'machine' || p.kind === 'arcade' || p.kind === 'arcademines' || p.kind === 'pinball' || p.kind === 'oldpc') pool(p.x, p.y, 1.2, -9);   // their screens' glow
+    });
+    if (map.aquarium) pool((map.aquarium.x0 + map.aquarium.x1) / 2, map.aquarium.y - 0.6, 1.6, -12);
+    // smoothed three times, then whole levels
+    for (var pass = 0; pass < 3; pass++) {
       var g2 = new Float32Array(Wl * Hl);
       for (j = 0; j < Hl; j++) for (i = 0; i < Wl; i++) {
         var sum = 0, cnt = 0;
@@ -1964,7 +2008,7 @@
       var step = TEX / lineH, L = mipOf(step, MIPS);
       var lv = tex.mips[L], tpx = lv.px, sb = TB - L, sm = lv.w - 1, txl = tx >> L, tpos = (y0 - top) * step;
       // a column is lit from one side, round: darker the further its face turns away
-      var lgt = lightAt(st, st.x + (perp - 0.04) * rx, st.y + (perp - 0.04) * ry);    // the light just in front of the wall
+      var lgt = lightAtF(st, st.x + (perp - 0.3) * rx, st.y + (perp - 0.3) * ry);    // the light a little in front of the wall (past the floor's dark edge)
       lut = col >= 0 ? lutAt(shadeLevel(perp, 0) + Math.round((1 - Math.max(0, (colX * 0.55 - colY * 0.83) / PILLAR_R)) * 9) + lgt, pz)
         : shade(perp, door ? 0 : side, door ? pz : zone[pmy * mw + pmx], lgt);
       for (y = y0; y <= y1; y++) {
@@ -1988,13 +2032,14 @@
       var own = fl ? (pz ? T.nightFloor : T.floor) : (pz ? T.nightCeil : T.ceil), oth = fl ? (pz ? T.floor : T.nightFloor) : (pz ? T.ceil : T.nightCeil);
       var ol = own.mips[Lf], al = oth.mips[Lf], opx = ol.px, apx = al.px, S = ol.w, m = S - 1, sbf = TB - Lf;
       var SK = !fl && !pz ? map.sky : null, kpx = SK ? T.sky.mips[Lf].px : null;
-      var lutf = shade(rd, 0, pz), luta = shade(rd, 0, !pz), o = y * W;
-      var lvO = shadeLevel(rd, 0) + (pz ? lampOff : 0), lvA = shadeLevel(rd, 0) + (pz ? 0 : lampOff), LG = st.light, LWd = st.lightW;
+      var lutf = shade(rd, 0, pz, fl || pz ? 0 : 10), luta = shade(rd, 0, !pz), o = y * W;
+      var cOff = fl || pz ? 0 : 10;                                   // the hall's ceiling in a dusk over the lights
+      var lvO = shadeLevel(rd, 0) + cOff + (pz ? lampOff : 0), lvA = shadeLevel(rd, 0) + (pz ? 0 : lampOff), LG = st.light, LWd = st.lightW;
       for (x = 0; x < W; x++) {
         if (y >= wt[x] && y <= wb[x]) continue;
         var wx = fx0 + x * sx, wy = fy0 + x * sy;
         var ti = ((((wy * S) | 0) & m) << sbf) | (((wx * S) | 0) & m);
-        var other = cr[x] >= 0 && rd > cr[x], lg = LG ? LG[((wy * 4) | 0) * LWd + ((wx * 4) | 0)] | 0 : 0;
+        var other = cr[x] >= 0 && rd > cr[x], lg = LG ? LG[((wy * LRES) | 0) * LWd + ((wx * LRES) | 0)] | 0 : 0;
         if (SK && !other && SK[(wy | 0) * mw + (wx | 0)]) { buf[o + x] = px(kpx[ti], lutf); continue; }   // the skylight
         buf[o + x] = lg ? (other ? px(apx[ti], lutAt(lvA + lg, !pz)) : px(opx[ti], lutAt(lvO + lg, pz))) : other ? px(apx[ti], luta) : px(opx[ti], lutf);
       }
@@ -2018,9 +2063,20 @@
     renderOverlay(st, t0);
   }
   // what both renderers draw over the picture: the hand, the crosshair, the prompt, the map; the aim
+  // the edges a little darker, into the blue (made once a size)
+  var vignetteC = null;
+  function vignette() {
+    if (vignetteC && vignetteC.width === W && vignetteC.height === VIEW_H) return vignetteC;
+    var c = vignetteC = canvas(W, VIEW_H), g = c.getContext('2d');
+    var gr = g.createRadialGradient(W / 2, VIEW_H * 0.46, W * 0.28, W / 2, VIEW_H * 0.46, W * 0.72);
+    gr.addColorStop(0, 'rgba(8,12,36,0)'); gr.addColorStop(0.55, 'rgba(8,12,36,.16)'); gr.addColorStop(1, 'rgba(8,12,36,.52)');
+    g.fillStyle = gr; g.fillRect(0, 0, W, VIEW_H);
+    return c;
+  }
   function renderOverlay(st, t0) {
     drawHand(st);
     var c = st.ctx, mid = VIEW_H / 2, s = W / 512;
+    c.drawImage(vignette(), 0, 0);
     var cx = W >> 1, ref = st.pickRef[cx];
     st.aim = ref && st.pickDist[cx] <= (ref.isArt ? 3.4 : ref.reach || 2.4) ? ref : null;
     // looking up or down: only what the crosshair is on (straight ahead, its column, as before)
@@ -2049,7 +2105,7 @@
       var floorY = half + ((z - (p.lift || 0)) * P) / tY, foot = floorY + (spr.drop ? spr.drop * P / tY : 0), top = foot - sh, left = screenX - sw * (spr.cx == null ? 0.5 : spr.cx);
       var x0 = Math.max(0, Math.ceil(left)), x1 = Math.min(W - 1, Math.floor(left + sw)), x;
       if (x1 < x0) continue;
-      var lut = shade(tY, 0, zoneAt(st.map, p.x, p.y), lightAt(st, p.x, p.y));
+      var lut = shade(tY, 0, zoneAt(st.map, p.x, p.y), lightAtF(st, p.x, p.y));
       // the shadow: an ellipse on the floor round the foot
       var r = p.shade || 0;
       if (r) {
@@ -4046,21 +4102,24 @@
       + 'varying vec2 vt;varying vec3 vc,vn,vp;varying float vo,vz;varying vec2 vw;'
       + 'void main(){vec2 d=p.xy-cam.xy;float Z=d.x*dir.x+d.y*dir.y,X=-d.x*dir.y+d.y*dir.x,Y=p.z-cam.z;'
       + 'float cp=cos(pr.z),sp=sin(pr.z),Zr=Z*cp+Y*sp,Yr=Y*cp-Z*sp;'
-      + 'vt=t;vc=c;vo=o;vz=Z;vn=nm;vp=p;vw=p.xy-normalize(d+vec2(1e-6))*0.04;'   // the tile light just in front of the surface
+      + 'vt=t;vc=c;vo=o;vz=Z;vn=nm;vp=p;vw=p.xy+nm.xy*0.3-normalize(d+vec2(1e-6))*0.02;'   // the tile light: a wall's a little in front of it
       + 'gl_Position=vec4(X*pr.x,Yr*pr.y,Zr*1.000667-0.04001,Zr);}';
     var FS = 'precision highp float;uniform sampler2D s;uniform sampler2D lt;uniform vec2 ls;uniform vec4 fix;uniform vec3 fogD,fogN;uniform float blend,quant,amb;'
       + 'uniform vec3 lp[16];uniform vec3 lc[16];uniform int ln;'
       + 'varying vec2 vt;varying vec3 vc,vn,vp;varying float vo,vz;varying vec2 vw;'
       + 'void main(){vec3 n=normalize(vn+vec3(1e-6));float fl=step(0.5,n.z);'
       + 'vec4 x=texture2D(s,vt,-0.6*fl);if(blend<0.5&&x.a<0.5)discard;if(fix.w>0.5){gl_FragColor=x;return;}'
-      + 'vec4 L=fix.x>0.5?vec4(fix.y,fix.z,0.,0.):texture2D(lt,vw*4./ls);'
-      + 'float light=fix.x>0.5?fix.y:floor(L.r*255.+0.5)-128.;float night=fix.x>0.5?fix.z:step(0.5,L.a);'
+      + 'vec4 L=fix.x>0.5?vec4(fix.y,fix.z,0.,0.):texture2D(lt,vw*' + LRES + './ls);'
+      + 'float light=fix.x>0.5?fix.y:L.r*255.-128.;float night=fix.x>0.5?fix.z:step(0.5,L.a);'
       + 'float l=min(63.,floor(max(vz,0.)*5.6)+floor(vo+0.5))+light;l=clamp(l,-16.,63.);'
       + 'float f=l<0.?1.-0.022*l:1.-0.76*l/63.;float w=clamp((l-10.)/20.,0.,1.);float k=l<0.?0.:(1.-f)*w;'
       + 'vec3 dl=vec3(0.);'
       + 'for(int i=0;i<16;i++){if(i>=ln)break;vec3 v=lp[i]-vp;float dd=max(dot(v,v),0.16);dl+=max(dot(n,v*inversesqrt(dd)),0.)/dd*lc[i];}'
-      + 'float a=mix(amb,0.86,fl);vec3 lit=x.rgb*vc*(f*a+pow(dl,vec3(0.75))*mix(1.,0.55,fl));'
+      + 'float wm=clamp((12.-l)/24.,0.,1.),cl=clamp((l-20.)/30.,0.,1.);vec3 tn=vec3(1.+.22*wm-.12*cl,1.+.06*wm-.05*cl,1.-.2*wm+.08*cl);'
+      + 'float a=mix(amb,0.86,fl);vec3 lit=x.rgb*vc*(f*a*tn+pow(dl,vec3(0.75))*mix(1.,0.55,fl));'
       + 'vec3 fog=night>0.5?fogN:fogD;vec3 o=min(vec3(1.),lit+fog*k*a);'
+      + 'vec3 sm=o*o*(3.-2.*o),hi=smoothstep(.45,1.,o),lo=1.-smoothstep(0.,.45,o);'   // the grade (gradeCh)
+      + 'o=clamp(mix(o,sm,.45)*(1.+vec3(.08,.02,-.1)*hi)+vec3(-.03,0.,.06)*lo,0.,1.);'
       + 'if(quant>0.5){vec2 q=mod(floor(gl_FragCoord.xy),4.),q1=mod(q,2.),q2=floor(q/2.);'
       + 'float th=(4.*mod(2.*q1.x+3.*q1.y,4.)+mod(2.*q2.x+3.*q2.y,4.)+0.5)/16.;o=floor(o*32.+th)/32.;}'
       + 'gl_FragColor=vec4(o,blend>0.5?x.a:1.);}';
@@ -4224,16 +4283,16 @@
     var gl = R.gl; gl.uniform3fv(R.U.lp, GL_LP); gl.uniform3fv(R.U.lc, GL_LC); gl.uniform1i(R.U.ln, ls.length);
   }
   function glBuildLight(st, R) {
-    var gl = R.gl, map = st.map, Wl = map.w * 4, Hl = map.h * 4, data = new Uint8Array(Wl * Hl * 2), L = st.light;
+    var gl = R.gl, map = st.map, Wl = map.w * LRES, Hl = map.h * LRES, data = new Uint8Array(Wl * Hl * 2), L = st.light;
     for (var j = 0; j < Hl; j++) for (var i = 0; i < Wl; i++) {
       var k = j * Wl + i, v = L ? (L[k] | 0) : 0;
       data[k * 2] = Math.max(0, Math.min(255, v + 128));
-      data[k * 2 + 1] = map.zone[((j / 4) | 0) * map.w + ((i / 4) | 0)] ? 255 : 0;
+      data[k * 2 + 1] = map.zone[((j / LRES) | 0) * map.w + ((i / LRES) | 0)] ? 255 : 0;
     }
     if (!R.light) R.light = gl.createTexture();
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, R.light);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE_ALPHA, Wl, Hl, 0, gl.LUMINANCE_ALPHA, gl.UNSIGNED_BYTE, data);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);   // (blended: no steps)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform2f(R.U.ls, Wl, Hl);
