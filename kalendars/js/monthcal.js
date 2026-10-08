@@ -24,7 +24,6 @@
   var _viewMode = 'month';   // 'month' | 'week' | 'abs' | 'rgv' (/rad: radiographers)
   var _weekIdx = 0;          // which week row (0-based) in week view
   var _viewFrom = null;      // view being left, for the tab switch motion
-  var _holiCache = {};
 
   // /rad: the left column holds residents and the radiographers' birthdays
   // are not shown anywhere.
@@ -77,60 +76,9 @@
   }
 
   // ---- Latvian holidays -------------------------------------------------
-  // Svētku dienas (public holidays / non-working = free:true) + atzīmējamās
-  // dienas (celebrated, free:false). Excludes atceres/piemiņas (memorial)
-  // days per request. Movable days computed from Easter.
-  function easterSunday(y){
-    var a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4,
-        f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3),
-        h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4,
-        l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451),
-        mo=Math.floor((h+l-7*m+114)/31), da=((h+l-7*m+114)%31)+1;
-    return new Date(y, mo-1, da);
-  }
-  function nthWeekday(y, monthIdx, weekday, n){ // weekday: 0=Sun
-    var first = new Date(y, monthIdx, 1);
-    var add = (weekday - first.getDay() + 7) % 7;
-    return new Date(y, monthIdx, 1 + add + (n - 1) * 7);
-  }
-  function dstr(dt){ return ('0'+dt.getDate()).slice(-2)+'.'+('0'+(dt.getMonth()+1)).slice(-2)+'.'+dt.getFullYear(); }
-  function addDays(dt, n){ var x = new Date(dt); x.setDate(x.getDate()+n); return x; }
-  function holidaysForYear(y){
-    var E = easterSunday(y);
-    function on(mo, da){ return ('0'+da).slice(-2)+'.'+('0'+mo).slice(-2)+'.'+y; }
-    return [
-      { date: on(1,1),            name: 'Jaungada diena',                          free: true },
-      { date: dstr(addDays(E,-2)),name: 'Lielā Piektdiena',                        free: true },
-      { date: dstr(E),            name: 'Pirmās Lieldienas',                       free: true },
-      { date: dstr(addDays(E,1)), name: 'Otrās Lieldienas',                        free: true },
-      { date: on(5,1),            name: 'Darba svētki',                            free: true },
-      { date: on(5,4),            name: 'Neatkarības atjaunošanas diena',          free: true },
-      { date: dstr(nthWeekday(y,4,0,2)), name: 'Mātes diena',                      free: false },
-      { date: dstr(addDays(E,49)),name: 'Vasarsvētki',                             free: false },
-      { date: on(6,23),           name: 'Līgo diena',                              free: true },
-      { date: on(6,24),           name: 'Jāņi (Vasaras saulgrieži)',              free: true },
-      { date: on(11,18),          name: 'Latvijas Republikas proklamēšanas diena', free: true },
-      { date: on(12,24),          name: 'Ziemassvētku vakars',                     free: true },
-      { date: on(12,25),          name: 'Pirmie Ziemassvētki',                     free: true },
-      { date: on(12,26),          name: 'Otrie Ziemassvētki',                      free: true },
-      { date: on(12,31),          name: 'Vecgada diena',                           free: true },
-      // Atzīmējamās / svinamās dienas (not days off)
-      { date: on(3,8),            name: 'Starptautiskā sieviešu diena',            free: false },
-      { date: on(5,12),           name: 'Mediķu diena (medmāsu diena)',            free: false },
-      { date: on(5,15),           name: 'Starptautiskā ģimenes diena',             free: false },
-      { date: on(6,1),            name: 'Bērnu aizsardzības diena',                free: false },
-      { date: on(9,1),            name: 'Zinību diena',                            free: false },
-      { date: dstr(nthWeekday(y,8,0,2)), name: 'Tēvu diena',                       free: false },
-      { date: on(11,11),          name: 'Lāčplēša diena',                          free: false }
-    ];
-  }
-  function holidayMap(year){
-    if (_holiCache[year]) return _holiCache[year];
-    var m = {};
-    holidaysForYear(year).forEach(function(h){ m[h.date] = h; });
-    return (_holiCache[year] = m);
-  }
-  function dkey(d){ var p = String(d).split('.'); return (+p[2]) * 10000 + (+p[1]) * 100 + (+p[0]); }
+  // Svētku dienas (free:true) and atzīmējamās dienas (free:false) come from
+  // MinkaLvHolidays (js/lv-holidays.js), shared with the pill strip and levels.
+
 
   // ---- Colleague birthdays (date without year, DD.MM) -------------------
   // Private data is loaded from minka-api; do not commit names/dates here.
@@ -556,12 +504,13 @@
     }
     if (Date.now() - _absAt >= AB_TTL) loadAbsences();
     var data = monthAbsences(p), n = data.daysIn;
-    var today = todayKey(), holi = holidayMap(p.year);
+    var today = todayKey();
     var startW = (new Date(p.year, p.idx, 1).getDay() + 6) % 7;
     var bg = '', days = '';
     for (var d = 1; d <= n; d++){
       var dateStr = ('0' + d).slice(-2) + '.' + ('0' + (p.idx + 1)).slice(-2) + '.' + p.year;
-      var cls = ((startW + d - 1) % 7 >= 5 ? ' is-weekend' : '') + (holi[dateStr] && holi[dateStr].free ? ' is-free' : '')
+      var hd = MinkaLvHolidays.get(dateStr);
+      var cls = ((startW + d - 1) % 7 >= 5 ? ' is-weekend' : '') + (hd && hd.free ? ' is-free' : '')
         + (p.year * 10000 + (p.idx + 1) * 100 + d === today ? ' is-today' : '');
       bg += '<i class="' + cls.trim() + '"></i>';
       // Phones show every fifth day; not right next to today's number.
@@ -638,7 +587,6 @@
     var daysIn = new Date(p.year, p.idx + 1, 0).getDate();
     var total = startW + daysIn;
     var today = todayKey();
-    var holi = holidayMap(p.year);
     var bday = birthdayMap();
     var rgv = _viewMode === 'rgv';
     if (rgv){
@@ -653,7 +601,7 @@
       var key = p.year * 10000 + (p.idx + 1) * 100 + d;
       var rg = rgv ? dayWorkers(month, dateStr, _rgx) : dayWorkers(month, dateStr, rgStore());
       var rd = rgv ? [] : dayWorkers(month, dateStr, rdStore());
-      var hd = holi[dateStr];
+      var hd = MinkaLvHolidays.get(dateStr);
       var bdNames = bday[dateStr.slice(0, 5)];
       var body = '';
       var rows = _viewMode === 'week' ? workerRows : monthRows;
@@ -856,7 +804,7 @@
     var html;
     var closeBtn = '<button class="mcal-icbtn mcal-panel-x" aria-label="Aizvērt">' + ICON.close + '</button>';
     if (type === 'holi'){
-      var items = holidaysForYear(year).slice().sort(function(a, b){ return dkey(a.date) - dkey(b.date); });
+      var items = MinkaLvHolidays.list(year);
       html = '<div class="mcal-panel" role="dialog" aria-label="Svētku dienas ' + year + '"><div class="mcal-panel-h"><span class="mcal-panel-t">Svētku dienas ' + year + '</span>' + closeBtn + '</div>'
         + '<div class="mcal-panel-b">'
         + items.map(function(h){

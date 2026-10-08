@@ -32,40 +32,6 @@
     10: 'Veterāns'
   };
 
-  const FIXED_PUBLIC_HOLIDAYS = new Set([
-    '01.01', '01.05', '04.05', '23.06', '24.06', '18.11',
-    '24.12', '25.12', '26.12', '31.12'
-  ]);
-
-  function dateKey(date) {
-    return String(date.getDate()).padStart(2, '0') + '.' + String(date.getMonth() + 1).padStart(2, '0');
-  }
-
-  function addDays(date, days) {
-    var copy = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    copy.setDate(copy.getDate() + days);
-    return copy;
-  }
-
-  // Gregorian Easter (Meeus/Jones/Butcher), used for Latvia's movable holidays.
-  function easterSunday(year) {
-    var a = year % 19;
-    var b = Math.floor(year / 100);
-    var c = year % 100;
-    var d = Math.floor(b / 4);
-    var e = b % 4;
-    var f = Math.floor((b + 8) / 25);
-    var g = Math.floor((b - f + 1) / 3);
-    var h = (19 * a + b - d - g + 15) % 30;
-    var i = Math.floor(c / 4);
-    var k = c % 4;
-    var l = (32 + 2 * e + 2 * i - h - k) % 7;
-    var m = Math.floor((a + 11 * h + 22 * l) / 451);
-    var month = Math.floor((h + l - 7 * m + 114) / 31);
-    var day = ((h + l - 7 * m + 114) % 31) + 1;
-    return new Date(year, month - 1, day);
-  }
-
   const EMOJI_SECTIONS = [
     { label: 'Medicina', emoji: ['🩻','💉','🏥','⚕️','🔬','💊','🩺','🩹','🧬','🫀','🧠','🦷','🩸','🧪','🔭','🫁','🧲','⚗️','🩼','🦺','🥼','🚑','🏋️‍♂️','💪','🧘','🫶','💆','🛌','🏃','🧑‍⚕️'] },
     { label: 'Sajutas', emoji: ['😴','😎','🤯','💀','👻','🤖','🦾','😤','🥱','😵','🤪','🧐','😏','🥳','🫡','🥶','🥵','😈','👾','🫠','😑','🙃','😬','🫤','😒','🥺','🫂','💤','😤','💪'] },
@@ -76,31 +42,10 @@
     { label: 'Simboli', emoji: ['💯','⚠️','🆘','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🔶','🔷','💠','🔺','🔻','🎯','❗','❕','✅','❌','🔒','🔓','🔑','💡','🔔','📌','🏴','🚩','⚡'] }
   ];
 
+  // A shift on a day off by law (js/lv-holidays.js), Sunday holidays included.
   function isHoliday(dateStr) {
-    var date = normalizeDateObj(dateStr);
-    if (!date) return false;
-    var key = dateKey(date);
-    if (FIXED_PUBLIC_HOLIDAYS.has(key)) return true;
-
-    var year = date.getFullYear();
-    var easter = easterSunday(year);
-    var movable = [
-      addDays(easter, -2), // Lielā Piektdiena
-      easter,
-      addDays(easter, 1),  // Otrās Lieldienas
-      addDays(easter, 49)  // Vasarsvētki
-    ];
-    // Mother's Day: second Sunday in May.
-    var may1 = new Date(year, 4, 1);
-    var firstSunday = 1 + ((7 - may1.getDay()) % 7);
-    movable.push(new Date(year, 4, firstSunday + 7));
-
-    // If 4 May or 18 November falls on a weekend, the next Monday is a holiday.
-    [new Date(year, 4, 4), new Date(year, 10, 18)].forEach(function(publicHoliday) {
-      if (publicHoliday.getDay() === 6) movable.push(addDays(publicHoliday, 2));
-      if (publicHoliday.getDay() === 0) movable.push(addDays(publicHoliday, 1));
-    });
-    return movable.some(function(candidate) { return dateKey(candidate) === key; });
+    var h = MinkaLvHolidays.get(dateStr);
+    return !!(h && h.free);
   }
 
   function getLevelData(xp) {

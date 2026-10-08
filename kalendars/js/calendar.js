@@ -1918,37 +1918,6 @@ function filterFullList(btn) {
   function g_scrollCal(dir) { document.getElementById('grafiks-scroller').scrollBy({ left: dir * 200, behavior: 'smooth' }); }
   function g_toggleView() { isGridView = !isGridView; document.getElementById('grafiks-viewIcon').innerText = isGridView ? 'format_list_bulleted' : 'grid_view'; g_updateList(); }
 
-  // Anonymous Gregorian computus — same algorithm monthcal.js uses, so the pill
-  // strip and the month grid can no longer disagree about when Lieldienas fall.
-  function lvEasterSunday(y) {
-    const a = y % 19, b = Math.floor(y / 100), c = y % 100;
-    const d = Math.floor(b / 4), e = b % 4;
-    const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
-    const h = (19 * a + b - d - g + 15) % 30;
-    const i = Math.floor(c / 4), k = c % 4;
-    const l = (32 + 2 * e + 2 * i - h - k) % 7;
-    const m = Math.floor((a + 11 * h + 22 * l) / 451);
-    const mo = Math.floor((h + l - 7 * m + 114) / 31);
-    const da = ((h + l - 7 * m + 114) % 31) + 1;
-    return new Date(y, mo - 1, da);
-  }
-
-  const _lvHolidayCache = new Map();
-  function lvHolidaySet(year) {
-    if (_lvHolidayCache.has(year)) return _lvHolidayCache.get(year);
-    const mmdd = (dt) => String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
-    const shift = (dt, n) => { const x = new Date(dt); x.setDate(x.getDate() + n); return x; };
-    const easter = lvEasterSunday(year);
-    const set = new Set([
-      '01-01', '05-01', '05-04', '06-23', '06-24', '11-18', '12-24', '12-25', '12-26', '12-31',
-      mmdd(shift(easter, -2)), // Lielā Piektdiena
-      mmdd(easter),            // Pirmās Lieldienas
-      mmdd(shift(easter, 1))   // Otrās Lieldienas
-    ]);
-    _lvHolidayCache.set(year, set);
-    return set;
-  }
-
   function g_renderMonth() {
     const scroller = document.getElementById('grafiks-scroller');
     scroller.innerHTML = "";
@@ -1999,10 +1968,6 @@ function filterFullList(btn) {
     }
 
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-    // Built once per render, not once per day, and with Easter computed rather
-    // than hardcoded — the old inline list pinned Lieldienas to April 3/5/6 with
-    // an "(aprox)" note, which is only right for 2026.
-    const holidaySet = lvHolidaySet(year);
 
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${String(d).padStart(2,'0')}.${String(monthIndex+1).padStart(2,'0')}.${year}`;
@@ -2012,8 +1977,8 @@ function filterFullList(btn) {
       const dow = dateObj.getDay(); // 0=Sun, 6=Sat
       const isWeekend = (dow === 0 || dow === 6);
 
-      const mmdd = String(monthIndex+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const isHoliday = holidaySet.has(mmdd);
+      const holiday = MinkaLvHolidays.get(dateStr);
+      const isHoliday = !!(holiday && holiday.free);
 
       const div = document.createElement('div');
       let pillClass = 'pill';
@@ -7543,7 +7508,6 @@ function filterFullList(btn) {
   window.g_updatePanelsForDate = g_updatePanelsForDate;
   window.g_selectDay = g_selectDay;
   window.g_selectDayHeld = g_selectDayHeld;
-  window.__lvHolidaySet = lvHolidaySet;
   window.g_stepDay = g_stepDay;
   // Pāriet uz jebkuru datumu ar grafiku (arī citā mēnesī); false = tāda nav.
   window.g_goToDate = g_selectDateWithMonthSync;
@@ -8031,43 +7995,6 @@ function renderModalList() {
   modalListReady = true;
 }
 
-// Latvian statutory month norm: 8h for every Mon–Fri, minus public holidays
-// that fall on a workday. Movable Easter days via the Gregorian computus;
-// 4 May / 18 Nov falling on a weekend move the day off to next Monday (LV law).
-function lvMonthNormHours(year, month) {
-  function pad2(n) { return String(n).padStart(2, '0'); }
-  function easterSunday(y) {
-    const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4,
-          f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3),
-          h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
-          l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
-          mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1;
-    return new Date(y, mo - 1, da);
-  }
-  const holi = new Set(['01-01', '05-01', '05-04', '06-23', '06-24', '11-18', '12-24', '12-25', '12-26', '12-31']);
-  const es = easterSunday(year);
-  const gf = new Date(es); gf.setDate(es.getDate() - 2);  // Lielā Piektdiena
-  const em = new Date(es); em.setDate(es.getDate() + 1);  // Otrās Lieldienas
-  holi.add(pad2(gf.getMonth() + 1) + '-' + pad2(gf.getDate()));
-  holi.add(pad2(em.getMonth() + 1) + '-' + pad2(em.getDate()));
-  [[4, 4], [10, 18]].forEach(function (md) {                // 04.05 / 18.11 pārcelšana
-    const d = new Date(year, md[0], md[1]);
-    if (d.getDay() === 6) d.setDate(d.getDate() + 2);
-    else if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-    else return;
-    holi.add(pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()));
-  });
-  let norm = 0;
-  const last = new Date(year, month + 1, 0).getDate();
-  for (let day = 1; day <= last; day++) {
-    const wd = new Date(year, month, day).getDay();
-    if (wd === 0 || wd === 6) continue;
-    if (holi.has(pad2(month + 1) + '-' + pad2(day))) continue;
-    norm += 8;
-  }
-  return norm;
-}
-
 function updateModalTotalHours() {
   const total = modalWorkerDates
     .filter(d => {
@@ -8088,7 +8015,7 @@ function updateModalTotalHours() {
   // Norm / overtime strip for the displayed month
   const row = document.getElementById('wm-norm-row');
   if (row) {
-    const norm = lvMonthNormHours(modalCurrentYear, modalCurrentMonth);
+    const norm = MinkaLvHolidays.workHours(modalCurrentYear, modalCurrentMonth);
     const diff = total - norm;
     let ot;
     if (diff > 0) ot = '<span class="ot plus">Virsstundas<b>+' + diff + 'h</b></span>';
@@ -8724,8 +8651,6 @@ function renderMiniCalPhone(pop) {
   const active = String(window.__activeDateStr || activeDateStr || '');
   const tm = today.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
   const todayKey = tm ? +tm[3] * 10000 + +tm[2] * 100 + +tm[1] : 0;
-  let holidays = null;
-  try { holidays = window.__lvHolidaySet ? window.__lvHolidaySet(year) : null; } catch (_e) {}
   const picker = document.getElementById('grafiks-monthPicker');
   const canPrev = !!picker && picker.selectedIndex > 0;
   const canNext = !!picker && picker.selectedIndex < picker.options.length - 1;
@@ -8747,7 +8672,8 @@ function renderMiniCalPhone(pop) {
     const wd = (startOffset + d - 1) % 7;
     const key = year * 10000 + (monthIdx + 1) * 100 + d;
     let cls = 'mc-day';
-    if (wd >= 5 || (holidays && holidays.has(pad(monthIdx + 1) + '-' + pad(d)))) cls += ' is-weekend';
+    const holiday = MinkaLvHolidays.get(dateStr);
+    if (wd >= 5 || (holiday && holiday.free)) cls += ' is-weekend';
     if (todayKey && key < todayKey) cls += ' is-past';
     if (dateStr === today) cls += ' is-today';
     if (dateStr === active) cls += ' is-active';
