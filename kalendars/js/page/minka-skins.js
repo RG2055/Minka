@@ -19,6 +19,13 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
+  // Name lettering (skin `nf`): a font and its effect on the first name only.
+  // Fonts: kalendars/assets/fonts/name-styles (a face downloads only when a card uses it).
+  var NAME_STYLES = [['', 'Parasts'], ['c', 'Hroms'], ['n', 'Neons'], ['z', 'Zelts'], ['r', '80-tie'], ['b', '3D bloks'],
+    ['k', 'Komikss'], ['a', 'Plakāts'], ['d', 'Rakstīts'], ['l', 'Izkārtne'], ['p', 'Pikseļi'], ['e', 'Elegants']];
+  // Lower case: every text on the card in that font (the name with the effect);
+  // a capital letter keeps it to the name only (`nf:C`).
+  var NAME_STYLE_RE = /^[cnzrbkadlpe]$/i;
   var IMG_GROUPS = [
     // Generated for the Focus kit (scripts/build-chrome-art.py): grain, chrome, holo foil.
     { label: 'Hroms un graudi',     ids: ['focus-ribbons','focus-ribbons-teal','focus-chrome','focus-holo','grain-grafits','grain-okeans','grain-ogles','grain-sfumato','grain-varss','grain-sudrabs','grain-terauds','grain-misins'] },
@@ -1136,7 +1143,8 @@
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
     // Night duration sits on a fixed dark info strip, independent of skin text colours.
     if (el.classList.contains('nsc-full-card')) numEl = null;
-    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-txt-dark','mk-emoji-sys','mk-emoji-black','mk-emoji-white','mk-txtfx-f','mk-txtfx-g','mk-txtfx-o','mk-txtfx-h','mk-emoji-zs','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-fx-dither','mk-fx-ditherpaper','mk-fx-dithercolor','mk-fx-pic','mk-fx-xray','mk-fx-halftone','mk-fx-duotone','mk-fx-ascii','mk-fx-focus','mk-fx-poster','mk-fx-split','mk-fx-mosaic','mk-fx-bricks','mk-fx-lines','mk-fx-led','mk-fx-pixelate','mk-fx-cmyk','mk-fx-riso','mk-fx-pointillism','mk-fx-heatmap','mk-fx-threshold','mk-fx-outline','mk-fx-posterize','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
+    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-txt-dark','mk-emoji-sys','mk-emoji-black','mk-emoji-white','mk-txtfx-f','mk-txtfx-g','mk-txtfx-o','mk-txtfx-h','mk-nf','mk-nf-only','mk-emoji-zs','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-fx-dither','mk-fx-ditherpaper','mk-fx-dithercolor','mk-fx-pic','mk-fx-xray','mk-fx-halftone','mk-fx-duotone','mk-fx-ascii','mk-fx-focus','mk-fx-poster','mk-fx-split','mk-fx-mosaic','mk-fx-bricks','mk-fx-lines','mk-fx-led','mk-fx-pixelate','mk-fx-cmyk','mk-fx-riso','mk-fx-pointillism','mk-fx-heatmap','mk-fx-threshold','mk-fx-outline','mk-fx-posterize','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
+    NAME_STYLES.forEach(function(o){ if (o[0]) el.classList.remove('mk-nf-' + o[0]); });
     ['--mk-skin-img','--mk-ez','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op','--mk-fx-scale','--mk-focus-x','--mk-focus-y'].forEach(function(p){ el.style.removeProperty(p); });
     if (!skin) { if (window.MinkaCardFaces) window.MinkaCardFaces.apply(el, null); return; }
     if (el.classList.contains('nsc-full-card')) el.classList.add('nsc-worker-skinned');
@@ -1204,6 +1212,10 @@
     if (esClass) el.classList.add(esClass);
     // Text effect for the name, labels and small values (not the numeral): flat, glow, outline, hard shadow.
     if (/^[fgoh]$/.test(String(skin.te || ''))) el.classList.add('mk-txtfx-' + skin.te);
+    if (NAME_STYLE_RE.test(String(skin.nf || ''))) {
+      el.classList.add('mk-nf', 'mk-nf-' + skin.nf.toLowerCase());
+      if (skin.nf !== skin.nf.toLowerCase()) el.classList.add('mk-nf-only');
+    }
     // The person's emoji on the card: small, as drawn, large or extra large (Emoji tab → Izmērs).
     // The person's emoji on the card: its size in % (Emoji tab → size), 100 = as drawn.
     var ezp = ezPercent(skin.ez);
@@ -1229,7 +1241,7 @@
       window.mkApplySkinToEl(c, skin);
     });
   }
-  function hasAny(sk) { return !!(sk && (sk.t || sk.num || sk.txt || sk.em != null || sk.emn != null || sk.es || sk.te || sk.ez || sk.fx || sk.face || sk.bed || sk.bp || sk.bq)); }
+  function hasAny(sk) { return !!(sk && (sk.t || sk.num || sk.txt || sk.em != null || sk.emn != null || sk.es || sk.te || sk.nf || sk.ez || sk.fx || sk.face || sk.bed || sk.bp || sk.bq)); }
   function storeSkinLocal(name, skin) {
     cloudRevision++;
     localEdited = true;
@@ -1332,6 +1344,7 @@
       if (sk.emn != null) p.push('emn:' + sk.emn);
       if (/^[sbw]$/.test(String(sk.es || ''))) p.push('es:' + sk.es);
       if (/^[fgoh]$/.test(String(sk.te || ''))) p.push('te:' + sk.te);
+      if (NAME_STYLE_RE.test(String(sk.nf || ''))) p.push('nf:' + sk.nf);
       if (EZ_RE.test(String(sk.ez || ''))) p.push('ez:' + sk.ez);
       if (sk.fx) p.push('fx:' + sk.fx);
       if (sk.fx && sk.fxs != null) p.push('fxs:' + numStr(sk.fxs));
@@ -1371,6 +1384,7 @@
       else if (part.indexOf('emn:') === 0) { sk.emn = part.slice(4); }
       else if (part.indexOf('es:') === 0) { if (/^[sbw]$/.test(part.slice(3))) sk.es = part.slice(3); }
       else if (part.indexOf('te:') === 0) { if (/^[fgoh]$/.test(part.slice(3))) sk.te = part.slice(3); }
+      else if (part.indexOf('nf:') === 0) { if (NAME_STYLE_RE.test(part.slice(3))) sk.nf = part.slice(3); }
       else if (part.indexOf('ez:') === 0) { if (EZ_RE.test(part.slice(3))) sk.ez = part.slice(3); }
       else if (part.indexOf('fx:') === 0) { sk.fx = part.slice(3); }
       else if (part.indexOf('fxs:') === 0) { sk.fxs = part.slice(4); }
@@ -1733,6 +1747,7 @@
     if (current && current.emn != null) skin.emn = current.emn;
     if (current && current.es) skin.es = current.es;
     if (current && current.te) skin.te = current.te;
+    if (current && current.nf) skin.nf = current.nf;
     if (current && current.ez) skin.ez = current.ez;
     if (opts.keep) return Promise.resolve({ skin: skin, addon: addon });
     return suggestedPalette(skin).then(function(pal) {
@@ -1848,6 +1863,15 @@
           return '<button type="button" data-txt-fx="' + o[0] + '" aria-pressed="' + ((draft.te || '') === o[0]) + '"><i class="mk-txtfx-sample' + (o[0] ? ' mk-txtfx-' + o[0] : '') + '" aria-hidden="true">Aa</i><b>' + o[1] + '</b></button>';
         }).join('') + '</div>'
       + '</div></div>';
+    // Fonts: each tile writes the person's own first name in that style.
+    var nfFirst = String(name || '').trim().split(/\s+/)[0] || 'Vārds';
+    nfFirst = nfFirst.charAt(0).toUpperCase() + nfFirst.slice(1).toLowerCase();
+    html += '<div class="mk-skin-tool mk-skin-tool-namestyle"><div class="mk-skin-tool-head">Fonts</div>'
+      + '<div class="mk-nf-grid" role="group" aria-label="Kartītes fonts">' + NAME_STYLES.map(function (o) {
+          return '<button type="button" data-name-style="' + o[0] + '" aria-pressed="' + ((draft.nf || '').toLowerCase() === o[0]) + '"><i class="mk-nf-sample' + (o[0] ? ' mk-nf-' + o[0] : '') + '" aria-hidden="true">' + skinEsc(nfFirst) + '</i><b>' + o[1] + '</b></button>';
+        }).join('') + '</div>'
+      + '<label class="mk-switch mk-nf-only-switch"><input type="checkbox" class="mk-nf-only-toggle"' + (draft.nf && draft.nf !== draft.nf.toLowerCase() ? ' checked' : '') + (draft.nf ? '' : ' disabled') + '><span></span><b>Tikai vārdam</b></label>'
+      + '</div>';
     html += '<div class="mk-skin-tool mk-skin-tool-emoji"><div class="mk-skin-tool-head">Emoji fonā</div><div class="mk-skin-custom">'
       + '<label class="mk-switch"><input type="checkbox" class="mk-emoji-show"' + (emShown ? ' checked' : '') + '><span></span><b>Rādīt</b></label>'
       + '<input type="range" class="mk-emoji-op" min="4" max="60" step="2" value="' + (emShown ? emVal : 13) + '"' + (emShown ? '' : ' disabled') + '>'
@@ -2652,6 +2676,21 @@
     emOp.addEventListener('change', commit);
     host.querySelector('.mk-emoji-neg').addEventListener('change', function(ev) {
       if (ev.target.checked) delete draft.emn; else draft.emn = '0';
+      commit();
+    });
+    host.querySelectorAll('[data-name-style]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        rememberForUndo();
+        var only = !!(draft.nf && draft.nf !== draft.nf.toLowerCase());
+        if (b.dataset.nameStyle) draft.nf = only ? b.dataset.nameStyle.toUpperCase() : b.dataset.nameStyle; else delete draft.nf;
+        commit();
+      });
+    });
+    var nfOnly = host.querySelector('.mk-nf-only-toggle');
+    if (nfOnly) nfOnly.addEventListener('change', function () {
+      if (!draft.nf) return;
+      rememberForUndo();
+      draft.nf = nfOnly.checked ? draft.nf.toUpperCase() : draft.nf.toLowerCase();
       commit();
     });
     host.querySelectorAll('[data-txt-fx]').forEach(function (b) {

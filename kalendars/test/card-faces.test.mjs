@@ -252,7 +252,10 @@ test('all material bundles have local lightweight assets and API-compatible appe
     const face = Object.assign(M.preset(material.face), {tint:material.tint,metal:material.metal,finish:material.finish});
     if(material.hours)face.parts.hours=material.hours.slice();
     Object.assign(face.parts,material.parts||{});
-    assert.deepEqual(M.unpack(M.pack(face)),face,material.id);
+    // Stored as cleaned: a sun/moon a bundle put on the coffee cup moves beside it.
+    assert.deepEqual(M.unpack(M.pack(face)),M.clean(face),material.id);
+    const mo=M.clean(face).parts.moon,cf=face.parts.coffee;
+    assert.ok(!(cf[3]&&Math.abs(mo[0]-cf[0])<15&&Math.abs(mo[1]-cf[1])<13),material.id+' moon on coffee');
     assert.equal(face.parts.emoji[3],1,material.id);
     if(material.foreground){const front=await readFile(new URL('../'+material.foreground,import.meta.url),'utf8');assert.ok(front.length<10000);assert.doesNotMatch(front,/<(?:filter|animate|script|image)\b/);}
     const skin = 'img:' + material.id + ';wf:' + M.pack(face) + ';dp:0;av:1;ad:charm-paw,140,l,0,0';
@@ -297,4 +300,18 @@ test('per-element colours and the whole-card look survive storage, default off, 
     assert.equal(M.unpack(fields.join('~')),null);
     assert.equal((await request('wf:'+fields.join('~'))).status,400);
   }
+});
+test('per-element fonts survive storage (v6), default empty, bad letters rejected; the API accepts them', async () => {
+  const f = M.preset('classic');
+  assert.equal(M.pack(f).split('~')[0] === '6', false);
+  f.fonts.name = 'c'; f.fonts.month = 'x'; f.fonts.hours = 'c';   // hours is not a text part: dropped
+  const t = M.pack(f), u = M.unpack(t);
+  assert.equal(t.split('~')[0], '6');
+  assert.equal(u.fonts.name, 'c'); assert.equal(u.fonts.month, 'x'); assert.equal(u.fonts.hours, '');
+  assert.equal(M.unpack(t.replace(/~[0xcnzrbkadlpe]{10}$/, '~0q00000000')), null);
+  const src = await readFile(new URL('../../cloudflare/minka-api/src/index.js', import.meta.url), 'utf8');
+  const body = src.slice(src.indexOf('function validCardFacePart'), src.indexOf('function cleanSkinValue'));
+  const valid = new Function(body + '; return validCardFacePart;')();
+  assert.equal(valid('wf:' + t), true);
+  assert.equal(valid('wf:' + t.replace(/~[0xcnzrbkadlpe]{10}$/, '~0q00000000')), false);
 });

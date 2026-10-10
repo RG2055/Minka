@@ -692,6 +692,13 @@ html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch
 /* initials on a plate: a round badge */
 html body #grafiks-list.grid-view.grid-view .card.card.card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="initials"][data-wf-plate]:not([data-wf-plate="clear"]) {padding:1.6cqw 2.6cqw !important;border-radius:999px !important;}
 
+/* The element panel's font choice (card-faces.js .wf-part-font; tiles in name-styles.css). */
+.wf-part-font {display:grid;gap:8px;margin:12px 0 4px;}
+.wf-part-font[hidden] {display:none !important;}
+.wf-part-font > span {font-size:12px;opacity:.8;}
+.wf-part-font .mk-nf-grid {grid-template-columns:repeat(auto-fill,minmax(70px,1fr));}
+.wf-part-font .mk-nf-grid > button {min-height:58px;padding:6px 4px;}
+.wf-part-font .mk-nf-sample {font-size:18px;}
 /* The element panel's plate choice (card-faces.js .wf-part-plate). */
 .wf-part-plate {display:grid;gap:8px;margin:12px 0 4px;}
 .wf-part-plate[hidden] {display:none !important;}

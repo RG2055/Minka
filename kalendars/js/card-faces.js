@@ -795,6 +795,9 @@
       // Its plate (card-face-model plates): the letters follow it, so it always reads.
       var plate=config.face==='winamp'?'':PLATES[(config.plates&&config.plates[key])||0];
       if(plate)el.dataset.wfPlate=plate;else delete el.dataset.wfPlate;
+      // Its own font (name-styles.css), over the card's.
+      var font=config.fonts&&config.fonts[key];
+      if(font)el.dataset.wfFont=font;else delete el.dataset.wfFont;
       var ink=own||config.tint, rgb=ink.match(/../g).map(function(v){return parseInt(v,16)/255;}), lum=rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722;
       el.classList.toggle('wf-plate-ink-dark',plate==='tinted'&&lum>.55);
     });
@@ -1046,6 +1049,7 @@
       + '<div class="wf-part-head"><strong class="wf-part-name"></strong><button type="button" class="wf-remove">Noņemt</button></div>'
       + '<div class="wf-part-color"><span>Šī elementa krāsa</span><input type="color" class="wf-part-color-input" aria-label="Šī elementa krāsa"><button type="button" class="wf-part-color-clear">Kā akcenta krāsa</button></div>'
       // The element's plate, in the card tone's own words (and a light one, as on a watch).
+      + '<div class="wf-part-font"><span>Fonts</span><div class="mk-nf-grid wf-font-modes" role="group" aria-label="Fonts">'+[['','Kā kartītei'],['x','Parasts'],['c','Hroms'],['n','Neons'],['z','Zelts'],['r','80-tie'],['b','3D bloks'],['k','Komikss'],['a','Plakāts'],['d','Rakstīts'],['l','Izkārtne'],['p','Pikseļi'],['e','Elegants']].map(function(m){return '<button type="button" data-part-font="'+m[0]+'"><i class="mk-nf-sample'+(m[0]&&m[0]!=='x'?' mk-nf-'+m[0]:'')+'" aria-hidden="true">'+(m[0]?'Aa':'·')+'</i><b>'+m[1]+'</b></button>';}).join('')+'</div></div>'
       + '<div class="wf-part-plate"><span>Plāksne</span><div class="wf-plate-modes" role="group" aria-label="Plāksne">'+[['0','Kā kartītei'],['1','Tumšs'],['2','Caurspīdīgs'],['3','Tonēts'],['4','Gaišs']].map(function(m){return '<button type="button" data-part-plate="'+m[0]+'"><i class="wf-plate-sample p'+m[0]+'" aria-hidden="true">9</i><span>'+m[1]+'</span></button>';}).join('')+'</div></div>'
       + '<div class="wf-timer-options" hidden><div class="wf-segment" aria-label="Taimeris"><button type="button" data-timer-style="">Cipari</button><button type="button" data-timer-style="a">Analogs</button></div>'
       + '<div class="wf-timer-digital"><div class="wf-digit-skins" role="group" aria-label="Ciparu izskats"><button type="button" data-timer-digit=""><span class="wf-digit-mini"><span class="mk-m3d m3-plain">7:42:10</span></span><b>Parasti</b></button>' + DIGIT_SKINS.map(function(k){return '<button type="button" data-timer-digit="'+k[0]+'"><span class="wf-digit-mini">'+digitPreview(k[0]+'11')+'</span><b>'+k[1]+'</b></button>';}).join('') + '</div></div>'
@@ -1134,6 +1138,9 @@
       pq('.wf-part-color-input').value='#'+(own||config.tint);
       pq('.wf-part-color').classList.toggle('is-own',!!own);
       pq('.wf-part-color-clear').hidden=!own;
+      var fontRow=pq('.wf-part-font'), canFont=(M.fontParts||[]).indexOf(selectedPart)>=0&&!/^(winamp|gameboy|dots|lines|thermo)$/.test(config.face);
+      fontRow.hidden=!canFont;
+      if(canFont)fontRow.querySelectorAll('[data-part-font]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.partFont===((config.fonts&&config.fonts[selectedPart])||'')));});
       var plateRow=pq('.wf-part-plate'), canPlate=(M.plateParts||[]).indexOf(selectedPart)>=0&&config.face!=='winamp';
       plateRow.hidden=!canPlate;
       if(canPlate){ plateRow.style.setProperty('--wf-plate-tint','#'+(own||config.tint)); plateRow.querySelectorAll('[data-part-plate]').forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.partPlate===(config.plates[selectedPart]||0)));}); }
@@ -1654,6 +1661,7 @@
       if(el.classList.contains('wf-full-tint-auto')){config.fullTintAuto=config.fullTintAuto?0:1;save();}
       if(el.classList.contains('wf-part-color-clear')){config.colors[selectedPart]='';save();}
       if(el.dataset.partPlate!=null){config.plates[selectedPart]=+el.dataset.partPlate;save();}
+      if(el.dataset.partFont!=null){config.fonts=config.fonts||{};config.fonts[selectedPart]=el.dataset.partFont;save();}
       if(el.dataset.part){selKind='part';selectedPart=el.dataset.part;if(!config.parts[selectedPart][3]||!options.get().face){config.parts[selectedPart][3]=1;save('parts');}else sync();}
       if(el.classList.contains('wf-remove')){config.parts[selectedPart][3]=config.parts[selectedPart][3]?0:1;save('parts');}
       if(el.classList.contains('wf-undo')&&history.length){var previous=history.pop();glide(function(){config=M.clean(previous);options.change(previous);preview.classList.toggle('wf-editing',!!previous);},function(){return options.get();});sync();sizePreview();}

@@ -6,6 +6,10 @@
   // Elements that sit on a plate (the watch's complications), and the plate each can
   // take: 0 as the card, 1 dark, 2 clear (no plate), 3 tinted, 4 light.
   var plateParts = ['initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock'];
+  // Texts that can take their own font ('' = the card's, 'x' = the usual font, or a
+  // card font letter, minka-skins.js NAME_STYLES); stored as v6, one character each.
+  var fontParts = ['name', 'initials', 'month', 'fatigue', 'remaining', 'clock'];
+  var FONT_RE = /^[xcnzrbkadlpe]$/;
   /* Centre x/y (%), size (%), visibility. Positions scale with the actual card.
      Every layout sits on the same grid, so nothing is ever drawn over anything:
        top row  (y ≈ 15) — the sun/moon, the name, the month's hours;
@@ -80,6 +84,8 @@
     out.fullTintIntensity=bounded(value.fullTintIntensity,0,100,80);
     out.fullTintAuto=value.fullTintAuto===1||value.fullTintAuto===true?1:0;
     out.fullTintScheme=bounded(value.fullTintScheme,0,2,0); // 0 auto, 1 light, 2 dark
+    out.fonts={};
+    parts.forEach(function (key) { var f=value.fonts&&value.fonts[key]; out.fonts[key]=fontParts.indexOf(key)>=0&&FONT_RE.test(f||'')?f:''; });
     out.plates={};
     parts.forEach(function (key) { out.plates[key]=plateParts.indexOf(key)>=0?bounded(value.plates&&value.plates[key],0,4,0):0; });
     parts.forEach(function (key, i) {
@@ -91,6 +97,13 @@
     // A sun/moon still at any default spot (today's, or one an older version stored) takes the face's designed spot.
     if(!keepSymbolPosition&&(!oldSymbol||Object.values(moonLayouts).concat(OLD_MOONS).some(function(p){return p.slice(0,3).join()===oldSymbol.slice(0,3).join();}))){
       var visibility=out.parts.moon[3];out.parts.moon=symbolPlacement(out.parts,face);out.parts.moon[3]=visibility;
+    }
+    // The sun/moon never sits on the coffee cup (photo bundles with a high numeral put
+    // both in the top-left corner): it moves beside the cup, or under it at the edge.
+    var mo=out.parts.moon,cf=out.parts.coffee;
+    if(mo[3]&&cf[3]&&Math.abs(mo[0]-cf[0])<15&&Math.abs(mo[1]-cf[1])<13){
+      if(cf[0]+17<=90)out.parts.moon=[cf[0]+17,cf[1],mo[2],1];
+      else out.parts.moon=[cf[0],Math.min(90,cf[1]+15),mo[2],1];
     }
     return out;
   }
@@ -115,20 +128,23 @@
   function pack(value) {
     var v = clean(value, true);
     // v5 adds each element's plate (only when one is chosen, so older looks keep their text)
-    var plated=parts.some(function (key) { return v.plates[key]; });
+    var fonted=parts.some(function (key) { return v.fonts[key]; });
+    var plated=fonted||parts.some(function (key) { return v.plates[key]; });
     var colored=plated||parts.some(function (key) { return v.colors[key]; })||v.fullTintMode>0;
     var extra=colored||v.coffeeExplicit||v.coffeeMode!==1||v.coffeeContrast!==0;
-    return [plated?5:colored?4:extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
+    return [fonted?6:plated?5:colored?4:extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
       .concat(parts.map(function (key) { return v.parts[key].join(','); }))
       .concat(extra?[v.coffeeMode,v.coffeeContrast]:[])
       .concat(colored?[parts.map(function (key) { return v.colors[key]||'-'; }).join(','),[v.fullTintMode,v.fullTintHue,v.fullTintIntensity,v.fullTintAuto,v.fullTintScheme].join(',')]:[])
-      .concat(plated?[parts.map(function (key) { return v.plates[key]; }).join('')]:[]).join('~');
+      .concat(plated?[parts.map(function (key) { return v.plates[key]; }).join('')]:[])
+      .concat(fonted?[parts.map(function (key) { return v.fonts[key]||'0'; }).join('')]:[]).join('~');
   }
   function unpack(text) {
     var a = String(text || '').split('~');
     var legacy=a.length===17&&a[0]==='1';
     var coffee=a.length===20&&a[0]==='3';
-    var plated=a.length===23&&a[0]==='5';
+    var fonted=a.length===24&&a[0]==='6';
+    var plated=(a.length===23&&a[0]==='5')||fonted;
     var colored=(a.length===22&&a[0]==='4')||plated;
     if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-9]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
@@ -142,6 +158,7 @@
       if(colors.length!==parts.length||!colors.every(function (c) { return c==='-'||/^[a-f0-9]{6}$/.test(c); })||look.length!==5||!/^[0-3]$/.test(look[0])||!/^\d{1,3}$/.test(look[1])||!/^\d{1,3}$/.test(look[2])||!/^[01]$/.test(look[3])||!/^[0-2]$/.test(look[4]))return null;
       value.colors={};parts.forEach(function (key, i) { value.colors[key]=colors[i]==='-'?'':colors[i]; });
       if(plated){ if(!/^[0-4]{10}$/.test(a[22]))return null; value.plates={}; parts.forEach(function (key, i) { value.plates[key]=+a[22][i]; }); }
+      if(fonted){ if(!/^[0xcnzrbkadlpe]{10}$/.test(a[23]))return null; value.fonts={}; parts.forEach(function (key, i) { value.fonts[key]=a[23][i]==='0'?'':a[23][i]; }); }
       value.fullTintMode=+look[0];value.fullTintHue=+look[1];value.fullTintIntensity=+look[2];value.fullTintAuto=+look[3];value.fullTintScheme=+look[4];
     }
     for (var i = 0; i < (legacy?9:10); i++) {
@@ -228,5 +245,5 @@
     return value;
   }
 
-  root.MinkaCardFaceModel = { fitDial: fitDial, faces: faces, looks: looks, parts: parts, plateParts: plateParts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
+  root.MinkaCardFaceModel = { fitDial: fitDial, faces: faces, looks: looks, parts: parts, plateParts: plateParts, fontParts: fontParts, clean: clean, preset: preset, pack: pack, unpack: unpack, fitPart: fitPart, symbolPlacement: symbolPlacement, coffeeColors: coffeeColors, effectiveCoffeeMode: effectiveCoffeeMode };
 })(globalThis);
