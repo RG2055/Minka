@@ -405,10 +405,6 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(:has(.mk-mid-coffee :focus-visible)):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), min-width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
 :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-editing [data-wf-part="coffee"] {transition: none !important;}
 @media (prefers-reduced-motion: reduce) {
-  #grafiks-list .card.mk-mid-card .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add), #grafiks-list .card.mk-mid-card [data-wf-part="coffee"], #grafiks-list .card.mk-mid-card .mkc-under, #grafiks-list .card.mk-mid-card .mkc-back {transition: none !important;}
+  #grafiks-list .card.mk-mid-card .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add), #grafiks-list .card.mk-mid-card [data-wf-part="coffee"] {transition: none !important;}
 }
-/* an element the open coffee would cover steps aside (card-faces.js coffeeRoom) and
-   comes back when the coffee closes */
-#grafiks-list .card.mk-mid-card .mkc-under {opacity: 0 !important; transition: opacity 160ms cubic-bezier(.2,0,0,1) !important;}
-#grafiks-list .card.mk-mid-card .mkc-back {transition: opacity 200ms cubic-bezier(.2,0,0,1) 60ms !important;}
 }

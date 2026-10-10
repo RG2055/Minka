@@ -2245,6 +2245,9 @@
   function step(card) { return card.querySelector('.mk-mid-coffee .mk-coffee-step'); }
   function isOpen(card) { var add = card.querySelector('.mk-coffee-step > .mk-coffee-add'); return !!add && add.getBoundingClientRect().width > 6 && getComputedStyle(add).opacity > .3; }
   function canOpen(card) { return card.dataset.coffeeMode !== 'open' && !card.classList.contains('wf-editing'); }
+  // Every element the pill lies over, the outermost one that does not hold the coffee.
+  // A wrapper's own box says nothing (a face's parts sit absolutely outside it), so the
+  // walk goes into every wrapper; an svg is one piece.
   function covered(card, st) {
     var r = st.getBoundingClientRect(), cr = card.getBoundingClientRect(), big = cr.width * cr.height * .4, out = [];
     function hit(b) { return b.width > 0 && b.height > 0 && b.left < r.right - 2 && b.right > r.left + 2 && b.top < r.bottom - 2 && b.bottom > r.top + 2; }
@@ -2252,33 +2255,76 @@
       for (var c = el.firstElementChild; c; c = c.nextElementSibling) {
         if (c === st) continue;
         if (c.contains(st)) { walk(c); continue; }
-        if (c.tagName === 'CANVAS' || c.tagName === 'STYLE' || (typeof c.className === 'string' && SKIP.test(c.className))) continue;
+        if (c.tagName === 'CANVAS' || c.tagName === 'STYLE' || c.tagName === 'SCRIPT' || (typeof c.className === 'string' && SKIP.test(c.className))) continue;
         var b = c.getBoundingClientRect();
-        if (!hit(b)) continue;
-        if (b.width * b.height > big) walk(c); else out.push(c);
+        if (hit(b) && b.width * b.height <= big) { if (inkHits(c, hit)) out.push(c); continue; }
+        if (c.tagName !== 'svg' && c.firstElementChild) walk(c);
       }
     })(card);
     return out;
   }
+  // Does what is drawn of el touch the pill? A box with a fill, border or shadow counts
+  // whole; text counts only by its glyphs (a big numeral's line has room above and
+  // below its digits — "24" under the coffee's corner is not covered); a picture by its box.
+  function boxShows(cs) {
+    if (cs.backgroundClip === 'text' || cs.webkitBackgroundClip === 'text') return false;
+    var bg = cs.backgroundColor, a = /rgba?\(([^)]+)\)/.exec(bg), alpha = a ? (a[1].split(',')[3] == null ? 1 : +a[1].split(',')[3]) : 0;
+    return alpha > .05 || cs.backgroundImage !== 'none' || parseFloat(cs.borderTopWidth) > 0 || cs.boxShadow !== 'none';
+  }
+  function inkHits(el, hit) {
+    var cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || +cs.opacity === 0) return false;
+    var tag = el.tagName;
+    if (tag === 'IMG' || tag === 'svg' || tag === 'CANVAS' || tag === 'VIDEO' || boxShows(cs)) return hit(el.getBoundingClientRect());
+    for (var n = el.firstChild; n; n = n.nextSibling) {
+      if (n.nodeType === 3) {
+        if (!n.nodeValue.trim()) continue;
+        var rg = document.createRange(); rg.selectNodeContents(n);
+        var rs = rg.getClientRects();
+        for (var i = 0; i < rs.length; i++) {
+          var q = rs[i], h = q.height;
+          if (hit({ left: q.left, right: q.right, top: q.top + h * .2, bottom: q.bottom - h * .14, width: q.width, height: h * .66 })) return true;
+        }
+      } else if (n.nodeType === 1 && inkHits(n, hit)) return true;
+    }
+    return false;
+  }
+  // inline and !important, so no card rule can keep it showing; its own inline
+  // opacity/transition come back after
+  var saved = new WeakMap();
   function hide(card, list) {
-    card.querySelectorAll('.mkc-under').forEach(function (el) { if (list.indexOf(el) < 0) show1(el); });
-    list.forEach(function (el) { el.classList.remove('mkc-back'); el.classList.add('mkc-under'); });
+    card.querySelectorAll('[data-mkc-under]').forEach(function (el) { if (list.indexOf(el) < 0) show1(el); });
+    list.forEach(function (el) {
+      if (!saved.has(el)) saved.set(el, [el.style.getPropertyValue('opacity'), el.style.getPropertyPriority('opacity'), el.style.getPropertyValue('transition'), el.style.getPropertyPriority('transition')]);
+      clearTimeout(el._mkcT);
+      el.setAttribute('data-mkc-under', '');
+      el.style.setProperty('transition', reduced() ? 'none' : 'opacity 160ms cubic-bezier(.2,0,0,1)', 'important');
+      el.style.setProperty('opacity', '0', 'important');
+    });
   }
   function show1(el) {
-    el.classList.remove('mkc-under'); el.classList.add('mkc-back');
-    setTimeout(function () { if (!el.classList.contains('mkc-under')) el.classList.remove('mkc-back'); }, 360);
+    var old = saved.get(el) || ['', '', '', ''];
+    el.removeAttribute('data-mkc-under');
+    el.style.setProperty('transition', reduced() ? 'none' : 'opacity 200ms cubic-bezier(.2,0,0,1) 60ms', 'important');
+    if (old[0]) el.style.setProperty('opacity', old[0], old[1]); else el.style.removeProperty('opacity');
+    clearTimeout(el._mkcT);
+    el._mkcT = setTimeout(function () {
+      if (el.hasAttribute('data-mkc-under')) return;
+      if (old[2]) el.style.setProperty('transition', old[2], old[3]); else el.style.removeProperty('transition');
+      saved.delete(el);
+    }, 300);
   }
-  function close(card) { clearTimeout(timer); if (card) card.querySelectorAll('.mkc-under').forEach(show1); }
+  function reduced() { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  function close(card) { clearTimeout(timer); if (card) card.querySelectorAll('[data-mkc-under]').forEach(show1); }
   function open(card) {
     var st = step(card);
     if (!st || !canOpen(card)) return;
     var known = seen.get(card);
-    if (known) hide(card, known.filter(function (el) { return card.contains(el); }));
+    if (known && (cur === card || card.dataset.coffeeExpanded === 'true')) hide(card, known.filter(function (el) { return card.contains(el); }));
     clearTimeout(timer);
     // measure when the pill has opened (its motion is 280 ms)
     timer = setTimeout(function () {
-      if (cur !== card && card.dataset.coffeeExpanded !== 'true') return;
-      if (!isOpen(card)) { close(card); return; }
+      if (cur !== card && card.dataset.coffeeExpanded !== 'true' || !isOpen(card)) { close(card); return; }
       var list = covered(card, st); seen.set(card, list); hide(card, list);
     }, 300);
   }
@@ -2301,7 +2347,7 @@
   document.addEventListener('click', function (e) {
     var card = e.target.closest && e.target.closest('.mk-mid-coffee') && cardOf(e.target);
     if (!card) return;
-    setTimeout(function () { if (isOpen(card)) open(card); else close(card); }, 0);
+    setTimeout(function () { open(card); }, 0);
   }, true);
   document.addEventListener('focusin', function (e) { var card = e.target.closest && e.target.closest('.mk-mid-coffee') && cardOf(e.target); if (card) open(card); });
   document.addEventListener('focusout', function (e) { var card = cardOf(e.target); if (card && !card.contains(e.relatedTarget) && card !== cur) close(card); });
