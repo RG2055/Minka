@@ -3020,21 +3020,23 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>i{right:20p
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn:active>svg{transform:scale(.88)}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-pop :is(.dock-px,.dock-alt){animation:dk-pop .52s linear both!important}
 @keyframes dk-pop{0%{transform:scale(1)}22%{transform:scale(.84)}55%{transform:scale(1.1)}78%{transform:scale(.98)}100%{transform:scale(1)}}
-/* the zone each pill measures (MinkaMotion.liquid reads its box) */
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button>s.dk-slot{position:absolute!important;left:50%;top:6px;width:64px;height:32px;margin-left:-32px;pointer-events:none;visibility:hidden;text-decoration:none}
+/* the zone each pill measures (MinkaMotion.liquid reads its box): the
+   whole item, icon and label together in one shape */
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button>s.dk-slot{position:absolute!important;left:2px;right:2px;top:0;bottom:0;pointer-events:none;visibility:hidden;text-decoration:none}
 /* the pills */
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill{position:absolute;z-index:0;top:12px;height:32px;left:0;right:100%;pointer-events:none;opacity:0}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill.is-on{opacity:1}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill>i{position:absolute;inset:0;border-radius:16px;transition:transform var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease),border-radius var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease),background-color var(--mk-dur-effects-slow,300ms) var(--mk-ease-effects,ease)}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill>i{position:absolute;inset:0;border-radius:22px;transition:transform var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease),border-radius var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease),background-color var(--mk-dur-effects-slow,300ms) var(--mk-ease-effects,ease)}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-hover>i{background:rgba(255,255,255,.075)}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-active>i{background:color-mix(in srgb,var(--dk-acc,#7dd3fc) 24%,#141922);transform:scaleX(.4)}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-active.is-on>i{transform:none}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill.is-press>i{transform:scale(.9,.84);border-radius:10px}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill.is-press>i{transform:scale(.94,.9);border-radius:14px}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-hover.is-press>i{background:rgba(255,255,255,.12)}
 html.minka-rad #bottomBtnBar>.dk-pill,html.minka-rad #bottomBtnBar>button>s.dk-slot{display:none!important}
 @media(max-width:720px){
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button{width:52px!important;min-width:52px!important;height:52px!important;min-height:52px!important;padding:10px 0 0!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button>s.dk-slot{top:10px;width:44px;margin-left:-22px}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){width:56px!important;min-width:56px!important;height:56px!important;min-height:56px!important;padding:0!important;justify-content:center!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{margin:0!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill>i{border-radius:18px}
 }
 </style>
 <script>
