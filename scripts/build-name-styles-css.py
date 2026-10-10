@@ -110,6 +110,9 @@ def main():
         o.append(f"{C}.mk-watch-face.mk-nf-{l} [data-wf-part=\"name\"]{NOT_OWN} .name-main, {C}.mk-watch-face [data-wf-part=\"name\"][data-wf-font=\"{l}\"] .name-main {{ font-size: {wf} !important; }}\n")
         o.append(f"{C}.mk-nf-{l}:not(.mk-watch-face) .name-main {{ font-size: {plain} !important; white-space: nowrap !important; }}\n")
         o.append(f".mk-nf-sample.mk-nf-{l} {{ font-size: {sample}px; }}\n")
+    # The surname in a styled font (wider letters): sized by its length so it never runs out.
+    o.append(f"{C}.mk-watch-face.mk-nf:not(.mk-nf-only) [data-wf-part=\"name\"]{NOT_OWN} .name-sub {{ font-size: min(5.4cqw, calc(52cqw / var(--wf-surname-chars, 12))) !important; white-space: nowrap !important; }}\n")
+    o.append(f"{C}.mk-watch-face:is(.mk-nf-c,.mk-nf-r,.mk-nf-b,.mk-nf-p,.mk-nf-l):not(.mk-nf-only) [data-wf-part=\"name\"]{NOT_OWN} .name-sub {{ font-size: min(4.4cqw, calc(42cqw / var(--wf-surname-chars, 12))) !important; }}\n")
     # Chrome glints
     glint = ', '.join(f'{n}::{p}' for n in names('c') for p in ('before', 'after'))
     o.append(f"""{glint} {{

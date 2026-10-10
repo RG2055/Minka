@@ -297,6 +297,21 @@
     var sw=p[2]?'url('+(material?material.path:'data/skins/skin-'+p[2]+'.webp')+')'+(material&&material.background?','+material.background:''):'rgb('+paper+')';
     PRESETS.push({label:p[0],group:'layouts',isNew:true,keepLayout:true,keepParts:true,bg:p[2]?{t:'img',id:p[2]}:{t:'hue',rgb:paper},num:p[3],na:'1',txt:p[4],face:face,depth:p[5]?undefined:false,foreground:p[5]&&material?material.path:null,sw:sw});
   });
+  // Vārdu stili: a picture and a name lettering that belong together (skin nf): [label, picture, font, number].
+  [['Hroms','grain-sfumato','c','255,255,255'],['Neons','grain-ogles','n','255,138,92'],['Zelts','art-apolons','z','240,190,82'],
+   ['80-tie','grain-grafits','r','127,246,255'],['3D bloks','grain-citrons','b','28,24,20'],['Komikss','spilgti-majas','k','255,210,63'],
+   ['Plakāts','pils-betona-loki','a','244,242,236'],['Rakstīts','daba-pienene','d','246,247,249'],['Izkārtne','grain-persiks','l','196,65,15'],
+   ['Pikseļi','grain-mints','p','20,22,26'],['Elegants','akmens-slaneklis','e','244,242,236']].forEach(function(p){
+    var face=window.MinkaCardFaceModel.preset('classic');
+    // the name is the star: big across the top, the number smaller under it
+    face.parts.name=[50,25,150,1];face.parts.hours=[50,64,66,1];face.parts.month[3]=0;
+    face.finish=2;   // a solid number in the preset's own colour (glass went pale on light pictures)
+    face.tint=p[3].split(',').map(function(v){return ('0'+(+v).toString(16)).slice(-2);}).join('');
+    face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
+    var light=p[3].split(',').reduce(function(a,v){return a+(+v);},0)<200;
+    if(light)window.MinkaCardFaceModel.plateParts.forEach(function(k){face.plates[k]=4;});
+    PRESETS.push({label:'Vārds · '+p[0],group:'names',isNew:true,keepLayout:true,keepParts:true,nf:p[2],bg:{t:'img',id:p[1]},num:p[3],na:'1',txt:light?'28,24,20':'246,247,249',face:face,depth:false,sw:'url(data/skins/skin-'+p[1]+'.webp)'});
+  });
   // Plakāts: collector-card look — the picture in a window, a big name below it.
   [['Plakāts · Seja','aesthetic-face','f67a18'],['Plakāts · Kaķis','cat-06','f67a18'],['Plakāts · Ķivere','aesthetic-helmet','64d2ff'],['Plakāts · Kalni','1036','f5b73f']].forEach(function(p){
     var face=window.MinkaCardFaceModel.preset('classic');
@@ -354,11 +369,11 @@
   /* Show the finest first: photo compositions, then posters and picture effects;
      the plain number looks come last. (Sorted once, before any button exists.) */
   (function(){
-    var rank={layouts:-3,dithart:-2,vapor:-1,wildlife:0,botanical:0,ocean:0,fx:1,landscape:1,poster:2,dither:3,collection:4,numbers:5};
+    var rank={names:-4,layouts:-3,dithart:-2,vapor:-1,wildlife:0,botanical:0,ocean:0,fx:1,landscape:1,poster:2,dither:3,collection:4,numbers:5};
     PRESETS=PRESETS.map(function(p,i){return [p,i];}).sort(function(a,b){return ((rank[a[0].group]==null?4:rank[a[0].group])-(rank[b[0].group]==null?4:rank[b[0].group]))||a[1]-b[1];}).map(function(x){return x[0];});
   })();
   var DITHER_INKS=[['eceae4','Balta'],['64d2ff','Ledus'],['23cdcf','Ciāna'],['1fe091','Zaļa'],['f5b73f','Dzintars'],['ff8a5c','Oranža'],['ff5c5c','Sarkana'],['2554a0','Tinte'],['141414','Melna']];
-  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['dithart','Dither māksla'],['layouts','Jauni izkārtojumi'],['vapor','Vaporwave'],['fx','Efekti'],['poster','Plakāti'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
+  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['dithart','Dither māksla'],['layouts','Jauni izkārtojumi'],['names','Vārdu stili'],['vapor','Vaporwave'],['fx','Efekti'],['poster','Plakāti'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
   function presetInGroup(p,group){return group==='all'||(group==='new'?p.isNew:p.group===group);}
 
   /* Every card render asks for its skin: parse the stored map once per change,
@@ -2530,6 +2545,7 @@
       if(p.fl)skin.fl=p.fl;
       if(p.fxs)skin.fxs=p.fxs;
       if(p.tm)skin.tm=p.tm;
+      if(p.nf)skin.nf=p.nf;
       if(p.depth===false)skin.depth=false;
       if(p.txt)skin.txt=p.txt;
       // The person's analog timer on a layout drawn for the small chip: give it a free spot.

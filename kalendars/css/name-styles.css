@@ -158,6 +158,8 @@
 .card.mk-mid-card.mk-watch-face.mk-nf-e [data-wf-part="name"]:not([data-wf-font]):not([data-wf-font] *) .name-main, .card.mk-mid-card.mk-watch-face [data-wf-part="name"][data-wf-font="e"] .name-main { font-size: min(11cqw,calc(82cqw / var(--wf-name-chars,10))) !important; }
 .card.mk-mid-card.mk-nf-e:not(.mk-watch-face) .name-main { font-size: clamp(13px,8.5cqw,24px) !important; white-space: nowrap !important; }
 .mk-nf-sample.mk-nf-e { font-size: 22px; }
+.card.mk-mid-card.mk-watch-face.mk-nf:not(.mk-nf-only) [data-wf-part="name"]:not([data-wf-font]):not([data-wf-font] *) .name-sub { font-size: min(5.4cqw, calc(52cqw / var(--wf-surname-chars, 12))) !important; white-space: nowrap !important; }
+.card.mk-mid-card.mk-watch-face:is(.mk-nf-c,.mk-nf-r,.mk-nf-b,.mk-nf-p,.mk-nf-l):not(.mk-nf-only) [data-wf-part="name"]:not([data-wf-font]):not([data-wf-font] *) .name-sub { font-size: min(4.4cqw, calc(42cqw / var(--wf-surname-chars, 12))) !important; }
 .card.mk-mid-card.mk-nf-c .name-main:not([data-wf-font]):not([data-wf-font] *)::before, .card.mk-mid-card.mk-nf-c .name-main:not([data-wf-font]):not([data-wf-font] *)::after, .card.mk-mid-card [data-wf-font="c"] .name-main::before, .card.mk-mid-card [data-wf-font="c"] .name-main::after, .mk-nf-sample.mk-nf-c::before, .mk-nf-sample.mk-nf-c::after {
   content: "✦"; position: absolute; font-family: system-ui, sans-serif; line-height: 1; color: #fff; -webkit-text-fill-color: #fff;
   -webkit-text-stroke: 0; text-shadow: 0 0 .25em #fff, 0 0 .6em #a9cfff; pointer-events: none; rotate: 5deg;

@@ -31,7 +31,10 @@
 
 /* ---------- Žurnāls: the picture is the cover, the name its masthead ---------- */
 .card.mk-watch-face[data-watch-face="cover"] [data-wf-part="name"] {z-index: 2 !important; width: 92% !important;}
-.card.mk-watch-face[data-watch-face="cover"] [data-wf-part="name"] .name-sub {letter-spacing: .3em !important; text-transform: uppercase !important; opacity: .9 !important;}
+/* the masthead is drawn at 170 %: the surname's size follows its length so even a long one
+   (with its wide letter spacing) stays inside the card */
+.card.mk-watch-face[data-watch-face="cover"] [data-wf-part="name"] .name-sub {letter-spacing: .24em !important; text-transform: uppercase !important; opacity: .9 !important;
+  font-size: min(5.2cqw, calc(48cqw / var(--wf-surname-chars, 12))) !important; white-space: nowrap !important;}
 .card.mk-watch-face[data-watch-face="cover"]::after {border-color: #fff9 !important;}
 
 /* ---------- Pulkstenis: a dark watch dial with hands ---------- */
@@ -122,6 +125,7 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 /* The cover's masthead lettering: a later layer than mk-nf, so a chosen card font wins. */
 @layer mk-face-type {
 .card.mk-watch-face[data-watch-face="cover"] [data-wf-part="name"] .name-main {
+  font-size: min(10.5cqw, calc(80cqw / var(--wf-name-chars, 10))) !important; white-space: nowrap !important;
   font-family: 'Playfair Display', Georgia, serif !important; font-style: italic !important; font-weight: 800 !important;
   letter-spacing: -.01em !important; line-height: 1 !important;
 }
