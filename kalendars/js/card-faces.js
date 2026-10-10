@@ -5,7 +5,7 @@
   var M = window.MinkaCardFaceModel;
   var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis', moon: 'Saule / mēness' };
   var selectors = { hours: '.mk-mid-hours', name: '.mk-mid-name-wrap', initials: '.mk-mid-initials', month: '.mk-mid-month', coffee: '.mk-mid-coffee', fatigue: '.mk-mid-meta-fat', remaining: '.mk-mid-meta-time', emoji: '.mk-mid-meta-emoji', clock: '.mk-wf-clock', moon: '.mk-wf-moon' };
-  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither', 'Gameboy', 'Termostats', 'Punkti', 'Līnijas', 'Biļete', 'Žurnāls', 'Pulkstenis', 'Akmens'];
+  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither', 'Gameboy', 'Termostats', 'Punkti', 'Līnijas', 'Biļete', 'Žurnāls', 'Pulkstenis', 'Akmens', 'M3'];
   var metals = [
     ['Sudrabs','#d7d9de'],['Dabiskais titāns','#b7afa0'],['Melnais titāns','#484a50'],['Rozā zelts','#d9b3a7'],
     ['Zelts','#c7ac7c'],['Slānekļa titāns','#71747a'],['Tuksneša titāns','#c4a98d'],['Baltais titāns','#e7e5de'],
@@ -494,6 +494,15 @@
   }
   /* The drawn parts of the newer faces: static SVG, drawn once per face change,
      in currentColor (the accent/ink) — no ids, no filters, no animation. */
+  /* M3 face: fatigue is a ring gauge; its value comes from the text ("8% ↘"),
+     read once per paint into --m3-fat (0–100) for the ring's conic fill. */
+  function paintM3Gauge(card, on) {
+    var el = card.querySelector('[data-wf-part="fatigue"]');
+    if (!el) return;
+    if (!on) { el.style.removeProperty('--m3-fat'); return; }
+    var m = /(\d{1,3})\s*%/.exec(el.textContent || '');
+    el.style.setProperty('--m3-fat', m ? Math.min(100, +m[1]) : 0);
+  }
   function faceArt(face) {
     if (face === 'orbit') return orbitArt();
     var a = '';
@@ -853,6 +862,7 @@
     paintBitDigits(card,config.face==='winamp'?0:config.finish);
     paintTemp(card,config.face==='thermo');
     paintHands(card,config.face==='analog');
+    paintM3Gauge(card,config.face==='material');
     setDial(card,skin,config);
     // Dither face (and the app-wide "dither images" option): the background is re-dithered off-thread-ish, once per image.
     if(window.MinkaDither&&window.MinkaDither.skin)window.MinkaDither.skin(card);

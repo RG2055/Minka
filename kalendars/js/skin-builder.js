@@ -25,7 +25,7 @@
   ];
   var FX = [['', 'Nav'], ['dither', 'Dither'], ['ditherpaper', 'Papīrs'], ['halftone', 'Rastrs'], ['duotone', 'Duotons'], ['led', 'LED'], ['lines', 'Līnijas'], ['ascii', 'ASCII'],
     ['mosaic', 'Mozaīka'], ['bricks', 'Kluči'], ['pixelate', 'Pikseļi'], ['cmyk', 'CMYK'], ['riso', 'Riso'], ['posterize', 'Posters'], ['heatmap', 'Siltums'], ['focus', 'Fokuss'], ['split', 'Puse']];
-  var FACES = [['classic', 'Klasisks'], ['photo', 'Foto'], ['orbit', 'Orbīta'], ['modular', 'Moduļi'], ['dither', 'Dither'], ['gameboy', 'Gameboy'], ['thermo', 'Termostats'], ['dots', 'Punkti'], ['lines', 'Līnijas'], ['ticket', 'Biļete'], ['cover', 'Žurnāls'], ['analog', 'Pulkstenis'], ['stone', 'Akmens']];
+  var FACES = [['classic', 'Klasisks'], ['photo', 'Foto'], ['orbit', 'Orbīta'], ['modular', 'Moduļi'], ['dither', 'Dither'], ['gameboy', 'Gameboy'], ['thermo', 'Termostats'], ['dots', 'Punkti'], ['lines', 'Līnijas'], ['ticket', 'Biļete'], ['cover', 'Žurnāls'], ['analog', 'Pulkstenis'], ['stone', 'Akmens'], ['material', 'M3']];
   var PARTS = [['name', 'Vārds'], ['month', 'Mēnesis'], ['fatigue', 'Nogurums'], ['remaining', 'Taimeris'], ['coffee', 'Kafija'], ['emoji', 'Emoji'], ['clock', 'Pulkstenis'], ['initials', 'Iniciāļi'], ['moon', 'Simbols']];
   var ESSENTIAL = { hours: 1, name: 1, month: 1, remaining: 1 };
   var FINISHES = ['Stikls', 'Metāls', 'Tīrs', 'Plūsma', 'Perlamutrs', 'Neons'];
