@@ -356,9 +356,9 @@ body.stars-active #stars-overlay{display:block;}
   content:'';
   position:absolute;
   inset:0;
-  background:
-    radial-gradient(circle at 78% 16%, rgba(180,210,255,.10), transparent 18%),
-    linear-gradient(180deg, transparent 45%, rgba(255,170,120,.04) 100%);
+  /* only the soft light up top: a warm tint that grew towards the bottom stopped
+     at the calendar's edge, a line across the page right above the dock */
+  background: radial-gradient(circle at 78% 16%, rgba(180,210,255,.10), transparent 18%);
 }
 .stars-layer{
   position:absolute;

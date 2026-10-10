@@ -3002,6 +3002,13 @@ html:not(.minka-rad):not(.has-wallpaper-bg) body::before {
     radial-gradient(1100px 540px at 50% -12%, color-mix(in srgb, var(--hxr-surface, #000) 62%, transparent), transparent 68%),
     radial-gradient(900px 440px at 50% 112%, color-mix(in srgb, var(--hxr-accent, #000) 6%, transparent), transparent 60%) !important;
 }
+/* On the tinted page the calendar has no glass panel of its own: its tone, sheen,
+   frame and shadow ended in a straight line across the page above the dock (seen
+   at night against the stars). The calendar and the dock share the one page. */
+html:not(.minka-rad):not(.has-wallpaper-bg) body #calendarEmbed {
+  background: transparent !important; border-color: transparent !important; box-shadow: none !important;
+}
+html:not(.minka-rad):not(.has-wallpaper-bg) body #calendarEmbed::before {display: none !important;}
 /* ═══ Dock M3 (2026-10): a floating toolbar in the M3 style, kept plain.
    Each item: the icon with its label under it. States are colour only, on
    the effects curve (no overshoot, M3: colour and opacity never bounce):
