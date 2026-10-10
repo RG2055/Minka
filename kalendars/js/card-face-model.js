@@ -59,7 +59,7 @@
     // gauge, the emoji in a cookie, the coffee in a soft diamond.
     // Emoji pulkstenis: twelve faces round the dial in place of the hours, light hands
     // in the card's colour; the name and the hours small inside the ring.
-    emojiclock: [[50,74,30,1],[50,29,44,1],[18,81,92,0],[33,50,46,0],[50,50,46,0],[67,50,46,0],[50,96,60,0],[50,50,50,0],[62,86,56,0]],
+    emojiclock: [[50,74,30,1],[50,27,44,1],[18,81,92,0],[33,50,46,0],[50,50,46,0],[67,50,46,0],[50,96,60,0],[50,41,40,1],[62,86,56,0]],
     material: [[79,54,100,1],[36,16,92,1],[18,81,92,0],[34,38,80,1],[22,85,76,1],[50,70,80,1],[50,96,60,0],[21,61,80,1],[62,86,56,0]]
   };
   var moonLayouts={classic:[15,16,70,1],photo:[16,32,70,1],orbit:[50,16,64,1],modular:[16,36,70,1],winamp:[26,15,95,1],dither:[15,16,70,1],gameboy:[17,42,66,1],thermo:[62,15,62,1],dots:[50,15,60,1],lines:[16,40,64,1],ticket:[13,52,56,0],cover:[14,58,54,1],analog:[50,15,60,0],stone:[15,16,70,1],material:[60,8,50,0],emojiclock:[60,8,50,0]};

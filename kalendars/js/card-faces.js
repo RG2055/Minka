@@ -494,10 +494,11 @@
   }
   /* The drawn parts of the newer faces: static SVG, drawn once per face change,
      in currentColor (the accent/ink) — no ids, no filters, no animation. */
-  /* M3 face: fatigue is an M3 Expressive circular progress round its value, in the
-     proportions of the M3E component (shadcn-m3e circular-progress): stroke 4 at
-     radius 20, a wavy indicator of amplitude 1.6 / wavelength 15 at radius 24 (≈10
-     waves round), round caps, a 4dp gap plus the caps before the track. The value comes from the text ("8% ↘");
+  /* M3 face: fatigue is an M3 Expressive wavy circular progress round its value, in
+     the proportions of the M3E component (shadcn-m3e circular-progress): stroke 4 at
+     radius 20, waves of amplitude 1.6 / wavelength 15 at radius 24 (≈10 round),
+     round caps. The whole ring is wavy (the track in the dark tone too), the value
+     the light part of it, wavy at any length. The value comes from the text ("8% ↘");
      the ring is redrawn only when the value changes. */
   function paintM3Gauge(card, on) {
     var el = card.querySelector('[data-wf-part="fatigue"]');
@@ -513,17 +514,18 @@
     var R = 40, end = v * 3.6, gap = 23, body = '';
     function ap(deg) { var a = deg * Math.PI / 180; return (50 + R * Math.sin(a)).toFixed(2) + ' ' + (50 - R * Math.cos(a)).toFixed(2); }
     function arcD(a0, a1) { return 'M' + ap(a0) + 'A' + R + ' ' + R + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 1 ' + ap(a1); }
-    function waveD(a0, a1) {
+    // full: a closed ring, the wave all the way round (no easing in at the ends)
+    function waveD(a0, a1, full) {
       var d = '', steps = Math.max(8, Math.ceil((a1 - a0) / 2.5));
       for (var i = 0; i <= steps; i++) {
-        var a = a0 + (a1 - a0) * i / steps, k = Math.min(1, (a - a0) / 10, (a1 - a) / 10), r = R + 2.7 * k * Math.sin(a / 360 * 10 * Math.PI * 2), t = a * Math.PI / 180;
+        var a = a0 + (a1 - a0) * i / steps, k = full ? 1 : Math.min(1, (a - a0) / 6, (a1 - a) / 6), r = R + 2.7 * k * Math.sin(a / 360 * 10 * Math.PI * 2), t = a * Math.PI / 180;
         d += (i ? 'L' : 'M') + (50 + r * Math.sin(t)).toFixed(2) + ' ' + (50 - r * Math.cos(t)).toFixed(2);
       }
       return d;
     }
-    if (v <= 0) body = '<circle class="trk" cx="50" cy="50" r="' + R + '"/>';
-    else if (end >= 360 - gap) body = '<path class="ind" d="' + waveD(0, 359.9) + '"/>';
-    else body = '<path class="trk" d="' + arcD(end + gap, 360 - gap) + '"/><path class="ind" d="' + (end > 30 ? waveD(0, end) : arcD(0, end)) + '"/>';
+    if (v <= 0) body = '<path class="trk" d="' + waveD(0, 359.9, 1) + '"/>';
+    else if (end >= 360 - gap) body = '<path class="ind" d="' + waveD(0, 359.9, 1) + '"/>';
+    else body = '<path class="trk" d="' + waveD(end + gap, 360 - gap) + '"/><path class="ind" d="' + (end >= 12 ? waveD(0, end) : arcD(0, end)) + '"/>';
     var svg = '<svg class="m3g" data-v="' + v + '" viewBox="0 0 100 100" aria-hidden="true">' + body + '</svg>';
     if (old) old.outerHTML = svg; else el.insertAdjacentHTML('afterbegin', svg);
   }

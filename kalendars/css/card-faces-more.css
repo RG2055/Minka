@@ -208,7 +208,7 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"]:not([hidden]) {
   display: grid !important; place-items: center !important; place-content: center !important; padding: 0 !important; aspect-ratio: 1;
   width: 25cqw !important; height: 25cqw !important; min-width: 0 !important; box-sizing: border-box !important; border-radius: 50% !important;
-  background: transparent !important;
+  background: radial-gradient(circle closest-side, var(--m3-dark) 72%, transparent 73%) !important;
 }
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g {position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none;}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g .trk {fill: none; stroke: var(--m3-chip); stroke-width: 8; stroke-linecap: round;}
