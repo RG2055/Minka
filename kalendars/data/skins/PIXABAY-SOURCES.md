@@ -60,3 +60,13 @@ Content License: https://pixabay.com/service/license-summary/
 - `skin-spilgti-tulpes.webp` — https://pixabay.com/photos/tulips-tulip-field-tulip-blossom-3359902/
 
 Grain gradients `skin-grain-*.webp` are drawn by scripts/build-grain-gradients.py (no source photo).
+
+## Akmens (2026-10-10, 640x360)
+
+- `skin-akmens-travertins s42.webp` — 
+- `skin-akmens-slaneklis s18.webp` — 
+- `skin-akmens-granits s51.webp` — 
+- `skin-akmens-smilsakmens s63.webp` — 
+- `skin-akmens-smilts s01.webp` — 
+- `skin-akmens-iezis s14.webp` — 
+- `../../assets/stone/granite-chip.webp` (Akmens layout chips) — https://pixabay.com/photos/granite-wall-stone-texture-rock-4953749/

@@ -184,7 +184,7 @@ function validCardFacePart(part) {
   const fonted = a.length === 24 && a[0] === "6";
   const plated = (a.length === 23 && a[0] === "5") || fonted;
   const colored = (a.length === 22 && a[0] === "4") || plated;
-  if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2") || coffee || colored) || !/^[0-9]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
+  if (!((a.length === 17 && a[0] === "1") || (a.length === 18 && a[0] === "2") || coffee || colored) || !/^[0-9a-d]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return false;
   if ((coffee || colored) && (!/^[01]$/.test(a[18]) || !/^[0-2]$/.test(a[19]))) return false;
   if (plated && !/^[0-4]{10}$/.test(a[22])) return false;
   if (fonted && !/^[0xcnzrbkadlpe]{10}$/.test(a[23])) return false;

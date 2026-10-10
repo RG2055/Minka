@@ -1,7 +1,8 @@
 /* Compact, versioned appearance data. No DOM, timers, or network work. */
 (function (root) {
   'use strict';
-  var faces = ['classic', 'photo', 'orbit', 'modular', 'winamp', 'dither', 'gameboy', 'thermo', 'dots', 'lines'];
+  // Stored by index: 0-9, then a letter (base 36) for the faces after the tenth.
+  var faces = ['classic', 'photo', 'orbit', 'modular', 'winamp', 'dither', 'gameboy', 'thermo', 'dots', 'lines', 'ticket', 'cover', 'analog', 'stone'];
   var parts = ['hours', 'name', 'initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock', 'moon'];
   // Elements that sit on a plate (the watch's complications), and the plate each can
   // take: 0 as the card, 1 dark, 2 clear (no plate), 3 tinted, 4 light.
@@ -39,14 +40,24 @@
     dots:    [[50,45,92,1],[50,75,76,1],[16,12,100,0],[80,16,60,1],[22,88,70,1],[24,16,64,1],[50,89,74,1],[80,88,70,1],[50,20,100,0]],
     // Līnijas: line drawings on paper, the reading to the right of the circles; the circles stay
     // clear — the cup leads the bottom row, the emoji sits in the top row between name and hours.
-    lines:   [[62,50,90,1],[34,14,78,1],[16,12,100,0],[82,17,60,1],[16,85,70,1],[38,85,66,1],[68,85,68,1],[65,15,60,1],[50,20,100,0]]
+    lines:   [[62,50,90,1],[34,14,78,1],[16,12,100,0],[82,17,60,1],[16,85,70,1],[38,85,66,1],[68,85,68,1],[65,15,60,1],[50,20,100,0]],
+    // Biļete: the ticket's main part on the left, the tear-off stub (right of the
+    // perforation at 72 %) holds the month's hours and the shift time; a barcode under them.
+    ticket:  [[37,51,84,1],[37,16,72,1],[16,12,100,0],[86,18,52,1],[13,86,66,1],[40,86,62,1],[86,42,56,1],[86,64,52,1],[62,86,56,0]],
+    // Žurnāla vāks: the name as the masthead across the top, the number small at the bottom left.
+    cover:   [[78,60,54,1],[50,20,170,1],[16,12,100,0],[79,90,52,1],[86,38,58,1],[44,90,54,1],[79,77,58,1],[14,40,56,1],[62,86,56,0]],
+    // Pulkstenis: an analog watch dial; the name above the centre, the hours and the
+    // shift time as complications left and right, the number small at the bottom.
+    analog:  [[50,75,42,1],[50,31,56,1],[16,12,100,0],[25,51,50,1],[15,86,58,1],[85,86,58,1],[75,51,54,1],[85,15,54,1],[62,86,56,0]],
+    // Akmens: the classic grid on a stone slab (card-faces-more.css).
+    stone:   [[50,50,90,1],[45,15,80,1],[16,12,100,0],[79,16,66,1],[13,50,80,1],[29,86,80,1],[67,86,84,1],[87,50,80,1],[50,20,100,0]]
   };
-  var moonLayouts={classic:[15,16,70,1],photo:[16,32,70,1],orbit:[50,16,64,1],modular:[16,36,70,1],winamp:[26,15,95,1],dither:[15,16,70,1],gameboy:[17,42,66,1],thermo:[62,15,62,1],dots:[50,15,60,1],lines:[16,40,64,1]};
+  var moonLayouts={classic:[15,16,70,1],photo:[16,32,70,1],orbit:[50,16,64,1],modular:[16,36,70,1],winamp:[26,15,95,1],dither:[15,16,70,1],gameboy:[17,42,66,1],thermo:[62,15,62,1],dots:[50,15,60,1],lines:[16,40,64,1],ticket:[62,86,56,1],cover:[14,58,54,1],analog:[15,15,54,1],stone:[15,16,70,1]};
   // Default sun/moon spots saved by earlier versions: recognised as "not moved by the person".
   var OLD_MOONS=[[14,68,100,1],[14,76,100,1],[82,39,90,1],[57,12,80,1],[57,11,75,1],[17,34,90,1],[16,34,78,1],[12,13,70,1],[50,13,70,1],[86,40,70,1],[60,12,62,1]];
   /* Faces that bring their own palette (ink, frame, digits): taken when a card
      switches to them, so a light accent never ends up on a light LCD or paper. */
-  var looks={winamp:{tint:'9dff4a'},gameboy:{tint:'2f4a1f',metal:7,finish:7},thermo:{tint:'8fd8ff',metal:9,finish:8},dots:{tint:'1f1f24',metal:3,finish:6},lines:{tint:'1f1c17',metal:10,finish:2}};
+  var looks={winamp:{tint:'9dff4a'},gameboy:{tint:'2f4a1f',metal:7,finish:7},thermo:{tint:'8fd8ff',metal:9,finish:8},dots:{tint:'1f1f24',metal:3,finish:6},analog:{tint:'ff9f0a',metal:0,finish:2},stone:{finish:2},lines:{tint:'1f1c17',metal:10,finish:2}};
   function bounded(n, min, max, fallback) {
     n = Number(n);
     return Number.isFinite(n) ? Math.round(Math.min(max, Math.max(min, n))) : fallback;
@@ -132,7 +143,7 @@
     var plated=fonted||parts.some(function (key) { return v.plates[key]; });
     var colored=plated||parts.some(function (key) { return v.colors[key]; })||v.fullTintMode>0;
     var extra=colored||v.coffeeExplicit||v.coffeeMode!==1||v.coffeeContrast!==0;
-    return [fonted?6:plated?5:colored?4:extra?3:2, faces.indexOf(v.face), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
+    return [fonted?6:plated?5:colored?4:extra?3:2, faces.indexOf(v.face).toString(36), v.tint, v.metal, v.finish, v.imageX, v.imageY, v.imageZoom]
       .concat(parts.map(function (key) { return v.parts[key].join(','); }))
       .concat(extra?[v.coffeeMode,v.coffeeContrast]:[])
       .concat(colored?[parts.map(function (key) { return v.colors[key]||'-'; }).join(','),[v.fullTintMode,v.fullTintHue,v.fullTintIntensity,v.fullTintAuto,v.fullTintScheme].join(',')]:[])
@@ -146,9 +157,9 @@
     var fonted=a.length===24&&a[0]==='6';
     var plated=(a.length===23&&a[0]==='5')||fonted;
     var colored=(a.length===22&&a[0]==='4')||plated;
-    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-9]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
+    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-9a-d]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
-    var value = { face: faces[+a[1]], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
+    var value = { face: faces[parseInt(a[1],36)], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
     if(coffee||colored){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];
       // A stored coffee setting counts as chosen (colour-only looks store the default too).
       value.coffeeExplicit=a[18]==='1'&&(coffee||a[19]!=='0')?1:0;}

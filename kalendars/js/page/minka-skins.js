@@ -41,6 +41,8 @@
     { label: 'Pilsēta', ids: ['gnome-curvaturingster-d','gnome-map-d','1029','1033','lv-riga-nakti','lv-vecriga','pils-jugends-seja','pils-jugends-fasade','pils-balta-forma','pils-betona-loki','pils-apla-logs','pils-zelta-kupols','pils-vecriga-augsa','pils-nakts-gaismas'] },
     { label: 'Melnbalti',          ids: ['gnome-curvy-d','open-bw','47','58','daba-pienene','lv-eglu-migla','mb-balkoni','mb-vartu-klusums','mb-spirale','mb-ziedi'] },
     { label: 'Barbie rozā',        ids: ['gnome-dithered-sun-l','open-barbie','bb2','bb3','bb4','bd1','bd2','bd3','grain-roze','grain-zemene','grain-konfekte','grain-flamingo'] },
+    // Real stone photographs (Pixabay), the slabs for the Akmens layout.
+    { label: 'Akmens',             ids: ['akmens-travertins','akmens-slaneklis','akmens-granits','akmens-smilsakmens','akmens-smilts','akmens-iezis'] },
     { label: 'Dither',             ids: ['dither-tors','dither-lode','dither-kapas','dither-lentes','dither-rezgis','dither-signals','dither-papirs','art-partenons','art-kolonnas','art-piramidas','art-sfinksa','art-herakls','art-atena','art-kariatides','art-apolons','art-domatajs','art-konkordija','art-herkuls'] },
     { label: 'Kaķi',               ids: ['user-neon-alley-cat','open-cat','cat-01','cat-02','cat-03','cat-04','cat-05','cat-06','cat-07','cat-08','cat-09','cat-10','cat-11','cat-12','cat-13','cat-14','user-black-cat'] }
   ];
@@ -129,6 +131,8 @@
     'gaisma-stari': 'Gaismas stari', 'gaisma-ledus': 'Ledus stikls', 'gaisma-ella': 'Eļļas burbuļi',
     'ilu-meness': 'Mēness jūrā', 'ilu-ziemas-koki': 'Ziemas koki', 'ilu-kalni': 'Rožainie kalni', 'ilu-ausma': 'Zaļā ausma',
     'grain-kapu-ausma': 'Kāpu ausma', 'grain-mints': 'Piparmētru migla', 'grain-persiks': 'Persiku migla', 'grain-citrons': 'Citronu gaisma', 'grain-grafits': 'Grafīts', 'grain-varss': 'Varš', 'grain-sudrabs': 'Sudrabs', 'grain-terauds': 'Tērauds', 'grain-misins': 'Misiņš', 'grain-roze': 'Rozā', 'grain-zemene': 'Zemene', 'grain-konfekte': 'Konfekte', 'grain-flamingo': 'Flamingo', 'grain-okeans': 'Okeāna dzīles', 'grain-ogles': 'Ogles', 'grain-sfumato': 'Sfumato', 'pils-jugends-seja': 'Jūgendstila seja', 'pils-jugends-fasade': 'Jūgendstila fasāde', 'pils-balta-forma': 'Baltā forma', 'pils-betona-loki': 'Betona loki', 'pils-apla-logs': 'Apaļais logs', 'pils-zelta-kupols': 'Zelta kupols', 'pils-vecriga-augsa': 'Vecrīga no augšas', 'pils-nakts-gaismas': 'Nakts gaismas', 'mb-balkoni': 'Balkoni', 'mb-vartu-klusums': 'Vārti ūdenī', 'mb-spirale': 'Spirāle', 'mb-ziedi': 'Baltie ziedi', 'mili-ezis': 'Ezis', 'mili-lapsens': 'Lapsēns', 'mili-zakis': 'Zaķēns', 'mili-calis': 'Cālis', 'mili-vavere': 'Vāvere', 'mili-pucite': 'Pūcēns', 'spilgti-majas': 'Krāsainās mājas', 'spilgti-lietussargi': 'Lietussargi', 'spilgti-tulpes': 'Tulpes',
+    'akmens-travertins': 'Travertīns', 'akmens-slaneklis': 'Slāneklis', 'akmens-granits': 'Granīts', 'akmens-smilsakmens': 'Smilšakmens',
+    'akmens-smilts': 'Smilšu akmens', 'akmens-iezis': 'Iezis',
     'art-partenons': 'Partenons', 'art-kolonnas': 'Jonu kolonna', 'art-piramidas': 'Piramīda', 'art-sfinksa': 'Sfinksa', 'art-herakls': 'Hērakls', 'art-atena': 'Atēna', 'art-kariatides': 'Kariatīdes', 'art-apolons': 'Apolons', 'art-domatajs': 'Domātājs', 'art-konkordija': 'Konkordijas templis', 'art-herkuls': 'Hērakls naktī'
   };
   var MATERIALS = window.MinkaCardMaterials || [];
@@ -273,6 +277,21 @@
     window.MinkaCardFaceModel.plateParts.forEach(function(k){face.plates[k]=dark?1:4;});
     PRESETS.push({label:p[0],group:'dithart',isNew:true,bg:{t:'img',id:'art-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:dark?'244,242,236':'20,20,22',face:face,depth:false,sw:'url(data/skins/skin-art-'+p[1]+'.webp)'});
   });
+  // The newer layouts, each on a picture that suits it: [label, face, picture, number, text, depth].
+  [['Biļete','ticket','grain-persiks','196,65,15','28,22,20'],['Biļete · Lapsēns','ticket','mili-lapsens','255,214,170','250,246,240'],
+   ['Žurnāla vāks','cover','photo-fox','244,242,236','250,248,244',1],['Vāks · Magnolija','cover','photo-magnolia','246,214,222','252,246,248',1],
+   ['Pulkstenis','analog','', '255,159,10','244,244,246'],
+   ['Akmens · Travertīns','stone','akmens-travertins','70,58,46','64,52,40'],['Akmens · Slāneklis','stone','akmens-slaneklis','228,224,216','232,228,220'],
+   ['Akmens · Smilšakmens','stone','akmens-smilsakmens','255,240,224','255,244,232']].forEach(function(p){
+    var face=window.MinkaCardFaceModel.preset(p[1]);
+    face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
+    face.tint=p[3].split(',').map(function(v){return ('0'+(+v).toString(16)).slice(-2);}).join('');
+    // Dark text on a light picture: the chips get light plates so their values read.
+    if(p[4].split(',').reduce(function(a,v){return a+(+v);},0)<300)window.MinkaCardFaceModel.plateParts.forEach(function(k){face.plates[k]=4;});
+    var material=p[2]&&window.MinkaFindCardMaterial(p[2]);
+    var sw=p[2]?'url('+(material?material.path:'data/skins/skin-'+p[2]+'.webp')+')'+(material&&material.background?','+material.background:''):'radial-gradient(circle at 50% 42%,#1d1f25,#050506)';
+    PRESETS.push({label:p[0],group:'layouts',isNew:true,bg:p[2]?{t:'img',id:p[2]}:{t:'hue',rgb:'10,10,12'},num:p[3],na:'1',txt:p[4],face:face,depth:p[5]?undefined:false,sw:sw});
+  });
   // Plakāts: collector-card look — the picture in a window, a big name below it.
   [['Plakāts · Seja','aesthetic-face','f67a18'],['Plakāts · Kaķis','cat-06','f67a18'],['Plakāts · Ķivere','aesthetic-helmet','64d2ff'],['Plakāts · Kalni','1036','f5b73f']].forEach(function(p){
     var face=window.MinkaCardFaceModel.preset('classic');
@@ -330,11 +349,11 @@
   /* Show the finest first: photo compositions, then posters and picture effects;
      the plain number looks come last. (Sorted once, before any button exists.) */
   (function(){
-    var rank={dithart:-2,vapor:-1,wildlife:0,botanical:0,ocean:0,fx:1,landscape:1,poster:2,dither:3,collection:4,numbers:5};
+    var rank={layouts:-3,dithart:-2,vapor:-1,wildlife:0,botanical:0,ocean:0,fx:1,landscape:1,poster:2,dither:3,collection:4,numbers:5};
     PRESETS=PRESETS.map(function(p,i){return [p,i];}).sort(function(a,b){return ((rank[a[0].group]==null?4:rank[a[0].group])-(rank[b[0].group]==null?4:rank[b[0].group]))||a[1]-b[1];}).map(function(x){return x[0];});
   })();
   var DITHER_INKS=[['eceae4','Balta'],['64d2ff','Ledus'],['23cdcf','Ciāna'],['1fe091','Zaļa'],['f5b73f','Dzintars'],['ff8a5c','Oranža'],['ff5c5c','Sarkana'],['2554a0','Tinte'],['141414','Melna']];
-  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['dithart','Dither māksla'],['vapor','Vaporwave'],['fx','Efekti'],['poster','Plakāti'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
+  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['dithart','Dither māksla'],['layouts','Jauni izkārtojumi'],['vapor','Vaporwave'],['fx','Efekti'],['poster','Plakāti'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
   function presetInGroup(p,group){return group==='all'||(group==='new'?p.isNew:p.group===group);}
 
   /* Every card render asks for its skin: parse the stored map once per change,

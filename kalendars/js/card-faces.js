@@ -5,7 +5,7 @@
   var M = window.MinkaCardFaceModel;
   var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis', moon: 'Saule / mēness' };
   var selectors = { hours: '.mk-mid-hours', name: '.mk-mid-name-wrap', initials: '.mk-mid-initials', month: '.mk-mid-month', coffee: '.mk-mid-coffee', fatigue: '.mk-mid-meta-fat', remaining: '.mk-mid-meta-time', emoji: '.mk-mid-meta-emoji', clock: '.mk-wf-clock', moon: '.mk-wf-moon' };
-  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither', 'Gameboy', 'Termostats', 'Punkti', 'Līnijas'];
+  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither', 'Gameboy', 'Termostats', 'Punkti', 'Līnijas', 'Biļete', 'Žurnāls', 'Pulkstenis', 'Akmens'];
   var metals = [
     ['Sudrabs','#d7d9de'],['Dabiskais titāns','#b7afa0'],['Melnais titāns','#484a50'],['Rozā zelts','#d9b3a7'],
     ['Zelts','#c7ac7c'],['Slānekļa titāns','#71747a'],['Tuksneša titāns','#c4a98d'],['Baltais titāns','#e7e5de'],
@@ -462,13 +462,36 @@
     clearTimeout(clockTimer); clockTimer = 0;
     if (document.hidden) return;
     var nodes = document.querySelectorAll('.mk-watch-face .mk-wf-clock:not([hidden])');
-    if (!nodes.length) return;
+    var hands = document.querySelectorAll('.mk-watch-face > .mk-wf-hands');
+    hands.forEach(setHands);
+    if (!nodes.length && !hands.length) return;
     var time = new Intl.DateTimeFormat('lv-LV', { timeZone: 'Europe/Riga', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
     nodes.forEach(function (el) { if (el.textContent !== time) el.textContent = time; });
     document.querySelectorAll('.card.wf-winamp .mk-wa-pos').forEach(function (el) { el.style.setProperty('--p', waProgress(el.closest('.card')).toFixed(3)); });
     clockTimer = setTimeout(paintClock, 60000 - Date.now() % 60000 + 25);
   }
   document.addEventListener('visibilitychange', paintClock);
+  /* Pulkstenis: hour and minute hands set once a minute (with the shared clock), the
+     seconds hand turns by itself in CSS steps (one transform, on the compositor),
+     started at the right second. */
+  function rigaNow() {
+    var p = {}; new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Riga', hour: 'numeric', minute: 'numeric', second: 'numeric', hourCycle: 'h23' })
+      .formatToParts(new Date()).forEach(function (x) { p[x.type] = +x.value; });
+    return p;
+  }
+  function setHands(el) {
+    var t = rigaNow();
+    el.style.setProperty('--wf-h', ((t.hour % 12) * 30 + t.minute * .5) + 'deg');
+    el.style.setProperty('--wf-m', (t.minute * 6 + t.second * .1) + 'deg');
+    el.style.setProperty('--wf-s0', (-t.second) + 's');
+  }
+  function paintHands(card, on) {
+    var el = card.querySelector(':scope > .mk-wf-hands');
+    if (!on) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement('span'); el.className = 'mk-wf-hands'; el.setAttribute('aria-hidden', 'true'); el.innerHTML = '<i class="h"></i><i class="m"></i><i class="s"></i><b></b>'; card.append(el); }
+    setHands(el);
+    if (!clockTimer) paintClock();
+  }
   /* The drawn parts of the newer faces: static SVG, drawn once per face change,
      in currentColor (the accent/ink) — no ids, no filters, no animation. */
   function faceArt(face) {
@@ -497,6 +520,22 @@
         + '<g stroke="currentColor" stroke-width=".7" stroke-linecap="round" stroke-opacity=".75"><line x1="22" y1="44" x2="26" y2="44"/><line x1="22" y1="53.5" x2="26" y2="53.5"/><line x1="24" y1="51.5" x2="24" y2="55.5"/></g>'
         + '<circle cx="87" cy="86" r="5.5" fill="#e5602a" fill-opacity=".92"/>';
       return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + a + '</svg>';
+    }
+    if (face === 'ticket') {
+      // a tinted tear-off stub, the perforation, a barcode at its foot
+      a += '<rect x="72" y="0" width="28" height="100" fill="currentColor" fill-opacity=".14"/>'
+        + '<line x1="72" y1="9" x2="72" y2="91" stroke="currentColor" stroke-opacity=".7" stroke-width=".6" stroke-dasharray="1.6 1.8" vector-effect="non-scaling-stroke"/>';
+      var bars = [1.2, .5, .8, 1.6, .5, 1, .5, 1.4, .7, .5, 1.1, .6, 1.5, .5, .9], bx = 77.5;
+      bars.forEach(function (w, i) { if (bx + w < 95.5) a += '<rect x="' + bx.toFixed(2) + '" y="78" width="' + w + '" height="12" fill="currentColor" fill-opacity=".8"/>'; bx += w + (i % 3 ? .7 : 1.1); });
+      return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + a + '</svg>';
+    }
+    if (face === 'analog') {
+      // the dial: sixty minute ticks, the hour ticks long and bright
+      for (var m = 0; m < 60; m++) {
+        var an = m * 6 * Math.PI / 180, hr = m % 5 === 0, r0 = hr ? 40 : 43.5, r1 = 46.5;
+        a += '<line x1="' + (50 + r0 * Math.sin(an)).toFixed(2) + '" y1="' + (50 - r0 * Math.cos(an)).toFixed(2) + '" x2="' + (50 + r1 * Math.sin(an)).toFixed(2) + '" y2="' + (50 - r1 * Math.cos(an)).toFixed(2) + '" stroke="' + (hr ? '#f4f4f6' : '#8a8d96') + '" stroke-width="' + (hr ? 1.4 : .5) + '" stroke-linecap="round"/>';
+      }
+      return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' + a + '</svg>';
     }
     if (face === 'gameboy') {
       // the handheld: a dark frame round the LCD, the power light, the speaker slots
@@ -725,7 +764,7 @@
         delete el.dataset.wfPart; el.hidden = false; el.classList.remove('wf-colored'); el.removeAttribute('data-wf-free');
         ['--wf-x','--wf-y','--wf-scale','--wf-tint','--mk-txt-color'].forEach(function(p) { el.style.removeProperty(p); });
       });
-      card.querySelectorAll('.mk-wf-art,.mk-wf-clock,.mk-wf-moon,.mk-wf-effects,.mk-wf-depth,.mk-wf-background').forEach(function(el) { el.remove(); });
+      card.querySelectorAll('.mk-wf-art,.mk-wf-clock,.mk-wf-moon,.mk-wf-effects,.mk-wf-depth,.mk-wf-background,.mk-wf-hands').forEach(function(el) { el.remove(); });
       delete card.dataset.fullTintPalette;delete card.dataset.fullTint;delete card.dataset.fullTintScheme;['--wf-full-tint-hue','--wf-full-tint-sat'].forEach(function(p){card.style.removeProperty(p);});
       clearWinamp(card);
       var originalEmoji=card.querySelector('.mk-mid-bg-emoji');if(originalEmoji)originalEmoji.hidden=false;
@@ -804,6 +843,7 @@
     if(config.face==='winamp')applyWinamp(card);else clearWinamp(card);
     paintBitDigits(card,config.face==='winamp'?0:config.finish);
     paintTemp(card,config.face==='thermo');
+    paintHands(card,config.face==='analog');
     setDial(card,skin,config);
     // Dither face (and the app-wide "dither images" option): the background is re-dithered off-thread-ish, once per image.
     if(window.MinkaDither&&window.MinkaDither.skin)window.MinkaDither.skin(card);

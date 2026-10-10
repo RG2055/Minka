@@ -1,0 +1,101 @@
+/* Four more faces (card-face-model.js faces 10-13): Biļete, Žurnāls, Pulkstenis, Akmens.
+   Static paint only: masks, gradients, two small textures, one CSS-stepped seconds hand.
+   In layer mk-fx like the other newer faces (card-faces-x.css): a layered !important
+   beats the older unlayered rules. The cover's lettering sits in a later layer, so a
+   font the person picks (layer mk-nf) still wins over it. */
+@layer mk-fx {
+
+/* ---------- Biļete: a ticket with a tear-off stub ---------- */
+.card.mk-watch-face[data-watch-face="ticket"] {
+  -webkit-mask: radial-gradient(circle at 72% 0, #0000 8px, #000 8.5px) top / 100% 51% no-repeat, radial-gradient(circle at 72% 100%, #0000 8px, #000 8.5px) bottom / 100% 51% no-repeat;
+  mask: radial-gradient(circle at 72% 0, #0000 8px, #000 8.5px) top / 100% 51% no-repeat, radial-gradient(circle at 72% 100%, #0000 8px, #000 8.5px) bottom / 100% 51% no-repeat;
+  border-radius: 14% !important;
+}
+.card.mk-watch-face[data-watch-face="ticket"] > .mk-wf-art {z-index: 2 !important; color: var(--wf-tint);}
+.card.mk-watch-face[data-watch-face="ticket"] [data-wf-part="name"] .name-main {letter-spacing: .02em !important;}
+.card.mk-watch-face[data-watch-face="ticket"] :is(.mk-mid-meta-label,.mk-mid-month-label) {letter-spacing: .14em !important; text-transform: uppercase !important;}
+
+/* ---------- Žurnāls: the picture is the cover, the name its masthead ---------- */
+.card.mk-watch-face[data-watch-face="cover"] [data-wf-part="name"] {z-index: 2 !important; width: 92% !important;}
+.card.mk-watch-face[data-watch-face="cover"] [data-wf-part="name"] .name-sub {letter-spacing: .3em !important; text-transform: uppercase !important; opacity: .9 !important;}
+.card.mk-watch-face[data-watch-face="cover"]::after {border-color: #fff9 !important;}
+
+/* ---------- Pulkstenis: a dark watch dial with hands ---------- */
+.card.mk-watch-face[data-watch-face="analog"] {background: #050506 !important;}
+.card.mk-watch-face[data-watch-face="analog"]::before {background-image: radial-gradient(circle at 50% 42%, #1d1f25 0%, #0b0c0f 62%, #040405 100%) !important; background-size: 100% 100% !important;}
+.card.mk-watch-face[data-watch-face="analog"] > .mk-wf-background {display: none !important;}
+.card.mk-watch-face[data-watch-face="analog"] > .mk-wf-art svg {position: absolute; inset: 4%; width: 92%; height: 92%;}
+.card.mk-watch-face[data-watch-face="analog"] [data-wf-part] {text-shadow: none !important;}
+:is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="analog"] [data-wf-part="name"] .name-main {color: #f4f4f6 !important; -webkit-text-fill-color: #f4f4f6 !important; font-weight: 600 !important;}
+:is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="analog"] [data-wf-part="name"] .name-sub {color: #8a8d96 !important; -webkit-text-fill-color: #8a8d96 !important;}
+.card.mk-watch-face[data-watch-face="analog"] :is([data-wf-part="fatigue"],[data-wf-part="month"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]):not([data-wf-plate]):not(.wf-analog),
+.card.mk-watch-face[data-watch-face="analog"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
+  background: #ffffff0d !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important; backdrop-filter: none !important;
+}
+:is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="analog"] :is(.mk-mid-meta-label,.mk-mid-month-label) {color: var(--wf-tint) !important; -webkit-text-fill-color: var(--wf-tint) !important; opacity: 1 !important;}
+:is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="analog"] :is(.mk-mid-meta-value,.mk-mid-month-num,.mk-mid-meta-time) {color: #f4f4f6 !important; -webkit-text-fill-color: #f4f4f6 !important;}
+/* under the texts (z 4), over the dial art: the name and chips always read */
+.mk-wf-hands {position: absolute !important; inset: 0 !important; width: auto !important; height: auto !important; display: block !important; z-index: 3 !important; pointer-events: none;}
+.mk-wf-hands > i {position: absolute !important; display: block !important; left: 50%; bottom: 50%; transform-origin: 50% 100%; border-radius: 99px; translate: -50% 0; margin: 0 !important;}
+.mk-wf-hands > .h {width: 3.2%; height: 25%; background: #f4f4f6; rotate: var(--wf-h, 300deg); box-shadow: 0 0 0 1px #0006;}
+.mk-wf-hands > .m {width: 2.4%; height: 38%; background: #f4f4f6; rotate: var(--wf-m, 60deg); box-shadow: 0 0 0 1px #0006;}
+.mk-wf-hands > .s {width: .9%; height: 44%; background: var(--wf-tint, #ff9f0a); bottom: 43%; transform-origin: 50% 84%; rotate: 0deg;
+  animation: mk-wf-sec 60s steps(60) infinite; animation-delay: var(--wf-s0, 0s);}
+.mk-wf-hands > b {position: absolute; left: 50%; top: 50%; width: 4.4%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: var(--wf-tint, #ff9f0a); box-shadow: inset 0 0 0 2px #0a0a0c;}
+@keyframes mk-wf-sec {to {rotate: 360deg;}}
+@media (prefers-reduced-motion: reduce) {.mk-wf-hands > .s {display: none;}}
+
+/* ---------- Akmens: a stone slab, carved letters, pebble buttons ---------- */
+.card.mk-watch-face[data-watch-face="stone"] {
+  border-radius: 22% 25% 21% 24% / 24% 21% 25% 22% !important;
+  box-shadow: 0 2px 2px #201a1540, 0 7px 12px #201a1530 !important;
+}
+.card.mk-watch-face[data-watch-face="stone"]::before {background-image: var(--mk-skin-img, url("../data/skins/skin-akmens-travertins.webp")) !important; background-size: cover !important; background-position: center !important;}
+.card.mk-watch-face[data-watch-face="stone"]::after {
+  border: 0 !important; background: none !important;
+  box-shadow: inset 0 3px 2px #fff8e870, inset 3px 0 3px #ffffff2e, inset 0 -5px 4px #0000006e, inset -3px 0 4px #00000045 !important;
+}
+/* carved: a dark lower lip and a light upper one around every letter */
+.card.mk-watch-face[data-watch-face="stone"] :is([data-wf-part="name"] :is(.name-main,.name-sub),.mk-mid-hours) {
+  text-shadow: 0 1px 0 #fffaf08c, 0 -1px 0 #0000005c !important;
+}
+.card.mk-watch-face[data-watch-face="stone"] :is([data-wf-part="fatigue"],[data-wf-part="month"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]):not([data-wf-plate]):not(.wf-analog),
+.card.mk-watch-face[data-watch-face="stone"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
+  background: linear-gradient(#1c140970, #120c099c), url("../assets/stone/granite-chip.webp") center / 140px !important;
+  border: 0 !important; border-radius: 11px 13px 10px 12px !important; backdrop-filter: none !important;
+  box-shadow: inset 0 2px 1px #cfc0a570, inset 2px 0 2px #ffffff33, inset 0 -4px 3px #080605a3, inset -2px 0 3px #00000055, 0 2px 2px #201a1540, 0 6px 8px #201a1526 !important;
+}
+html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-watch-face[data-watch-face="stone"] :is([data-wf-part="fatigue"],[data-wf-part="month"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]):not([data-wf-plate]) :is(.mk-mid-meta-label,.mk-mid-meta-value,.mk-mid-month-num,.mk-mid-month-label,.mk-mid-meta-time,.mk-mid-timer,.val,span,b),
+html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-watch-face[data-watch-face="stone"] :is([data-wf-part="remaining"],[data-wf-part="clock"]):not([data-wf-plate]),
+html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-watch-face[data-watch-face="stone"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
+  color: #f6eee0 !important; -webkit-text-fill-color: #f6eee0 !important; text-shadow: 0 -1px 1px #080604, 0 1px 0 #ffffff44 !important;
+}
+
+/* ---------- the face picker's thumbnails ---------- */
+.wf-face-thumb:is(.wf-thumb-ticket,.wf-thumb-analog) i {position: absolute; inset: 0; border: 0; border-radius: 0; transform: none; opacity: 1;}
+.wf-face-thumb:is(.wf-thumb-ticket,.wf-thumb-analog) i svg {display: block; width: 100%; height: 100%;}
+.wf-face-thumb:is(.wf-thumb-ticket,.wf-thumb-analog) :is(b,small) {position: relative; z-index: 1;}
+.wf-thumb-ticket {-webkit-mask: radial-gradient(circle at 72% 0, #0000 5px, #000 5.5px) top / 100% 51% no-repeat, radial-gradient(circle at 72% 100%, #0000 5px, #000 5.5px) bottom / 100% 51% no-repeat;
+  mask: radial-gradient(circle at 72% 0, #0000 5px, #000 5.5px) top / 100% 51% no-repeat, radial-gradient(circle at 72% 100%, #0000 5px, #000 5.5px) bottom / 100% 51% no-repeat; border-radius: 14% !important;}
+.wf-thumb-ticket i {color: #f4f1ea;}
+.wf-thumb-ticket b {transform: translateX(-16%);}
+.wf-thumb-ticket small {transform: translateX(-24%);}
+.wf-thumb-cover b {font-family: 'Playfair Display', Georgia, serif !important; font-style: italic !important; font-weight: 800 !important; letter-spacing: 0 !important;}
+.wf-thumb-analog {background: radial-gradient(circle at 50% 42%, #1d1f25, #050506) !important; border-color: #3a3c44 !important;}
+.wf-thumb-analog i svg {position: absolute; inset: 4%; width: 92% !important; height: 92% !important;}
+.wf-thumb-analog b {font-size: 70% !important; color: #f4f4f6 !important; background: none !important; -webkit-text-fill-color: #f4f4f6 !important; transform: translateY(70%);}
+.wf-thumb-analog small {color: #ff9f0a !important; transform: translateY(-260%);}
+.wf-thumb-analog::after {content: ''; position: absolute; left: 50%; top: 50%; width: 3px; height: 32%; background: #f4f4f6; border-radius: 3px; transform-origin: 50% 100%; translate: -50% -100%; rotate: 50deg; z-index: 1;}
+.wf-thumb-stone {background: url("../data/skins/skin-akmens-travertins.webp") center / cover !important; border: 0 !important; border-radius: 22% 25% 21% 24% / 24% 21% 25% 22% !important;
+  box-shadow: inset 0 3px 2px #fff8e870, inset 0 -5px 4px #0000006e !important;}
+.wf-thumb-stone b {color: #4a3f33 !important; background: none !important; -webkit-text-fill-color: #4a3f33 !important; text-shadow: 0 1px 0 #fffaf08c, 0 -1px 0 #0000005c !important;}
+.wf-thumb-stone small {color: #f6eee0 !important; padding: 2px 6px; border-radius: 6px; background: linear-gradient(#1c140970, #120c099c), url("../assets/stone/granite-chip.webp") center / 80px;}
+}
+
+/* The cover's masthead lettering: a later layer than mk-nf, so a chosen card font wins. */
+@layer mk-face-type {
+.card.mk-watch-face[data-watch-face="cover"] [data-wf-part="name"] .name-main {
+  font-family: 'Playfair Display', Georgia, serif !important; font-style: italic !important; font-weight: 800 !important;
+  letter-spacing: -.01em !important; line-height: 1 !important;
+}
+}
