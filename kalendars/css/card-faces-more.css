@@ -123,6 +123,10 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
   box-shadow: inset 0 3px 2px #fff8e870, inset 0 -5px 4px #0000006e !important;}
 .wf-thumb-stone b {color: #4a3f33 !important; background: none !important; -webkit-text-fill-color: #4a3f33 !important; text-shadow: 0 1px 0 #fffaf08c, 0 -1px 0 #0000005c !important;}
 .wf-thumb-stone small {color: #f6eee0 !important; padding: 2px 6px; border-radius: 6px; background: linear-gradient(#1c140970, #120c099c), url("../assets/stone/granite-chip.webp") center / 80px;}
+.wf-thumb-material {background: radial-gradient(circle at 30% 66%, transparent 8%, #a9e1c6 8.6% 12.6%, transparent 13.2%), linear-gradient(#cdeedd, #cdeedd) 16% 22% / 36% 9% no-repeat, #17241e !important; border-color: #2c4339 !important;}
+.wf-thumb-material i, .wf-thumb-material small {display: none !important;}
+.wf-thumb-material b {position: absolute !important; right: 16%; top: 50%; translate: 0 -50%; width: .62em !important; padding: .1em .16em .14em !important; word-break: break-all; line-height: .86 !important; text-align: center;
+  border-radius: 999px; background: #a9e1c6 !important; color: #1d3b2f !important; -webkit-text-fill-color: #1d3b2f !important; font-family: 'M3 Digits', sans-serif !important; font-variation-settings: 'ROND' 100; font-weight: 700 !important; font-size: 1em !important;}
 /* ---------- M3: Material You widgets ----------
    After the M3 Expressive widgets (AppsLab, on X) and the M3 rules: one dark
    tonal container in the card's colour (--wf-tint), flat (no glass, gradient or
@@ -134,7 +138,7 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
              card-faces.js paintM3Gauge
      emoji   in a light cookie (the one abstract shape, on an image element)
      coffee  in a soft diamond ("100 %")
-   With a picture, the picture stays under a dark wash of the same tone. */
+   A chosen background (picture or colour blend) shows under a light wash. */
 .card.mk-watch-face[data-watch-face="material"] {
   --m3-dark: color-mix(in oklab, var(--wf-tint, #8fd9b6) 20%, #0f1012);
   --m3-on-dark: color-mix(in oklab, var(--wf-tint, #8fd9b6) 72%, #fff);
@@ -145,10 +149,12 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
   --m3-cookie: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50.00 1.30 L51.69 1.54 L53.34 2.22 L54.91 3.29 L56.37 4.65 L57.73 6.18 L58.98 7.74 L60.17 9.22 L61.33 10.49 L62.52 11.48 L63.78 12.13 L65.17 12.44 L66.72 12.45 L68.43 12.22 L70.28 11.85 L72.25 11.46 L74.27 11.16 L76.26 11.06 L78.15 11.25 L79.86 11.79 L81.30 12.69 L82.45 13.96 L83.27 15.55 L83.79 17.37 L84.03 19.36 L84.09 21.40 L84.04 23.40 L84.00 25.29 L84.08 27.02 L84.35 28.54 L84.90 29.85 L85.76 30.98 L86.94 31.98 L88.40 32.90 L90.06 33.82 L91.82 34.78 L93.56 35.85 L95.15 37.05 L96.48 38.41 L97.43 39.92 L97.96 41.54 L98.02 43.25 L97.64 44.99 L96.85 46.72 L95.77 48.40 L94.50 50.00 L93.18 51.51 L91.93 52.93 L90.88 54.30 L90.11 55.64 L89.69 57.00 L89.62 58.42 L89.88 59.94 L90.40 61.59 L91.09 63.35 L91.82 65.22 L92.46 67.16 L92.91 69.10 L93.05 71.00 L92.82 72.77 L92.18 74.35 L91.13 75.70 L89.71 76.78 L88.00 77.61 L86.09 78.20 L84.09 78.60 L82.11 78.91 L80.23 79.20 L78.55 79.57 L77.10 80.10 L75.90 80.87 L74.94 81.92 L74.16 83.25 L73.50 84.85 L72.89 86.64 L72.25 88.54 L71.50 90.44 L70.59 92.22 L69.48 93.76 L68.17 94.96 L66.66 95.76 L64.99 96.12 L63.20 96.04 L61.36 95.57 L59.52 94.80 L57.73 93.82 L56.01 92.78 L54.39 91.80 L52.87 91.00 L51.41 90.48 L50.00 90.30 L48.59 90.48 L47.13 91.00 L45.61 91.80 L43.99 92.78 L42.27 93.82 L40.48 94.80 L38.64 95.57 L36.80 96.04 L35.01 96.12 L33.34 95.76 L31.83 94.96 L30.52 93.76 L29.41 92.22 L28.50 90.44 L27.75 88.54 L27.11 86.64 L26.50 84.85 L25.84 83.25 L25.06 81.92 L24.10 80.87 L22.90 80.10 L21.45 79.57 L19.77 79.20 L17.89 78.91 L15.91 78.60 L13.91 78.20 L12.00 77.61 L10.29 76.78 L8.87 75.70 L7.82 74.35 L7.18 72.77 L6.95 71.00 L7.09 69.10 L7.54 67.16 L8.18 65.22 L8.91 63.35 L9.60 61.59 L10.12 59.94 L10.38 58.42 L10.31 57.00 L9.89 55.64 L9.12 54.30 L8.07 52.93 L6.82 51.51 L5.50 50.00 L4.23 48.40 L3.15 46.72 L2.36 44.99 L1.98 43.25 L2.04 41.54 L2.57 39.92 L3.52 38.41 L4.85 37.05 L6.44 35.85 L8.18 34.78 L9.94 33.82 L11.60 32.90 L13.06 31.98 L14.24 30.98 L15.10 29.85 L15.65 28.54 L15.92 27.02 L16.00 25.29 L15.96 23.40 L15.91 21.40 L15.97 19.36 L16.21 17.37 L16.73 15.55 L17.55 13.96 L18.70 12.69 L20.14 11.79 L21.85 11.25 L23.74 11.06 L25.73 11.16 L27.75 11.46 L29.72 11.85 L31.57 12.22 L33.28 12.45 L34.83 12.44 L36.22 12.13 L37.48 11.48 L38.67 10.49 L39.83 9.22 L41.02 7.74 L42.27 6.18 L43.63 4.65 L45.09 3.29 L46.66 2.22 L48.31 1.54 L50.00 1.30Z'/%3E%3C/svg%3E");
   border-radius: 22% !important;
 }
-html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-watch-face[data-watch-face="material"] {background: var(--m3-dark) !important; background-image: none !important; box-shadow: none !important;}
-.card.mk-watch-face[data-watch-face="material"]:not(.mk-has-skin) > .mk-wf-background, .card.mk-watch-face[data-watch-face="material"].mk-has-grad > .mk-wf-background {display: none !important;}
+html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-watch-face[data-watch-face="material"] {background: var(--m3-dark) !important; background-image: none !important; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--wf-tint, #8fd9b6) 20%, transparent) !important;}
+.card.mk-watch-face[data-watch-face="material"]:not(.mk-has-skin) > .mk-wf-background {display: none !important;}
 .card.mk-watch-face[data-watch-face="material"]::before {background: none !important;}
-.card.mk-watch-face[data-watch-face="material"].mk-has-skin:not(.mk-has-grad)::before {background: linear-gradient(color-mix(in oklab, var(--m3-dark) 62%, transparent), color-mix(in oklab, var(--m3-dark) 80%, transparent)) !important; opacity: 1 !important; z-index: 1 !important;}
+/* a chosen background (picture or colour blend) shows; only a light wash of the dark tone,
+   deeper at the top where the name is, so the light name reads; the chips have their own fill */
+.card.mk-watch-face[data-watch-face="material"].mk-has-skin::before {background: linear-gradient(color-mix(in oklab, var(--m3-dark) 46%, transparent), color-mix(in oklab, var(--m3-dark) 22%, transparent) 55%, color-mix(in oklab, var(--m3-dark) 30%, transparent)) !important; opacity: 1 !important; z-index: 1 !important;}
 .card.mk-watch-face[data-watch-face="material"]::after {background: none !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;}
 .card.mk-watch-face[data-watch-face="material"] > .mk-wf-art {display: none !important;}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part], .card.mk-watch-face[data-watch-face="material"] [data-wf-part] * {text-shadow: none !important; filter: none !important;}
