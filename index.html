@@ -2927,17 +2927,27 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
 #dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover{background:rgba(255,255,255,.065)!important;border-color:rgba(255,255,255,.09)!important;color:#f2f6fd!important;transform:translateY(-1px)!important}
 #dockShelf #bottomBtnBar .dock-px{width:21px!important;max-height:22px!important;filter:saturate(.78) brightness(1.08)}
 #dockMoreBtn svg{width:21px;height:21px;fill:currentColor}
-/* Hover: the icon hops up two pixels in two hard steps and gets its full
-   colour, like a sprite, not a magnifying lens. Press sinks the button a
-   little. Transform and a small filter only, no neighbours move. */
-#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),#dockShelf #bottomBtnBar>#dockMoreBtn>svg{transition:transform .14s steps(2,end),filter .14s steps(2,end)}
-#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover :is(.dock-px,.dock-alt),#dockShelf #bottomBtnBar>#dockMoreBtn:hover>svg{transform:translateY(-2px)}
+/* Dock magnification, light: the icon under the pointer grows and rises,
+   the next icons on both sides grow a little. Only the icons are scaled
+   (transform from the bottom), the buttons keep their size, so nothing
+   reflows and the old PCs only composite. Separators sit hidden between
+   some buttons (five before RADIO, left by the tools moved to VAIRĀK),
+   hence the "+ div +" forms and the named pairs. */
+#dockShelf #bottomBtnBar>button{--mag:1;--lift:0px}
+#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){overflow:visible!important}
+#dockShelf #bottomBtnBar>button :is(.dock-px,.dock-alt,#dockMoreBtn>svg){transform:translateY(var(--lift)) scale(var(--mag));transform-origin:50% 100%;transition:transform .24s cubic-bezier(.25,1.35,.5,1),filter .2s}
+#dockShelf #bottomBtnBar>button:hover{--mag:1.38;--lift:-5px}
+#dockShelf #bottomBtnBar>button:hover+button,#dockShelf #bottomBtnBar>button:hover+div+button,
+#dockShelf #bottomBtnBar>button:has(+button:hover),#dockShelf #bottomBtnBar>button:has(+div+button:hover),
+#dockShelf #bottomBtnBar>#statsDocBtn:hover~:is(#radioIdleBtn,#radioToggle),#dockShelf #bottomBtnBar:has(>:is(#radioIdleBtn,#radioToggle):hover)>#statsDocBtn,
+#dockShelf #bottomBtnBar>#radioIdleBtn:hover~#dockMoreBtn,#dockShelf #bottomBtnBar>#radioToggle:hover~#dockMoreBtn,
+#dockShelf #bottomBtnBar:has(>#dockMoreBtn:hover)>:is(#radioIdleBtn,#radioToggle){--mag:1.16;--lift:-2px}
 #dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover .dock-px{filter:saturate(1) brightness(1.18)}
 #dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active{transform:translateY(0) scale(.96)!important;transition-duration:.06s!important}
-#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active :is(.dock-px,.dock-alt){transform:none}
+#dockShelf #bottomBtnBar>button:active{--mag:1.24;--lift:-3px}
 #dockShelf #bottomBtnBar>button:focus-visible{outline:2px solid rgba(125,211,252,.6)!important;outline-offset:2px!important}
-@media(prefers-reduced-motion:reduce){#dockShelf #bottomBtnBar>button :is(.dock-px,.dock-alt),#dockShelf #bottomBtnBar>#dockMoreBtn>svg{transition:none!important;transform:none!important}}
-html.mk-low-spec #dockShelf #bottomBtnBar>button :is(.dock-px,.dock-alt),html.mk-low-spec #dockShelf #bottomBtnBar>#dockMoreBtn>svg{transition:none!important;transform:none!important}
+@media(prefers-reduced-motion:reduce){#dockShelf #bottomBtnBar>button :is(.dock-px,.dock-alt,#dockMoreBtn>svg){transition:none!important;transform:none!important}}
+html.mk-low-spec #dockShelf #bottomBtnBar>button :is(.dock-px,.dock-alt,#dockMoreBtn>svg){transition:none!important;transform:none!important}
 #dockMoreBtn i{position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:50%;background:#67e8f9;box-shadow:0 0 10px rgba(103,232,249,.65);opacity:0;transition:opacity .16s}
 #dockMoreBtn.has-active i{opacity:1}
 #dockMoreBtn[aria-expanded="true"]{background:rgba(103,232,249,.10)!important;border-color:rgba(103,232,249,.25)!important;color:#dffbff!important}
