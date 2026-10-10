@@ -148,7 +148,8 @@ html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-sectio
 html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label > .cards-role-mark,
 html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label > .cards-role-name {
   translate: var(--mk-role-shift, 0px) 0;
-  transition: translate var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease);
+  transition: translate var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease),
+    transform var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease);
 }
 
 html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label.mk-role-instant > * {
@@ -181,6 +182,36 @@ html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-role-m
 html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label:hover .cards-role-mark::after {
   border-radius: 16px;
   background-color: rgba(var(--mk-role-rgb), .24);
+}
+
+/* Hover, the same for both headings: the square turns round (above), the icon
+   hops once and settles a little larger, the name leans in. Transforms only, on
+   the shared spring; nothing runs while the pointer rests. */
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-role-mark::before {
+  transition: transform var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, ease);
+}
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label:hover .cards-role-mark::before {
+  transform: scale(1.1);
+  animation: mk-role-hop .62s cubic-bezier(.3, .7, .3, 1) both;
+}
+html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label:hover > .cards-role-name {
+  transform: translateX(4px);
+}
+@keyframes mk-role-hop {
+  0%   { transform: scale(1); }
+  30%  { transform: translateY(-3px) rotate(-10deg) scale(1.18); }
+  60%  { transform: translateY(0) rotate(4deg) scale(1.06); }
+  100% { transform: scale(1.1); }
+}
+/* The radiographers' section is pulled up beside the mood card and lets the
+   pointer through its empty box (mk-rg-pulse-v2.css). Its heading's mark and
+   name take the pointer again, so it answers like the radiologists' one. */
+#grafiks-list.grid-view .cards-section.rg-mood-pullup .cards-section-label-rg > :is(.cards-role-mark, .cards-role-name) {
+  pointer-events: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label:hover .cards-role-mark::before { animation: none; transform: none; }
+  html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-section-label:hover > .cards-role-name { transform: none; }
 }
 
 html:not(.minka-rad):not(.mk-mobile-shell) #grafiks-list.grid-view .cards-role-mark::before {
