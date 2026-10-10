@@ -2989,11 +2989,17 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
    Each item: the icon with its label under it. States are colour only, on
    the effects curve (no overshoot, M3: colour and opacity never bounce):
    hover lightens the item, press a little more, and the window that is open
-   keeps its item tinted in that icon's own colour (--dk-acc). Nothing moves,
-   so nothing can bounce or lag; the script only marks the open window
-   (.dk-on). BOLUS keeps its own look and frame. /rad keeps its own dock. */
-html:not(.minka-rad) #dockShelf #bottomBtnBar{background:#141922!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar{position:relative!important;isolation:isolate;display:flex!important;align-items:center!important;gap:2px!important;padding:6px!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:32px!important;box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.045)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+   keeps its item marked. Nothing moves, so nothing can bounce or lag; the
+   script only marks the open window (.dk-on). BOLUS keeps its own look and
+   frame. /rad keeps its own dock.
+   Tinted (material-web labs toolbar, colour "vibrant", 2026): the bar is the
+   header picture's dark tone (primary container), the labels its light tone
+   (primary), hover and press a state layer of that light tone, the open
+   window's item the neutral surface container with on-surface text. The
+   palette is the header's (--hxr-surface / --hxr-accent, set by
+   kalendars/js/page/mk-header-x.js); before it comes, the plain dark bar. */
+html:not(.minka-rad) #dockShelf #bottomBtnBar{background:color-mix(in srgb,var(--hxr-surface,#141922) 78%,#0b0e13)!important;transition:background-color 400ms cubic-bezier(.2,0,0,1)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar{position:relative!important;isolation:isolate;display:flex!important;align-items:center!important;gap:4px!important;padding:6px!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:32px!important;box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.045)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){position:relative!important;z-index:1!important;flex:0 0 auto!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:5px!important;width:80px!important;min-width:80px!important;max-width:none!important;height:64px!important;min-height:64px!important;padding:6px 4px 0!important;margin:0!important;background:transparent!important;transform:none!important;overflow:visible!important;outline:none;color:#a7b1c0!important;font:750 10.5px/1 'Space Grotesk',system-ui,sans-serif!important;letter-spacing:.07em!important;animation:none!important;transition:color var(--mk-dur-effects-default,200ms) var(--mk-ease-effects,ease)!important;-webkit-tap-highlight-color:transparent}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){border:0!important;border-radius:26px!important;box-shadow:none!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::before,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::after{display:none!important}
@@ -3007,11 +3013,11 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#statsDocBtn{--dk-acc:#1
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>:is(#radioIdleBtn,#radioToggle){--dk-acc:var(--radio-accent,#ff8a5c)}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{color:#eef3fa!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{color:#fff!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){transition:background-color 150ms cubic-bezier(.2,0,0,1),color 150ms cubic-bezier(.2,0,0,1)!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover{background:rgba(255,255,255,.06)!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active{background:rgba(255,255,255,.1)!important;transition-duration:50ms!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{background:color-mix(in srgb,var(--dk-acc,#7dd3fc) 22%,#141922)!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on:hover{background:color-mix(in srgb,var(--dk-acc,#7dd3fc) 28%,#1b2230)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){color:color-mix(in srgb,var(--hxr-accent,#a7b1c0) 80%,#fff)!important;transition:background-color 200ms cubic-bezier(.2,0,0,1),color 200ms cubic-bezier(.2,0,0,1)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover{background:color-mix(in srgb,var(--hxr-accent,#fff) 8%,transparent)!important;color:#fff!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active{background:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent)!important;transition-duration:50ms!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#12151b)!important;color:#fff!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on:hover{background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#1a1e26)!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}
 /* the icon centred in the 32 px zone */
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:22px!important;height:auto;max-height:22px!important;margin:5px 0!important;filter:none!important;transform:none}

@@ -601,7 +601,8 @@
     return { p70: vals[Math.floor(vals.length * .7)], sd: Math.sqrt(varSum / vals.length) };
   }
   // Windows that live outside the header (the birthday list) take the same
-  // picture colours: the palette is mirrored onto <html> when it changes.
+  // picture colours: the palette is mirrored onto <html> when it changes
+  // (and onto the shell's <html>, for its dock).
   var lastPal = '';
   function syncPaletteToRoot() {
     var wrap = $('minkaBarWrap');
@@ -611,6 +612,11 @@
     lastPal = acc + surf;
     root.style.setProperty('--hxr-accent', acc);
     root.style.setProperty('--hxr-surface', surf);
+    // and to the shell around the calendar: its dock is tinted with them too
+    try {
+      var shell = window.parent !== window && window.parent.document && window.parent.document.documentElement;
+      if (shell) { shell.style.setProperty('--hxr-accent', acc); shell.style.setProperty('--hxr-surface', surf); }
+    } catch (_e) {}
   }
   function applyTone() {
     syncPaletteToRoot();
