@@ -790,6 +790,11 @@
    tone and the soft picture is screened onto it like the characters are. */
 :root[data-page-tint] .rg-scape-sky { background-color: color-mix(in srgb, var(--hxr-surface, #000) 24%, #030405); }
 :root[data-page-tint] .rg-scape-sky > .rg-sky-move { mix-blend-mode: screen; }
+/* The date strip under the header was a navy band (rgba(5,9,15)): on a tinted
+   page it showed as an edge. It is the picture's tone too, a step lighter than
+   the page (a surface container), so it still reads as its own row. */
+:root[data-page-tint]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row { background: linear-gradient(color-mix(in srgb, var(--hxr-surface, #000) 34%, rgba(5, 6, 7, .62)), color-mix(in srgb, var(--hxr-surface, #000) 30%, rgba(4, 5, 6, .86))) !important; }
+:root[data-page-tint]:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row .mk-month-control { background: color-mix(in srgb, var(--hxr-surface, #000) 42%, rgba(6, 7, 8, .72)) !important; border-color: color-mix(in srgb, var(--hxr-accent, #38bdf8) 26%, transparent) !important; }
 /* A person's coffee: small moons round their glass (mood-feedback.js). */
 .rg-mood-moon {
   position: absolute;
