@@ -35,6 +35,13 @@
     { label: 'Pilsēta un arhitektūra', ids: ['gnome-curvaturingster-d','gnome-map-d','1029','1033'] },
     { label: 'Melnbalti',          ids: ['gnome-curvy-d','open-bw','47','58'] },
     { label: 'Barbie rozā',        ids: ['gnome-dithered-sun-l','open-barbie','bb2','bb3','bb4','bd1','bd2','bd3'] },
+    // Pixabay photos cropped round their subject (scripts/prepare-card-photos.py).
+    { label: 'Daba tuvplānā',      ids: ['daba-paparde','daba-gliemezis','daba-sunas','daba-lase','daba-lapa','daba-pienene','daba-sarma','daba-sarmas-lapa'] },
+    { label: 'Latvija',            ids: ['lv-riga-nakti','lv-vecriga','lv-kapas','lv-mezs','lv-eglu-migla','lv-ziema'] },
+    { label: 'Stikls un gaisma',   ids: ['gaisma-stikla-lode','gaisma-zila-lode','gaisma-bokeh','gaisma-stari','gaisma-ledus','gaisma-ella'] },
+    { label: 'Ilustrācijas',       ids: ['ilu-meness','ilu-ziemas-koki','ilu-kalni','ilu-ausma'] },
+    // Classical busts in one ink (scripts/build-statue-dither.py, lenxism/dither look).
+    { label: 'Statujas',           ids: ['statue-hadrians','statue-marks','statue-dovids','statue-profils','statue-muza','statue-jauneklis','statue-romietis','statue-madonna'] },
     { label: 'Dither',             ids: ['dither-tors','dither-lode','dither-kapas','dither-lentes','dither-rezgis','dither-signals','dither-papirs'] },
     { label: 'Kaķi',               ids: ['user-neon-alley-cat','open-cat','cat-01','cat-02','cat-03','cat-04','cat-05','cat-06','cat-07','cat-08','cat-09','cat-10','cat-11','cat-12','cat-13','cat-14','user-black-cat'] }
   ];
@@ -114,7 +121,16 @@
     'vapor-secret': 'Secret_ logs', 'vapor-floral': 'Floral grīda',
     'focus-ribbons': 'Zilās lentes', 'focus-ribbons-teal': 'Tirkīza lentes', 'focus-chrome': 'Hroma formas', 'focus-holo': 'Holo svītras',
     'dither-tors': 'Dither tors', 'dither-lode': 'Dither lode', 'dither-kapas': 'Dither kāpas',
-    'dither-lentes': 'Dither lentes', 'dither-rezgis': 'Dither režģis', 'dither-signals': 'Dither signāls', 'dither-papirs': 'Dither papīrs'
+    'dither-lentes': 'Dither lentes', 'dither-rezgis': 'Dither režģis', 'dither-signals': 'Dither signāls', 'dither-papirs': 'Dither papīrs',
+    'statue-hadrians': 'Hadriāns', 'statue-marks': 'Marks Aurēlijs', 'statue-dovids': 'Dāvids', 'statue-profils': 'Zelta profils',
+    'daba-paparde': 'Papardes pumpurs', 'daba-gliemezis': 'Papardes gliemezis', 'daba-sunas': 'Rasa sūnās', 'daba-lase': 'Lāse uz lapas',
+    'daba-lapa': 'Rudens lapa', 'daba-pienene': 'Pienene', 'daba-sarma': 'Sarmotas lapas', 'daba-sarmas-lapa': 'Sarmas lapa',
+    'lv-riga-nakti': 'Melngalvju nams', 'lv-vecriga': 'Pētera baznīca', 'lv-kapas': 'Kāpas', 'lv-mezs': 'Mežs',
+    'lv-eglu-migla': 'Egles miglā', 'lv-ziema': 'Sarmots koks',
+    'gaisma-stikla-lode': 'Stikla lode', 'gaisma-zila-lode': 'Zilā lode', 'gaisma-bokeh': 'Siltās gaismas',
+    'gaisma-stari': 'Gaismas stari', 'gaisma-ledus': 'Ledus stikls', 'gaisma-ella': 'Eļļas burbuļi',
+    'ilu-meness': 'Mēness jūrā', 'ilu-ziemas-koki': 'Ziemas koki', 'ilu-kalni': 'Rožainie kalni', 'ilu-ausma': 'Zaļā ausma',
+    'statue-muza': 'Mūza', 'statue-jauneklis': 'Jauneklis', 'statue-romietis': 'Romietis', 'statue-madonna': 'Madonna'
   };
   var MATERIALS = window.MinkaCardMaterials || [];
   IMG_GROUPS.unshift({label:'Foto kompozīcijas', ids:MATERIALS.filter(function(m){return m.kind==='depth';}).map(function(m){return m.id;})});
@@ -248,6 +264,14 @@
     // Light paper art gets the paper look: light chips, dark text (dark chips on it hid the values).
     PRESETS.push({label:'Dither · '+p[0],group:'dither',isNew:true,bg:{t:'img',id:'dither-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:p[3]?'20,20,20':'241,240,234',fx:p[3],face:face,depth:false,sw:'url(data/skins/skin-dither-'+p[1]+'.webp)'});
   });
+  // Statues: pre-dithered busts, one ink on a plain ground (scripts/build-statue-dither.py).
+  // Dark grounds only (the Dither face darkens the picture); number and frame take the ink colour.
+  [['Hadriāns','hadrians','7d96ff'],['Marks Aurēlijs','marks','ff8a5c'],['Dāvids','dovids','3ee0a0'],['Zelta profils','profils','e8b44a'],
+   ['Mūza','muza','e9e4d8'],['Jauneklis','jauneklis','e9e4d8'],['Romietis','romietis','e9e4d8'],['Madonna','madonna','e9e4d8']].forEach(function(p){
+    var face=window.MinkaCardFaceModel.preset('dither');
+    face.tint=p[2];face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
+    PRESETS.push({label:p[0],group:'statue',isNew:true,bg:{t:'img',id:'statue-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:'241,240,234',face:face,depth:false,sw:'url(data/skins/skin-statue-'+p[1]+'.webp)'});
+  });
   // Plakāts: collector-card look — the picture in a window, a big name below it.
   [['Plakāts · Seja','aesthetic-face','f67a18'],['Plakāts · Kaķis','cat-06','f67a18'],['Plakāts · Ķivere','aesthetic-helmet','64d2ff'],['Plakāts · Kalni','1036','f5b73f']].forEach(function(p){
     var face=window.MinkaCardFaceModel.preset('classic');
@@ -305,11 +329,11 @@
   /* Show the finest first: photo compositions, then posters and picture effects;
      the plain number looks come last. (Sorted once, before any button exists.) */
   (function(){
-    var rank={vapor:-1,wildlife:0,botanical:0,ocean:0,fx:1,landscape:1,poster:2,dither:3,collection:4,numbers:5};
+    var rank={statue:-2,vapor:-1,wildlife:0,botanical:0,ocean:0,fx:1,landscape:1,poster:2,dither:3,collection:4,numbers:5};
     PRESETS=PRESETS.map(function(p,i){return [p,i];}).sort(function(a,b){return ((rank[a[0].group]==null?4:rank[a[0].group])-(rank[b[0].group]==null?4:rank[b[0].group]))||a[1]-b[1];}).map(function(x){return x[0];});
   })();
   var DITHER_INKS=[['eceae4','Balta'],['64d2ff','Ledus'],['23cdcf','Ciāna'],['1fe091','Zaļa'],['f5b73f','Dzintars'],['ff8a5c','Oranža'],['ff5c5c','Sarkana'],['2554a0','Tinte'],['141414','Melna']];
-  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['vapor','Vaporwave'],['fx','Efekti'],['poster','Plakāti'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
+  var PRESET_GROUPS=[['all','Visi'],['new','Jaunumi'],['statue','Statujas'],['vapor','Vaporwave'],['fx','Efekti'],['poster','Plakāti'],['dither','Dither'],['wildlife','Dzīvnieki'],['botanical','Ziedi un augi'],['ocean','Ūdens'],['landscape','Ainavas un nakts'],['numbers','Ciparu efekti'],['collection','Citi foto']];
   function presetInGroup(p,group){return group==='all'||(group==='new'?p.isNew:p.group===group);}
 
   /* Every card render asks for its skin: parse the stored map once per change,

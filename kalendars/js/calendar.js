@@ -58,7 +58,18 @@ var hospitalDatabase = window.hospitalDatabase;
     // Cut to 2400x250 (9.6:1) on purpose: at that ratio a 1900px-wide header
     // shows them whole, with no stretch and barely any crop.
     { id: 'dunes-mono-20260922', periods: ['day', 'sunset'], position: '55% 50%' }   /* the dune ridge */,
-    { id: 'emoji-gold-20260922', periods: ['morning', 'day'], position: '42% 45%' }   /* the face */
+    { id: 'emoji-gold-20260922', periods: ['morning', 'day'], position: '42% 45%' }   /* the face */,
+    // Dithered classical busts, one ink on a plain ground (scripts/build-statue-dither.py).
+    // The head stands on the right; the plain ground carries the header text.
+    // Light grounds by day, dark ones in the evening and at night.
+    { id: 'statue-hadrians', periods: ['morning', 'day'], position: '93% 33%' },
+    { id: 'statue-marks', periods: ['morning', 'day'], position: '92% 33%' },
+    { id: 'statue-muza', periods: ['day'], position: '93% 40%' },
+    { id: 'statue-dovids', periods: ['sunset', 'night'], position: '69% 46%' },
+    { id: 'statue-profils', periods: ['sunset'], position: '94% 35%' },
+    { id: 'statue-jauneklis', periods: ['night'], position: '89% 31%' },
+    { id: 'statue-romietis', periods: ['sunset', 'night'], position: '87% 39%' },
+    { id: 'statue-madonna', periods: ['night'], position: '72% 31%' }
   ].map(item => ({ ...item, src: 'data/header-backgrounds/pool/' + item.id + '.webp' }));
   const MIX_LAST_KEY = 'mk_header_mix_last_v1';
   let mixCurrent = null;      // { src, position, period }
