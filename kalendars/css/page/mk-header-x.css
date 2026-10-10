@@ -450,8 +450,10 @@
 /* ── Citas dienas: tā pati rinda paliek, ar dienas asi bez progresa ───── */
 #hxAxis {
   position: absolute;
-  left: 4px;
-  right: 4px;
+  /* edge to edge, like today's progress row (#shift-progress-wrap, width 100%):
+     another day's band starts and ends where today's does */
+  left: 0;
+  right: 0;
   top: calc(4px + var(--mk-duty-summary-height, 108px));
   height: 35px;
   z-index: 8;
