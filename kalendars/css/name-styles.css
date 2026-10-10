@@ -170,6 +170,7 @@
 .mk-nf-grid > button {all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   min-height: 74px; padding: 10px 6px 8px; border-radius: 16px; cursor: pointer; overflow: hidden;
   background: radial-gradient(120% 90% at 50% 20%, #232a36, #0d1015); color: var(--pp-on, #e3e7ee); transition: border-radius .3s var(--pp-spring, ease);}
+.mk-nf-grid > button[hidden] {display: none !important;}
 .mk-nf-grid > button:hover {border-radius: 10px;}
 .mk-nf-grid > button:focus-visible {outline: 2px solid var(--pp-primary, #a8c7fa); outline-offset: 2px;}
 .mk-nf-grid > button[aria-pressed="true"] {box-shadow: 0 0 0 2px var(--pp-bg, #11151b), 0 0 0 4px var(--pp-primary, #a8c7fa);}

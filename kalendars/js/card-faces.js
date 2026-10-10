@@ -1140,7 +1140,14 @@
       pq('.wf-part-color-clear').hidden=!own;
       var fontRow=pq('.wf-part-font'), canFont=(M.fontParts||[]).indexOf(selectedPart)>=0&&!/^(winamp|gameboy|dots|lines|thermo)$/.test(config.face);
       fontRow.hidden=!canFont;
-      if(canFont)fontRow.querySelectorAll('[data-part-font]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.partFont===((config.fonts&&config.fonts[selectedPart])||'')));});
+      if(canFont){
+        // "Kā kartītei" shows the card's own font; "Parasts" only when that is a different one.
+        var cardNf=String(options.get().nf||'').toLowerCase(), own=(config.fonts&&config.fonts[selectedPart])||'';
+        var asCard=fontRow.querySelector('[data-part-font=""] i');
+        asCard.className='mk-nf-sample'+(cardNf?' mk-nf-'+cardNf:'');asCard.textContent='Aa';
+        fontRow.querySelector('[data-part-font="x"]').hidden=!cardNf&&own!=='x';
+        fontRow.querySelectorAll('[data-part-font]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.partFont===own));});
+      }
       var plateRow=pq('.wf-part-plate'), canPlate=(M.plateParts||[]).indexOf(selectedPart)>=0&&config.face!=='winamp';
       plateRow.hidden=!canPlate;
       if(canPlate){ plateRow.style.setProperty('--wf-plate-tint','#'+(own||config.tint)); plateRow.querySelectorAll('[data-part-plate]').forEach(function(b){b.setAttribute('aria-pressed',String(+b.dataset.partPlate===(config.plates[selectedPart]||0)));}); }
