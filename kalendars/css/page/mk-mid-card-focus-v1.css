@@ -24,16 +24,22 @@
 #grafiks-list.grid-view .card.mk-mid-card.mk-has-skin:not(.rg-feedback-card):not(.mk-has-grad):hover {
   background:
     linear-gradient(180deg, rgba(5, 9, 16, .30) 0%, rgba(5, 9, 16, .12) 52%, rgba(5, 9, 16, .60) 100%),
-    var(--mk-skin-img) center/cover no-repeat,
+    var(--mk-skin-img),
     #0b1019 !important;
+  background-size: auto, cover, cover !important;
+  background-position: center, center, center !important;
+  background-repeat: no-repeat !important;
   background-blend-mode: normal !important;
 }
 #grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-skin-fit:not(.rg-feedback-card):not(.mk-has-grad),
 #grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-skin-fit:not(.rg-feedback-card):not(.mk-has-grad):hover {
   background:
     linear-gradient(180deg, rgba(5, 9, 16, .30) 0%, rgba(5, 9, 16, .12) 52%, rgba(5, 9, 16, .60) 100%),
-    var(--mk-skin-img) center/100% 100% no-repeat,
+    var(--mk-skin-img),
     #0b1019 !important;
+  background-size: auto, 100% 100%, 100% 100% !important;
+  background-position: center, center, center !important;
+  background-repeat: no-repeat !important;
 }
 
 /* No saved skin: a cheap static abstract surface. The oversized shift value

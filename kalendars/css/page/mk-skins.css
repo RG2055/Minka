@@ -1,10 +1,15 @@
 /* ── Darbinieka kartes skins ── */
 #grafiks-list.grid-view .card.mk-mid-card.mk-has-skin,
 #grafiks-list .card.mk-has-skin {
+  /* Layer lists, not the shorthand: --mk-skin-img can hold two layers (a cut-out photo
+     and its gradient), and "var() center/cover" would size only the last of them. */
   background:
     linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
-    var(--mk-skin-img) center/cover no-repeat,
+    var(--mk-skin-img),
     #0b1019 !important;
+  background-size: auto, cover, cover !important;
+  background-position: center, center, center !important;
+  background-repeat: no-repeat !important;
   background-blend-mode: normal !important;
 }
 #grafiks-list.grid-view .card.mk-has-num .mk-mid-hours.card-shift,
@@ -14,10 +19,15 @@
 }
 #grafiks-list.grid-view .card.mk-mid-card.mk-has-skin:hover,
 #grafiks-list .card.mk-has-skin:hover {
+  /* Layer lists, not the shorthand: --mk-skin-img can hold two layers (a cut-out photo
+     and its gradient), and "var() center/cover" would size only the last of them. */
   background:
     linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
-    var(--mk-skin-img) center/cover no-repeat,
+    var(--mk-skin-img),
     #0b1019 !important;
+  background-size: auto, cover, cover !important;
+  background-position: center, center, center !important;
+  background-repeat: no-repeat !important;
   background-blend-mode: normal !important;
 }
 #grafiks-list.grid-view .card.mk-mid-card.mk-has-skin.mk-skin-fit,
@@ -26,8 +36,11 @@
 #grafiks-list .card.mk-has-skin.mk-skin-fit:hover {
   background:
     linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
-    var(--mk-skin-img) center/100% 100% no-repeat,
+    var(--mk-skin-img),
     #0b1019 !important;
+  background-size: auto, 100% 100%, 100% 100% !important;
+  background-position: center, center, center !important;
+  background-repeat: no-repeat !important;
   background-blend-mode: normal !important;
 }
 .mk-skin-shell {
@@ -211,13 +224,19 @@
 .mk-skin-preview.mk-has-skin {
   background:
     linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
-    var(--mk-skin-img) center/cover no-repeat, #0b1019;
+    var(--mk-skin-img), #0b1019;
+  background-size: auto, cover, cover;
+  background-position: center, center, center;
+  background-repeat: no-repeat;
   background-blend-mode: normal;
 }
 .mk-skin-preview.mk-has-skin.mk-skin-fit {
   background:
     linear-gradient(180deg, rgba(7,10,17,.62) 0%, rgba(7,10,17,.45) 45%, rgba(7,10,17,.74) 100%),
-    var(--mk-skin-img) center/100% 100% no-repeat, #0b1019;
+    var(--mk-skin-img), #0b1019;
+  background-size: auto, 100% 100%, 100% 100%;
+  background-position: center, center, center;
+  background-repeat: no-repeat;
 }
 .mk-skin-preview:not(.mk-has-skin)::after {
   content: "24"; position: absolute; z-index: 0; left: -4px; top: 27px;
