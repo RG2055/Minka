@@ -476,6 +476,7 @@ html body #worker-modal .card .mk-contrast-flag {outline:2px dashed #ffb4ab;outl
 #worker-modal#worker-modal .bld-entry small {display:block;margin-top:3px;color:var(--pp-on-var,#b8c1cd);font:500 12px/1.3 var(--pp-font,system-ui);}
 #worker-modal#worker-modal .bld-entry > i {font-style:normal;font-size:18px;color:var(--pp-on-var,#b8c1cd);}
 /* Būvē savu kartīti: text on the left, a fan of three finished cards on the right
+   (square like the real ones, with their light metal rim)
    that spreads a little on hover (transform only, static images). */
 #worker-modal#worker-modal .bld-entry.org-bld {grid-template-columns:1fr auto;min-height:150px;padding:18px 14px 18px 20px;overflow:hidden;text-align:left;cursor:pointer;
   background:radial-gradient(120% 140% at 100% 0%,#2a3b57 0%,#16202d 55%,#11161e 100%);border-radius:24px;}
@@ -485,9 +486,9 @@ html body #worker-modal .card .mk-contrast-flag {outline:2px dashed #ffb4ab;outl
   background:var(--pp-primary,#a8c7fa);color:var(--pp-on-primary,#0b2a57);transition:border-radius .3s var(--pp-spring,ease);}
 #worker-modal#worker-modal .bld-entry-text em i {font-style:normal;}
 #worker-modal#worker-modal .bld-entry:hover .bld-entry-text em {border-radius:10px;}
-#worker-modal#worker-modal .bld-fan {position:relative;width:156px;height:104px;}
-#worker-modal#worker-modal .bld-fan-card {position:absolute;top:17px;left:36px;width:84px;height:69px;border-radius:18px;background:#222 center/cover no-repeat;
-  box-shadow:0 6px 16px rgba(0,0,0,.45),0 0 0 2px rgba(255,255,255,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+#worker-modal#worker-modal .bld-fan {position:relative;width:156px;height:112px;}
+#worker-modal#worker-modal .bld-fan-card {position:absolute;top:16px;left:39px;width:78px;height:78px;border-radius:24%;box-sizing:border-box;border:3px solid #e4e8ee;background:#222 center/cover no-repeat;
+  box-shadow:0 6px 16px rgba(0,0,0,.45),inset 0 0 0 1px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
   transition:transform .45s var(--pp-spring,cubic-bezier(.2,0,0,1));}
 #worker-modal#worker-modal .bld-fan-card.is-left {transform:translate(-32px,6px) rotate(-12deg);}
 #worker-modal#worker-modal .bld-fan-card.is-right {transform:translate(32px,6px) rotate(11deg);}
