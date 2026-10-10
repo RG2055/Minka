@@ -22,27 +22,20 @@
   var IMG_GROUPS = [
     // Generated for the Focus kit (scripts/build-chrome-art.py): grain, chrome, holo foil.
     { label: 'Vaporwave',           ids: ['vapor-secret','vapor-floral'] },
-    { label: 'Hroms un graudi',     ids: ['focus-ribbons','focus-ribbons-teal','focus-chrome','focus-holo'] },
-    { label: 'Abstrakti',          ids: ['abstract-color-wave','abstract-blue-liquid','abstract-pastel-orbit','abstract-sun-glow','abstract-neon-folds','abstract-white-flow','abstract-copper-web','abstract-paper-geometry','pix-color-waves'] },
+    { label: 'Hroms un graudi',     ids: ['focus-ribbons','focus-ribbons-teal','focus-chrome','focus-holo','grain-grafits','grain-okeans','grain-ogles','grain-sfumato'] },
+    { label: 'Abstrakti',          ids: ['abstract-color-wave','abstract-blue-liquid','abstract-pastel-orbit','abstract-sun-glow','abstract-neon-folds','abstract-white-flow','abstract-copper-web','abstract-paper-geometry','pix-color-waves','grain-kapu-ausma','grain-mints','grain-persiks','grain-citrons'] },
     { label: 'Aesthetic',           ids: ['user-holo-jellyfish','user-glitter-rainbow','user-pixel-clouds','user-golden-water','user-rainbow-beach','user-silver-ocean','user-glitch-dinosaurs','gnome-glass-chip-d','gnome-lcd-rainbow-d','gnome-pixels-d','gnome-tarka-d','open-aesthetic','aesthetic-bird','aesthetic-cyborg','aesthetic-face','aesthetic-flash','aesthetic-helmet','aesthetic-sunset','aesthetic-water','user-bubble'] },
-    { label: 'Rozā un maigi',      ids: ['user-pink-cosmos','user-pink-liquid','user-pink-water','gnome-blobs-l','gnome-pills-d','open-pink','360','25','888','867','56','788','866','923','301','705','279','213','787','77','544','pix-water-drops','pix-pastel-flow'] },
-    { label: 'Mīļi un jauki',      ids: ['gnome-balls-l','open-cute','146','798','219','790','248','user-butterfly'] },
-    { label: 'Spilgti',            ids: ['gnome-blendpills-d','gnome-drool-d','gnome-progress-d','open-bright','1080','1069','211','76'] },
-    { label: 'Ūdens, sniegs un zili', ids: ['gnome-adwaita-d','gnome-sheet-d','gnome-symbolic-d','open-blue','1015','1036','1035','13','15','16','37','199'] },
-    { label: 'Zaļā daba',          ids: ['open-green','1018','1039','1043','10','11','17','18','28','128','190','user-daisy','user-bamboo-forest'] },
-    { label: 'Silti un saulaini',  ids: ['gnome-amber-d','gnome-fold-l','gnome-pixel-pusher-d','gnome-glass-stripes-l','open-warm','1016','1057','110','19','46','164','user-autumn-leaves'] },
-    { label: 'Tumši un mistiski',  ids: ['gnome-morphogenesis-d','gnome-tubes-d','open-dark','1019','1022','12','29','55','83','95','184','pix-aurora-sky'] },
-    { label: 'Pilsēta un arhitektūra', ids: ['gnome-curvaturingster-d','gnome-map-d','1029','1033'] },
-    { label: 'Melnbalti',          ids: ['gnome-curvy-d','open-bw','47','58'] },
+    { label: 'Rozā un maigi',      ids: ['user-pink-cosmos','user-pink-liquid','user-pink-water','gnome-blobs-l','gnome-pills-d','open-pink','360','25','888','867','56','788','866','923','301','705','279','213','787','77','544','pix-water-drops','pix-pastel-flow','ilu-kalni'] },
+    { label: 'Mīļi un jauki',      ids: ['gnome-balls-l','open-cute','146','798','219','790','248','user-butterfly','mili-ezis','mili-lapsens','mili-zakis','mili-calis','mili-vavere','mili-pucite','ilu-meness','ilu-ausma'] },
+    { label: 'Spilgti',            ids: ['gnome-blendpills-d','gnome-drool-d','gnome-progress-d','open-bright','1080','1069','211','76','spilgti-majas','spilgti-lietussargi','spilgti-tulpes','gaisma-stari','gaisma-ella'] },
+    { label: 'Ūdens, sniegs un zili', ids: ['gnome-adwaita-d','gnome-sheet-d','gnome-symbolic-d','open-blue','1015','1036','1035','13','15','16','37','199','daba-sarma','lv-ziema','gaisma-zila-lode','ilu-ziemas-koki'] },
+    { label: 'Zaļā daba',          ids: ['open-green','1018','1039','1043','10','11','17','18','28','128','190','user-daisy','user-bamboo-forest','daba-paparde','daba-sunas','daba-lase','lv-mezs'] },
+    { label: 'Silti un saulaini',  ids: ['gnome-amber-d','gnome-fold-l','gnome-pixel-pusher-d','gnome-glass-stripes-l','open-warm','1016','1057','110','19','46','164','user-autumn-leaves','daba-lapa','daba-sarmas-lapa','lv-kapas','gaisma-stikla-lode','gaisma-bokeh'] },
+    { label: 'Tumši un mistiski',  ids: ['gnome-morphogenesis-d','gnome-tubes-d','open-dark','1019','1022','12','29','55','83','95','184','pix-aurora-sky','gaisma-ledus'] },
+    { label: 'Pilsēta un arhitektūra', ids: ['gnome-curvaturingster-d','gnome-map-d','1029','1033','lv-riga-nakti','lv-vecriga','pils-jugends-seja','pils-jugends-fasade','pils-balta-forma','pils-betona-loki','pils-apla-logs','pils-zelta-kupols','pils-vecriga-augsa','pils-nakts-gaismas'] },
+    { label: 'Melnbalti',          ids: ['gnome-curvy-d','open-bw','47','58','daba-pienene','lv-eglu-migla','mb-balkoni','mb-vartu-klusums','mb-spirale','mb-ziedi'] },
     { label: 'Barbie rozā',        ids: ['gnome-dithered-sun-l','open-barbie','bb2','bb3','bb4','bd1','bd2','bd3'] },
-    // Pixabay photos cropped round their subject (scripts/prepare-card-photos.py).
-    { label: 'Daba tuvplānā',      ids: ['daba-paparde','daba-gliemezis','daba-sunas','daba-lase','daba-lapa','daba-pienene','daba-sarma','daba-sarmas-lapa'] },
-    { label: 'Latvija',            ids: ['lv-riga-nakti','lv-vecriga','lv-kapas','lv-mezs','lv-eglu-migla','lv-ziema'] },
-    { label: 'Stikls un gaisma',   ids: ['gaisma-stikla-lode','gaisma-zila-lode','gaisma-bokeh','gaisma-stari','gaisma-ledus','gaisma-ella'] },
-    { label: 'Ilustrācijas',       ids: ['ilu-meness','ilu-ziemas-koki','ilu-kalni','ilu-ausma'] },
-    // Temples and statues printed in one ink (scripts/build-dither-art.py).
-    { label: 'Dither māksla',      ids: ['art-partenons','art-kolonnas','art-piramidas','art-sfinksa','art-herakls','art-atena','art-kariatides','art-apolons','art-domatajs','art-konkordija','art-herkuls'] },
-    { label: 'Dither',             ids: ['dither-tors','dither-lode','dither-kapas','dither-lentes','dither-rezgis','dither-signals','dither-papirs'] },
+    { label: 'Dither',             ids: ['dither-tors','dither-lode','dither-kapas','dither-lentes','dither-rezgis','dither-signals','dither-papirs','art-partenons','art-kolonnas','art-piramidas','art-sfinksa','art-herakls','art-atena','art-kariatides','art-apolons','art-domatajs','art-konkordija','art-herkuls'] },
     { label: 'Kaķi',               ids: ['user-neon-alley-cat','open-cat','cat-01','cat-02','cat-03','cat-04','cat-05','cat-06','cat-07','cat-08','cat-09','cat-10','cat-11','cat-12','cat-13','cat-14','user-black-cat'] }
   ];
   var IMG_LABELS = {
@@ -122,13 +115,14 @@
     'focus-ribbons': 'Zilās lentes', 'focus-ribbons-teal': 'Tirkīza lentes', 'focus-chrome': 'Hroma formas', 'focus-holo': 'Holo svītras',
     'dither-tors': 'Dither tors', 'dither-lode': 'Dither lode', 'dither-kapas': 'Dither kāpas',
     'dither-lentes': 'Dither lentes', 'dither-rezgis': 'Dither režģis', 'dither-signals': 'Dither signāls', 'dither-papirs': 'Dither papīrs',
-    'daba-paparde': 'Papardes pumpurs', 'daba-gliemezis': 'Papardes gliemezis', 'daba-sunas': 'Rasa sūnās', 'daba-lase': 'Lāse uz lapas',
+    'daba-paparde': 'Papardes pumpurs', 'daba-sunas': 'Rasa sūnās', 'daba-lase': 'Lāse uz lapas',
     'daba-lapa': 'Rudens lapa', 'daba-pienene': 'Pienene', 'daba-sarma': 'Sarmotas lapas', 'daba-sarmas-lapa': 'Sarmas lapa',
     'lv-riga-nakti': 'Melngalvju nams', 'lv-vecriga': 'Pētera baznīca', 'lv-kapas': 'Kāpas', 'lv-mezs': 'Mežs',
     'lv-eglu-migla': 'Egles miglā', 'lv-ziema': 'Sarmots koks',
     'gaisma-stikla-lode': 'Stikla lode', 'gaisma-zila-lode': 'Zilā lode', 'gaisma-bokeh': 'Siltās gaismas',
     'gaisma-stari': 'Gaismas stari', 'gaisma-ledus': 'Ledus stikls', 'gaisma-ella': 'Eļļas burbuļi',
     'ilu-meness': 'Mēness jūrā', 'ilu-ziemas-koki': 'Ziemas koki', 'ilu-kalni': 'Rožainie kalni', 'ilu-ausma': 'Zaļā ausma',
+    'grain-kapu-ausma': 'Kāpu ausma', 'grain-mints': 'Piparmētru migla', 'grain-persiks': 'Persiku migla', 'grain-citrons': 'Citronu gaisma', 'grain-grafits': 'Grafīts', 'grain-okeans': 'Okeāna dzīles', 'grain-ogles': 'Ogles', 'grain-sfumato': 'Sfumato', 'pils-jugends-seja': 'Jūgendstila seja', 'pils-jugends-fasade': 'Jūgendstila fasāde', 'pils-balta-forma': 'Baltā forma', 'pils-betona-loki': 'Betona loki', 'pils-apla-logs': 'Apaļais logs', 'pils-zelta-kupols': 'Zelta kupols', 'pils-vecriga-augsa': 'Vecrīga no augšas', 'pils-nakts-gaismas': 'Nakts gaismas', 'mb-balkoni': 'Balkoni', 'mb-vartu-klusums': 'Vārti ūdenī', 'mb-spirale': 'Spirāle', 'mb-ziedi': 'Baltie ziedi', 'mili-ezis': 'Ezis', 'mili-lapsens': 'Lapsēns', 'mili-zakis': 'Zaķēns', 'mili-calis': 'Cālis', 'mili-vavere': 'Vāvere', 'mili-pucite': 'Pūcēns', 'spilgti-majas': 'Krāsainās mājas', 'spilgti-lietussargi': 'Lietussargi', 'spilgti-tulpes': 'Tulpes',
     'art-partenons': 'Partenons', 'art-kolonnas': 'Jonu kolonna', 'art-piramidas': 'Piramīda', 'art-sfinksa': 'Sfinksa', 'art-herakls': 'Hērakls', 'art-atena': 'Atēna', 'art-kariatides': 'Kariatīdes', 'art-apolons': 'Apolons', 'art-domatajs': 'Domātājs', 'art-konkordija': 'Konkordijas templis', 'art-herkuls': 'Hērakls naktī'
   };
   var MATERIALS = window.MinkaCardMaterials || [];

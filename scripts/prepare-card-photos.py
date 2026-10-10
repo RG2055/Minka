@@ -19,7 +19,7 @@ W, H = 640, 360
 
 # id (source file stem) -> focal point (x, y as fractions of the source)
 PHOTOS = {
-    'daba-paparde': (.45, .5), 'daba-gliemezis': (.5, .45), 'daba-sunas': (.5, .5),
+    'daba-paparde': (.45, .5), 'daba-sunas': (.5, .5),
     'daba-lase': (.4, .45), 'daba-lapa': (.5, .45), 'daba-pienene': (.5, .55),
     'daba-sarma': (.55, .5), 'daba-sarmas-lapa': (.5, .5),
     'lv-riga-nakti': (.5, .55), 'lv-vecriga': (.5, .45), 'lv-kapas': (.5, .55),
@@ -27,6 +27,14 @@ PHOTOS = {
     'gaisma-stikla-lode': (.5, .5), 'gaisma-zila-lode': (.5, .5), 'gaisma-bokeh': (.5, .5),
     'gaisma-stari': (.5, .5), 'gaisma-ledus': (.5, .5), 'gaisma-ella': (.5, .5),
     'ilu-meness': (.5, .45), 'ilu-ziemas-koki': (.5, .5), 'ilu-kalni': (.5, .5), 'ilu-ausma': (.5, .5),
+    'pils-jugends-seja': (.5, .45), 'pils-jugends-fasade': (.5, .45), 'pils-balta-forma': (.5, .5),
+    'pils-betona-loki': (.5, .5), 'pils-apla-logs': (.5, .5), 'pils-zelta-kupols': (.5, .5),
+    'pils-vecriga-augsa': (.5, .5), 'pils-nakts-gaismas': (.5, .5),
+    'mb-balkoni': (.5, .5), 'mb-vartu-klusums': (.5, .5), 'mb-spirale': (.5, .5),
+    'mb-ziedi': (.5, .5),
+    'mili-ezis': (.5, .5), 'mili-lapsens': (.45, .5), 'mili-zakis': (.5, .45), 'mili-calis': (.5, .5),
+    'mili-vavere': (.5, .4), 'mili-pucite': (.5, .45),
+    'spilgti-majas': (.5, .5), 'spilgti-lietussargi': (.5, .5), 'spilgti-tulpes': (.5, .5),
 }
 
 
