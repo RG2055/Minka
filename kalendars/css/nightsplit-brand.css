@@ -1931,6 +1931,9 @@ html.mk-low-spec:not(.mk-mobile-shell) #nsOverlay.open #nsPanel { transform: tra
 #nsOverlay #nsPanel .ns-flow-worker-emoji,
 #nsOverlay #nsPanel .nsc-duration-emoji,
 #nsOverlay #nsPanel .ns-stat-name .ns-stat-emoji { font-family: "Fluent Emoji Gaps", "Fluent Emoji Color", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif !important; }
+/* Someone without an emoji: their initials in its place (the app's font, not the emoji one) */
+#nsOverlay #nsPanel .nsc-duration-emoji.nsc-duration-initials { font-family: var(--pp-font) !important; font-size: 19px !important; font-weight: 800 !important; letter-spacing: .06em !important; color: rgba(255, 255, 255, .9) !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .6) !important; }
+#nsOverlay #nsPanel .nsc-duration-emoji .nsc-duration-pic { width: 30px; height: 30px; vertical-align: 0; }
 
 /* Galvene */
 #nsOverlay #nsPanel .ns-panel-head { border-bottom: 0 !important; margin-bottom: 14px !important; }

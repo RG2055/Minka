@@ -3271,6 +3271,15 @@
 
 
 
+    // The last cell of a card's row: the person's emoji (a 3D / Noto one as its
+    // picture), or, for someone without an emoji, their initials.
+    function nscEmojiCell(name, em){
+      var pic=em&&window.MinkaEmoji3D?window.MinkaEmoji3D.html(em,false,'nsc-duration-pic'):null;
+      if(em) return '<span class="nsc-duration-emoji" aria-hidden="true">'+(pic||escHtml(em))+'</span>';
+      var parts=String(name||'').trim().split(/\s+/).filter(Boolean);
+      var ini=((parts[0]||'').charAt(0)+(parts.length>1?parts[parts.length-1].charAt(0):'')).toUpperCase();
+      return '<span class="nsc-duration-emoji nsc-duration-initials" aria-hidden="true">'+escHtml(ini)+'</span>';
+    }
     // Build full glowing cards
     var cards=st.sl.map(function(s,i){
       var nm=escHtml(String(s.w.name||'').split(/\s+/)[0]);
@@ -3303,7 +3312,7 @@
         +'<div class="nsc-full-meta">'
         +'<span class="nsc-full-fat '+tr.cls+'" style="--nsc-fat-color:'+fatCol+';--nsc-fat-pct:'+fatPct+'%"><span class="nsc-fat-label">Nogurums</span><span class="nsc-fat-value" style="color:'+fatCol+' !important">'+fatPct+'% '+tr.icon+'</span></span>'
         +'<span class="nsc-dur-cluster"><span class="nsc-full-dur">'+dur+'</span></span>'
-        +(em?'<span class="nsc-duration-emoji" aria-hidden="true">'+escHtml(em)+'</span>':'<span class="nsc-duration-emoji nsc-duration-emoji-empty" aria-hidden="true"></span>')
+        +nscEmojiCell(s.w.name, em)
         +'</div>'
         +(rt.active?'<div class="nsc-full-progress"><span style="width:'+rt.pct.toFixed(1)+'%;background:'+c.accent+'"></span></div>':'')
         +'</div>'
