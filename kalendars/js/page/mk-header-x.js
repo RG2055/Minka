@@ -615,7 +615,13 @@
     // and to the shell around the calendar: its dock is tinted with them too
     try {
       var shell = window.parent !== window && window.parent.document && window.parent.document.documentElement;
-      if (shell) { shell.style.setProperty('--hxr-accent', acc); shell.style.setProperty('--hxr-surface', surf); }
+      if (shell) {
+        shell.style.setProperty('--hxr-accent', acc); shell.style.setProperty('--hxr-surface', surf);
+        // the shell tints its page with them (not under a person's wallpaper, not in /rad):
+        // what is drawn on black here (Noskaņa's sky) then takes the same tone
+        var tinted = !shell.classList.contains('has-wallpaper-bg') && !shell.classList.contains('minka-rad');
+        root.toggleAttribute('data-page-tint', tinted);
+      }
     } catch (_e) {}
   }
   function applyTone() {

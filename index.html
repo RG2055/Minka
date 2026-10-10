@@ -2985,6 +2985,23 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
 </script>
 
 <style>
+/* ═══ Tinted page (M3 content colour, 2026-10): the page is no longer flat
+   black but the header picture's darkest tone, kept deep (it is still a dark
+   page, not a wallpaper): surface = 24% of the picture's dark tone on black,
+   a soft glow of it from the top and a faint one of its light tone from the
+   bottom (in place of the old violet and teal glows). The palette is the
+   header's (--hxr-surface / --hxr-accent, kalendars/js/page/mk-header-x.js);
+   before it comes, plain black as before. Not with a person's own wallpaper,
+   not in /rad. */
+html:not(.minka-rad):not(.has-wallpaper-bg), html:not(.minka-rad):not(.has-wallpaper-bg) body {
+  background-color: color-mix(in srgb, var(--hxr-surface, #000) 24%, #030405) !important;
+  transition: background-color 600ms cubic-bezier(.2, 0, 0, 1);
+}
+html:not(.minka-rad):not(.has-wallpaper-bg) body::before {
+  background:
+    radial-gradient(1100px 540px at 50% -12%, color-mix(in srgb, var(--hxr-surface, #000) 62%, transparent), transparent 68%),
+    radial-gradient(900px 440px at 50% 112%, color-mix(in srgb, var(--hxr-accent, #000) 6%, transparent), transparent 60%) !important;
+}
 /* ═══ Dock M3 (2026-10): a floating toolbar in the M3 style, kept plain.
    Each item: the icon with its label under it. States are colour only, on
    the effects curve (no overshoot, M3: colour and opacity never bounce):

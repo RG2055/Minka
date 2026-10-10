@@ -785,6 +785,11 @@
    the colour of the cloud passing beneath it, continuously (compositor). */
 .rg-sky-chars { position: absolute; inset: 0; isolation: isolate; mix-blend-mode: screen; }
 .rg-sky-tint, .rg-sky-mask { mix-blend-mode: multiply; }
+/* A tinted page (index.html, the header picture's dark tone): the sky's black
+   becomes that same tone, so it shows no dark patch. Its base is the page's
+   tone and the soft picture is screened onto it like the characters are. */
+:root[data-page-tint] .rg-scape-sky { background-color: color-mix(in srgb, var(--hxr-surface, #000) 24%, #030405); }
+:root[data-page-tint] .rg-scape-sky > .rg-sky-move { mix-blend-mode: screen; }
 /* A person's coffee: small moons round their glass (mood-feedback.js). */
 .rg-mood-moon {
   position: absolute;
