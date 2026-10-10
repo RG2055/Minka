@@ -475,6 +475,30 @@ html body #worker-modal .card .mk-contrast-flag {outline:2px dashed #ffb4ab;outl
 #worker-modal#worker-modal .bld-entry b {display:block;font:700 15px/1.2 var(--pp-font,system-ui);}
 #worker-modal#worker-modal .bld-entry small {display:block;margin-top:3px;color:var(--pp-on-var,#b8c1cd);font:500 12px/1.3 var(--pp-font,system-ui);}
 #worker-modal#worker-modal .bld-entry > i {font-style:normal;font-size:18px;color:var(--pp-on-var,#b8c1cd);}
+/* Būvē savu kartīti: text on the left, a fan of three finished cards on the right
+   that spreads a little on hover (transform only, static images). */
+#worker-modal#worker-modal .bld-entry.org-bld {grid-template-columns:1fr auto;min-height:150px;padding:18px 14px 18px 20px;overflow:hidden;text-align:left;cursor:pointer;
+  background:radial-gradient(120% 140% at 100% 0%,#2a3b57 0%,#16202d 55%,#11161e 100%);border-radius:24px;}
+#worker-modal#worker-modal .bld-entry-text b {font:700 17px/1.2 var(--pp-font,system-ui);}
+#worker-modal#worker-modal .bld-entry-text small {font:500 13px/1.35 var(--pp-font,system-ui);max-width:22ch;}
+#worker-modal#worker-modal .bld-entry-text em {display:inline-flex;align-items:center;gap:6px;margin-top:12px;height:36px;padding:0 16px;border-radius:18px;font:600 14px/1 var(--pp-font,system-ui);font-style:normal;
+  background:var(--pp-primary,#a8c7fa);color:var(--pp-on-primary,#0b2a57);transition:border-radius .3s var(--pp-spring,ease);}
+#worker-modal#worker-modal .bld-entry-text em i {font-style:normal;}
+#worker-modal#worker-modal .bld-entry:hover .bld-entry-text em {border-radius:10px;}
+#worker-modal#worker-modal .bld-fan {position:relative;width:150px;height:118px;}
+#worker-modal#worker-modal .bld-fan-card {position:absolute;top:8px;left:40px;width:70px;height:96px;border-radius:14px;background:#222 center/cover no-repeat;
+  box-shadow:0 6px 16px rgba(0,0,0,.45),0 0 0 2px rgba(255,255,255,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  transition:transform .45s var(--pp-spring,cubic-bezier(.2,0,0,1));}
+#worker-modal#worker-modal .bld-fan-card.is-left {transform:translate(-34px,8px) rotate(-14deg);}
+#worker-modal#worker-modal .bld-fan-card.is-right {transform:translate(34px,8px) rotate(13deg);}
+#worker-modal#worker-modal .bld-fan-card.is-front {transform:translateY(-2px);z-index:1;}
+#worker-modal#worker-modal .bld-entry:hover .bld-fan-card.is-left {transform:translate(-44px,6px) rotate(-19deg);}
+#worker-modal#worker-modal .bld-entry:hover .bld-fan-card.is-right {transform:translate(44px,6px) rotate(18deg);}
+#worker-modal#worker-modal .bld-entry:hover .bld-fan-card.is-front {transform:translateY(-6px) scale(1.04);}
+#worker-modal#worker-modal .bld-fan-num {font:800 30px/1 var(--pp-font,system-ui);font-style:normal;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+#worker-modal#worker-modal .bld-fan-card .mk-nf-sample {font-size:15px;max-width:66px;overflow:visible;margin-bottom:2px;}
+@media (prefers-reduced-motion:reduce) {#worker-modal#worker-modal .bld-fan-card {transition:none;}}
+#worker-modal#worker-modal .bld-fonts {margin-bottom:12px;}
 /* Confetti: a dozen specks from the preview, transform and opacity only */
 #worker-modal#worker-modal .bld-confetti {position:absolute;inset:0;pointer-events:none;z-index:30;overflow:visible;}
 #worker-modal#worker-modal .bld-confetti i {position:absolute;left:50%;top:42%;width:7px;height:10px;border-radius:2px;background:var(--c);opacity:0;animation:bld-burst 1.1s cubic-bezier(.15,.75,.3,1) var(--d) forwards;}

@@ -1,5 +1,5 @@
-/* Būvētājs: a card from scratch in seven small steps (Fons → Efekts →
-   Izkārtojums → Krāsas → Cipari → Taimeris → Dekori), each with its own
+/* Būvētājs: a card from scratch in eight small steps (Fons → Efekts →
+   Izkārtojums → Krāsas → Cipari → Fonts → Taimeris → Dekori), each with its own
    suggestions and the reason for them. The card preview on the left changes
    with every pick and the Kontrasts check measures it, so the "Salasāmība"
    meter always tells the truth. Points, stars and a small confetti make it a
@@ -18,6 +18,7 @@
     { key: 'layout', label: 'Izkārtojums', title: 'Kur kas atrodas', tip: 'Izvēlies izkārtojumu un to, ko kartītē rādīt. Mazāk elementu nozīmē tīrāku kartīti.' },
     { key: 'colors', label: 'Krāsas', title: 'Krāsas no bildes', tip: 'Visas krāsas ņemtas no fona. Birka rāda, vai cipars lasās.' },
     { key: 'digits', label: 'Cipari', title: 'Ciparu materiāls', tip: 'Uz raiba fona vislabāk lasās Tīrs vai Neons.' },
+    { key: 'font', label: 'Fonts', title: 'Teksta fonts', tip: 'Fonts visam kartītes tekstam, vārdam arī efekts. Vienam elementam atsevišķi: Izkārtojums → uzspied uz elementa.' },
     { key: 'timer', label: 'Taimeris', title: 'Maiņas taimeris', tip: 'Cipari vai analogs pulkstenis. Pulkstenis pats atrod brīvu vietu.' },
     { key: 'decor', label: 'Dekori', title: 'Dekori', tip: 'Līdz 3 dekoriem. Tie paši atrod vietu, kartītē tos var pārvilkt.' },
     { key: 'done', label: 'Gatavs', title: 'Tava kartīte', tip: '' }
@@ -124,7 +125,7 @@
   function body(host) {
     var ctx = ctxOf(host), draft = ctx.draft(), step = STEPS[B.step].key, kit = K(), html = '';
     if (step === 'bg') {
-      var groups = kit.IMG_GROUPS.filter(function (g) { return g.label !== 'Dither' && g.ids.length > 5; });
+      var groups = kit.IMG_GROUPS.filter(function (g) { return g.ids.length > 5; });
       var mood = B.mood || '';
       html += '<div class="bld-chips bld-moods" role="group" aria-label="Noskaņa"><button type="button" data-mood="" aria-pressed="' + !mood + '">Ieteiktie</button>'
         + groups.map(function (g) { return '<button type="button" data-mood="' + esc(g.label) + '" aria-pressed="' + (mood === g.label) + '">' + esc(g.label) + '</button>'; }).join('') + '</div>';
@@ -182,6 +183,13 @@
         var rec = busy2 ? (i === 2 || i === 5) : i === 0;
         return '<button type="button" class="bld-tile" data-finish-pick="' + i + '" data-watch-finish="' + i + '" style="--wf-tint:' + tint + '" aria-pressed="' + ((f0.finish || 0) === i) + '"><b class="wf-number-sample" aria-hidden="true">12</b><span>' + t + '</span>' + (rec ? '<em class="bld-rec">Ieteicams</em>' : '') + '</button>';
       }).join('') + '</div>';
+    } else if (step === 'font') {
+      var styles = kit.NAME_STYLES || [], nf = String(draft.nf || ''), first = String(B.name || '').trim().split(/\s+/)[0] || 'Vārds';
+      first = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+      html += '<div class="mk-nf-grid bld-fonts" role="group" aria-label="Teksta fonts">' + styles.map(function (o) {
+        return '<button type="button" data-font-pick="' + o[0] + '" aria-pressed="' + (nf.toLowerCase() === o[0]) + '"><i class="mk-nf-sample' + (o[0] ? ' mk-nf-' + o[0] : '') + '" aria-hidden="true">' + esc(first) + '</i><b>' + esc(o[1]) + '</b></button>';
+      }).join('') + '</div>'
+        + '<label class="mk-switch bld-font-only"><input type="checkbox" data-font-only' + (nf && nf !== nf.toLowerCase() ? ' checked' : '') + (nf ? '' : ' disabled') + '><span></span><b>Tikai vārdam</b></label>';
     } else if (step === 'timer') {
       var tm = String(draft.tm || ''), F = window.MinkaCardFaces, skins = (F && F.dialSkins) || [];
       html += '<div class="bld-grid bld-timers"><button type="button" class="bld-tile" data-tm="" aria-pressed="' + !tm + '"><span class="bld-digital">7:42<small>LĪDZ 20:00</small></span><b>Cipari</b></button>'
@@ -342,6 +350,19 @@
       render(host);
       return;
     }
+    if (step === 'font' && el.dataset.fontPick != null) {
+      var only = !!(draft.nf && draft.nf !== draft.nf.toLowerCase());
+      if (el.dataset.fontPick) draft.nf = only ? el.dataset.fontPick.toUpperCase() : el.dataset.fontPick; else delete draft.nf;
+      update(host, draft, { fix: true });
+      award(host, 'font', 10);
+      render(host);
+      return;
+    }
+    if (step === 'font' && el.hasAttribute('data-font-only')) {
+      if (draft.nf) { draft.nf = el.checked ? draft.nf.toUpperCase() : draft.nf.toLowerCase(); update(host, draft, { fix: true }); }
+      render(host);
+      return;
+    }
     if (step === 'timer' && el.dataset.tm != null) {
       var tm = el.dataset.tm;
       if (tm) { draft.tm = tm; if (/^[a-h]/.test(tm)) M().fitDial(draft.face); } else delete draft.tm;
@@ -432,6 +453,7 @@
         + '<header class="bld-h"></header><div class="bld-body"></div><aside class="bld-tip" hidden></aside>'
         + '<footer class="bld-foot"><button type="button" class="bld-prev">Atpakaļ</button><button type="button" class="bld-next">Tālāk</button></footer>';
       editor.prepend(panel);
+      panel.addEventListener('change', function (e) { if (B && e.target.hasAttribute('data-font-only')) pick(host, e.target); });
       panel.addEventListener('click', function (e) {
         var t = e.target.closest('button'); if (!t || !B) return;
         if (t.classList.contains('bld-x')) { close(host, true); return; }

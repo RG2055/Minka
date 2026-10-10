@@ -1764,7 +1764,7 @@
      editor: pictures, palettes, the harmoniser and the ready-made sets. */
   window.MinkaSkinKit = {
     IMG_GROUPS: IMG_GROUPS, IMG_LABELS: IMG_LABELS, SCENIC_SKINS: SCENIC_SKINS, DITHER_INKS: DITHER_INKS,
-    imgUrl: stockSkinUrl, palette: suggestedPalette, harmonize: harmonizeSkin, harmonizeAddon: harmonizeAddon,
+    NAME_STYLES: NAME_STYLES, imgUrl: stockSkinUrl, palette: suggestedPalette, harmonize: harmonizeSkin, harmonizeAddon: harmonizeAddon,
     INK_FX: INK_FX, COLOR_FX: REMIX_COLOR_FX, SUBJECT_FX: REMIX_SUBJECT_FX, BUSY_FX: REMIX_BUSY_FX,
     hexOf: hexOf, hexToRgb: hexToRgb, rgbToHsl: rgbToHsl, hslToRgb: hslToRgb, toneAt: toneAt, relLuminance: relLuminance
   };

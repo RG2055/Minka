@@ -235,8 +235,20 @@
     var bldBtn = null;
     if (window.MinkaSkinBuilder && window.MinkaSkinBuilder.start) {
       bldBtn = document.createElement('button'); bldBtn.type = 'button'; bldBtn.className = 'bld-entry org-bld';
-      bldBtn.innerHTML = '<span class="bld-entry-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg></span>'
-        + '<span><b>Būvē savu kartīti</b><small>7 soļi ar ieteikumiem, salasāmības pārbaude un punkti</small></span><i aria-hidden="true">→</i>';
+      // A fan of three finished cards (like a stack of postcards): two pictures behind,
+      // in front the person's own name in a card font over the shift number.
+      var kit = window.MinkaSkinKit, url = function (id) { return kit && kit.imgUrl ? kit.imgUrl(id) : ''; };
+      var nameEl = host.querySelector('.mk-skin-preview-list .card .name-main');
+      var first = String(nameEl && nameEl.textContent || '').trim().split(/\s+/)[0] || 'Vārds';
+      first = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+      var fanCard = function (cls, id, inner) { return '<span class="bld-fan-card ' + cls + '" style="background-image:url(&quot;' + url(id) + '&quot;)">' + (inner || '') + '</span>'; };
+      bldBtn.innerHTML = '<span class="bld-entry-text"><b>Būvē savu kartīti</b><small>Fons, fonts, krāsas un dekori soli pa solim</small><em>Sākt <i aria-hidden="true">→</i></em></span>'
+        + '<span class="bld-fan" aria-hidden="true">'
+        + fanCard('is-left', 'art-kolonnas', '<em class="bld-fan-num">12</em>')
+        + fanCard('is-right', 'mili-lapsens', '<em class="bld-fan-num">24</em>')
+        + fanCard('is-front', 'grain-sfumato', '<i class="mk-nf-sample mk-nf-c"></i><em class="bld-fan-num">24</em>')
+        + '</span>';
+      bldBtn.querySelector('.is-front .mk-nf-sample').textContent = first;
       bldBtn.addEventListener('click', function () { window.MinkaSkinBuilder.start(host); });
     }
     slot('presets', [bldBtn]);
