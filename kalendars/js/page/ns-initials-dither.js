@@ -1,26 +1,26 @@
-/* Nakts sadalījums: hovering a person's card brings up a fine dither of their
-   own initials around the pointer (each lit cell is the pair, "AL"), tinted
-   with the colour that person chose (the card's --nsc-accent: their number
-   colour, else the night palette) blended with the photo's own colour under
-   each letter, so every card shimmers a little differently.
-
-   The same idea as the app's other character grids (Noskaņa's sky,
-   js/page/mood-trend.js; the login, js/gate-sky.js): a fixed grid of small
-   characters, each cell lit or not by an ordered (Bayer 4×4) threshold. Here the
-   light is the card's photo (brighter = denser letters) times a soft circle
-   that follows the pointer and fades behind it.
+/* Nakts sadalījums: hovering a person's card draws their card's photo round the
+   pointer in their own initials, the way Noskaņa draws its sky in characters
+   (js/page/mood-trend.js): a fine fixed grid (3.9 × 6.6 px cells, 6 px
+   characters), the light deciding which cells show and how strongly (the same
+   ordered Bayer thinning and three inks), each character in the photo's own
+   colour there blended with the colour this person chose (the card's
+   --nsc-accent), and a soft glow of that colour behind the characters. Only
+   the initials are used, alternating (A L A L…). The circle follows the
+   pointer and fades behind it.
 
    Cheap on an old computer, no WebGL: one 2D canvas on the hovered card only;
-   the letters are drawn once into a small white atlas, each frame only copies
-   them and lays the card's tint over them in one draw (source-in);
-   the loop runs while the pointer moves or the trail fades, then stops and the
-   canvas is cleared. Nothing for reduced motion or in a hidden tab. */
+   the letters are drawn once into a small white atlas, each frame copies them
+   and lays the card's tint over them in one draw (source-in), then the glow
+   behind (destination-over). The loop runs while the pointer moves or the
+   trail fades, then stops and the canvas is cleared. Nothing for reduced
+   motion, touch, or in a hidden tab. */
 (function () {
   'use strict';
-  var CHAR_W = 4.1, CELL_H = 7, FONT_PX = 6.4;     // css px; a cell is as wide as the initials
-  var RADIUS = 96;                                  // the circle round the pointer, css px
+  var CELL_W = 3.9, CELL_H = 6.6, CELL_FONT = 6;    // Noskaņa's grid, css px
+  var LO = .16, HI = .9;                            // the light's useful range, as Noskaņa
+  var LEVELS = [.34, .56, .8];                      // three inks, as Noskaņa
+  var RADIUS = 92;                                  // the circle round the pointer, css px
   var FADE = .9;                                    // trail: what is left of it each frame
-  var LEVELS = [.2, .36, .54, .74, .95];            // five inks, faint to full
   var BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   var states = new WeakMap(), active = null, raf = 0, photos = {};
 
@@ -43,38 +43,13 @@
     }
     return img && img.currentSrc ? img.currentSrc : '';
   }
-  // A CSS colour as [r, g, b].
   function rgbOf(color) {
     var c = document.createElement('canvas'); c.width = c.height = 1;
     var x = c.getContext('2d', { willReadFrequently: true }); x.fillStyle = '#9fd8ff'; x.fillStyle = color; x.fillRect(0, 0, 1, 1);
     var d = x.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2]];
   }
-  /* The tint under every letter, one pixel per cell (scaled up smoothly when
-     drawn): the person's colour, and where there is a photo, blended with the
-     photo's own colour there (made vivid and light enough to read on the dark
-     card). Without a photo, the person's colour, a little lighter at the top. */
-  function tintOf(accent, photo, cols, rows) {
-    var c = document.createElement('canvas'); c.width = cols; c.height = rows;
-    var x = c.getContext('2d'), img = x.createImageData(cols, rows), d = img.data, a = rgbOf(accent);
-    for (var y = 0; y < rows; y++) for (var i = 0; i < cols; i++) {
-      var k = y * cols + i, r = a[0], g = a[1], b = a[2];
-      if (photo) {
-        var pr = photo.rgb[k * 3], pg = photo.rgb[k * 3 + 1], pb = photo.rgb[k * 3 + 2];
-        var m = Math.max(pr, pg, pb, 1), boost = 235 / m;                 // the photo's hue, at full strength
-        r = r * .55 + pr * boost * .45; g = g * .55 + pg * boost * .45; b = b * .55 + pb * boost * .45;
-      } else {
-        var lift = .22 * (1 - y / Math.max(1, rows - 1));
-        r += (255 - r) * lift; g += (255 - g) * lift; b += (255 - b) * lift;
-      }
-      var lum = (r * .2126 + g * .7152 + b * .0722) / 255;
-      if (lum < .6) { var up = (.6 - lum) / (1 - lum); r += (255 - r) * up; g += (255 - g) * up; b += (255 - b) * up; }
-      d[k * 4] = r; d[k * 4 + 1] = g; d[k * 4 + 2] = b; d[k * 4 + 3] = 255;
-    }
-    x.putImageData(img, 0, 0);
-    return c;
-  }
   // The photo's light and colour per grid cell (cover fit, like the card shows it); null without one.
-  function lightOf(url, cols, rows, done) {
+  function photoOf(url, cols, rows, done) {
     if (!url) { done(null); return; }
     var key = url + '|' + cols + 'x' + rows;
     if (photos[key] !== undefined) { done(photos[key]); return; }
@@ -85,6 +60,7 @@
       try {
         var c = document.createElement('canvas'); c.width = cols; c.height = rows;
         var x = c.getContext('2d', { willReadFrequently: true });
+        x.imageSmoothingQuality = 'high';
         var s = Math.max(cols / im.naturalWidth, rows / im.naturalHeight);
         var w = im.naturalWidth * s, h = im.naturalHeight * s;
         x.drawImage(im, (cols - w) / 2, (rows - h) / 2, w, h);
@@ -94,20 +70,47 @@
           rgb[i * 3] = d[i * 4]; rgb[i * 3 + 1] = d[i * 4 + 1]; rgb[i * 3 + 2] = d[i * 4 + 2];
         }
         photos[key] = { lum: lum, rgb: rgb };
-      } catch (_e) { photos[key] = null; }                 // another site's picture: the plain dither
+      } catch (_e) { photos[key] = null; }                 // another site's picture: the plain one
       done(photos[key]);
     };
     im.onerror = function () { photos[key] = null; done(null); };
     im.src = url;
   }
-  // The person's initials in white, five inks, drawn once (the tint goes on after).
-  function atlasFor(letters, dpr, cellW) {
-    var cw = Math.round(cellW * dpr), ch = Math.round(CELL_H * dpr);
-    var c = document.createElement('canvas'); c.width = cw; c.height = ch * LEVELS.length;
+  /* The colour under every character, one pixel per cell (scaled up smoothly
+     when drawn): the photo's own colour there (lifted to read on the dark
+     card) blended half and half with the person's colour; without a photo,
+     the person's colour, a little lighter towards the top. */
+  function tintOf(accent, photo, cols, rows) {
+    var c = document.createElement('canvas'); c.width = cols; c.height = rows;
+    var x = c.getContext('2d'), img = x.createImageData(cols, rows), d = img.data, a = rgbOf(accent);
+    for (var y = 0; y < rows; y++) for (var i = 0; i < cols; i++) {
+      var k = y * cols + i, r = a[0], g = a[1], b = a[2];
+      if (photo) {
+        var pr = photo.rgb[k * 3], pg = photo.rgb[k * 3 + 1], pb = photo.rgb[k * 3 + 2];
+        var m = Math.max(pr, pg, pb, 1), boost = Math.min(3, 230 / m);
+        r = r * .5 + Math.min(255, pr * boost) * .5; g = g * .5 + Math.min(255, pg * boost) * .5; b = b * .5 + Math.min(255, pb * boost) * .5;
+      } else {
+        var lift = .2 * (1 - y / Math.max(1, rows - 1));
+        r += (255 - r) * lift; g += (255 - g) * lift; b += (255 - b) * lift;
+      }
+      var lum = (r * .2126 + g * .7152 + b * .0722) / 255;
+      if (lum < .62) { var up = (.62 - lum) / (1 - lum); r += (255 - r) * up; g += (255 - g) * up; b += (255 - b) * up; }
+      d[k * 4] = r; d[k * 4 + 1] = g; d[k * 4 + 2] = b; d[k * 4 + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    return { canvas: c, rgb: a };
+  }
+  // Each initial at each ink, in white, once (the tint goes on after).
+  function atlasFor(letters, dpr) {
+    var cw = Math.max(3, Math.round(CELL_W * dpr)), ch = Math.max(5, Math.round(CELL_H * dpr));
+    var c = document.createElement('canvas'); c.width = cw * letters.length; c.height = ch * LEVELS.length;
     var x = c.getContext('2d');
-    x.font = '600 ' + (FONT_PX * dpr).toFixed(1) + 'px ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#fff';
-    LEVELS.forEach(function (a, row) { x.globalAlpha = a; x.fillText(letters, cw / 2, row * ch + ch / 2 + .5 * dpr); });
+    x.font = '500 ' + (CELL_FONT * dpr).toFixed(2) + 'px ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    LEVELS.forEach(function (alpha, row) {
+      x.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+      for (var k = 0; k < letters.length; k++) x.fillText(letters[k], k * cw + cw / 2, row * ch + ch / 2 + .5 * dpr);
+    });
     return { img: c, cw: cw, ch: ch };
   }
 
@@ -126,12 +129,12 @@
       var deco = card.querySelector(':scope > .nsc-deco');
       if (deco) deco.after(canvas); else card.prepend(canvas);
     }
-    var cellW = CHAR_W * letters.length + 2.4, cols = Math.ceil(w / cellW), rows = Math.ceil(h / CELL_H);
-    st = { canvas: canvas, ctx: canvas.getContext('2d'), w: w, h: h, dpr: dpr, cols: cols, rows: rows, color: color, letters: letters, cellW: cellW,
-      atlas: atlasFor(letters, dpr, cellW), heat: new Float32Array(cols * rows), light: null, tint: tintOf(color, null, cols, rows),
-      px: -1, py: -1, inside: false, lit: false };
+    var atlas = atlasFor(letters, dpr), cols = Math.ceil(canvas.width / atlas.cw), rows = Math.ceil(canvas.height / atlas.ch);
+    st = { canvas: canvas, ctx: canvas.getContext('2d'), w: w, h: h, dpr: dpr, cols: cols, rows: rows, color: color, letters: letters,
+      atlas: atlas, heat: new Float32Array(cols * rows), light: null, tint: tintOf(color, null, cols, rows),
+      px: -1, py: -1, inside: false, glow: 0 };
     states.set(card, st);
-    lightOf(photoUrl(card), cols, rows, function (l) { st.light = l && l.lum; if (l) st.tint = tintOf(color, l, cols, rows); });
+    photoOf(photoUrl(card), cols, rows, function (p) { st.light = p && p.lum; if (p) st.tint = tintOf(color, p, cols, rows); });
     return st;
   }
 
@@ -139,43 +142,57 @@
     raf = 0;
     var card = active, st = card && states.get(card);
     if (!st || !card.isConnected || document.hidden) { if (st) clear(st); active = null; return; }
-    var cols = st.cols, rows = st.rows, heat = st.heat, light = st.light, any = false;
-    var R = RADIUS, CW = st.cellW, cx = st.px / CW, cy = st.py / CELL_H;
+    var A = st.atlas, cols = st.cols, rows = st.rows, heat = st.heat, light = st.light, any = false;
+    var cw = A.cw / st.dpr, chh = A.ch / st.dpr;             // a cell, css px
+    var cx = st.px / cw, cy = st.py / chh;
     for (var i = 0; i < heat.length; i++) heat[i] *= FADE;
+    st.glow = st.inside ? Math.min(1, st.glow + .2) : st.glow * FADE;
     if (st.inside) {
-      var rx = Math.ceil(R / CW), ry = Math.ceil(R / CELL_H);
+      var rx = Math.ceil(RADIUS / cw), ry = Math.ceil(RADIUS / chh);
       var x0 = Math.max(0, Math.floor(cx) - rx), x1 = Math.min(cols - 1, Math.floor(cx) + rx);
       var y0 = Math.max(0, Math.floor(cy) - ry), y1 = Math.min(rows - 1, Math.floor(cy) + ry);
       for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) {
-        var dx = (x + .5 - cx) * CW, dy = (y + .5 - cy) * CELL_H, d = Math.sqrt(dx * dx + dy * dy);
-        if (d >= R) continue;
-        var t = 1 - d / R, v = t * t * (3 - 2 * t), k = y * cols + x;
+        var dx = (x + .5 - cx) * cw, dy = (y + .5 - cy) * chh, d = Math.sqrt(dx * dx + dy * dy);
+        if (d >= RADIUS) continue;
+        var t = 1 - d / RADIUS, v = t * t * (3 - 2 * t), k = y * cols + x;
         if (v > heat[k]) heat[k] = v;
       }
     }
-    var ctx = st.ctx, A = st.atlas;
+    var ctx = st.ctx, n = st.letters.length;
     ctx.clearRect(0, 0, st.canvas.width, st.canvas.height);
     for (var yy = 0; yy < rows; yy++) for (var xx = 0; xx < cols; xx++) {
       var kk = yy * cols + xx, hv = heat[kk];
       if (hv < .02) continue;
       any = true;
-      var val = hv * (light ? .25 + .85 * light[kk] : .9);
-      if (val <= (BAYER4[(xx & 3) + ((yy & 3) << 2)] + .5) / 16) continue;
-      var lvl = Math.min(LEVELS.length - 1, Math.floor(val * LEVELS.length));
-      ctx.drawImage(A.img, 0, lvl * A.ch, A.cw, A.ch, Math.round(xx * CW * st.dpr), Math.round(yy * CELL_H * st.dpr), A.cw, A.ch);
+      // Noskaņa's rule: the light in its useful range, a cell shows while the
+      // ordered threshold is under 1.7× it, its ink from how bright it is
+      var v = light ? (light[kk] - LO) / (HI - LO) : .62;
+      v = Math.max(0, Math.min(1, v)) * hv;
+      if (v <= 0 || (BAYER4[(yy & 3) * 4 + (xx & 3)] + .5) / 16 >= v * 1.7) continue;
+      var level = v < .38 ? 0 : v < .7 ? 1 : 2;
+      ctx.drawImage(A.img, ((xx + yy) % n) * A.cw, level * A.ch, A.cw, A.ch, xx * A.cw, yy * A.ch, A.cw, A.ch);
     }
-    // the tint: the letters take the colour under them (one draw)
     if (any) {
+      // the characters take the colour under them
       ctx.globalCompositeOperation = 'source-in';
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(st.tint, 0, 0, st.canvas.width, st.canvas.height);
+      ctx.drawImage(st.tint.canvas, 0, 0, st.canvas.width, st.canvas.height);
+      // and a soft glow of the person's colour behind them, round the pointer
+      if (st.glow > .02 && st.px >= 0) {
+        var gx = st.px * st.dpr, gy = st.py * st.dpr, gr = RADIUS * 1.15 * st.dpr, c = st.tint.rgb;
+        var grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+        grad.addColorStop(0, 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (.16 * st.glow).toFixed(3) + ')');
+        grad.addColorStop(1, 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',0)');
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = grad;
+        ctx.fillRect(gx - gr, gy - gr, gr * 2, gr * 2);
+      }
       ctx.globalCompositeOperation = 'source-over';
     }
-    st.lit = any;
     if (any || st.inside) raf = requestAnimationFrame(frame);
     else { clear(st); active = null; }
   }
-  function clear(st) { st.ctx.clearRect(0, 0, st.canvas.width, st.canvas.height); st.heat.fill(0); st.lit = false; }
+  function clear(st) { st.ctx.clearRect(0, 0, st.canvas.width, st.canvas.height); st.heat.fill(0); st.glow = 0; }
   function run() { if (!raf) raf = requestAnimationFrame(frame); }
 
   document.addEventListener('pointermove', function (e) {
