@@ -180,7 +180,7 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 }
 
 /* month: a tonal pill with its calendar icon in a light circle */
-.card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"]:not([data-wf-plate]) {
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"]:not([data-wf-plate]):not([hidden]) {
   display: grid !important; grid-template-columns: auto auto !important; grid-template-rows: auto auto !important; align-items: center !important;
   width: auto !important; min-width: 0 !important; max-width: none !important;
   column-gap: 2cqw !important; padding: 1.4cqw 3.6cqw 1.4cqw 1.4cqw !important; border-radius: 999px !important; background: var(--m3-chip) !important;
@@ -195,16 +195,21 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 :is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"] .mk-mid-month-num {color: var(--m3-on-dark) !important; line-height: 1 !important;}
 :is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"] .mk-mid-month-label {color: color-mix(in oklab, var(--m3-on-dark) 62%, transparent) !important; opacity: 1 !important;}
 
-/* fatigue: a ring gauge round its value */
-.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"]:not([data-wf-plate]) {
+/* fatigue: an M3 Expressive circular progress round its value (card-faces.js
+   paintM3Gauge draws the ring: round caps, wavy indicator, a gap, the track) */
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"]:not([data-wf-plate]):not([hidden]) {
   display: grid !important; place-items: center !important; place-content: center !important; padding: 0 !important; aspect-ratio: 1;
   width: 25cqw !important; height: 25cqw !important; min-width: 0 !important; box-sizing: border-box !important; border-radius: 50% !important;
-  background:
-    radial-gradient(circle closest-side, var(--m3-dark) 74%, transparent 75.5%),
-    conic-gradient(var(--m3-light) calc(var(--m3-fat, 0) * 1%), var(--m3-chip) 0) !important;
+  background: transparent !important;
 }
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g {position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none;}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g .trk {fill: none; stroke: var(--m3-chip); stroke-width: 8; stroke-linecap: round;}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g .ind {fill: none; stroke: var(--m3-light); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round;}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] .mk-mid-meta-value {position: relative;}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] .mk-mid-meta-label {display: none !important;}
-:is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] .mk-mid-meta-value {-webkit-text-fill-color: currentColor !important; font-size: 7.4cqw !important; line-height: 1 !important; white-space: nowrap !important;}
+:is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] .mk-mid-meta-value {-webkit-text-fill-color: currentColor !important; font-size: 6.2cqw !important; line-height: 1 !important; white-space: nowrap !important; display: grid !important; justify-items: center !important; gap: .4cqw !important;}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] .m3g-tr {font-style: normal; font-size: .62em; line-height: 1; opacity: .9;}
+:is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] .mk-mid-meta-value.m3g-long {font-size: 5cqw !important;}
 
 /* emoji (or initials) in a light cookie */
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="emoji"]:not([data-wf-plate]):not([hidden]) {

@@ -494,14 +494,38 @@
   }
   /* The drawn parts of the newer faces: static SVG, drawn once per face change,
      in currentColor (the accent/ink) — no ids, no filters, no animation. */
-  /* M3 face: fatigue is a ring gauge; its value comes from the text ("8% ↘"),
-     read once per paint into --m3-fat (0–100) for the ring's conic fill. */
+  /* M3 face: fatigue is an M3 Expressive circular progress round its value, in the
+     proportions of the M3E component (shadcn-m3e circular-progress): stroke 4 at
+     radius 20, a wavy indicator of amplitude 1.6 / wavelength 15 at radius 24 (≈10
+     waves round), round caps, a 4dp gap plus the caps before the track. The value comes from the text ("8% ↘");
+     the ring is redrawn only when the value changes. */
   function paintM3Gauge(card, on) {
     var el = card.querySelector('[data-wf-part="fatigue"]');
     if (!el) return;
-    if (!on) { el.style.removeProperty('--m3-fat'); return; }
-    var m = /(\d{1,3})\s*%/.exec(el.textContent || '');
-    el.style.setProperty('--m3-fat', m ? Math.min(100, +m[1]) : 0);
+    var old = el.querySelector(':scope > svg.m3g');
+    if (!on) { if (old) old.remove(); return; }
+    var m = /(\d{1,3})\s*%/.exec(el.textContent || ''), v = m ? Math.min(100, +m[1]) : 0;
+    // the trend arrow goes under the number, inside the ring (side by side they ran into it)
+    var val = el.querySelector('.mk-mid-meta-value'), tm = val && !val.querySelector('.m3g-tr') && /^\s*(\d{1,3}\s*%)\s*(\S+)\s*$/.exec(val.textContent || '');
+    if (tm) val.innerHTML = tm[1].replace(/\s+/g, '') + '<i class="m3g-tr">' + tm[2] + '</i>';
+    if (val) val.classList.toggle('m3g-long', v >= 100);
+    if (old && old.getAttribute('data-v') === String(v)) return;
+    var R = 40, end = v * 3.6, gap = 23, body = '';
+    function ap(deg) { var a = deg * Math.PI / 180; return (50 + R * Math.sin(a)).toFixed(2) + ' ' + (50 - R * Math.cos(a)).toFixed(2); }
+    function arcD(a0, a1) { return 'M' + ap(a0) + 'A' + R + ' ' + R + ' 0 ' + (a1 - a0 > 180 ? 1 : 0) + ' 1 ' + ap(a1); }
+    function waveD(a0, a1) {
+      var d = '', steps = Math.max(8, Math.ceil((a1 - a0) / 2.5));
+      for (var i = 0; i <= steps; i++) {
+        var a = a0 + (a1 - a0) * i / steps, k = Math.min(1, (a - a0) / 10, (a1 - a) / 10), r = R + 2.7 * k * Math.sin(a / 360 * 10 * Math.PI * 2), t = a * Math.PI / 180;
+        d += (i ? 'L' : 'M') + (50 + r * Math.sin(t)).toFixed(2) + ' ' + (50 - r * Math.cos(t)).toFixed(2);
+      }
+      return d;
+    }
+    if (v <= 0) body = '<circle class="trk" cx="50" cy="50" r="' + R + '"/>';
+    else if (end >= 360 - gap) body = '<path class="ind" d="' + waveD(0, 359.9) + '"/>';
+    else body = '<path class="trk" d="' + arcD(end + gap, 360 - gap) + '"/><path class="ind" d="' + (end > 30 ? waveD(0, end) : arcD(0, end)) + '"/>';
+    var svg = '<svg class="m3g" data-v="' + v + '" viewBox="0 0 100 100" aria-hidden="true">' + body + '</svg>';
+    if (old) old.outerHTML = svg; else el.insertAdjacentHTML('afterbegin', svg);
   }
   function faceArt(face) {
     if (face === 'orbit') return orbitArt();
