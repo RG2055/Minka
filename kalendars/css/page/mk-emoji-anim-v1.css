@@ -73,8 +73,19 @@
     72%   { transform: rotate(360deg) scale3d(1, 1, 1); }
     100%  { transform: rotate(360deg) scale3d(1, 1, 1); }       /* pauze */
   }
+  /* A picture emoji without its own animation (Noto 3D, Roji, Baloni): the same
+     turn as a Fluent emoji without one (js/page/emoji-hover-animation.js). */
+  html.mk-low-spec img.mk-e3d.mk-e3d-nudge,
+  img.mk-e3d.mk-e3d-nudge {
+    animation-name: mk-emoji-tada !important;
+    animation-duration: 1.9s !important;
+    animation-timing-function: ease-in-out !important;
+    animation-iteration-count: infinite !important;
+    transform-origin: 50% 50%;
+  }
   @media (prefers-reduced-motion: reduce) {
-    .mk-emoji-nudge-box.mk-emoji-nudge-box { animation: none !important; }
+    .mk-emoji-nudge-box.mk-emoji-nudge-box,
+    img.mk-e3d.mk-e3d-nudge { animation: none !important; }
   }
   /* Samazināta kustība: statiskais kadrs paliek redzams (tas aizstāj glifu, ko
      fonts nesalīmē), tikai nekustas. Agrāk te bija display:none — tad šie emoji

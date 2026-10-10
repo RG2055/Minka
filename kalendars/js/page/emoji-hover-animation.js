@@ -172,6 +172,33 @@
     if (info) makeBox(el, info);
   }
 
+  /* Bilžu emoji (js/emoji3d.js: Noto, Noto 3D, Roji, Baloni) pēc tiem pašiem
+     likumiem kā Fluent: uzejot uz kartītes, pa vienam. Noto ir sava animācija
+     (data-anim); pārējiem tāda nav, tie dabū to pašu apgriezienu, ko Fluent
+     emoji bez animācijas. Bez šī bildes emoji uz kartītes nekustējās vispār —
+     teksta tiem nav, un start() izgāja ārā. */
+  function startPic(el, pic) {
+    if (el === playing && el.__mkPic === pic) return;
+    stop();
+    if (pic.hasAttribute('data-anim')) {
+      if (!pic.hasAttribute('data-still')) pic.setAttribute('data-still', pic.getAttribute('src'));
+      pic.src = pic.getAttribute('data-anim');
+    } else {
+      pic.style.animationDelay = motionDelay('nudge:' + pic.getAttribute('src'), 1900) + 'ms';
+      pic.classList.add('mk-e3d-nudge');
+    }
+    el.__mkPic = pic;
+    playing = el;
+    activeText = '';
+  }
+  function stopPic(el) {
+    var pic = el.__mkPic; el.__mkPic = null;
+    if (!pic) return;
+    if (pic.hasAttribute('data-still')) pic.src = pic.getAttribute('data-still');
+    pic.classList.remove('mk-e3d-nudge');
+    pic.style.removeProperty('animation-delay');
+  }
+
   function stop() {
     if (nudging) {
       var nb = nudging.querySelector('.mk-emoji-nudge-box');
@@ -181,6 +208,7 @@
       nudging = null;
     }
     if (!playing) return;
+    if (playing.__mkPic) { stopPic(playing); playing = null; activeText = ''; return; }
     var film = playing.querySelector('.mk-emoji-film');
     if (film) film.classList.remove('is-playing');
     var text = (playing.textContent || '').trim();
@@ -205,8 +233,10 @@
     /* Pārbaudām arī TEKSTU, ne tikai elementu: kartītes pārzīmēšana var atstāt
        to pašu mezglu, bet nomainīt tajā emoji. Ar pārbaudi tikai pēc elementa
        jaunais emoji paliktu bez animācijas. */
-    if (!manifest) return;
     if (stillOnly()) { stop(); return; }
+    var pic = el.querySelector('img.mk-e3d');
+    if (pic) { startPic(el, pic); return; }
+    if (!manifest) return;
     if ((el === playing || el === nudging) && text === activeText) return;
     var info = manifest.emoji && manifest.emoji[text];
     stop();
@@ -274,6 +304,10 @@
     requestAnimationFrame(function () {
       pending = false;
       applyStatics();
+      // a picture emoji redrawn inside the same element: play the new one
+      if (playing && document.contains(playing) && playing.__mkPic && !playing.contains(playing.__mkPic)) {
+        var again = playing; playing.__mkPic = null; playing = null; start(again); return;
+      }
       if (playing && document.contains(playing)) return;
       if (nudging && document.contains(nudging)) return;
       playing = null;                       /* vecais mezgls ir atdalīts */

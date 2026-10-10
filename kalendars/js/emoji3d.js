@@ -7,7 +7,8 @@
    Noto (scripts/build-noto-emoji.py writes the NOTO list below), Google:
      Noto 3D, Apache License 2.0: the picker's whole catalogue (noto) and the
      Emoji 18.0 ones (noto18); Noto, the classic look, CC BY 4.0 (notoanim): a
-     still picture that moves under the pointer, like the Fluent emoji.
+     still picture with its animation in data-anim, played on hover like the
+     Fluent emoji (js/page/emoji-hover-animation.js).
    styled(set, emoji) finds an emoji's picture in a set: the picker shows the
    same emoji in the look a person chooses. */
 (function () {
@@ -65,26 +66,6 @@
     sets: [['roji', 'Roji', 'Roji 3D'], ['balloon', 'Baloni', 'Baloni 3D'], ['noto', 'Noto 3D', 'Noto 3D'],
       ['noto18', 'Emoji 18', 'Emoji 18 (jaunie)'], ['notoanim', 'Noto', 'Noto']]
   };
-  /* A Noto picture moves only under the pointer, one at a time, like the Fluent
-     emoji (js/page/emoji-hover-animation.js): the page never runs many at once.
-     Not with reduced motion. (Not tied to mk-low-spec: the calendar sets that
-     on every computer.) */
-  var playing = null;
-  function calm() {
-    return document.documentElement.getAttribute('data-motion') === 'reduced'
-      || !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }
-  function stop() { if (playing) { playing.src = playing.getAttribute('data-still'); playing = null; } }
-  document.addEventListener('pointerover', function (e) {
-    // the picture itself often has pointer-events: none, then its holder gets the event
-    var t = e.target, img = t && t.closest ? t.closest('img.mk-e3d[data-anim]') : null;
-    if (!img && t && t.querySelector) img = t.querySelector(':scope > img.mk-e3d[data-anim], :scope > * > img.mk-e3d[data-anim]');
-    if (img === playing) return;
-    stop();
-    if (!img || calm()) return;
-    if (!img.hasAttribute('data-still')) img.setAttribute('data-still', img.getAttribute('src'));
-    img.src = img.getAttribute('data-anim');
-    playing = img;
-  }, { passive: true });
-  document.addEventListener('pointerout', function (e) { if (!e.relatedTarget) stop(); }, { passive: true });
+  /* Moving on hover is js/page/emoji-hover-animation.js, the same rules as for the
+     Fluent emoji: on a card, one at a time; a Noto picture plays its data-anim. */
 })();
