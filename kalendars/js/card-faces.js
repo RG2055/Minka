@@ -5,7 +5,7 @@
   var M = window.MinkaCardFaceModel;
   var labels = { hours: 'Maiņas stundas', name: 'Vārds', initials: 'Iniciāļi', month: 'Stundas mēnesī', coffee: 'Kafija', fatigue: 'Nogurums', remaining: 'Maiņas laiks', emoji: 'Emoji', clock: 'Pulkstenis', moon: 'Saule / mēness' };
   var selectors = { hours: '.mk-mid-hours', name: '.mk-mid-name-wrap', initials: '.mk-mid-initials', month: '.mk-mid-month', coffee: '.mk-mid-coffee', fatigue: '.mk-mid-meta-fat', remaining: '.mk-mid-meta-time', emoji: '.mk-mid-meta-emoji', clock: '.mk-wf-clock', moon: '.mk-wf-moon' };
-  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither', 'Gameboy', 'Termostats', 'Punkti', 'Līnijas', 'Biļete', 'Žurnāls', 'Pulkstenis', 'Akmens', 'M3'];
+  var titles = ['Klasika', 'Foto stikls', 'Loks', 'Moduļi', 'Winamp', 'Dither', 'Gameboy', 'Termostats', 'Punkti', 'Līnijas', 'Biļete', 'Žurnāls', 'Pulkstenis', 'Akmens', 'M3', 'Emoji pulkstenis'];
   var metals = [
     ['Sudrabs','#d7d9de'],['Dabiskais titāns','#b7afa0'],['Melnais titāns','#484a50'],['Rozā zelts','#d9b3a7'],
     ['Zelts','#c7ac7c'],['Slānekļa titāns','#71747a'],['Tuksneša titāns','#c4a98d'],['Baltais titāns','#e7e5de'],
@@ -527,6 +527,30 @@
     var svg = '<svg class="m3g" data-v="' + v + '" viewBox="0 0 100 100" aria-hidden="true">' + body + '</svg>';
     if (old) old.outerHTML = svg; else el.insertAdjacentHTML('afterbegin', svg);
   }
+  // One small drawn face (the emoji clock's hour marks): a light disc, dark features.
+  function emojiFace(i, x, y) {
+    function f(n) { return n.toFixed(2); }
+    var r = 6.6, ex = 2.2, ey = y - 1.3, my = y + 2.2;
+    var dot = function (dx) { return '<circle class="ec-fill" cx="' + f(x + dx) + '" cy="' + f(ey) + '" r=".75"/>'; };
+    var shut = function (dx, up) { return '<path class="ec-ink" d="M' + f(x + dx - 1) + ' ' + f(ey + (up ? .4 : -.2)) + 'Q' + f(x + dx) + ' ' + f(ey + (up ? -.9 : .9)) + ' ' + f(x + dx + 1) + ' ' + f(ey + (up ? .4 : -.2)) + '"/>'; };
+    var smile = function (w, d) { return '<path class="ec-ink" d="M' + f(x - w) + ' ' + f(my - .4) + 'Q' + f(x) + ' ' + f(my + d) + ' ' + f(x + w) + ' ' + f(my - .4) + '"/>'; };
+    var eyes = dot(-ex) + dot(ex), s = '<circle class="ec-face" cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '"/>';
+    switch (i) {
+      case 0: s += eyes + smile(2.4, 2); break;                                                   // smile
+      case 1: s += eyes + '<path class="ec-fill" d="M' + f(x - 2.6) + ' ' + f(my - .6) + 'h5.2q0 3.2-2.6 3.2t-2.6-3.2Z"/>'; break; // grin
+      case 2: s += dot(-ex) + shut(ex, true) + smile(2.4, 2); break;                              // wink
+      case 3: s += '<rect class="ec-fill" x="' + f(x - 3.6) + '" y="' + f(ey - 1.1) + '" width="7.2" height="2.2" rx="1"/>' + smile(2.2, 1.6); break; // cool
+      case 4: s += '<path class="ec-fill" d="M' + f(x - ex) + ' ' + f(ey + 1) + 'l-1.2-1.2a.7.7 0 0 1 1.2-.9a.7.7 0 0 1 1.2.9Z M' + f(x + ex) + ' ' + f(ey + 1) + 'l-1.2-1.2a.7.7 0 0 1 1.2-.9a.7.7 0 0 1 1.2.9Z"/>' + smile(2.4, 2); break; // love
+      case 5: s += shut(-ex, false) + shut(ex, false) + '<circle class="ec-ink" cx="' + f(x + .6) + '" cy="' + f(my + .2) + '" r=".7"/>'; break; // sleepy
+      case 6: s += shut(-ex, true) + shut(ex, true) + '<path class="ec-fill" d="M' + f(x - 2.8) + ' ' + f(my - .8) + 'h5.6q0 3.6-2.8 3.6t-2.8-3.6Z"/>'; break; // laugh
+      case 7: s += eyes + '<circle class="ec-ink" cx="' + f(x) + '" cy="' + f(my + .4) + '" r="1.2"/>'; break; // surprised
+      case 8: s += eyes + '<path class="ec-ink" d="M' + f(x - 2) + ' ' + f(my + .3) + 'h4"/>'; break;      // neutral
+      case 9: s += eyes + '<path class="ec-ink" d="M' + f(x - 2.2) + ' ' + f(my + 1.2) + 'Q' + f(x) + ' ' + f(my - 1) + ' ' + f(x + 2.2) + ' ' + f(my + 1.2) + '"/>'; break; // sad
+      case 10: s = '<path class="ec-face" d="M' + f(x - 5) + ' ' + f(y - 4) + 'l-1-3.6 3.4 1.8Z M' + f(x + 5) + ' ' + f(y - 4) + 'l1-3.6-3.4 1.8Z"/>' + s + eyes + smile(2.4, 1.6); break; // devil
+      default: s += '<path class="ec-ink" d="M' + f(x - ex - .8) + ' ' + f(ey - .8) + 'l1.6 1.6m0-1.6l-1.6 1.6M' + f(x + ex - .8) + ' ' + f(ey - .8) + 'l1.6 1.6m0-1.6l-1.6 1.6M' + f(x - 1.8) + ' ' + f(my + .4) + 'h3.6"/>'; // dizzy
+    }
+    return s;
+  }
   function faceArt(face) {
     if (face === 'orbit') return orbitArt();
     var a = '';
@@ -577,6 +601,14 @@
         var an = m * 6 * Math.PI / 180, hr = m % 5 === 0, r0 = hr ? 40 : 43.5, r1 = 46.5;
         a += '<line x1="' + (50 + r0 * Math.sin(an)).toFixed(2) + '" y1="' + (50 - r0 * Math.cos(an)).toFixed(2) + '" x2="' + (50 + r1 * Math.sin(an)).toFixed(2) + '" y2="' + (50 - r1 * Math.cos(an)).toFixed(2) + '" stroke="' + (hr ? '#f4f4f6' : '#8a8d96') + '" stroke-width="' + (hr ? 1.4 : .5) + '" stroke-linecap="round"/>';
       }
+      return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' + a + '</svg>';
+    }
+    if (face === 'emojiclock') {
+      // twelve faces round the dial in place of the hours, each in a light round
+      // button with dark features: all different (smile, grin, wink, cool, love,
+      // sleepy, laugh, surprised, neutral, sad, devil, dizzy); colours from CSS
+      a += '<circle class="ec-dial" cx="50" cy="50" r="47.5"/>';
+      for (var q = 0; q < 12; q++) a += emojiFace(q, 50 + 38 * Math.sin(q * Math.PI / 6), 50 - 38 * Math.cos(q * Math.PI / 6));
       return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' + a + '</svg>';
     }
     if (face === 'gameboy') {
@@ -885,7 +917,7 @@
     if(config.face==='winamp')applyWinamp(card);else clearWinamp(card);
     paintBitDigits(card,config.face==='winamp'?0:config.finish);
     paintTemp(card,config.face==='thermo');
-    paintHands(card,config.face==='analog');
+    paintHands(card,config.face==='analog'||config.face==='emojiclock');
     paintM3Gauge(card,config.face==='material');
     setDial(card,skin,config);
     // Dither face (and the app-wide "dither images" option): the background is re-dithered off-thread-ish, once per image.

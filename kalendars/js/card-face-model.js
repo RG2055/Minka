@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   // Stored by index: 0-9, then a letter (base 36) for the faces after the tenth.
-  var faces = ['classic', 'photo', 'orbit', 'modular', 'winamp', 'dither', 'gameboy', 'thermo', 'dots', 'lines', 'ticket', 'cover', 'analog', 'stone', 'material'];
+  var faces = ['classic', 'photo', 'orbit', 'modular', 'winamp', 'dither', 'gameboy', 'thermo', 'dots', 'lines', 'ticket', 'cover', 'analog', 'stone', 'material', 'emojiclock'];
   var parts = ['hours', 'name', 'initials', 'month', 'coffee', 'fatigue', 'remaining', 'emoji', 'clock', 'moon'];
   // Elements that sit on a plate (the watch's complications), and the plate each can
   // take: 0 as the card, 1 dark, 2 clear (no plate), 3 tinted, 4 light.
@@ -57,14 +57,17 @@
     // own shape: the hours stacked in a tall light pill on the right, the name with a
     // dot and a handwritten surname, the month a pill with its icon, fatigue a ring
     // gauge, the emoji in a cookie, the coffee in a soft diamond.
+    // Emoji pulkstenis: twelve faces round the dial in place of the hours, light hands
+    // in the card's colour; the name and the hours small inside the ring.
+    emojiclock: [[50,74,30,1],[50,29,44,1],[18,81,92,0],[33,50,46,0],[50,50,46,0],[67,50,46,0],[50,96,60,0],[50,50,50,0],[62,86,56,0]],
     material: [[79,54,100,1],[36,16,92,1],[18,81,92,0],[34,38,80,1],[22,85,76,1],[50,70,80,1],[50,96,60,0],[21,61,80,1],[62,86,56,0]]
   };
-  var moonLayouts={classic:[15,16,70,1],photo:[16,32,70,1],orbit:[50,16,64,1],modular:[16,36,70,1],winamp:[26,15,95,1],dither:[15,16,70,1],gameboy:[17,42,66,1],thermo:[62,15,62,1],dots:[50,15,60,1],lines:[16,40,64,1],ticket:[13,52,56,0],cover:[14,58,54,1],analog:[50,15,60,0],stone:[15,16,70,1],material:[60,8,50,0]};
+  var moonLayouts={classic:[15,16,70,1],photo:[16,32,70,1],orbit:[50,16,64,1],modular:[16,36,70,1],winamp:[26,15,95,1],dither:[15,16,70,1],gameboy:[17,42,66,1],thermo:[62,15,62,1],dots:[50,15,60,1],lines:[16,40,64,1],ticket:[13,52,56,0],cover:[14,58,54,1],analog:[50,15,60,0],stone:[15,16,70,1],material:[60,8,50,0],emojiclock:[60,8,50,0]};
   // Default sun/moon spots saved by earlier versions: recognised as "not moved by the person".
   var OLD_MOONS=[[14,68,100,1],[14,76,100,1],[82,39,90,1],[57,12,80,1],[57,11,75,1],[17,34,90,1],[16,34,78,1],[12,13,70,1],[50,13,70,1],[86,40,70,1],[60,12,62,1]];
   /* Faces that bring their own palette (ink, frame, digits): taken when a card
      switches to them, so a light accent never ends up on a light LCD or paper. */
-  var looks={winamp:{tint:'9dff4a'},gameboy:{tint:'2f4a1f',metal:7,finish:7},thermo:{tint:'8fd8ff',metal:9,finish:8},dots:{tint:'1f1f24',metal:3,finish:6},analog:{tint:'ff9f0a',metal:0,finish:2},stone:{finish:2},material:{tint:'8fd9b6',metal:12,finish:2},lines:{tint:'1f1c17',metal:10,finish:2}};
+  var looks={winamp:{tint:'9dff4a'},gameboy:{tint:'2f4a1f',metal:7,finish:7},thermo:{tint:'8fd8ff',metal:9,finish:8},dots:{tint:'1f1f24',metal:3,finish:6},analog:{tint:'ff9f0a',metal:0,finish:2},stone:{finish:2},material:{tint:'8fd9b6',metal:12,finish:2},emojiclock:{tint:'6fd3cf',metal:12,finish:2},lines:{tint:'1f1c17',metal:10,finish:2}};
   function bounded(n, min, max, fallback) {
     n = Number(n);
     return Number.isFinite(n) ? Math.round(Math.min(max, Math.max(min, n))) : fallback;
@@ -164,7 +167,7 @@
     var fonted=a.length===24&&a[0]==='6';
     var plated=(a.length===23&&a[0]==='5')||fonted;
     var colored=(a.length===22&&a[0]==='4')||plated;
-    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-9a-e]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
+    if ((!legacy && !coffee && !colored && !(a.length===18&&a[0]==='2')) || !/^[0-9a-f]$/.test(a[1]) || !/^[a-f0-9]{6}$/.test(a[2])) return null;
     if (!a.slice(3,8).every(function (n) { return /^\d{1,3}$/.test(n); })) return null;
     var value = { face: faces[parseInt(a[1],36)], tint: a[2], metal: +a[3], finish: +a[4], imageX: +a[5], imageY: +a[6], imageZoom: +a[7], parts: {} };
     if(coffee||colored){if(!/^[01]$/.test(a[18])||!/^[0-2]$/.test(a[19]))return null;value.coffeeMode=+a[18];value.coffeeContrast=+a[19];

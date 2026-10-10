@@ -286,7 +286,8 @@
    ['M3 · Piparmētra','material','','143,217,182','236,248,240'],['M3 · Persiks','material','','242,166,90','250,240,230'],
    ['M3 · Debess','material','','143,184,255','236,242,255'],['M3 · Citrons','material','','214,224,110','246,248,228'],
    ['M3 · Rozā','material','','244,160,180','252,238,242'],['M3 · Okeāns','material','grain-okeans','127,200,230','236,248,252'],
-   ['M3 · Lapsa','material','photo-fox','255,190,140','252,244,236']].forEach(function(p){
+   ['M3 · Lapsa','material','photo-fox','255,190,140','252,244,236'],
+   ['Emoji pulkstenis','emojiclock','','111,211,207','236,250,248'],['Emoji pulkstenis · Persiks','emojiclock','','244,170,120','252,242,234']].forEach(function(p){
     var face=window.MinkaCardFaceModel.preset(p[1]);
     // A picture whose subject reaches the number's spot moves the number aside.
     if(p[6])Object.keys(p[6]).forEach(function(k){face.parts[k]=p[6][k].slice();});
@@ -298,7 +299,7 @@
     // No picture: the ticket is cream paper, the watch a dark dial.
     var paper=p[1]==='ticket'?'242,236,224':'10,10,12';
     // M3 without a picture: its own dark tone (a fifth of its colour on near black)
-    if(p[1]==='material'&&!p[2])paper=p[3].split(',').map(function(v){return Math.round(+v*.2+15*.8);}).join(',');
+    if((p[1]==='material'||p[1]==='emojiclock')&&!p[2])paper=p[3].split(',').map(function(v){return Math.round(+v*.2+15*.8);}).join(',');
     if(!p[2]&&p[1]==='ticket'){window.MinkaCardFaceModel.plateParts.forEach(function(k){face.plates[k]=2;});face.plates.emoji=1;}
     var sw=p[2]?'url('+(material?material.path:'data/skins/skin-'+p[2]+'.webp')+')'+(material&&material.background?','+material.background:''):'rgb('+paper+')';
     PRESETS.push({label:p[0],group:'layouts',isNew:true,keepLayout:true,keepParts:true,bg:p[2]?{t:'img',id:p[2]}:{t:'hue',rgb:paper},num:p[3],na:'1',txt:p[4],face:face,depth:p[5]?undefined:false,foreground:p[5]&&material?material.path:null,sw:sw});
