@@ -2232,3 +2232,77 @@
   }
   window.MinkaCardFaces = { dialPreview: dialPreview, dialMarkup: dialMarkup, dialSkins: DIAL_SKINS, digitSkins: DIGIT_SKINS, digitPreview: digitPreview, pick: function(e){ return currentPick(e); }, settle: function(){ currentSettle(); }, quiet: function(on){ if (quietParts !== !!on) { quietParts = !!on; currentQuiet(); } }, adopt: function(el){ currentAdopt(el); }, apply: apply, mount: mount, release: release, refreshPreview: function(){refreshPreview();}, warmCoffee: warmCoffee };
 })();
+
+/* Coffee makes room: when a card's coffee opens into its pill (on hover, a tap or the
+   keyboard) the elements the pill would cover fade out, and come back when it closes.
+   Only the card under the pointer is measured, once its pill has opened (the set is
+   kept for that card, so the next time they fade with the opening, not after it). */
+(function () {
+  'use strict';
+  if (window.MINKA_APP === 'rad') return;
+  var cur = null, timer = 0, seen = new WeakMap();
+  var SKIP = /(^|\s)(mk-wf-background|mk-wf-art|mk-initials-dither|mk-wf-hands)(\s|$)/;
+  function step(card) { return card.querySelector('.mk-mid-coffee .mk-coffee-step'); }
+  function isOpen(card) { var add = card.querySelector('.mk-coffee-step > .mk-coffee-add'); return !!add && add.getBoundingClientRect().width > 6 && getComputedStyle(add).opacity > .3; }
+  function canOpen(card) { return card.dataset.coffeeMode !== 'open' && !card.classList.contains('wf-editing'); }
+  function covered(card, st) {
+    var r = st.getBoundingClientRect(), cr = card.getBoundingClientRect(), big = cr.width * cr.height * .4, out = [];
+    function hit(b) { return b.width > 0 && b.height > 0 && b.left < r.right - 2 && b.right > r.left + 2 && b.top < r.bottom - 2 && b.bottom > r.top + 2; }
+    (function walk(el) {
+      for (var c = el.firstElementChild; c; c = c.nextElementSibling) {
+        if (c === st) continue;
+        if (c.contains(st)) { walk(c); continue; }
+        if (c.tagName === 'CANVAS' || c.tagName === 'STYLE' || (typeof c.className === 'string' && SKIP.test(c.className))) continue;
+        var b = c.getBoundingClientRect();
+        if (!hit(b)) continue;
+        if (b.width * b.height > big) walk(c); else out.push(c);
+      }
+    })(card);
+    return out;
+  }
+  function hide(card, list) {
+    card.querySelectorAll('.mkc-under').forEach(function (el) { if (list.indexOf(el) < 0) show1(el); });
+    list.forEach(function (el) { el.classList.remove('mkc-back'); el.classList.add('mkc-under'); });
+  }
+  function show1(el) {
+    el.classList.remove('mkc-under'); el.classList.add('mkc-back');
+    setTimeout(function () { if (!el.classList.contains('mkc-under')) el.classList.remove('mkc-back'); }, 360);
+  }
+  function close(card) { clearTimeout(timer); if (card) card.querySelectorAll('.mkc-under').forEach(show1); }
+  function open(card) {
+    var st = step(card);
+    if (!st || !canOpen(card)) return;
+    var known = seen.get(card);
+    if (known) hide(card, known.filter(function (el) { return card.contains(el); }));
+    clearTimeout(timer);
+    // measure when the pill has opened (its motion is 280 ms)
+    timer = setTimeout(function () {
+      if (cur !== card && card.dataset.coffeeExpanded !== 'true') return;
+      if (!isOpen(card)) { close(card); return; }
+      var list = covered(card, st); seen.set(card, list); hide(card, list);
+    }, 300);
+  }
+  function cardOf(t) { return t && t.closest ? t.closest('#grafiks-list .card.mk-mid-card:not(.rg-feedback-card)') : null; }
+  document.addEventListener('pointerover', function (e) {
+    if (e.pointerType === 'touch') return;
+    var card = cardOf(e.target);
+    if (card === cur) return;
+    if (cur) close(cur);
+    cur = card;
+    if (card) open(card);
+  }, true);
+  document.addEventListener('pointerout', function (e) {
+    if (!cur || e.pointerType === 'touch') return;
+    var to = cardOf(e.relatedTarget);
+    if (to === cur) return;
+    close(cur); cur = null;
+  }, true);
+  // a tap or the keyboard opens/closes the pill too
+  document.addEventListener('click', function (e) {
+    var card = e.target.closest && e.target.closest('.mk-mid-coffee') && cardOf(e.target);
+    if (!card) return;
+    setTimeout(function () { if (isOpen(card)) open(card); else close(card); }, 0);
+  }, true);
+  document.addEventListener('focusin', function (e) { var card = e.target.closest && e.target.closest('.mk-mid-coffee') && cardOf(e.target); if (card) open(card); });
+  document.addEventListener('focusout', function (e) { var card = cardOf(e.target); if (card && !card.contains(e.relatedTarget) && card !== cur) close(card); });
+})();
