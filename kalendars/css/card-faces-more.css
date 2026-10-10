@@ -56,7 +56,7 @@
 /* the coffee, the emoji/initials and fatigue are small round dials inside the ring */
 .card.mk-watch-face[data-watch-face="analog"] [data-wf-part="fatigue"] .mk-mid-meta-label {display: none !important;}
 .card.mk-watch-face[data-watch-face="analog"] [data-wf-part="coffee"] .mk-coffee-step :is(img,svg,.mk-coffee-cup) {max-width: 60% !important; max-height: 60% !important;}
-.card.mk-watch-face[data-watch-face="analog"] :is([data-wf-part="emoji"],[data-wf-part="fatigue"]):not([data-wf-plate]):not(.wf-analog),
+.card.mk-watch-face[data-watch-face="analog"] :is([data-wf-part="emoji"],[data-wf-part="fatigue"]):not([data-wf-plate]):not(.wf-analog):not([hidden]),
 .card.mk-watch-face[data-watch-face="analog"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
   border-radius: 50% !important; aspect-ratio: 1; display: grid !important; place-items: center; padding: 0 !important;
   width: 26cqw !important; height: 26cqw !important; min-width: 0 !important; min-height: 0 !important; box-sizing: border-box !important;
