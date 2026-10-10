@@ -1206,10 +1206,15 @@ function filterFullList(btn) {
   // hashes so private roster names never become part of the source repository.
   const WORKER_IDENTITY_ALIASES = Object.freeze({
     '3vftwm': 'worker-identity-01',
-    'bdyfi3': 'worker-identity-01'
+    'bdyfi3': 'worker-identity-01',
+    // Oct 2026 sheet: the name cell was overtyped with keyboard noise; the
+    // neighbouring months keep the real name, which is shown instead.
+    '59pql7': 'worker-identity-02',
+    '1fh22d': 'worker-identity-02'
   });
   const WORKER_CANONICAL_HASHES = Object.freeze({
-    'worker-identity-01': 'bdyfi3'
+    'worker-identity-01': 'bdyfi3',
+    'worker-identity-02': '1fh22d'
   });
 
   function rawWorkerIdentity(name) {
