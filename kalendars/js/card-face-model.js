@@ -44,8 +44,9 @@
     // Biļete: the ticket's main part on the left, the tear-off stub (right of the
     // perforation at 72 %) holds the month's hours and the shift time; a barcode under them.
     ticket:  [[37,54,84,1],[37,23,72,1],[16,12,100,0],[83,16,48,1],[13,86,66,1],[40,86,62,1],[83,38,52,1],[62,86,52,1],[62,86,56,0]],
-    // Žurnāla vāks: the name as the masthead across the top, the number small at the bottom left.
-    cover:   [[78,60,54,1],[50,20,170,1],[16,12,100,0],[79,90,52,1],[86,38,58,1],[44,90,54,1],[79,77,58,1],[14,40,56,1],[62,86,56,0]],
+    // Žurnāla vāks: the name as the masthead across the top, the subject in front of it (the
+    // picture's cut-out); the number and the chips keep to a column on the right.
+    cover:   [[83,58,50,1],[50,20,170,1],[16,12,100,0],[83,89,48,1],[87,37,54,1],[61,89,50,1],[83,76,54,1],[41,89,50,1],[62,86,56,0]],
     // Pulkstenis: an analog watch dial; everything sits inside the ring of ticks as
     // complications: the name under 12, the hours at 9, the shift time at 3, the number
     // above 6, and the coffee, emoji/initials and fatigue as small round dials below it.

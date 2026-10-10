@@ -279,11 +279,13 @@
   });
   // The newer layouts, each on a picture that suits it: [label, face, picture, number, text, depth].
   [['Biļete','ticket','','196,65,15','28,24,22'],['Biļete · Lapsēns','ticket','mili-lapsens','255,214,170','250,246,240'],
-   ['Žurnāla vāks','cover','photo-fox','244,242,236','250,248,244'],['Vāks · Magnolija','cover','photo-magnolia','246,214,222','252,246,248'],
+   ['Žurnāla vāks','cover','photo-fox','244,242,236','250,248,244',1],['Vāks · Magnolija','cover','photo-magnolia','246,214,222','252,246,248',1,{hours:[84,40,44,1],coffee:[87,60,54,1]}],
    ['Pulkstenis','analog','', '255,159,10','244,244,246'],
    ['Akmens · Travertīns','stone','akmens-travertins','70,58,46','64,52,40'],['Akmens · Slāneklis','stone','akmens-slaneklis','228,224,216','232,228,220'],
    ['Akmens · Smilšakmens','stone','akmens-smilsakmens','255,240,224','255,244,232']].forEach(function(p){
     var face=window.MinkaCardFaceModel.preset(p[1]);
+    // A picture whose subject reaches the number's spot moves the number aside.
+    if(p[6])Object.keys(p[6]).forEach(function(k){face.parts[k]=p[6][k].slice();});
     face.parts.moon=window.MinkaCardFaceModel.symbolPlacement(face.parts,face.face);
     face.tint=p[3].split(',').map(function(v){return ('0'+(+v).toString(16)).slice(-2);}).join('');
     // Dark text on a light picture: the chips get light plates so their values read.
@@ -293,7 +295,7 @@
     var paper=p[1]==='ticket'?'242,236,224':'10,10,12';
     if(!p[2]&&p[1]==='ticket'){window.MinkaCardFaceModel.plateParts.forEach(function(k){face.plates[k]=2;});face.plates.emoji=1;}
     var sw=p[2]?'url('+(material?material.path:'data/skins/skin-'+p[2]+'.webp')+')'+(material&&material.background?','+material.background:''):'rgb('+paper+')';
-    PRESETS.push({label:p[0],group:'layouts',isNew:true,keepLayout:true,bg:p[2]?{t:'img',id:p[2]}:{t:'hue',rgb:paper},num:p[3],na:'1',txt:p[4],face:face,depth:false,sw:sw});
+    PRESETS.push({label:p[0],group:'layouts',isNew:true,keepLayout:true,keepParts:true,bg:p[2]?{t:'img',id:p[2]}:{t:'hue',rgb:paper},num:p[3],na:'1',txt:p[4],face:face,depth:p[5]?undefined:false,foreground:p[5]&&material?material.path:null,sw:sw});
   });
   // Plakāts: collector-card look — the picture in a window, a big name below it.
   [['Plakāts · Seja','aesthetic-face','f67a18'],['Plakāts · Kaķis','cat-06','f67a18'],['Plakāts · Ķivere','aesthetic-helmet','64d2ff'],['Plakāts · Kalni','1036','f5b73f']].forEach(function(p){
