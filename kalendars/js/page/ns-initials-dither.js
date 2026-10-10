@@ -20,6 +20,7 @@
   var LO = .16, HI = .9;                            // the light's useful range, as Noskaņa
   var LEVELS = [.34, .56, .8];                      // three inks, as Noskaņa
   var RADIUS = 92;                                  // the circle round the pointer, css px
+  var FLOOR = .34;                                  // the darkest photo still shows this much
   var FADE = .9;                                    // trail: what is left of it each frame
   var BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   var states = new WeakMap(), active = null, raf = 0, photos = {};
@@ -165,9 +166,12 @@
       if (hv < .02) continue;
       any = true;
       // Noskaņa's rule: the light in its useful range, a cell shows while the
-      // ordered threshold is under 1.7× it, its ink from how bright it is
+      // ordered threshold is under 1.7× it, its ink from how bright it is.
+      // Unlike the sky, a card has no empty black: its dark parts keep a
+      // sparse, faint floor, so the circle always fills the card round the
+      // pointer and the photo shows as density on top of it.
       var v = light ? (light[kk] - LO) / (HI - LO) : .62;
-      v = Math.max(0, Math.min(1, v)) * hv;
+      v = (FLOOR + (1 - FLOOR) * Math.max(0, Math.min(1, v))) * hv;
       if (v <= 0 || (BAYER4[(yy & 3) * 4 + (xx & 3)] + .5) / 16 >= v * 1.7) continue;
       var level = v < .38 ? 0 : v < .7 ? 1 : 2;
       ctx.drawImage(A.img, ((xx + yy) % n) * A.cw, level * A.ch, A.cw, A.ch, xx * A.cw, yy * A.ch, A.cw, A.ch);
