@@ -1,10 +1,11 @@
-/* Nakts sadalījums: hovering a person's card draws their card's photo round the
-   pointer in their own initials, the way Noskaņa draws its sky in characters
+/* Hovering a person's card (the calendar's cards, and Nakts sadalījums) draws
+   the card's photo round the pointer in their own initials, the way Noskaņa draws its sky in characters
    (js/page/mood-trend.js): a fine fixed grid (3.9 × 6.6 px cells, 6 px
    characters), the light deciding which cells show and how strongly (the same
    ordered Bayer thinning and three inks), each character in the photo's own
-   colour there blended with the colour this person chose (the card's
-   --nsc-accent), and a soft glow of that colour behind the characters. Only
+   colour there blended with the colour this person chose (their number
+   colour: --mk-num-color on a calendar card, --nsc-accent on a night one),
+   and a soft glow of that colour behind the characters. Only
    the initials are used, alternating (A L A L…). The circle follows the
    pointer and fades behind it.
 
@@ -19,11 +20,27 @@
   var CELL_W = 3.9, CELL_H = 6.6, CELL_FONT = 6;    // Noskaņa's grid, css px
   var LO = .16, HI = .9;                            // the light's useful range, as Noskaņa
   var LEVELS = [.34, .56, .8];                      // three inks, as Noskaņa
-  var RADIUS = 92;                                  // the circle round the pointer, css px
+  var RADIUS = 92;                                  // the circle round the pointer, css px (less on a small card)
   var FLOOR = .34;                                  // the darkest photo still shows this much
   var FADE = .9;                                    // trail: what is left of it each frame
   var BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   var states = new WeakMap(), active = null, raf = 0, photos = {};
+  /* The cards it works on: where its canvas goes, and the person's colour.
+     The canvas sits over the photo and under the number and the text
+     (css/page/mk-mid-card-focus-v1.css, css/nightsplit-brand.css). */
+  var KINDS = [
+    { sel: '#nsPanel .nsc-full-card[data-worker]', after: ':scope > .nsc-deco',
+      color: function (card, cs) { return (cs.getPropertyValue('--nsc-accent') || '').trim(); } },
+    { sel: '#grafiks-list .card.mk-mid-card[data-worker]:not(.rg-feedback-card)', after: null,
+      color: function (card, cs) {
+        var num = (cs.getPropertyValue('--mk-num-color') || '').trim();
+        if (/^\d{1,3},\d{1,3},\d{1,3}$/.test(num)) return 'rgb(' + num + ')';
+        var big = card.querySelector('.mk-mid-center');
+        return big ? getComputedStyle(big).color : '';
+      } }
+  ];
+  var SEL = KINDS.map(function (k) { return k.sel; }).join(',');
+  function kindOf(card) { for (var i = 0; i < KINDS.length; i++) if (card.matches(KINDS[i].sel)) return KINDS[i]; return null; }
 
   function reduced() {
     try { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_e) { return false; }
@@ -35,8 +52,8 @@
   }
   // The card's photo, if it has one: the last url() of its background layers.
   function photoUrl(card) {
-    var deco = card.querySelector(':scope > .nsc-deco');
-    var layers = [getComputedStyle(card).backgroundImage, deco ? getComputedStyle(deco).backgroundImage : ''];
+    var deco = card.querySelector(':scope > .nsc-deco'), cs = getComputedStyle(card);
+    var layers = [cs.backgroundImage, cs.getPropertyValue('--mk-skin-img'), deco ? getComputedStyle(deco).backgroundImage : ''];
     var img = deco && deco.querySelector('img');
     for (var i = 0; i < layers.length; i++) {
       var m = String(layers[i] || '').match(/url\(["']?([^"')]+)["']?\)/g);
@@ -77,11 +94,24 @@
     im.onerror = function () { photos[key] = null; done(null); };
     im.src = url;
   }
+  /* How light a card is without a photo: the colours of its own background
+     layers (a light yellow card wants dark letters, a night one light ones). */
+  function baseLight(card) {
+    var cs = getComputedStyle(card), txt = cs.backgroundImage + ' ' + cs.backgroundColor;
+    var m = txt.match(/rgba?\([^)]+\)/g) || [], sum = 0, wsum = 0;
+    m.forEach(function (c) {
+      var v = c.replace(/rgba?\(|\)/g, '').split(/[\s,\/]+/).filter(Boolean).map(Number), a = v.length > 3 ? v[3] : 1;
+      if (!(a > 0)) return;
+      sum += (v[0] * .2126 + v[1] * .7152 + v[2] * .0722) / 255 * a; wsum += a;
+    });
+    return wsum ? sum / wsum : .15;
+  }
   /* The colour under every character, one pixel per cell (scaled up smoothly
-     when drawn): the photo's own colour there (lifted to read on the dark
-     card) blended half and half with the person's colour; without a photo,
-     the person's colour, a little lighter towards the top. */
-  function tintOf(accent, photo, cols, rows) {
+     when drawn): the photo's own colour there blended half and half with the
+     person's colour; without a photo, the person's colour, a little lighter
+     towards the top. Then made to read on what is under it: lifted on a dark
+     background, deepened on a light one. */
+  function tintOf(accent, photo, cols, rows, base) {
     var c = document.createElement('canvas'); c.width = cols; c.height = rows;
     var x = c.getContext('2d'), img = x.createImageData(cols, rows), d = img.data, a = rgbOf(accent);
     for (var y = 0; y < rows; y++) for (var i = 0; i < cols; i++) {
@@ -94,8 +124,9 @@
         var lift = .2 * (1 - y / Math.max(1, rows - 1));
         r += (255 - r) * lift; g += (255 - g) * lift; b += (255 - b) * lift;
       }
-      var lum = (r * .2126 + g * .7152 + b * .0722) / 255;
-      if (lum < .62) { var up = (.62 - lum) / (1 - lum); r += (255 - r) * up; g += (255 - g) * up; b += (255 - b) * up; }
+      var lum = (r * .2126 + g * .7152 + b * .0722) / 255, under = photo ? photo.lum[k] : base;
+      if (under > .58) { if (lum > .32) { var dn = .32 / lum; r *= dn; g *= dn; b *= dn; } }
+      else if (lum < .62) { var up = (.62 - lum) / (1 - lum); r += (255 - r) * up; g += (255 - g) * up; b += (255 - b) * up; }
       d[k * 4] = r; d[k * 4 + 1] = g; d[k * 4 + 2] = b; d[k * 4 + 3] = 255;
     }
     x.putImageData(img, 0, 0);
@@ -116,26 +147,28 @@
   }
 
   function setup(card) {
-    var st = states.get(card);
-    var r = card.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
-    var w = Math.round(r.width), h = Math.round(r.height);
-    var color = (getComputedStyle(card).getPropertyValue('--nsc-accent') || '').trim() || '#9fd8ff';
+    var st = states.get(card), kind = kindOf(card);
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    // the card's own size (a hover scale or zoom does not change it)
+    var w = card.offsetWidth, h = card.offsetHeight;
+    var color = kind.color(card, getComputedStyle(card)) || '#9fd8ff';
     var letters = initialsOf(card.getAttribute('data-worker'));
     if (st && st.canvas.isConnected && st.w === w && st.h === h && st.color === color && st.letters === letters) return st;
     var canvas = (st && st.canvas.isConnected) ? st.canvas : document.createElement('canvas');
-    canvas.className = 'nsc-initials-dither';
+    canvas.className = 'mk-initials-dither';
     canvas.setAttribute('aria-hidden', 'true');
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     if (!canvas.isConnected) {
-      var deco = card.querySelector(':scope > .nsc-deco');
-      if (deco) deco.after(canvas); else card.prepend(canvas);
+      var under = kind.after && card.querySelector(kind.after);
+      if (under) under.after(canvas); else card.prepend(canvas);
     }
     var atlas = atlasFor(letters, dpr), cols = Math.ceil(canvas.width / atlas.cw), rows = Math.ceil(canvas.height / atlas.ch);
     st = { canvas: canvas, ctx: canvas.getContext('2d'), w: w, h: h, dpr: dpr, cols: cols, rows: rows, color: color, letters: letters,
-      atlas: atlas, heat: new Float32Array(cols * rows), light: null, tint: tintOf(color, null, cols, rows),
-      px: -1, py: -1, inside: false, glow: 0 };
+      atlas: atlas, heat: new Float32Array(cols * rows), light: null, base: baseLight(card),
+      radius: Math.min(RADIUS, .42 * Math.min(w, h)), px: -1, py: -1, inside: false, glow: 0 };
+    st.tint = tintOf(color, null, cols, rows, st.base);
     states.set(card, st);
-    photoOf(photoUrl(card), cols, rows, function (p) { st.light = p && p.lum; if (p) st.tint = tintOf(color, p, cols, rows); });
+    photoOf(photoUrl(card), cols, rows, function (p) { st.light = p && p.lum; if (p) st.tint = tintOf(color, p, cols, rows, st.base); });
     return st;
   }
 
@@ -145,7 +178,7 @@
     if (!st || !card.isConnected || document.hidden) { if (st) clear(st); active = null; return; }
     var A = st.atlas, cols = st.cols, rows = st.rows, heat = st.heat, light = st.light, any = false;
     var cw = A.cw / st.dpr, chh = A.ch / st.dpr;             // a cell, css px
-    var cx = st.px / cw, cy = st.py / chh;
+    var cx = st.px / cw, cy = st.py / chh, RADIUS = st.radius;
     for (var i = 0; i < heat.length; i++) heat[i] *= FADE;
     st.glow = st.inside ? Math.min(1, st.glow + .2) : st.glow * FADE;
     if (st.inside) {
@@ -201,13 +234,14 @@
 
   document.addEventListener('pointermove', function (e) {
     if (e.pointerType === 'touch' || reduced()) return;
-    var card = e.target && e.target.closest ? e.target.closest('#nsPanel .nsc-full-card[data-worker]') : null;
+    var card = e.target && e.target.closest ? e.target.closest(SEL) : null;
     if (active && active !== card) { var old = states.get(active); if (old) old.inside = false; }
     if (!card) { run(); return; }
     var st = setup(card), r = card.getBoundingClientRect();
     if (active && active !== card) { var prev = states.get(active); if (prev) clear(prev); }
     active = card;
-    st.px = e.clientX - r.left; st.py = e.clientY - r.top; st.inside = true;
+    // screen px to the card's own px (a scaled or zoomed card)
+    st.px = (e.clientX - r.left) * (st.w / (r.width || st.w)); st.py = (e.clientY - r.top) * (st.h / (r.height || st.h)); st.inside = true;
     run();
   }, { passive: true });
   document.addEventListener('pointerout', function (e) {

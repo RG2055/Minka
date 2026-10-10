@@ -315,3 +315,12 @@
     top: 46% !important;
   }
 }
+
+/* Hover: the person's initials as a dither round the pointer
+   (js/page/card-initials-dither.js): over the photo, under the number and text. */
+#grafiks-list .card.mk-mid-card > canvas.mk-initials-dither {
+  position: absolute !important; inset: 0 !important; z-index: 1 !important;
+  width: 100% !important; height: 100% !important;
+  margin: 0 !important; padding: 0 !important;
+  border-radius: inherit; pointer-events: none !important;
+}
