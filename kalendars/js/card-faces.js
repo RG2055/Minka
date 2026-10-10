@@ -2241,7 +2241,9 @@
   'use strict';
   if (window.MINKA_APP === 'rad') return;
   var cur = null, timer = 0, seen = new WeakMap();
-  var SKIP = /(^|\s)(mk-wf-background|mk-wf-art|mk-initials-dither|mk-wf-hands)(\s|$)/;
+  // backgrounds, the hover dither, and the person's emoji (on hover it pops up out of
+  // its slot, past the coffee — that is its own motion, not something covered)
+  var SKIP = /(^|\s)(mk-wf-background|mk-wf-art|mk-initials-dither|mk-wf-hands|mk-mid-meta-emoji-fly|mk-emoji-film-box)(\s|$)/;
   function step(card) { return card.querySelector('.mk-mid-coffee .mk-coffee-step'); }
   function isOpen(card) { var add = card.querySelector('.mk-coffee-step > .mk-coffee-add'); return !!add && add.getBoundingClientRect().width > 6 && getComputedStyle(add).opacity > .3; }
   function canOpen(card) { return card.dataset.coffeeMode !== 'open' && !card.classList.contains('wf-editing'); }
