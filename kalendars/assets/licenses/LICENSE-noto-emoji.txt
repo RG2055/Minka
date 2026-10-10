@@ -2,17 +2,20 @@ Noto Emoji (Google LLC)
 https://github.com/googlefonts/noto-emoji
 https://googlefonts.github.io/noto-emoji-files/
 
-assets/emoji3d/n*.webp  Noto 3D emoji, including the Emoji 18.0 pictures.
-                        Images from the noto-emoji repository (3D/png),
-                        Apache License, Version 2.0:
-                        https://www.apache.org/licenses/LICENSE-2.0
-                        Resized to 128 and 320 px WebP.
+assets/emoji3d/n*.webp      Noto 3D emoji, including the Emoji 18.0 pictures.
+                            Images from the noto-emoji repository (3D/png),
+                            Apache License, Version 2.0:
+                            https://www.apache.org/licenses/LICENSE-2.0
+                            Resized to 128 and 320 px WebP.
 
-assets/emoji3d/a*.webp  Animated Noto Emoji, Google LLC.
-                        Creative Commons Attribution 4.0 International:
-                        https://creativecommons.org/licenses/by/4.0/
-                        https://googlefonts.github.io/noto-emoji-animation/
-                        Changed: resized to 160 px, every second frame,
-                        a still first frame at 128 and 320 px.
+assets/emoji3d/a*-128.webp  Noto emoji, the classic static pictures
+assets/emoji3d/a*-320.webp  (noto-emoji repository, 2D), Apache License 2.0.
+                            Resized to 128 and 320 px WebP.
+
+assets/emoji3d/a*-anim.webp Animated Noto Emoji, Google LLC.
+                            Creative Commons Attribution 4.0 International:
+                            https://creativecommons.org/licenses/by/4.0/
+                            https://googlefonts.github.io/noto-emoji-animation/
+                            Changed: resized to 112 px, every second frame.
 
 Made by scripts/build-noto-emoji.py.

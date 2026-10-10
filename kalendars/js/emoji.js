@@ -165,7 +165,7 @@
 
   var SECTION_TITLES = {};
   SECTIONS.forEach(function(sec) { SECTION_TITLES[sec.id] = sec.title; });
-  SECTION_TITLES['e3d-roji'] = 'Roji 3D'; SECTION_TITLES['e3d-balloon'] = 'Baloni 3D';
+  SECTION_TITLES['e3d-roji'] = 'Roji 3D'; SECTION_TITLES['e3d-balloon'] = 'Baloni 3D'; SECTION_TITLES['new18'] = 'Jaunie Emoji 18'; SECTION_TITLES.roji = 'Roji'; SECTION_TITLES.balloon = 'Baloni';
   var EMOJI_NAMES = {
     '🩻':'Rentgens','💉':'Šļirce','🏥':'Slimnīca','🔬':'Mikroskops','💊':'Tablete','🩺':'Stetoskops','🩹':'Plāksteris','🧬':'DNS','🫀':'Sirds','🫁':'Plaušas','🧠':'Smadzenes','🩸':'Asinis','🧪':'Mēģene','🚑':'Ātrā palīdzība','🥼':'Halāts','😷':'Maska','🤒':'Slims','🦴':'Kauls',
     '😴':'Miegs','😎':'Foršs','🤯':'Pārslodze','🤖':'Robots','🥱':'Žāva','🫡':'Dežūra','🫠':'Izkusis','😮‍💨':'Izelpa','😵‍💫':'Reibonis','❤️‍🔥':'Deg','❤️‍🩹':'Atkopjas',
@@ -178,10 +178,13 @@
   };
 
   CRITTERS.forEach(function(c) { EMOJI_NAMES[c[0]] = c[1]; });
+  // Names for the rest of the catalogue, so every emoji can be found by its name.
+  var MORE_NAMES = {'🤧':'Šķauda','🦷':'Zobs','🔭':'Teleskops','🤲':'Plaukstas','🧴':'Krēms','🩼':'Kruķis','🦺':'Veste','💪':'Spēks','🧘':'Joga','🫶':'Sirds rokas','💆':'Masāža','🛌':'Gultā','🏃':'Skrien','🧑‍⚕️':'Mediķis','🌡️':'Termometrs','🤕':'Savainots','🧫':'Petri trauks','🧼':'Ziepes','🦽':'Ratiņkrēsls','👨‍⚕️':'Ārsts','👩‍⚕️':'Ārste','🧑‍🔬':'Zinātnieks','👩‍🔬':'Zinātniece','👨‍🔬':'Laborants','🧯':'Ugunsdzēšamais','🧊':'Ledus','🦠':'Mikrobs','🧵':'Diegs','🧷':'Spraudīte','🧻':'Papīrs','🧽':'Sūklis','🪥':'Zobu birste','🦿':'Protēze','🦾':'Robota roka','💀':'Galvaskauss','👻':'Spoks','😤':'Niknums','😵':'Apdullis','🤪':'Trakulīgs','🧐':'Ar monokli','😏':'Smīns','🥳':'Ballīte','🥶':'Salst','🥵':'Karsti','😈':'Velniņš','👾':'Citplanētietis','😑':'Bez izteiksmes','🙃':'Otrādi','😬':'Saspringts','🫤':'Šķībs','😒':'Neapmierināts','🥺':'Lūdzoši','🫂':'Apskāviens','💤':'Miegs','😔':'Domīgs','🫥':'Neredzams','😍':'Iemīlējies','🥰':'Mīlestība','🤩':'Sajūsmā','😊':'Smaidīgs','😌':'Atvieglots','🤔':'Domā','😇':'Eņģelītis','😜':'Mēle un mirkšķis','🤗':'Apskāviens','😺':'Kaķa smaids','🫨':'Trīc','🫩':'Nogurušas acis','🙂‍↔️':'Krata galvu','🙂‍↕️':'Māj ar galvu','😶‍🌫️':'Miglā','🫰':'Sirsniņa ar pirkstiem','🫱':'Roka pa labi','🫲':'Roka pa kreisi','🌊':'Vilnis','🌪️':'Viesulis','⛈️':'Pērkona negaiss','💥':'Sprādziens','✨':'Dzirkstis','🎯':'Mērķis','💫':'Reibonis','🌟':'Mirdzoša zvaigzne','⭐':'Zvaigzne','🌑':'Jauns mēness','🌕':'Pilns mēness','☄️':'Komēta','🌤️':'Saule aiz mākoņa','🌧️':'Lietus','🌬️':'Vējš','🌋':'Vulkāns','🗻':'Fudzi kalns','💡':'Ideja','🕯️':'Svece','🪔':'Lampiņa','🌠':'Krītoša zvaigzne','🎆':'Salūts','🌀':'Virpulis','🔋':'Baterija','🔌':'Kontakts','🌞':'Saule','🌛':'Mēness seja','🌩️':'Zibens','🎇':'Brīnumsvecīte','🌫️':'Migla','💣':'Bumba','🧨':'Petarde','🛰️':'Satelīts','📟':'Peidžeris','📈':'Grafiks','🧭':'Kompass','🧲':'Magnēts','⚙️':'Zobrats','🪫':'Tukša baterija','🔦':'Lukturis','🫆':'Pirksta nospiedums','🦅':'Ērglis','🦈':'Haizivs','🦌':'Briedis','🦚':'Pāvs','🦑':'Kalmārs','🦜':'Papagailis','🐊':'Krokodils','🐋':'Valis','🐓':'Gailis','🦂':'Skorpions','🐆':'Leopards','🐮':'Govs','🐑':'Aita','🐈':'Kaķis','🐈‍⬛':'Melns kaķis','😸':'Smejošs kaķis','🐻‍❄️':'Leduslācis','🦤':'Dodo','🪿':'Zoss','🪽':'Spārns','🫏':'Ēzelis','🪲':'Vabole','🪱':'Tārps','🦥':'Sliņķis','🦧':'Orangutans','🦣':'Mamuts','🦛':'Nīlzirgs','🦏':'Degunradzis','🐿️':'Vāvere','🌵':'Kaktuss','🌱':'Asns','🍁':'Kļavas lapa','🍂':'Rudens lapas','🌸':'Ķiršu zieds','🌺':'Hibiska zieds','🌻':'Saulespuķe','🌹':'Roze','🪨':'Akmens','🌲':'Egle','🌴':'Palma','🎋':'Bambuss','🌾':'Vārpas','🪸':'Korallis','🍄':'Sēne','🪴':'Podiņa augs','🌍':'Zeme','🏔️':'Kalni','🏕️':'Telts','🏜️':'Tuksnesis','🏞️':'Parks','🌅':'Saullēkts','🌄':'Rīts kalnos','🌁':'Miglaina pilsēta','🌃':'Nakts pilsēta','🐚':'Gliemežvāks','🍃':'Lapas vējā','🌼':'Ziediņš','🐾':'Ķepas','🌥️':'Mākoņains','🌦️':'Saule un lietus','🌨️':'Sniegs','🪵':'Malka','🌳':'Koks','🫚':'Ingvers','🫛':'Zirņu pāksts','🫜':'Bietes','🧋':'Burbuļtēja','🌘':'Dilstošs mēness','🌗':'Pēdējais ceturksnis','🌖':'Dilstošs pilnmēness','🌔':'Augošs pilnmēness','🌓':'Pirmais ceturksnis','🌒':'Augošs mēness','🎸':'Ģitāra','🏂':'Snovbords','🤿':'Niršana','🧩':'Puzle','🎪':'Cirks','🎭':'Teātris','🎨':'Palete','🎵':'Nots','🎺':'Trompete','🥊':'Bokss','🎳':'Boulings','🎱':'Biljards','🏹':'Loks','🔑':'Atslēga','📡':'Antena','🛠️':'Instrumenti','🪓':'Cirvis','🎤':'Mikrofons','📷':'Fotoaparāts','🎁':'Dāvana','🃏':'Džokers','🎲':'Kauliņš','🧸':'Lācītis','👓':'Brilles','🕹️':'Kursorsvira','🏓':'Galda teniss','🏀':'Basketbols','⚽':'Futbols','🎰':'Spēļu automāts','🎬':'Kino','📎':'Saspraude','🪀':'Jojo','🍜':'Nūdeles','🪆':'Matrjoška','🎻':'Vijole','🪭':'Vēdeklis','🪈':'Flauta','🪇':'Marakas','🪉':'Arfa','🪏':'Lāpsta','🫙':'Burka','🧿':'Nazar amulets','🧰':'Instrumentu kaste','🖥️':'Dators','⌨️':'Klaviatūra','🖱️':'Pele'};
+  Object.keys(MORE_NAMES).forEach(function(e) { if (!EMOJI_NAMES[e]) EMOJI_NAMES[e] = MORE_NAMES[e]; });
 
   function getEmojiSection(emoji) {
     var E3 = window.MinkaEmoji3D, id3 = E3 && E3.decode(emoji);
-    if (id3) return 'e3d-' + E3.get(id3).set;
+    if (id3) { var it3 = E3.get(id3); if (it3.set === 'noto18') return 'new18'; if (!it3.e) return it3.set; emoji = it3.e; }
     var keys = ['med','mood','energy','animals','nature','stuff','rare'];
     for (var i = 0; i < keys.length; i++) {
       if ((EMOJI_BY_SECTION[keys[i]] || []).indexOf(emoji) !== -1) return keys[i];
@@ -206,21 +209,58 @@
     });
   }
 
-  // The 3D emoji (js/emoji3d.js) as more groups in this picker, one per set.
-  function e3dSections() {
-    var E3 = window.MinkaEmoji3D; if (!E3) return [];
-    return E3.sets.map(function (st) { var first = E3.list(st[0])[0]; return first ? { id: 'e3d-' + st[0], set: st[0], label: '<img class="mkp-tab-pic" src="' + E3.url(first.id, 128) + '" alt="">', title: st[2] || st[1] + ' 3D' } : null; }).filter(Boolean);
+  /* ── One grid, the look chosen after ───────────────────────────────────
+     The grid is the catalogue by category (chips that wrap), plus Emoji 18
+     (Noto 3D pictures only) and the Roji and Baloni pictures. The look of the
+     chosen emoji is picked under the preview: Fluent (the font, moves on
+     hover), Noto 3D, Noto (the classic one, moves on hover), or the font as
+     system / black / white. The grid shows the emoji in the chosen look. */
+  var _style = 'fluent';                     // 'fluent' | 'noto' | 'notoanim'
+  var OWN_SETS = { roji: 'Roji', balloon: 'Baloni' };
+  function e3() { return window.MinkaEmoji3D || null; }
+  // One catalogue emoji in a look (null: not in that look).
+  function styled(e, style) {
+    style = style || _style;
+    if (style === 'fluent') return e;
+    var E3 = e3(); return E3 && E3.styled ? E3.styled(style, e) : null;
   }
-  function e3dList(k) { var E3 = window.MinkaEmoji3D, set = /^e3d-(.+)$/.exec(k); return E3 && set ? E3.list(set[1]).map(function (it) { return E3.encode(it.id); }) : null; }
-  function buildCategoryButtons(buttonClass) {
-    var sections = SECTIONS.slice(0, -1).concat(e3dSections(), SECTIONS.slice(-1));
-    return sections.map(function(sec) {
-      var isNew = /^e3d-/.test(sec.id);
-      return '<button class="' + buttonClass + (_activeTab === sec.id ? ' mkp-tab-active' : '') + (isNew ? ' mkp-tab-isnew' : '') + '" data-tab="' + sec.id + '" title="' + sec.title + '">' +
-        '<span class="mkp-tab-ico">' + sec.label + '</span><span class="mkp-cat-name">' + sec.title + '</span>' + (isNew ? '<i class="mkp-tab-new">Jaunums</i>' : '') + '</button>';
+  // The plain emoji behind a value (a Noto picture's emoji), or null for a
+  // picture that has none in the font (Roji, Baloni, Emoji 18).
+  function plainOf(v) {
+    var E3 = e3(), id = v && E3 ? E3.decode(v) : null;
+    if (!id) return v || null;
+    var it = E3.get(id);
+    return it && it.e && it.set !== 'noto18' ? it.e : null;
+  }
+  function styleOf(v) {
+    var E3 = e3(), id = v && E3 ? E3.decode(v) : null, it = id && E3.get(id);
+    return it ? it.set : 'fluent';
+  }
+  function categories() {
+    var E3 = e3(), list = SECTIONS.slice();
+    if (E3 && E3.list('noto18').length) list.splice(1, 0, { id: 'new18', label: '🫫', title: 'Jaunie (18)', isNew: true, pic: 'noto18' });
+    Object.keys(OWN_SETS).forEach(function (set) { if (E3 && E3.list(set).length) list.push({ id: set, title: OWN_SETS[set], pic: set }); });
+    return list;
+  }
+  function categoryList(k) {
+    var E3 = e3();
+    if (OWN_SETS[k] || k === 'new18') return E3 ? E3.list(k === 'new18' ? 'noto18' : k).map(function (it) { return E3.encode(it.id); }) : [];
+    return (EMOJI_BY_SECTION[k] || []).map(function (e) { return styled(e); }).filter(Boolean);
+  }
+  // A category chip's icon: the picture set's first one, or the glyph in the chosen look.
+  function iconHtml(sec) {
+    var E3 = e3(), id = null;
+    if (sec.pic && E3) { var first = E3.list(sec.pic)[0]; id = first && first.id; }
+    else if (_style !== 'fluent' && E3) { var v = styled(sec.label); id = v && E3.decode(v); }
+    return id ? '<img class="mkp-tab-pic" src="' + E3.url(id, 128) + '" alt="">' : sec.label;
+  }
+  function buildCategoryChips() {
+    return categories().map(function (sec) {
+      return '<button type="button" class="mkp-chip' + (_activeTab === sec.id ? ' is-on' : '') + '" data-tab="' + sec.id + '" aria-pressed="' + (_activeTab === sec.id) + '">' +
+        '<span class="mkp-chip-ico">' + iconHtml(sec) + '</span><span>' + sec.title + '</span>' +
+        (sec.isNew ? '<i class="mkp-new-dot" title="Jaunums"></i>' : '') + '</button>';
     }).join('');
   }
-
   function emojiButtonHtml(e, workerLvl, currentEmoji) {
     var locked = !window.MinkaDaybook && LOCKED[e] && workerLvl < LOCKED[e].lvl;
     var isSelected = e === currentEmoji;
@@ -237,20 +277,21 @@
 
   function buildEmojiGroupsHtml(workerLvl, currentEmoji) {
     var q = String(_emojiQuery || '').trim().toLowerCase();
-    var keys = _activeTab === 'all'
-      ? ['med','mood','energy','animals','nature','stuff'].concat(e3dSections().map(function (x) { return x.id; }), ['rare'])
-      : [_activeTab];
+    // "Visi", and any search, go through every group; a chip shows its own.
+    var keys = (_activeTab === 'all' || q) ? categories().filter(function (c) { return c.id !== 'all'; }).map(function (c) { return c.id; }) : [_activeTab];
+    var titles = {}; categories().forEach(function (c) { titles[c.id] = c.id === 'new18' ? 'Jaunie Emoji 18' : c.title; });
     var html = '';
     keys.forEach(function(k) {
-      var list = (EMOJI_BY_SECTION[k] || e3dList(k) || []).filter(function(e) {
+      var title = titles[k] || SECTION_TITLES[k] || k;
+      var list = categoryList(k).filter(function(e) {
         if (!q) return true;
         return e.indexOf(q) !== -1 ||
           getEmojiName(e).toLowerCase().indexOf(q) !== -1 ||
-          (SECTION_TITLES[k] || '').toLowerCase().indexOf(q) !== -1;
+          title.toLowerCase().indexOf(q) !== -1;
       });
       if (!list.length) return;
       html += '<section class="mkp-group" data-group="' + k + '">' +
-        '<h5>' + (SECTION_TITLES[k] || (e3dSections().filter(function (x) { return x.id === k; })[0] || {}).title || k) + (/^e3d-/.test(k) ? ' <i class="mkp-tab-new">Jaunums</i>' : '') + '</h5>' +
+        '<h5>' + title + '</h5>' +
         '<div class="mkp-grid">' +
           list.map(function(e) { return emojiButtonHtml(e, workerLvl, currentEmoji); }).join('') +
         '</div>' +
@@ -263,7 +304,7 @@
      does not build and lay out hundreds of colour glyphs again; one set of listeners
      on the whole grid (delegated); the preview follows the pointer once a frame. */
   function showGridPage(left, workerLvl) {
-    var q = String(_emojiQuery || '').trim().toLowerCase(), key = _activeTab + '|' + q + '|' + workerLvl;
+    var q = String(_emojiQuery || '').trim().toLowerCase(), key = _style + '|' + _activeTab + '|' + q + '|' + workerLvl;
     var pages = left.__pages || (left.__pages = {}), page = pages[key];
     if (!page) {
       page = document.createElement('div'); page.className = 'mkp-grid-page';
@@ -318,6 +359,7 @@
   var _activeWorker = null;
   var _selectedEmoji = null;
   var _activeTab = 'all';
+  var _lookHook = null;
   var _emojiQuery = '';
   var _emojiSearchTimer = 0;
   var _hookedCards = new WeakSet();
@@ -784,24 +826,45 @@
       });
     }
     stage.after(hint);
-    // The emoji's look on the card (Fluent / system / black / white) under the preview, its
-    // samples in the emoji being tried: a black emoji on the card says why, right here.
-    var LOOKS = [['', 'Fluent', ''], ['s', 'Sistēmas', 'mk-emoji-sys'], ['b', 'Melns', 'mk-emoji-black'], ['w', 'Balts', 'mk-emoji-white']];
+    /* The emoji's look on the card, under the preview: Fluent (the font, moves on
+       hover), Noto 3D (new), Noto (classic, moves on hover), and the font as system /
+       black / white. Each sample is the emoji being tried in that look; a look it has
+       no version in is off (Roji or Baloni have no font version, Emoji 18 only Noto 3D).
+       A picture look changes the emoji itself (and the grid, through _lookHook). */
+    var LOOKS = [['', 'Fluent', ''], ['noto', 'Noto 3D', ''], ['notoanim', 'Noto', ''], ['s', 'Sistēmas', 'mk-emoji-sys'], ['b', 'Melns', 'mk-emoji-black'], ['w', 'Balts', 'mk-emoji-white']];
+    var PIC_LOOK = { noto: 1, notoanim: 1 };
     var look = null, paintLook = function () {};
     if (typeof window.mkSetEmojiLook === 'function') {
       Array.prototype.forEach.call(holder.querySelectorAll('.mkp-look'), function (x) { x.remove(); });
-      var curLook = window.mkGetEmojiLook(name);
       look = document.createElement('div'); look.className = 'mk-emoji-style mkp-look'; look.setAttribute('role', 'group'); look.setAttribute('aria-label', 'Emoji izskats kartītē');
-      look.innerHTML = LOOKS.map(function (o) { return '<button type="button" data-emoji-look="' + o[0] + '" aria-pressed="' + (curLook === o[0]) + '"><span class="mk-emoji-style-sample ' + o[2] + '" aria-hidden="true"></span><b>' + o[1] + '</b></button>'; }).join('');
+      look.innerHTML = LOOKS.map(function (o) { return '<button type="button" data-emoji-look="' + o[0] + '"' + (PIC_LOOK[o[0]] ? ' title="Google Noto (Apache 2.0' + (o[0] === 'notoanim' ? ', kustība CC BY 4.0' : '') + ')"' : '') + '><span class="mk-emoji-style-sample ' + o[2] + '" aria-hidden="true"></span><b>' + o[1] + '</b></button>'; }).join('');
       holder.appendChild(look);
-      paintLook = function (e) { if (typeof window.mkPaintEmojiLookSamples === 'function') window.mkPaintEmojiLookSamples(look, e); };
+      var E3L = window.MinkaEmoji3D;
+      paintLook = function (v) {
+        var base = v ? plainOf(v) : '😺', cur = styleOf(v), fontLook = window.mkGetEmojiLook(name) || '';
+        if (cur === 'noto18') cur = 'noto';                  // the new ones are Noto 3D pictures
+        look.querySelectorAll('[data-emoji-look]').forEach(function (b) {
+          var k = b.dataset.emojiLook, sample = b.querySelector('.mk-emoji-style-sample');
+          var val = PIC_LOOK[k] ? (base ? styled(base, k) : (cur === k ? v : null)) : base;
+          b.disabled = !val;
+          b.setAttribute('aria-pressed', String(PIC_LOOK[k] ? cur === k : (cur === 'fluent' && fontLook === k)));
+          if (!val) { sample.textContent = ''; return; }
+          if (E3L && E3L.decode(val)) E3L.paint(sample, val);
+          else { if (sample.hasAttribute('data-mk-emoji')) sample.removeAttribute('data-mk-emoji'); if (sample.textContent !== val || sample.children.length) sample.textContent = val; }
+        });
+        // Roji and Baloni have no other look: no row of switched-off buttons
+        look.hidden = !look.querySelector('[data-emoji-look]:not(:disabled)') || !look.querySelectorAll('[data-emoji-look]:not(:disabled)')[1];
+      };
       look.addEventListener('click', function (ev) {
-        var b = ev.target.closest('[data-emoji-look]'); if (!b) return;
+        var b = ev.target.closest('[data-emoji-look]'); if (!b || b.disabled) return;
         ev.stopPropagation();
-        var v = b.dataset.emojiLook;
-        LOOKS.forEach(function (o) { if (o[2]) c.classList.toggle(o[2], o[0] === v); });
-        look.querySelectorAll('[data-emoji-look]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
-        window.mkSetEmojiLook(name, v);
+        var k = b.dataset.emojiLook, v = _selectedEmoji, base = v ? plainOf(v) : null;
+        var font = PIC_LOOK[k] ? '' : k;
+        LOOKS.forEach(function (o) { if (o[2]) c.classList.toggle(o[2], o[0] === font); });
+        window.mkSetEmojiLook(name, font);
+        if (PIC_LOOK[k]) { if (_lookHook) _lookHook(k, base ? styled(base, k) : v); }
+        else if (_lookHook) _lookHook('fluent', base || v);
+        paintLook(_selectedEmoji);
       });
     }
     var refit = function () { if (typeof window.mkFitEmojiInside === 'function') requestAnimationFrame(function () { window.mkFitEmojiInside(c); }); };
@@ -1770,6 +1833,13 @@
       _selectedEmoji = current;
     }
     var _sel = safeEmoji(_selectedEmoji);
+    // Open where the person's emoji is: its look and its category.
+    if (_sel) {
+      var st0 = styleOf(_sel);
+      if (st0 === 'noto' || st0 === 'notoanim') _style = st0; else if (st0 === 'fluent') _style = 'fluent';
+      _activeTab = getEmojiSection(_sel);
+    }
+    if (!categories().some(function (c) { return c.id === _activeTab; })) _activeTab = 'all';
     var workerFirst = workerName.split(' ')[0] || '';
     var workerSur   = workerName.split(' ').slice(1).join(' ') || '';
     var initials    = ((workerFirst[0]||'') + (workerSur[0]||'')).toUpperCase();
@@ -1809,7 +1879,7 @@
     container.innerHTML =
       '<div class="mkp-toolbar">' +
         '<label class="mkp-search"><span>⌕</span><input id="mkp-modal-search-input" value="' + String(_emojiQuery || '').replace(/"/g, '&quot;') + '" placeholder="Meklēt emoji..." autocomplete="off"></label>' +
-        '<div class="mkp-tabs">' + buildCategoryButtons('mkp-tab') + '</div>' +
+        '<div class="mkp-cats" role="group" aria-label="Kategorija">' + buildCategoryChips() + '</div>' +
       '</div>' +
       '<div class="mkp-body mkp-modal-body">' +
         '<div class="mkp-left"></div>' +
@@ -1828,31 +1898,29 @@
       _live.emoji(_sel);
       _live.size(typeof window.mkGetEmojiSize === 'function' ? window.mkGetEmojiSize(workerName) : 100);
     }
-    // the tab row: one M3 bar, the chosen tab on a pill that slides to the next one
-    var tabRow = container.querySelector('.mkp-tabs'), tabPill = document.createElement('span');
-    tabPill.className = 'mkp-tab-pill'; tabPill.setAttribute('aria-hidden', 'true');
-    if (tabRow) tabRow.prepend(tabPill);
-    var seatPill = function (from, animate) {
-      var MM = window.MinkaMotion, act = tabRow && tabRow.querySelector('.mkp-tab-active');
-      if (MM && MM.liquid && act && MM.liquid(tabPill, tabRow, act, { from: from, animate: animate })) tabRow.classList.add('has-pill');
-    };
-    if (container.__tabRO) container.__tabRO.disconnect();
-    container.__tabRO = window.ResizeObserver && tabRow ? new ResizeObserver(function () { seatPill(null, false); }) : null;
-    if (container.__tabRO) container.__tabRO.observe(tabRow);
-    requestAnimationFrame(function () { seatPill(null, false); });
-
-    // Tab clicks: only the grid changes
-    container.querySelectorAll('.mkp-tab').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var prevTab = container.querySelector('.mkp-tab.mkp-tab-active');
-        _activeTab = btn.getAttribute('data-tab');
-        container.querySelectorAll('.mkp-tab').forEach(function (b) { b.classList.toggle('mkp-tab-active', b === btn); });
-        seatPill(prevTab, !!prevTab && prevTab !== btn);
-        if (tabRow && tabRow.scrollWidth > tabRow.clientWidth) tabRow.scrollTo({ left: Math.max(0, btn.offsetLeft - (tabRow.clientWidth - btn.offsetWidth) / 2), behavior: 'smooth' });
-        showGridPage(left, workerLvl);
+    // Category row: chips that wrap, nothing is cut.
+    var catRow = container.querySelector('.mkp-cats');
+    function bindChips() {
+      if (!catRow) return;
+      catRow.innerHTML = buildCategoryChips();
+      catRow.querySelectorAll('.mkp-chip').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          _activeTab = btn.getAttribute('data-tab');
+          catRow.querySelectorAll('.mkp-chip').forEach(function (b) { var on = b === btn; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on); });
+          showGridPage(left, workerLvl);
+        });
       });
-    });
+    }
+    bindChips();
+    // A look chosen under the preview (liveCard): the emoji in that look, and the grid too.
+    _lookHook = function (style, value) {
+      _style = style;
+      bindChips();
+      if (value && value !== _sel) { _sel = value; _selectedEmoji = value; previewModalEmoji(value); tintWindow(value); scheduleCommit(workerName); }
+      showGridPage(left, workerLvl);
+      markSelected(left, _sel);
+    };
 
     var searchInput = container.querySelector('#mkp-modal-search-input');
     if (searchInput) {

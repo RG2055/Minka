@@ -554,6 +554,18 @@
   color:inherit !important;font:500 11.5px/1 var(--pp-font) !important;letter-spacing:0 !important;text-transform:none !important;white-space:nowrap !important;pointer-events:none !important;}
 #worker-modal#worker-modal #modal-emoji-view .mkp-tab-pill {position:absolute;z-index:0;border-radius:26px;background:var(--pp-primary-c);pointer-events:none;opacity:0;}
 #worker-modal#worker-modal #modal-emoji-view .mkp-tabs.has-pill > .mkp-tab-pill {opacity:1;}
+/* ═══ Emoji picker, 2026-10: the groups as chips that wrap (the old single strip
+   ran out of room and cut its tabs); the look is chosen under the preview. */
+#worker-modal#worker-modal #modal-emoji-view .mkp-cats {display:flex !important;flex-wrap:wrap !important;gap:6px !important;margin:0 0 14px !important;padding:0 !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-cats[hidden] {display:none !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-chip {position:relative !important;display:inline-flex !important;align-items:center !important;gap:6px !important;height:34px !important;padding:0 12px 0 8px !important;border:1px solid color-mix(in srgb,var(--pp-on) 14%,transparent) !important;border-radius:17px !important;background:transparent !important;color:var(--pp-on-var) !important;box-shadow:none !important;font:500 13px/1 var(--pp-font) !important;letter-spacing:0 !important;text-transform:none !important;white-space:nowrap !important;cursor:pointer;transition:background-color .15s var(--pp-effects),color .15s var(--pp-effects),border-color .15s var(--pp-effects),border-radius .3s var(--pp-spring) !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-chip:hover:not(.is-on) {background:color-mix(in srgb,var(--pp-on) 7%,transparent) !important;color:var(--pp-on) !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-chip.is-on {border-color:transparent !important;border-radius:10px !important;background:var(--pp-secondary-c,var(--pp-primary-c)) !important;color:var(--pp-on-secondary-c,var(--pp-on-primary-c)) !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-chip-ico {display:grid;place-items:center;width:20px;height:20px;font-family:'Fluent Emoji Gaps','Fluent Emoji Color','Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif !important;font-size:17px !important;line-height:1 !important;transition:transform .3s var(--pp-spring);}
+/* Jaunums: a small green dot, not a badge that sticks out */
+#worker-modal#worker-modal #modal-emoji-view .mkp-chip:active .mkp-chip-ico {transform:scale(.88);}
+#worker-modal#worker-modal #modal-emoji-view .mkp-chip-ico .mkp-tab-pic {width:100%;height:100%;object-fit:contain;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-new-dot {flex:0 0 7px;width:7px;height:7px;margin:-10px 0 0 -4px;border-radius:50%;background:#6dd58c;pointer-events:none;}
 /* Jaunums: a green badge on the new groups (and their headings) */
 #worker-modal#worker-modal .mkp-tab-new {position:absolute;top:3px;right:6px;padding:2px 6px;border-radius:8px;background:#6dd58c;color:#06341b;font:700 9px/1.15 var(--pp-font) !important;font-style:normal;letter-spacing:.02em;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.35);}
 #worker-modal#worker-modal .mkp-group h5 .mkp-tab-new {position:static;display:inline-block;margin-left:8px;vertical-align:1px;letter-spacing:.02em;text-transform:none;}
@@ -629,7 +641,10 @@
 #worker-modal#worker-modal .mkp-ez.is-on .mkp-ez-tip,#worker-modal#worker-modal .mkp-ez:hover .mkp-ez-tip {opacity:1;}
 /* Emoji tab: the emoji's look on the card under the preview (skin-organize.css draws the
    tiles), four in a row in the narrow column */
-#worker-modal#worker-modal #modal-emoji-view .mkp-look {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%;flex:none;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%;flex:none;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look button:disabled {opacity:.32;cursor:default;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look[hidden] {display:none !important;}
+#worker-modal#worker-modal #modal-emoji-view .mkp-look button[aria-pressed="true"] {background:var(--pp-primary-c) !important;color:var(--pp-on-primary-c) !important;}
 #worker-modal#worker-modal #modal-emoji-view .mkp-look button {padding:7px 2px 6px;gap:3px;background:var(--pp-c1);}
 #worker-modal#worker-modal #modal-emoji-view .mkp-look button:hover {background:var(--pp-c3);}
 #worker-modal#worker-modal #modal-emoji-view .mkp-look .mk-emoji-style-sample {font-size:24px;height:26px;display:grid;place-items:center;}

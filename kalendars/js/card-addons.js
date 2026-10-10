@@ -298,7 +298,7 @@
     ['Savvaļā', 'toy-fox toy-raccoon toy-lion toy-monkey toy-elephant toy-hedgehog toy-owl toy-unicorn toy-dino toy-ladybug toy-bee'],
     ['Ūdenī', 'toy-penguin toy-frog toy-turtle toy-whale toy-dolphin toy-seal toy-octopus'],
     ['Formas', 'toy-star toy-heart toy-cloud']].forEach(function (g) { g[1].split(' ').forEach(function (id) { TOY_SUB[id] = g[0]; }); });
-  var SUB_ORDER = ['Lācīši', 'Mājās', 'Savvaļā', 'Ūdenī', 'Formas', 'Roji', 'Baloni', 'Noto 3D', 'Emoji 18', 'Kustīgie'];
+  var SUB_ORDER = ['Lācīši', 'Mājās', 'Savvaļā', 'Ūdenī', 'Formas', 'Emoji 18', 'Noto 3D', 'Noto', 'Roji', 'Baloni'];
   /* Rotaļlietas: the plush toys from the night beds (people's favourites), sitting on
      the card's bottom corner. Same pictures as in Nakts (assets/rooms/beds). */
   [['toy-teddy', 'Lācītis'], ['toy-teddy-cream', 'Krēmīgais lācītis'], ['toy-teddy-grey', 'Pelēkais lācītis'], ['toy-panda', 'Panda'], ['toy-koala', 'Koala'],
@@ -1322,7 +1322,7 @@
       var credit = panel.querySelector('.mk-addon-credit');
       if (activeGroup === 'e3d') {
         if (!credit) { credit = document.createElement('p'); credit.className = 'mk-addon-credit'; grid.after(credit); }
-        credit.textContent = '3D emoji: Roji x Moji — Dmitrij Matvejchuk; Emoji Balloons — DESIGNRIP. Licence CC BY 4.0.';
+        credit.textContent = '3D emoji: Roji x Moji — Dmitrij Matvejchuk; Emoji Balloons — DESIGNRIP (CC BY 4.0); Noto 3D, Noto — Google (Apache 2.0; kustība CC BY 4.0).';
       } else if (credit) credit.remove();
       grid.querySelectorAll('.mk-addon-choice').forEach(function(button) {
         var thumb = button.querySelector('img');
