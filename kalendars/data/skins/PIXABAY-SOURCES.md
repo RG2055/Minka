@@ -63,10 +63,10 @@ Grain gradients `skin-grain-*.webp` are drawn by scripts/build-grain-gradients.p
 
 ## Akmens (2026-10-10, 640x360)
 
-- `skin-akmens-travertins s42.webp` — 
-- `skin-akmens-slaneklis s18.webp` — 
-- `skin-akmens-granits s51.webp` — 
-- `skin-akmens-smilsakmens s63.webp` — 
-- `skin-akmens-smilts s01.webp` — 
-- `skin-akmens-iezis s14.webp` — 
+- `skin-akmens-travertins.webp` — https://pixabay.com/photos/marble-stone-bricks-building-1664442/
+- `skin-akmens-slaneklis.webp` — https://pixabay.com/photos/grey-stone-texture-black-and-white-926189/
+- `skin-akmens-granits.webp` — https://pixabay.com/photos/texture-marble-granite-grey-2923336/
+- `skin-akmens-smilsakmens.webp` — https://pixabay.com/photos/sandstone-landscape-abstract-467714/
+- `skin-akmens-smilts.webp` — https://pixabay.com/photos/texture-the-background-marble-1878273/
+- `skin-akmens-iezis.webp` — https://pixabay.com/photos/stone-surface-rau-texture-2946884/
 - `../../assets/stone/granite-chip.webp` (Akmens layout chips) — https://pixabay.com/photos/granite-wall-stone-texture-rock-4953749/
