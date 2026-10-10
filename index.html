@@ -3004,6 +3004,11 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){border:0!important;border-radius:26px!important;box-shadow:none!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::before,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::after{display:none!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{position:relative!important;z-index:1!important;align-self:center!important}
+/* BOLUS keeps its frame, but its surface follows the bar like the others (the
+   old dock painted it navy on hover, under the tint) */
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{background:transparent!important;transition:background-color 200ms cubic-bezier(.2,0,0,1)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:hover{background:color-mix(in srgb,var(--hxr-accent,#fff) 8%,transparent)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:active{background:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent)!important;transition-duration:50ms!important}
 /* the open window's item takes the colour of its icon */
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#nsToggleBtnParent{--dk-acc:#7ea6ff}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{--dk-acc:#2dd4bf}
