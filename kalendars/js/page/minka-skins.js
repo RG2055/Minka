@@ -21,20 +21,19 @@
   }
   var IMG_GROUPS = [
     // Generated for the Focus kit (scripts/build-chrome-art.py): grain, chrome, holo foil.
-    { label: 'Vaporwave',           ids: ['vapor-secret','vapor-floral'] },
-    { label: 'Hroms un graudi',     ids: ['focus-ribbons','focus-ribbons-teal','focus-chrome','focus-holo','grain-grafits','grain-okeans','grain-ogles','grain-sfumato'] },
+    { label: 'Hroms un graudi',     ids: ['focus-ribbons','focus-ribbons-teal','focus-chrome','focus-holo','grain-grafits','grain-okeans','grain-ogles','grain-sfumato','grain-varss','grain-sudrabs','grain-terauds','grain-misins'] },
     { label: 'Abstrakti',          ids: ['abstract-color-wave','abstract-blue-liquid','abstract-pastel-orbit','abstract-sun-glow','abstract-neon-folds','abstract-white-flow','abstract-copper-web','abstract-paper-geometry','pix-color-waves','grain-kapu-ausma','grain-mints','grain-persiks','grain-citrons'] },
-    { label: 'Aesthetic',           ids: ['user-holo-jellyfish','user-glitter-rainbow','user-pixel-clouds','user-golden-water','user-rainbow-beach','user-silver-ocean','user-glitch-dinosaurs','gnome-glass-chip-d','gnome-lcd-rainbow-d','gnome-pixels-d','gnome-tarka-d','open-aesthetic','aesthetic-bird','aesthetic-cyborg','aesthetic-face','aesthetic-flash','aesthetic-helmet','aesthetic-sunset','aesthetic-water','user-bubble'] },
+    { label: 'Aesthetic',           ids: ['user-holo-jellyfish','user-glitter-rainbow','user-pixel-clouds','user-golden-water','user-rainbow-beach','user-silver-ocean','user-glitch-dinosaurs','gnome-glass-chip-d','gnome-lcd-rainbow-d','gnome-pixels-d','gnome-tarka-d','open-aesthetic','aesthetic-bird','aesthetic-cyborg','aesthetic-face','aesthetic-flash','aesthetic-helmet','aesthetic-sunset','aesthetic-water','user-bubble','vapor-secret','vapor-floral'] },
     { label: 'Rozā un maigi',      ids: ['user-pink-cosmos','user-pink-liquid','user-pink-water','gnome-blobs-l','gnome-pills-d','open-pink','360','25','888','867','56','788','866','923','301','705','279','213','787','77','544','pix-water-drops','pix-pastel-flow','ilu-kalni'] },
     { label: 'Mīļi un jauki',      ids: ['gnome-balls-l','open-cute','146','798','219','790','248','user-butterfly','mili-ezis','mili-lapsens','mili-zakis','mili-calis','mili-vavere','mili-pucite','ilu-meness','ilu-ausma'] },
     { label: 'Spilgti',            ids: ['gnome-blendpills-d','gnome-drool-d','gnome-progress-d','open-bright','1080','1069','211','76','spilgti-majas','spilgti-lietussargi','spilgti-tulpes','gaisma-stari','gaisma-ella'] },
-    { label: 'Ūdens, sniegs un zili', ids: ['gnome-adwaita-d','gnome-sheet-d','gnome-symbolic-d','open-blue','1015','1036','1035','13','15','16','37','199','daba-sarma','lv-ziema','gaisma-zila-lode','ilu-ziemas-koki'] },
+    { label: 'Ūdens un sniegs', ids: ['gnome-adwaita-d','gnome-sheet-d','gnome-symbolic-d','open-blue','1015','1036','1035','13','15','16','37','199','daba-sarma','lv-ziema','gaisma-zila-lode','ilu-ziemas-koki'] },
     { label: 'Zaļā daba',          ids: ['open-green','1018','1039','1043','10','11','17','18','28','128','190','user-daisy','user-bamboo-forest','daba-paparde','daba-sunas','daba-lase','lv-mezs'] },
     { label: 'Silti un saulaini',  ids: ['gnome-amber-d','gnome-fold-l','gnome-pixel-pusher-d','gnome-glass-stripes-l','open-warm','1016','1057','110','19','46','164','user-autumn-leaves','daba-lapa','daba-sarmas-lapa','lv-kapas','gaisma-stikla-lode','gaisma-bokeh'] },
     { label: 'Tumši un mistiski',  ids: ['gnome-morphogenesis-d','gnome-tubes-d','open-dark','1019','1022','12','29','55','83','95','184','pix-aurora-sky','gaisma-ledus'] },
-    { label: 'Pilsēta un arhitektūra', ids: ['gnome-curvaturingster-d','gnome-map-d','1029','1033','lv-riga-nakti','lv-vecriga','pils-jugends-seja','pils-jugends-fasade','pils-balta-forma','pils-betona-loki','pils-apla-logs','pils-zelta-kupols','pils-vecriga-augsa','pils-nakts-gaismas'] },
+    { label: 'Pilsēta', ids: ['gnome-curvaturingster-d','gnome-map-d','1029','1033','lv-riga-nakti','lv-vecriga','pils-jugends-seja','pils-jugends-fasade','pils-balta-forma','pils-betona-loki','pils-apla-logs','pils-zelta-kupols','pils-vecriga-augsa','pils-nakts-gaismas'] },
     { label: 'Melnbalti',          ids: ['gnome-curvy-d','open-bw','47','58','daba-pienene','lv-eglu-migla','mb-balkoni','mb-vartu-klusums','mb-spirale','mb-ziedi'] },
-    { label: 'Barbie rozā',        ids: ['gnome-dithered-sun-l','open-barbie','bb2','bb3','bb4','bd1','bd2','bd3'] },
+    { label: 'Barbie rozā',        ids: ['gnome-dithered-sun-l','open-barbie','bb2','bb3','bb4','bd1','bd2','bd3','grain-roze','grain-zemene','grain-konfekte','grain-flamingo'] },
     { label: 'Dither',             ids: ['dither-tors','dither-lode','dither-kapas','dither-lentes','dither-rezgis','dither-signals','dither-papirs','art-partenons','art-kolonnas','art-piramidas','art-sfinksa','art-herakls','art-atena','art-kariatides','art-apolons','art-domatajs','art-konkordija','art-herkuls'] },
     { label: 'Kaķi',               ids: ['user-neon-alley-cat','open-cat','cat-01','cat-02','cat-03','cat-04','cat-05','cat-06','cat-07','cat-08','cat-09','cat-10','cat-11','cat-12','cat-13','cat-14','user-black-cat'] }
   ];
@@ -122,11 +121,11 @@
     'gaisma-stikla-lode': 'Stikla lode', 'gaisma-zila-lode': 'Zilā lode', 'gaisma-bokeh': 'Siltās gaismas',
     'gaisma-stari': 'Gaismas stari', 'gaisma-ledus': 'Ledus stikls', 'gaisma-ella': 'Eļļas burbuļi',
     'ilu-meness': 'Mēness jūrā', 'ilu-ziemas-koki': 'Ziemas koki', 'ilu-kalni': 'Rožainie kalni', 'ilu-ausma': 'Zaļā ausma',
-    'grain-kapu-ausma': 'Kāpu ausma', 'grain-mints': 'Piparmētru migla', 'grain-persiks': 'Persiku migla', 'grain-citrons': 'Citronu gaisma', 'grain-grafits': 'Grafīts', 'grain-okeans': 'Okeāna dzīles', 'grain-ogles': 'Ogles', 'grain-sfumato': 'Sfumato', 'pils-jugends-seja': 'Jūgendstila seja', 'pils-jugends-fasade': 'Jūgendstila fasāde', 'pils-balta-forma': 'Baltā forma', 'pils-betona-loki': 'Betona loki', 'pils-apla-logs': 'Apaļais logs', 'pils-zelta-kupols': 'Zelta kupols', 'pils-vecriga-augsa': 'Vecrīga no augšas', 'pils-nakts-gaismas': 'Nakts gaismas', 'mb-balkoni': 'Balkoni', 'mb-vartu-klusums': 'Vārti ūdenī', 'mb-spirale': 'Spirāle', 'mb-ziedi': 'Baltie ziedi', 'mili-ezis': 'Ezis', 'mili-lapsens': 'Lapsēns', 'mili-zakis': 'Zaķēns', 'mili-calis': 'Cālis', 'mili-vavere': 'Vāvere', 'mili-pucite': 'Pūcēns', 'spilgti-majas': 'Krāsainās mājas', 'spilgti-lietussargi': 'Lietussargi', 'spilgti-tulpes': 'Tulpes',
+    'grain-kapu-ausma': 'Kāpu ausma', 'grain-mints': 'Piparmētru migla', 'grain-persiks': 'Persiku migla', 'grain-citrons': 'Citronu gaisma', 'grain-grafits': 'Grafīts', 'grain-varss': 'Varš', 'grain-sudrabs': 'Sudrabs', 'grain-terauds': 'Tērauds', 'grain-misins': 'Misiņš', 'grain-roze': 'Rozā', 'grain-zemene': 'Zemene', 'grain-konfekte': 'Konfekte', 'grain-flamingo': 'Flamingo', 'grain-okeans': 'Okeāna dzīles', 'grain-ogles': 'Ogles', 'grain-sfumato': 'Sfumato', 'pils-jugends-seja': 'Jūgendstila seja', 'pils-jugends-fasade': 'Jūgendstila fasāde', 'pils-balta-forma': 'Baltā forma', 'pils-betona-loki': 'Betona loki', 'pils-apla-logs': 'Apaļais logs', 'pils-zelta-kupols': 'Zelta kupols', 'pils-vecriga-augsa': 'Vecrīga no augšas', 'pils-nakts-gaismas': 'Nakts gaismas', 'mb-balkoni': 'Balkoni', 'mb-vartu-klusums': 'Vārti ūdenī', 'mb-spirale': 'Spirāle', 'mb-ziedi': 'Baltie ziedi', 'mili-ezis': 'Ezis', 'mili-lapsens': 'Lapsēns', 'mili-zakis': 'Zaķēns', 'mili-calis': 'Cālis', 'mili-vavere': 'Vāvere', 'mili-pucite': 'Pūcēns', 'spilgti-majas': 'Krāsainās mājas', 'spilgti-lietussargi': 'Lietussargi', 'spilgti-tulpes': 'Tulpes',
     'art-partenons': 'Partenons', 'art-kolonnas': 'Jonu kolonna', 'art-piramidas': 'Piramīda', 'art-sfinksa': 'Sfinksa', 'art-herakls': 'Hērakls', 'art-atena': 'Atēna', 'art-kariatides': 'Kariatīdes', 'art-apolons': 'Apolons', 'art-domatajs': 'Domātājs', 'art-konkordija': 'Konkordijas templis', 'art-herkuls': 'Hērakls naktī'
   };
   var MATERIALS = window.MinkaCardMaterials || [];
-  IMG_GROUPS.unshift({label:'Foto kompozīcijas', ids:MATERIALS.filter(function(m){return m.kind==='depth';}).map(function(m){return m.id;})});
+  IMG_GROUPS.unshift({label:'Dzīvā daba', ids:MATERIALS.filter(function(m){return m.kind==='depth';}).map(function(m){return m.id;})});
   MATERIALS.forEach(function(m){IMG_LABELS[m.id]=m.label;});
   /* Viena bilde drīkst būt tikai vienā kategorijā. Šis aizsargs neļauj
      nejaušam nākamajam papildinājumam izvēlnē radīt dublikātus. */
@@ -1669,10 +1668,10 @@
   function remixSkin(current) {
     var M = window.MinkaCardFaceModel, kind = remixRecipe(), skin, addon = null, opts = { force: true };
     if (!REMIX_EFFECT_PHOTOS) {
-      REMIX_EFFECT_PHOTOS = SCENIC_SKINS.map(function(s) { return s.id; }).concat(groupIds(['Ūdens, sniegs un zili', 'Zaļā daba', 'Silti un saulaini', 'Tumši un mistiski', 'Pilsēta un arhitektūra', 'Melnbalti', 'Kaķi', 'Abstrakti', 'Aesthetic']));
+      REMIX_EFFECT_PHOTOS = SCENIC_SKINS.map(function(s) { return s.id; }).concat(groupIds(['Ūdens un sniegs', 'Zaļā daba', 'Silti un saulaini', 'Tumši un mistiski', 'Pilsēta', 'Melnbalti', 'Kaķi', 'Abstrakti', 'Aesthetic']));
       REMIX_COLOR_PHOTOS = groupIds(['Rozā un maigi', 'Spilgti', 'Zaļā daba', 'Silti un saulaini', 'Abstrakti', 'Mīļi un jauki']);
       REMIX_SUBJECT_PHOTOS = groupIds(['Kaķi', 'Melnbalti']).concat(['aesthetic-bird', 'aesthetic-cyborg', 'aesthetic-face', 'aesthetic-helmet', 'aesthetic-sunset', 'open-aesthetic', 'user-neon-alley-cat', 'user-butterfly', 'user-daisy']);
-      REMIX_SCENE_PHOTOS = SCENIC_SKINS.map(function(s) { return s.id; }).concat(groupIds(['Hroms un graudi', 'Abstrakti', 'Aesthetic', 'Rozā un maigi', 'Spilgti', 'Ūdens, sniegs un zili', 'Zaļā daba', 'Silti un saulaini', 'Tumši un mistiski', 'Mīļi un jauki', 'Barbie rozā', 'Kaķi']));
+      REMIX_SCENE_PHOTOS = SCENIC_SKINS.map(function(s) { return s.id; }).concat(groupIds(['Hroms un graudi', 'Abstrakti', 'Aesthetic', 'Rozā un maigi', 'Spilgti', 'Ūdens un sniegs', 'Zaļā daba', 'Silti un saulaini', 'Tumši un mistiski', 'Mīļi un jauki', 'Barbie rozā', 'Kaķi']));
     }
     if (kind === 'fxset' || kind === 'vapor') {
       // A ready-made effect look or vaporwave set, as designed (layout, timer, decoration).

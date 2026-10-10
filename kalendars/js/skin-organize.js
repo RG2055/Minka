@@ -23,6 +23,8 @@
   };
   // Gatavie first, in RG and /rad alike (/rad opened on Fons while it had its dithered default).
   var current = 'presets';
+  // Fons: the open picture album (its category index), or null for the album grid.
+  var albumOpen = null;
 
   // Small-thumbnail settings of every picture effect (also used by the Būvētājs).
   function thumbModes(ink, k) {
@@ -149,29 +151,60 @@
       if (rm) { ah.classList.add('org-sub-row'); ah.append(rm); }
     }
 
-    // ---- Fons: the picture categories behind one button (a menu), not 17 chips ----
-    var catNav = bg.querySelector('.mk-skin-category-nav');
-    if (catNav) {
-      var catBtn = document.createElement('button');
-      catBtn.type = 'button'; catBtn.className = 'org-cat-btn'; catBtn.setAttribute('aria-haspopup', 'true'); catBtn.setAttribute('aria-expanded', 'false');
-      catBtn.innerHTML = '<span class="org-cat-k">Kategorija</span><b></b><i></i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>';
-      catNav.before(catBtn); catNav.classList.add('org-cat-pop');
-      var syncCat = function () {
-        var a = catNav.querySelector('.mk-skin-category.is-active'); if (!a) return;
-        var n = a.querySelector('span');
-        catBtn.querySelector('b').textContent = (a.firstChild && a.firstChild.textContent || '').trim();
-        catBtn.querySelector('i').textContent = n ? n.textContent : '';
+    // ---- Fons: the picture categories as albums ----
+    // First a grid of small albums (a 2x2 peek, name, count; the one holding the card's
+    // picture is ticked); a press opens it, "Albumi" goes back. The chosen
+    // album stays open across re-renders (picking a picture rebuilds the editor).
+    var catNav = bg.querySelector('.mk-skin-category-nav'), gallery = bg.querySelector('.mk-skin-gallery');
+    var imagesPanel = bg.querySelector('.mk-bg-images');
+    if (catNav && gallery && imagesPanel) {
+      var albums = document.createElement('div'); albums.className = 'org-albums'; albums.setAttribute('role', 'list'); albums.setAttribute('aria-label', 'Albumi');
+      var head = document.createElement('div'); head.className = 'org-album-head';
+      head.innerHTML = '<button type="button" class="org-album-back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Albumi</span></button><b></b><i></i>';
+      var coverStyle = function (thumb) {
+        if (!thumb) return '';
+        var m = window.MinkaFindCardMaterial && window.MinkaFindCardMaterial(thumb.dataset.skin);
+        return 'url("' + thumb.dataset.src + '")' + (m && m.background ? ',' + m.background : '');
       };
-      var openCat = function (on) { catNav.classList.toggle('is-open', on); catBtn.setAttribute('aria-expanded', String(on)); };
-      catBtn.addEventListener('click', function () { openCat(!catNav.classList.contains('is-open')); });
-      catNav.addEventListener('click', function (e) { if (e.target.closest('.mk-skin-category')) setTimeout(function () { syncCat(); openCat(false); catBtn.focus({ preventScroll: true }); }, 0); });
-      // anywhere else (the shell is rebuilt with every render, so this never piles up)
-      var shellEl = host.querySelector('.mk-skin-shell');
-      if (shellEl) {
-        shellEl.addEventListener('pointerdown', function (e) { if (catNav.classList.contains('is-open') && !e.target.closest('.org-cat-pop, .org-cat-btn')) openCat(false); }, true);
-        shellEl.addEventListener('keydown', function (e) { if (e.key === 'Escape' && catNav.classList.contains('is-open')) { e.stopPropagation(); openCat(false); catBtn.focus({ preventScroll: true }); } });
-      }
-      syncCat();
+      catNav.querySelectorAll('.mk-skin-category').forEach(function (btn) {
+        var g = btn.dataset.group, panel = gallery.querySelector('[data-group-panel="' + g + '"]');
+        var thumbs = panel ? panel.querySelectorAll('.mk-skin-thumb[data-src]') : [];
+        if (!thumbs.length) return;
+        var name = (btn.firstChild && btn.firstChild.textContent || '').trim();
+        var current = !!(panel && panel.querySelector('.mk-skin-thumb.is-active'));
+        var a = document.createElement('button');
+        a.type = 'button'; a.className = 'org-album' + (current ? ' is-current' : ''); a.dataset.group = g;
+        a.setAttribute('role', 'listitem'); a.setAttribute('aria-label', name + ', ' + thumbs.length + (current ? ', izvēlētā bilde ir šeit' : ''));
+        // A 2x2 peek at the album: its first four pictures.
+        a.innerHTML = '<span class="org-album-cover"><span></span><span></span><span></span><span></span></span><b></b><i></i>';
+        a.querySelectorAll('.org-album-cover > span').forEach(function (cell, k) { cell.style.backgroundImage = coverStyle(thumbs[k]); });
+        a.querySelector('b').textContent = name;
+        a.querySelector('i').textContent = thumbs.length;
+        a.addEventListener('click', function () { openAlbum(g, true); });
+        albums.append(a);
+      });
+      catNav.before(albums, head);
+      var openAlbum = function (g, focus) {
+        albumOpen = g;
+        var btn = catNav.querySelector('.mk-skin-category[data-group="' + g + '"]');
+        if (btn) btn.click();
+        var album = albums.querySelector('.org-album[data-group="' + g + '"]');
+        head.querySelector('b').textContent = album ? album.querySelector('b').textContent : '';
+        head.querySelector('i').textContent = album ? album.querySelector('i').textContent : '';
+        imagesPanel.classList.add('org-in-album');
+        if (focus) head.querySelector('.org-album-back').focus({ preventScroll: true });
+      };
+      var closeAlbum = function () {
+        var g = albumOpen; albumOpen = null;
+        imagesPanel.classList.remove('org-in-album');
+        var album = g != null && albums.querySelector('.org-album[data-group="' + g + '"]');
+        if (album) album.focus({ preventScroll: true });
+      };
+      head.querySelector('.org-album-back').addEventListener('click', closeAlbum);
+      imagesPanel.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && imagesPanel.classList.contains('org-in-album')) { e.stopPropagation(); closeAlbum(); }
+      });
+      if (albumOpen != null && albums.querySelector('.org-album[data-group="' + albumOpen + '"]')) openAlbum(albumOpen, false);
     }
 
     // ---- own tab row ----
