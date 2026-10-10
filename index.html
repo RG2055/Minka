@@ -2988,7 +2988,8 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
 /* ═══ Dock M3 (2026-10): a floating toolbar in the M3 Expressive style.
    Each item: a 32 px indicator zone with the icon, the label under it.
    Two pills sit behind the buttons and move with MinkaMotion.liquid (the
-   same two-spring pill as the app's tabs): the hover pill follows the
+   same two-spring pill as the app's tabs; BOLUS keeps its own look and
+   frame and gets no pill): the hover pill follows the
    pointer, the active pill marks the window that is open, in that button's
    own colour. Press squeezes the pill and squares its corners (M3 shape
    morph); opening a window pops its icon once. Only left/right of two small
@@ -2996,11 +2997,11 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
    Reduced motion: the spring durations are 0 (css/mk-sys.css). /rad keeps
    its own dock. */
 html:not(.minka-rad) #dockShelf #bottomBtnBar{background:#141922!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar{position:relative!important;isolation:isolate;display:flex!important;align-items:stretch!important;gap:2px!important;padding:6px!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:32px!important;box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.045)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button{position:relative!important;z-index:1!important;flex:0 0 auto!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:5px!important;width:80px!important;min-width:80px!important;max-width:none!important;height:64px!important;min-height:64px!important;padding:6px 4px 0!important;margin:0!important;background:transparent!important;transform:none!important;overflow:visible!important;outline:none;color:#a7b1c0!important;font:750 10.5px/1 'Space Grotesk',system-ui,sans-serif!important;letter-spacing:.07em!important;animation:none!important;transition:color var(--mk-dur-effects-default,200ms) var(--mk-ease-effects,ease)!important;-webkit-tap-highlight-color:transparent}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar{position:relative!important;isolation:isolate;display:flex!important;align-items:center!important;gap:2px!important;padding:6px!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:32px!important;box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.045)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){position:relative!important;z-index:1!important;flex:0 0 auto!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:5px!important;width:80px!important;min-width:80px!important;max-width:none!important;height:64px!important;min-height:64px!important;padding:6px 4px 0!important;margin:0!important;background:transparent!important;transform:none!important;overflow:visible!important;outline:none;color:#a7b1c0!important;font:750 10.5px/1 'Space Grotesk',system-ui,sans-serif!important;letter-spacing:.07em!important;animation:none!important;transition:color var(--mk-dur-effects-default,200ms) var(--mk-ease-effects,ease)!important;-webkit-tap-highlight-color:transparent}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){border:0!important;border-radius:26px!important;box-shadow:none!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::before,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::after{display:none!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{width:auto!important;min-width:116px!important;padding:6px 12px 0!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{position:relative!important;z-index:1!important;align-self:center!important}
 /* the active pill takes the colour of the icon it sits behind */
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#nsToggleBtnParent{--dk-acc:#7ea6ff}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{--dk-acc:#2dd4bf}
@@ -3008,20 +3009,19 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#monthCalDocBtn{--dk-acc
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#planotajsDockBtn{--dk-acc:#38bdf8}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#statsDocBtn{--dk-acc:#1fe091}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>:is(#radioIdleBtn,#radioToggle){--dk-acc:var(--radio-accent,#ff8a5c)}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:hover,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:focus-visible{color:#eef3fa!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button.dk-on{color:#fff!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{color:#eef3fa!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{color:#fff!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}
 /* the icon centred in the 32 px zone */
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:22px!important;height:auto;max-height:22px!important;margin:5px 0!important;filter:none!important;transform:none;transition:transform var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:22px!important;height:auto;max-height:22px!important;margin:5px 0!important;filter:none!important;transform:none;transition:transform var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease)!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button .dock-alt{height:22px!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{height:22px!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>i{right:20px!important;top:8px!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:active :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn:active>svg{transform:scale(.88)}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button.dk-pop :is(.dock-px,.dock-alt){animation:dk-pop .52s linear both!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn:active>svg{transform:scale(.88)}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-pop :is(.dock-px,.dock-alt){animation:dk-pop .52s linear both!important}
 @keyframes dk-pop{0%{transform:scale(1)}22%{transform:scale(.84)}55%{transform:scale(1.1)}78%{transform:scale(.98)}100%{transform:scale(1)}}
 /* the zone each pill measures (MinkaMotion.liquid reads its box) */
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button>s.dk-slot{position:absolute!important;left:50%;top:6px;width:64px;height:32px;margin-left:-32px;pointer-events:none;visibility:hidden;text-decoration:none}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn>s.dk-slot{left:8px;right:8px;width:auto;margin-left:0}
 /* the pills */
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill{position:absolute;z-index:0;top:12px;height:32px;left:0;right:100%;pointer-events:none;opacity:0}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill.is-on{opacity:1}
@@ -3034,9 +3034,7 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-hover.is-press>i{bac
 html.minka-rad #bottomBtnBar>.dk-pill,html.minka-rad #bottomBtnBar>button>s.dk-slot{display:none!important}
 @media(max-width:720px){
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button{width:52px!important;min-width:52px!important;height:52px!important;min-height:52px!important;padding:10px 0 0!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{min-width:76px!important;padding:10px 8px 0!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button>s.dk-slot{top:10px;width:44px;margin-left:-22px}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn>s.dk-slot{left:4px;right:4px;width:auto;margin-left:0}
 }
 </style>
 <script>
@@ -3045,7 +3043,9 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn>s.dk-slot{l
   if (!bar) return;
   var MM = window.MinkaMotion;
   // An open window: the classes the dock buttons already get.
-  var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|bolus-open|mc-open)(\s|$)/;
+  // BOLUS has its own frame (progress ring, warning colours): no pill there.
+  var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|mc-open)(\s|$)/;
+  function ownFrame(b) { return b.id === 'bolusDocBtn'; }
   function pill(cls) {
     var el = document.createElement('span');
     el.className = 'dk-pill ' + cls; el.setAttribute('aria-hidden', 'true');
@@ -3065,13 +3065,14 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn>s.dk-slot{l
   buttons().forEach(slot);
   function shown(b) { return !!b && b.offsetWidth > 0; }
   function place(p, b, animate, from) {
-    if (!MM || !MM.liquid || !shown(b)) return false;
+    if (!MM || !MM.liquid || !shown(b) || ownFrame(b)) return false;
     return MM.liquid(p, bar, slot(b), { animate: animate, from: from && slot(from) });
   }
 
   var hoverBtn = null;
   function hoverTo(b) {
     if (b === hoverBtn) return;
+    if (ownFrame(b)) { hoverOff(); return; }
     var wasOn = hover.classList.contains('is-on');
     if (!place(hover, b, wasOn)) return;
     hoverBtn = b;
