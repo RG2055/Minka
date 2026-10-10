@@ -536,7 +536,7 @@
       var bars = [1, .4, .7, 1.3, .4, .8, .4, 1.1, .6, .4, .9, .5, 1.2, .4, .7, .5, 1, .4], by = 66;
       bars.forEach(function (h, i) { if (by + h < 93) a += '<rect x="76" y="' + by.toFixed(2) + '" width="11" height="' + h + '" fill="currentColor" fill-opacity=".85"/>'; by += h + (i % 3 ? .55 : .9); });
       // the printed words are HTML (sized in cqw with the card; SVG text does not follow a zoomed preview)
-      return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + a + '</svg><span class="tk-stub">BIĻETE Nº 024</span>';
+      return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + a + '</svg><span class="tk-stub">BIĻETE Nº 024</span><i class="tk-hole t"></i><i class="tk-hole b"></i>';
     }
     if (face === 'analog') {
       // the dial: sixty minute ticks, the hour ticks long and bright
