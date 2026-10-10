@@ -1189,7 +1189,7 @@
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
     // Night duration sits on a fixed dark info strip, independent of skin text colours.
     if (el.classList.contains('nsc-full-card')) numEl = null;
-    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-txt-dark','mk-emoji-sys','mk-emoji-black','mk-emoji-white','mk-txtfx-f','mk-txtfx-g','mk-txtfx-o','mk-txtfx-h','mk-nf','mk-nf-only','mk-emoji-zs','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-fx-dither','mk-fx-ditherpaper','mk-fx-dithercolor','mk-fx-pic','mk-fx-xray','mk-fx-halftone','mk-fx-duotone','mk-fx-ascii','mk-fx-focus','mk-fx-poster','mk-fx-split','mk-fx-mosaic','mk-fx-bricks','mk-fx-lines','mk-fx-led','mk-fx-pixelate','mk-fx-cmyk','mk-fx-riso','mk-fx-pointillism','mk-fx-heatmap','mk-fx-threshold','mk-fx-outline','mk-fx-posterize','mk-emoji-custom','mk-emoji-normal','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
+    ['mk-has-skin','mk-has-grad','mk-skin-fit','mk-has-num','mk-has-txt','mk-txt-dark','mk-emoji-sys','mk-emoji-black','mk-emoji-white','mk-txtfx-f','mk-txtfx-g','mk-txtfx-o','mk-txtfx-h','mk-nf','mk-nf-only','mk-emoji-zs','mk-has-spark','mk-fx-hearts','mk-fx-mirdz','mk-fx-burb','mk-fx-ziedi','mk-fx-taur','mk-fx-dither','mk-fx-ditherpaper','mk-fx-dithercolor','mk-fx-pic','mk-fx-xray','mk-fx-halftone','mk-fx-duotone','mk-fx-ascii','mk-fx-focus','mk-fx-poster','mk-fx-split','mk-fx-mosaic','mk-fx-bricks','mk-fx-lines','mk-fx-led','mk-fx-pixelate','mk-fx-cmyk','mk-fx-riso','mk-fx-pointillism','mk-fx-heatmap','mk-fx-threshold','mk-fx-outline','mk-fx-posterize','mk-emoji-custom','mk-emoji-normal','mk-skin-hue','nsc-worker-skinned','nsc-skin-hue','nsc-skin-contain','ns-room-bed-skin-hue'].forEach(function(c){ el.classList.remove(c); });
     NAME_STYLES.forEach(function(o){ if (o[0]) el.classList.remove('mk-nf-' + o[0]); });
     ['--mk-skin-img','--mk-ez','--mk-emoji-tint','--mk-emoji-tint-a','--mk-num-color','--mk-num-alpha','--mk-txt-color','--mk-emoji-op','--mk-fx-scale','--mk-focus-x','--mk-focus-y'].forEach(function(p){ el.style.removeProperty(p); });
     if (!skin) { if (window.MinkaCardFaces) window.MinkaCardFaces.apply(el, null); return; }
@@ -1223,6 +1223,7 @@
       el.classList.add('mk-has-grad');
       el.style.setProperty('--mk-skin-img', GRAD_MAP[skin.id]);
     } else if (skin.t === 'hue' && skin.rgb) {
+      el.classList.add('mk-skin-hue'); // faces that paint their own ground (M3, Emoji pulkstenis) take this tone
       el.style.setProperty('--mk-emoji-tint', skin.rgb);
       el.style.setProperty('--mk-emoji-tint-a', '.24');
       if (el.classList.contains('nsc-full-card')) el.classList.add('nsc-skin-hue');
@@ -2435,9 +2436,22 @@
     if (variantsBox) suggestedPalette(draft).then(function (pal) {
       if (!variantsBox.isConnected) return;
       var list = paletteVariants(pal), rgb = function (t) { return 'rgb(' + String(t).split(',').map(Math.round).join(',') + ')'; };
+      // The example shows the digits as the card will get them: a colour too close to
+      // the background (a mid pink on a light pink) is taken darker or lighter, in its
+      // own hue, until it reads (the contrast fix does the same after the pick).
+      var readable = function (num, bg) {
+        var n = parseRgbTriplet(num), b = parseRgbTriplet(bg);
+        if (!n || !b) return num;
+        var lb = relLuminance(b), to = lb > .3 ? [18, 14, 16] : [250, 248, 246];
+        for (var t = 0; t <= 1.001; t += .1) {
+          var c = blendRgb(to, t, n);
+          if (contrastRatio(relLuminance(c), lb) >= 3.2) return c.join(',');
+        }
+        return to.join(',');
+      };
       variantsBox.innerHTML = list.map(function (v, i) {
         var on = String(draft.num || '') === String(v.num);
-        return '<button type="button" class="mk-auto-var" data-var="' + i + '" aria-pressed="' + on + '" title="' + (i ? 'Cits saskaņots variants' : 'Fona paša krāsas') + '" style="--v-bg:' + rgb(v.source) + ';--v-num:' + rgb(v.num) + ';--v-txt:' + rgb(v.txt) + '"><b>24</b><i></i></button>';
+        return '<button type="button" class="mk-auto-var" data-var="' + i + '" aria-pressed="' + on + '" title="' + (i ? 'Cits saskaņots variants' : 'Fona paša krāsas') + '" style="--v-bg:' + rgb(v.source) + ';--v-num:' + rgb(readable(v.num, v.source)) + ';--v-txt:' + rgb(v.txt) + '"><b>24</b><i></i></button>';
       }).join('');
       variantsBox.querySelectorAll('.mk-auto-var').forEach(function (b) {
         b.addEventListener('click', function () {

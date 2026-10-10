@@ -279,7 +279,10 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-winamp[data
 
 /* Ietvars → Bez ietvara: no metal edge and no glass edge, the picture reaches the card's edge */
 @layer mk-fx {
-html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-no-frame[data-watch-face] {border-width:0 !important;background-color:transparent !important;}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-no-frame[data-watch-face] {border-width:0 !important;}
+/* no frame = no border; M3 and Emoji pulkstenis keep their tonal container (their own
+   ground, also the background tone chosen in Fons), the others go clear */
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-no-frame[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="emojiclock"]) {background-color:transparent !important;}
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face.wf-no-frame[data-watch-face]::after {border-color:transparent !important;}
 .wf-metals button[data-metal="12"] {background:transparent !important;box-shadow:inset 0 0 0 1.5px rgba(184,193,205,.55) !important;position:relative;overflow:hidden;}
 .wf-metals button[data-metal="12"]::after {content:"";position:absolute;left:50%;top:-10%;width:1.5px;height:120%;background:rgba(184,193,205,.7);transform:rotate(45deg);}
