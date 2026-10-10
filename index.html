@@ -2985,24 +2985,20 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
 </script>
 
 <style>
-/* ═══ Dock M3 (2026-10): a floating toolbar in the M3 Expressive style.
-   Each item: a 32 px indicator zone with the icon, the label under it.
-   Two pills sit behind the buttons and move with MinkaMotion.liquid (the
-   same two-spring pill as the app's tabs; BOLUS keeps its own look and
-   frame and gets no pill): the hover pill follows the
-   pointer, the active pill marks the window that is open, in that button's
-   own colour. Press squeezes the pill and squares its corners (M3 shape
-   morph); opening a window pops its icon once. Only left/right of two small
-   absolute pills, transform and colour change: no blur, no per-frame JS.
-   Reduced motion: the spring durations are 0 (css/mk-sys.css). /rad keeps
-   its own dock. */
+/* ═══ Dock M3 (2026-10): a floating toolbar in the M3 style, kept plain.
+   Each item: the icon with its label under it. States are colour only, on
+   the effects curve (no overshoot, M3: colour and opacity never bounce):
+   hover lightens the item, press a little more, and the window that is open
+   keeps its item tinted in that icon's own colour (--dk-acc). Nothing moves,
+   so nothing can bounce or lag; the script only marks the open window
+   (.dk-on). BOLUS keeps its own look and frame. /rad keeps its own dock. */
 html:not(.minka-rad) #dockShelf #bottomBtnBar{background:#141922!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar{position:relative!important;isolation:isolate;display:flex!important;align-items:center!important;gap:2px!important;padding:6px!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:32px!important;box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.045)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){position:relative!important;z-index:1!important;flex:0 0 auto!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:5px!important;width:80px!important;min-width:80px!important;max-width:none!important;height:64px!important;min-height:64px!important;padding:6px 4px 0!important;margin:0!important;background:transparent!important;transform:none!important;overflow:visible!important;outline:none;color:#a7b1c0!important;font:750 10.5px/1 'Space Grotesk',system-ui,sans-serif!important;letter-spacing:.07em!important;animation:none!important;transition:color var(--mk-dur-effects-default,200ms) var(--mk-ease-effects,ease)!important;-webkit-tap-highlight-color:transparent}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){border:0!important;border-radius:26px!important;box-shadow:none!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::before,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::after{display:none!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{position:relative!important;z-index:1!important;align-self:center!important}
-/* the active pill takes the colour of the icon it sits behind */
+/* the open window's item takes the colour of its icon */
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#nsToggleBtnParent{--dk-acc:#7ea6ff}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{--dk-acc:#2dd4bf}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#monthCalDocBtn{--dk-acc:#38bdf8}
@@ -3011,125 +3007,43 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#statsDocBtn{--dk-acc:#1
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>:is(#radioIdleBtn,#radioToggle){--dk-acc:var(--radio-accent,#ff8a5c)}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{color:#eef3fa!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{color:#fff!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){transition:background-color 150ms cubic-bezier(.2,0,0,1),color 150ms cubic-bezier(.2,0,0,1)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover{background:rgba(255,255,255,.06)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active{background:rgba(255,255,255,.1)!important;transition-duration:50ms!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{background:color-mix(in srgb,var(--dk-acc,#7dd3fc) 22%,#141922)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on:hover{background:color-mix(in srgb,var(--dk-acc,#7dd3fc) 28%,#1b2230)!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}
 /* the icon centred in the 32 px zone */
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:22px!important;height:auto;max-height:22px!important;margin:5px 0!important;filter:none!important;transform:none;transition:transform var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease)!important}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:22px!important;height:auto;max-height:22px!important;margin:5px 0!important;filter:none!important;transform:none}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button .dock-alt{height:22px!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{height:22px!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>i{right:20px!important;top:8px!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn:active>svg{transform:scale(.88)}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-pop :is(.dock-px,.dock-alt){animation:dk-pop .52s linear both!important}
-@keyframes dk-pop{0%{transform:scale(1)}22%{transform:scale(.84)}55%{transform:scale(1.1)}78%{transform:scale(.98)}100%{transform:scale(1)}}
-/* the zone each pill measures (MinkaMotion.liquid reads its box): the
-   whole item, icon and label together in one shape */
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button>s.dk-slot{position:absolute!important;left:2px;right:2px;top:0;bottom:0;pointer-events:none;visibility:hidden;text-decoration:none}
-/* the pills */
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill{position:absolute;z-index:0;top:12px;height:32px;left:0;right:100%;pointer-events:none;opacity:0}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill.is-on{opacity:1}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill>i{position:absolute;inset:0;border-radius:22px;transition:transform var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease),border-radius var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,ease),background-color var(--mk-dur-effects-slow,300ms) var(--mk-ease-effects,ease)}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-hover>i{background:rgba(255,255,255,.075)}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-active>i{background:color-mix(in srgb,var(--dk-acc,#7dd3fc) 24%,#141922);transform:scaleX(.4)}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-active.is-on>i{transform:none}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill.is-press>i{transform:scale(.94,.9);border-radius:14px}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-hover.is-press>i{background:rgba(255,255,255,.12)}
-html.minka-rad #bottomBtnBar>.dk-pill,html.minka-rad #bottomBtnBar>button>s.dk-slot{display:none!important}
 @media(max-width:720px){
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){width:56px!important;min-width:56px!important;height:56px!important;min-height:56px!important;padding:0!important;justify-content:center!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{margin:0!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>.dk-pill>i{border-radius:18px}
 }
 </style>
 <script>
 (function(){
+  // Marks the item whose window is open (.dk-on); its colour is CSS.
   var bar = document.getElementById('bottomBtnBar');
   if (!bar) return;
-  var MM = window.MinkaMotion;
-  // An open window: the classes the dock buttons already get.
-  // BOLUS has its own frame (progress ring, warning colours): no pill there.
+  // BOLUS has its own frame (progress ring, warning colours): not marked.
   var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|mc-open)(\s|$)/;
-  function ownFrame(b) { return b.id === 'bolusDocBtn'; }
-  function pill(cls) {
-    var el = document.createElement('span');
-    el.className = 'dk-pill ' + cls; el.setAttribute('aria-hidden', 'true');
-    el.appendChild(document.createElement('i'));
-    var bg = bar.querySelector(':scope > .dock-bg');
-    if (bg) bg.after(el); else bar.prepend(el);
-    return el;
+  function sync() {
+    var found = false;
+    Array.prototype.forEach.call(bar.querySelectorAll(':scope > button'), function (b) {
+      var on = !found && b.id !== 'bolusDocBtn' && ACTIVE.test(b.className) && b.offsetWidth > 0;
+      if (on) found = true;
+      if (b.classList.contains('dk-on') !== on) b.classList.toggle('dk-on', on);
+    });
   }
-  var hover = pill('dk-hover'), active = pill('dk-active');
-  bar.insertBefore(active, hover);
-  function buttons() { return Array.prototype.slice.call(bar.querySelectorAll(':scope > button')); }
-  function slot(b) {
-    var s = b.querySelector(':scope > s.dk-slot');
-    if (!s) { s = document.createElement('s'); s.className = 'dk-slot'; s.setAttribute('aria-hidden', 'true'); b.appendChild(s); }
-    return s;
-  }
-  buttons().forEach(slot);
-  function shown(b) { return !!b && b.offsetWidth > 0; }
-  function place(p, b, animate, from) {
-    if (!MM || !MM.liquid || !shown(b) || ownFrame(b)) return false;
-    return MM.liquid(p, bar, slot(b), { animate: animate, from: from && slot(from) });
-  }
-
-  var hoverBtn = null;
-  function hoverTo(b) {
-    if (b === hoverBtn) return;
-    if (ownFrame(b)) { hoverOff(); return; }
-    var wasOn = hover.classList.contains('is-on');
-    if (!place(hover, b, wasOn)) return;
-    hoverBtn = b;
-    hover.classList.add('is-on');
-  }
-  function hoverOff() { hoverBtn = null; hover.classList.remove('is-on', 'is-press'); }
-  function itemOf(t) { var b = t && t.closest ? t.closest('button') : null; return b && b.parentNode === bar ? b : null; }
-  bar.addEventListener('pointerover', function (e) { var b = itemOf(e.target); if (b) hoverTo(b); }, { passive: true });
-  bar.addEventListener('pointerleave', hoverOff, { passive: true });
-  bar.addEventListener('focusin', function (e) { var b = itemOf(e.target); if (b && b.matches(':focus-visible')) hoverTo(b); });
-  bar.addEventListener('focusout', function (e) { if (!bar.contains(e.relatedTarget)) hoverOff(); });
-  // Press: the pill under the finger squeezes, and springs back on release.
-  function press(on, b) {
-    hover.classList.toggle('is-press', on);
-    active.classList.toggle('is-press', on && !!b && b === activeBtn);
-  }
-  bar.addEventListener('pointerdown', function (e) { var b = itemOf(e.target); if (!b) return; hoverTo(b); press(true, b); }, { passive: true });
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (t) { bar.addEventListener(t, function () { press(false); }, { passive: true }); });
-
-  var activeBtn = null;
-  function accent(b) {
-    var c = getComputedStyle(b).getPropertyValue('--dk-acc').trim();
-    return c || '#7dd3fc';
-  }
-  function syncActive() {
-    var next = null;
-    buttons().some(function (b) { if (ACTIVE.test(b.className) && shown(b)) { next = b; return true; } return false; });
-    if (next === activeBtn) return;
-    var prev = activeBtn;
-    activeBtn = next;
-    buttons().forEach(function (b) { if (b !== next && b.classList.contains('dk-on')) b.classList.remove('dk-on'); });
-    if (!next) { active.classList.remove('is-on'); return; }
-    active.style.setProperty('--dk-acc', accent(next));
-    var wasOn = active.classList.contains('is-on') && prev;
-    place(active, next, !!wasOn);
-    if (!wasOn) { void active.offsetWidth; }
-    active.classList.add('is-on');
-    next.classList.add('dk-on');
-    next.classList.remove('dk-pop'); void next.offsetWidth; next.classList.add('dk-pop');
-  }
-  bar.addEventListener('animationend', function (e) { var b = itemOf(e.target); if (b) b.classList.remove('dk-pop'); });
   var queued = false;
-  function queue() { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; syncActive(); }); }
+  function queue() { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; sync(); }); }
   new MutationObserver(function (list) {
     for (var i = 0; i < list.length; i++) if (list[i].target.parentNode === bar && list[i].target.tagName === 'BUTTON') { queue(); return; }
   }).observe(bar, { attributes: true, attributeFilter: ['class'], subtree: true });
   new MutationObserver(queue).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  // Size or layout changes (fonts, window width, a button shown or hidden):
-  // put both pills back on their buttons without travel.
-  function settle() {
-    if (activeBtn) { if (shown(activeBtn)) place(active, activeBtn, false); else { activeBtn = null; active.classList.remove('is-on'); queue(); } }
-    if (hoverBtn && shown(hoverBtn)) place(hover, hoverBtn, false);
-  }
-  if (window.ResizeObserver) new ResizeObserver(settle).observe(bar);
-  window.addEventListener('resize', settle, { passive: true });
   queue();
 })();
 </script>
