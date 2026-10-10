@@ -191,10 +191,12 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"]:not([hidden]) {
   display: grid !important; grid-template-columns: auto auto !important; grid-template-rows: auto auto !important; align-items: center !important;
   width: auto !important; min-width: 0 !important; max-width: none !important;
-  column-gap: 2cqw !important; padding: 1.4cqw 3.6cqw 1.4cqw 1.4cqw !important; border-radius: 999px !important; background: var(--m3-chip) !important;
+  column-gap: 2cqw !important; padding: 1.6cqw 4.2cqw 1.6cqw 1.6cqw !important; border-radius: 999px !important; background: var(--m3-chip) !important;
 }
+/* the icon circle fills the pill's height less an even inset, so it sits concentric
+   in the pill's round end */
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"]::before,
-.card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"]::after {content: ""; grid-column: 1; grid-row: 1 / 3; width: 9cqw; height: 9cqw;}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"]::after {content: ""; grid-column: 1; grid-row: 1 / 3; align-self: stretch; width: auto; height: auto; aspect-ratio: 1;}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"]::before {border-radius: 50%; background: var(--m3-light);}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"]::after {background: var(--m3-on-light); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M7 2h2v2h6V2h2v2h1.5A2.5 2.5 0 0 1 21 6.5v12a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-12A2.5 2.5 0 0 1 5.5 4H7V2Zm-2 8v8.5c0 .3.2.5.5.5h13c.3 0 .5-.2.5-.5V10H5Zm2 2h3v3H7v-3Z'/%3E%3C/svg%3E") center / 56% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M7 2h2v2h6V2h2v2h1.5A2.5 2.5 0 0 1 21 6.5v12a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-12A2.5 2.5 0 0 1 5.5 4H7V2Zm-2 8v8.5c0 .3.2.5.5.5h13c.3 0 .5-.2.5-.5V10H5Zm2 2h3v3H7v-3Z'/%3E%3C/svg%3E") center / 56% no-repeat;}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="month"] > * {grid-column: 2 !important;}
@@ -208,10 +210,11 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"]:not([hidden]) {
   display: grid !important; place-items: center !important; place-content: center !important; padding: 0 !important; aspect-ratio: 1;
   width: 25cqw !important; height: 25cqw !important; min-width: 0 !important; box-sizing: border-box !important; border-radius: 50% !important;
-  background: radial-gradient(circle closest-side, var(--m3-dark) 72%, transparent 73%) !important;
+  background: none !important;
 }
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g {position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none;}
-.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g .trk {fill: none; stroke: var(--m3-chip); stroke-width: 8; stroke-linecap: round;}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g .bg {fill: var(--m3-dark);}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g .trk {fill: none; stroke: var(--m3-chip); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round;}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] > svg.m3g .ind {fill: none; stroke: var(--m3-light); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round;}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] .mk-mid-meta-value {position: relative;}
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="fatigue"] .mk-mid-meta-label {display: none !important;}
@@ -230,14 +233,39 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 :is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="material"] [data-wf-part="emoji"]:not(.is-initials) .mk-mid-meta-emoji-fly {font-size: 14cqw !important;}
 :is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="material"] [data-wf-part="emoji"] img.mk-e3d {width: 16cqw !important; height: 16cqw !important; vertical-align: 0 !important;}
 
-/* coffee: a soft diamond (a rounded square turned 45°, its cup upright) */
+/* coffee: at rest a soft diamond (a rounded square turned 45°, the cup upright); with
+   the pointer on the card it turns level and opens into a tonal pill — a round filled
+   − button, the cup (and count), a round + button, each button concentric with the
+   pill's end. The − and + are drawn bars, so they sit exactly in the middle at any size.
+   Effects curve, no overshoot. */
 .card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step {
-  display: grid !important; place-items: center; padding: 0 !important; aspect-ratio: 1;
-  width: 16cqw !important; height: 16cqw !important; min-width: 0 !important; min-height: 0 !important; box-sizing: border-box !important;
-  border-radius: 32% !important; rotate: 45deg; background: var(--m3-chip) !important;
+  display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 0 !important; position: relative !important;
+  width: 40cqw !important; height: 16cqw !important; min-width: 0 !important; min-height: 0 !important; padding: 0 1.6cqw !important; box-sizing: border-box !important;
+  border-radius: 999px !important; rotate: 0deg; background: var(--m3-chip) !important;
+  transition: rotate 200ms cubic-bezier(.2,0,0,1), width 200ms cubic-bezier(.2,0,0,1), border-radius 200ms cubic-bezier(.2,0,0,1) !important;
 }
-.card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step > * {rotate: -45deg;}
-.card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step :is(img,svg,.mk-coffee-cup) {max-width: 64% !important; max-height: 64% !important;}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step > * {rotate: 0deg; transition: rotate 200ms cubic-bezier(.2,0,0,1);}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {
+  display: block !important; position: relative !important; z-index: 1; flex: none !important; width: 12.8cqw !important; height: 12.8cqw !important; min-width: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;
+  border-radius: 50% !important; font-size: 0 !important; color: transparent !important; -webkit-text-fill-color: transparent !important; cursor: pointer;
+  background: linear-gradient(var(--m3-on-light), var(--m3-on-light)) center / 5.6cqw 1.3cqw no-repeat, var(--m3-light) !important;
+  transition: background-color 150ms cubic-bezier(.2,0,0,1), scale 150ms cubic-bezier(.2,0,0,1) !important;
+}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step > .mk-coffee-add {
+  background: linear-gradient(var(--m3-on-light), var(--m3-on-light)) center / 5.6cqw 1.3cqw no-repeat, linear-gradient(var(--m3-on-light), var(--m3-on-light)) center / 1.3cqw 5.6cqw no-repeat, var(--m3-light) !important;
+}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add):active {scale: .92;}
+/* the cup sits in the exact middle of the diamond and of the pill (it spans the whole
+   control, the buttons lie over its ends) */
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step > .mk-coffee-mid {position: absolute !important; inset: 0 !important; z-index: 0; display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important; height: 100% !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;}
+.card.mk-watch-face[data-watch-face="material"] .mk-mid-coffee.is-empty .mk-coffee-copy {display: none !important;}
+.card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step :is(img,svg,.mk-coffee-cup) {width: 8cqw !important; height: 8cqw !important; max-width: none !important; max-height: none !important; display: block !important;}
+.card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(:has(.mk-mid-coffee :focus-visible)) [data-wf-part="coffee"] .mk-coffee-step {width: 16cqw !important; padding: 0 !important; border-radius: 32% !important; rotate: 45deg;}
+.card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(:has(.mk-mid-coffee :focus-visible)) [data-wf-part="coffee"] .mk-coffee-step > * {rotate: -45deg;}
+.card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(:has(.mk-mid-coffee :focus-visible)) [data-wf-part="coffee"] .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {display: none !important;}
+@media (prefers-reduced-motion: reduce) {
+  .card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step, .card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step > * {transition: none !important;}
+}
 /* ---------- Emoji pulkstenis: twelve faces in place of the hours ----------
    A dark tonal dial in the card's colour (--wf-tint); the hour marks are small drawn
    faces (card-faces.js emojiFace), each a light round button with dark features;

@@ -3026,6 +3026,17 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{position:re
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{background:transparent!important;transition:background-color 200ms cubic-bezier(.2,0,0,1)!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:hover{background:color-mix(in srgb,var(--hxr-accent,#fff) 8%,transparent)!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:active{background:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent)!important;transition-duration:50ms!important}
+/* Themed icons (as Android's): at rest every icon is drawn in the header picture's
+   tones — a pixel icon keeps its details as three tones by its own lightness (light,
+   mid, dark: data-t, set by the dock script below) — and under the pointer, when
+   pressed or when its window is open, it shows its own colours again. Colour only,
+   200 ms on the effects curve. The other icon sets take the light tone. */
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar .dock-px rect {transition: fill 200ms cubic-bezier(.2,0,0,1);}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on) .dock-px rect[data-t="l"] {fill: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 92%, #fff) !important;}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on) .dock-px rect[data-t="m"] {fill: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 58%, var(--hxr-surface, #2a2f36)) !important;}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on) .dock-px rect[data-t="d"] {fill: color-mix(in oklab, var(--hxr-surface, #2a2f36) 72%, #000) !important;}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on) .dock-alt {--dock-ico: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 92%, #fff) !important;}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button .dock-alt {transition: background-color 200ms cubic-bezier(.2,0,0,1);}
 /* the open window's item takes the colour of its icon */
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#nsToggleBtnParent{--dk-acc:#7ea6ff}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{--dk-acc:#2dd4bf}
@@ -3056,6 +3067,16 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)
   // Marks the item whose window is open (.dk-on); its colour is CSS.
   var bar = document.getElementById('bottomBtnBar');
   if (!bar) return;
+  // Themed icons: each pixel of a dock icon gets its tone by its own lightness (CSS above).
+  function tones() {
+    Array.prototype.forEach.call(bar.querySelectorAll('.dock-px rect[fill]'), function (r) {
+      var m = /^#([0-9a-f]{6})$/i.exec(r.getAttribute('fill') || ''), n, l;
+      if (!m) return;
+      n = parseInt(m[1], 16); l = (((n >> 16) & 255) * .2126 + ((n >> 8) & 255) * .7152 + (n & 255) * .0722) / 255;
+      r.setAttribute('data-t', l > .55 ? 'l' : l > .2 ? 'm' : 'd');
+    });
+  }
+  tones();
   // BOLUS has its own frame (progress ring, warning colours): not marked.
   var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|mc-open)(\s|$)/;
   function sync() {
