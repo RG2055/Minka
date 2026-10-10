@@ -150,7 +150,7 @@ const FX_HASH_RE = /^[a-f0-9]{64}$/;
 const FX_MAX_BYTES = 600 * 1024;
 const FX_MAX_SIDE = 2400;
 const FX_TTL_SECONDS = 60 * 86400;
-const SKIN_PART_RE = /^(img:[\w-]{1,40}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|emo:[bcp][0-3]m?-(?:[0-9a-f]{2,6}(?:\.[0-9a-f]{2,6}){0,9}|x[rb]\d{2})|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|es:[sbw]|te:[fgoh]|nf:[cnzrbkadlpeCNZRBKADLPE]|ez:(?:[123]|[6-9]\d|[1-3]\d\d)|dp:0|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|fp:\d{1,2},\d{1,2}|tm:(?:[a-h][1-3][1-3]|[p-t]11)|bd:[a-z]{2,12}|bp:\d{1,2}|bq:\d{1,2}|av:1|ad:[a-z0-9-]{1,40},(?:[3-9]\d|1\d\d|200),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
+const SKIN_PART_RE = /^(img:[\w-]{1,40}|art:[a-f0-9]{32}|grad:[a-z]{1,16}|emo:[bcp][0-3]m?-(?:[0-9a-f]{2,6}(?:\.[0-9a-f]{2,6}){0,9}|x(?:[rb]\d{2}|[na][0-9a-z]{2}))|hue:\d{1,3},\d{1,3},\d{1,3}|txt:\d{1,3},\d{1,3},\d{1,3}|num:\d{1,3},\d{1,3},\d{1,3}|na:(0(\.\d{1,2})?|1)|em:(0(\.\d{1,2})?|1)|emn:[01]|es:[sbw]|te:[fgoh]|nf:[cnzrbkadlpeCNZRBKADLPE]|ez:(?:[123]|[6-9]\d|[1-3]\d\d)|dp:0|fx:[a-z]{1,12}|fxs:[0-3](\.\d{1,2})?|fp:\d{1,2},\d{1,2}|tm:(?:[a-h][1-3][1-3]|[p-t]11)|bd:[a-z]{2,12}|bp:\d{1,2}|bq:\d{1,2}|av:1|ad:[a-z0-9-]{1,40},(?:[3-9]\d|1\d\d|200),[lr],-?(?:1000|[0-9]{1,3}),-?(?:1000|[0-9]{1,3}))$/;
 
 function cleanSkinWorker(value) {
   if (typeof value !== "string") return "";

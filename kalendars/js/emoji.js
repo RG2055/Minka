@@ -206,10 +206,10 @@
     });
   }
 
-  // The 3D emoji (js/emoji3d.js) as two more groups in this picker.
+  // The 3D emoji (js/emoji3d.js) as more groups in this picker, one per set.
   function e3dSections() {
     var E3 = window.MinkaEmoji3D; if (!E3) return [];
-    return E3.sets.map(function (st) { var first = E3.list(st[0])[0]; return first ? { id: 'e3d-' + st[0], set: st[0], label: '<img class="mkp-tab-pic" src="' + E3.url(first.id, 128) + '" alt="">', title: st[1] + ' 3D' } : null; }).filter(Boolean);
+    return E3.sets.map(function (st) { var first = E3.list(st[0])[0]; return first ? { id: 'e3d-' + st[0], set: st[0], label: '<img class="mkp-tab-pic" src="' + E3.url(first.id, 128) + '" alt="">', title: st[2] || st[1] + ' 3D' } : null; }).filter(Boolean);
   }
   function e3dList(k) { var E3 = window.MinkaEmoji3D, set = /^e3d-(.+)$/.exec(k); return E3 && set ? E3.list(set[1]).map(function (it) { return E3.encode(it.id); }) : null; }
   function buildCategoryButtons(buttonClass) {

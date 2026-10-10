@@ -987,8 +987,8 @@
      2 black, 3 white; "m" = it follows the person's own emoji. The picture is drawn once
      per emoji and look into a small canvas (webp) and then is an ordinary background:
      the picture effects (Dither, Rastrs …) work on it like on a photo. */
-  // …or "x<id>": a 3D emoji picture (js/emoji3d.js), e.g. "p2-xr07".
-  var EMO_RE = /^[bcp][0-3]m?-(?:[0-9a-f]{2,6}(\.[0-9a-f]{2,6}){0,9}|x[rb]\d{2})$/;
+  // …or "x<id>": a 3D emoji picture (js/emoji3d.js), e.g. "p2-xr07", "c1-xn4b".
+  var EMO_RE = /^[bcp][0-3]m?-(?:[0-9a-f]{2,6}(\.[0-9a-f]{2,6}){0,9}|x(?:[rb]\d{2}|[na][0-9a-z]{2}))$/;
   var emoReady = Object.create(null), emoPending = Object.create(null);
   function emoCodes(e) { return Array.from(String(e || '')).map(function (c) { return c.codePointAt(0).toString(16); }).join('.'); }
   function emoFromCodes(s) { try { return String.fromCodePoint.apply(null, String(s).split('.').map(function (h) { return parseInt(h, 16); })); } catch (_e) { return ''; } }

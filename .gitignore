@@ -33,3 +33,6 @@ dist/
 # wrangler files
 .wrangler
 .dev.vars*
+
+# downloads for scripts/build-*.py
+.cache/

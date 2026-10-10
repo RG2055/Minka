@@ -298,7 +298,7 @@
     ['Savvaļā', 'toy-fox toy-raccoon toy-lion toy-monkey toy-elephant toy-hedgehog toy-owl toy-unicorn toy-dino toy-ladybug toy-bee'],
     ['Ūdenī', 'toy-penguin toy-frog toy-turtle toy-whale toy-dolphin toy-seal toy-octopus'],
     ['Formas', 'toy-star toy-heart toy-cloud']].forEach(function (g) { g[1].split(' ').forEach(function (id) { TOY_SUB[id] = g[0]; }); });
-  var SUB_ORDER = ['Lācīši', 'Mājās', 'Savvaļā', 'Ūdenī', 'Formas', 'Roji', 'Baloni'];
+  var SUB_ORDER = ['Lācīši', 'Mājās', 'Savvaļā', 'Ūdenī', 'Formas', 'Roji', 'Baloni', 'Noto 3D', 'Emoji 18', 'Kustīgie'];
   /* Rotaļlietas: the plush toys from the night beds (people's favourites), sitting on
      the card's bottom corner. Same pictures as in Nakts (assets/rooms/beds). */
   [['toy-teddy', 'Lācītis'], ['toy-teddy-cream', 'Krēmīgais lācītis'], ['toy-teddy-grey', 'Pelēkais lācītis'], ['toy-panda', 'Panda'], ['toy-koala', 'Koala'],
@@ -310,10 +310,14 @@
     ['toy-heart', 'Sirsniņa'], ['toy-cloud', 'Mākonītis']].forEach(function(t) {
     ITEMS.push({ id: t[0], label: t[1], group: 'toy', sub: TOY_SUB[t[0]] || 'Savvaļā', src: 'assets/rooms/beds/acc-' + t[0] + '.webp' });
   });
-  // 3D emoji (js/emoji3d.js): Roji x Moji faces and emoji balloons, as stickers on the card.
-  if (window.MinkaEmoji3D) window.MinkaEmoji3D.list().forEach(function(it) {
-    ITEMS.push({ id: 'e3d-' + it.id, label: it.label, group: 'e3d', sub: it.set === 'roji' ? 'Roji' : 'Baloni', src: 'assets/emoji3d/' + it.id + '-320.webp' });
-  });
+  // 3D emoji (js/emoji3d.js): Roji x Moji faces, emoji balloons and Noto, as stickers on the card.
+  if (window.MinkaEmoji3D) {
+    var E3_SUB = {};
+    window.MinkaEmoji3D.sets.forEach(function(st) { E3_SUB[st[0]] = st[1]; });
+    window.MinkaEmoji3D.list().forEach(function(it) {
+      ITEMS.push({ id: 'e3d-' + it.id, label: it.label, group: 'e3d', sub: E3_SUB[it.set] || 'Baloni', src: window.MinkaEmoji3D.url(it.id, 320) });
+    });
+  }
   var ITEM_BY_ID = Object.create(null);
   ITEMS.forEach(function(item) { ITEM_BY_ID[item.id] = item; });
 
