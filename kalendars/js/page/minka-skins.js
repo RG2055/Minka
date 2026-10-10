@@ -279,7 +279,7 @@
   });
   // The newer layouts, each on a picture that suits it: [label, face, picture, number, text, depth].
   [['Biļete','ticket','','196,65,15','28,24,22'],['Biļete · Lapsēns','ticket','mili-lapsens','255,214,170','250,246,240'],
-   ['Žurnāla vāks','cover','photo-fox','244,242,236','250,248,244',1],['Vāks · Magnolija','cover','photo-magnolia','246,214,222','252,246,248',1,{hours:[84,40,44,1],coffee:[87,60,54,1]}],
+   ['Žurnāla vāks','cover','photo-fox','244,242,236','250,248,244',1],['Vāks · Magnolija','cover','photo-magnolia','246,214,222','252,246,248',1,{hours:[84,48,44,1],coffee:[87,64,54,1]}],
    ['Pulkstenis','analog','', '255,159,10','244,244,246'],
    ['Akmens · Travertīns','stone','akmens-travertins','70,58,46','64,52,40'],['Akmens · Slāneklis','stone','akmens-slaneklis','228,224,216','232,228,220'],
    ['Akmens · Smilšakmens','stone','akmens-smilsakmens','255,240,224','255,244,232']].forEach(function(p){
@@ -2520,6 +2520,9 @@
       var skin=JSON.parse(JSON.stringify(p.bg));
       skin.face=JSON.parse(JSON.stringify(p.face));
       if(draft.face){skin.face.coffeeMode=draft.face.coffeeMode;skin.face.coffeeContrast=draft.face.coffeeContrast;skin.face.colors=draft.face.colors;skin.face.fullTintMode=draft.face.fullTintMode;skin.face.fullTintHue=draft.face.fullTintHue;skin.face.fullTintIntensity=draft.face.fullTintIntensity;skin.face.fullTintAuto=draft.face.fullTintAuto;skin.face.fullTintScheme=draft.face.fullTintScheme;}
+      // The new layouts come exactly as drawn: no whole-card tint (a "Tumšs" left from the
+      // old look greyed the picture) and no per-element colours from before.
+      if(p.keepLayout&&draft.face){skin.face.fullTintMode=0;skin.face.colors={};}
       if(draft.face&&!p.keepParts)Object.keys(draft.face.parts).forEach(function(key){skin.face.parts[key][3]=draft.face.parts[key][3];});
       if(p.keepParts&&draft.face)skin.face.colors.moon=draft.face.colors&&draft.face.colors.moon||'';
       skin.num=p.num;skin.numA=p.na;skin.em='0';
