@@ -2241,9 +2241,11 @@
   'use strict';
   if (window.MINKA_APP === 'rad') return;
   var cur = null, timer = 0, seen = new WeakMap();
-  // backgrounds, the hover dither, and the person's emoji (on hover it pops up out of
-  // its slot, past the coffee — that is its own motion, not something covered)
-  var SKIP = /(^|\s)(mk-wf-background|mk-wf-art|mk-initials-dither|mk-wf-hands|mk-mid-meta-emoji-fly|mk-emoji-film-box)(\s|$)/;
+  // backgrounds and the hover dither; on a plain card also the person's emoji (on hover
+  // it pops up out of its slot, past the coffee — its own motion, not something covered;
+  // on a face it stays put and steps aside like the rest)
+  var SKIP = /(^|\s)(mk-wf-background|mk-wf-art|mk-initials-dither|mk-wf-hands)(\s|$)/;
+  var POP = /(^|\s)(mk-mid-meta-emoji-fly|mk-emoji-film-box)(\s|$)/;
   function step(card) { return card.querySelector('.mk-mid-coffee .mk-coffee-step'); }
   function isOpen(card) { var add = card.querySelector('.mk-coffee-step > .mk-coffee-add'); return !!add && add.getBoundingClientRect().width > 6 && getComputedStyle(add).opacity > .3; }
   function canOpen(card) { return card.dataset.coffeeMode !== 'open' && !card.classList.contains('wf-editing'); }
@@ -2251,13 +2253,13 @@
   // A wrapper's own box says nothing (a face's parts sit absolutely outside it), so the
   // walk goes into every wrapper; an svg is one piece.
   function covered(card, st) {
-    var r = st.getBoundingClientRect(), cr = card.getBoundingClientRect(), big = cr.width * cr.height * .4, out = [];
+    var r = st.getBoundingClientRect(), cr = card.getBoundingClientRect(), big = cr.width * cr.height * .4, out = [], face = card.classList.contains('mk-watch-face');
     function hit(b) { return b.width > 0 && b.height > 0 && b.left < r.right - 2 && b.right > r.left + 2 && b.top < r.bottom - 2 && b.bottom > r.top + 2; }
     (function walk(el) {
       for (var c = el.firstElementChild; c; c = c.nextElementSibling) {
         if (c === st) continue;
         if (c.contains(st)) { walk(c); continue; }
-        if (c.tagName === 'CANVAS' || c.tagName === 'STYLE' || c.tagName === 'SCRIPT' || (typeof c.className === 'string' && SKIP.test(c.className))) continue;
+        if (c.tagName === 'CANVAS' || c.tagName === 'STYLE' || c.tagName === 'SCRIPT' || (typeof c.className === 'string' && (SKIP.test(c.className) || !face && POP.test(c.className)))) continue;
         var b = c.getBoundingClientRect();
         if (hit(b) && b.width * b.height <= big) { if (inkHits(c, hit)) out.push(c); continue; }
         if (c.tagName !== 'svg' && c.firstElementChild) walk(c);
@@ -2269,23 +2271,36 @@
   // whole; text counts only by its glyphs (a big numeral's line has room above and
   // below its digits — "24" under the coffee's corner is not covered); a picture by its box.
   function boxShows(cs) {
-    if (cs.backgroundClip === 'text' || cs.webkitBackgroundClip === 'text') return false;
+    // a fill painted into the text (gradient digits) is text, whatever its layers
+    if (/text/.test(cs.backgroundClip || '') || /text/.test(cs.webkitBackgroundClip || '')) return false;
     var bg = cs.backgroundColor, a = /rgba?\(([^)]+)\)/.exec(bg), alpha = a ? (a[1].split(',')[3] == null ? 1 : +a[1].split(',')[3]) : 0;
     return alpha > .05 || cs.backgroundImage !== 'none' || parseFloat(cs.borderTopWidth) > 0 || cs.boxShadow !== 'none';
   }
+  var cv = null;
+  function glyphs(cs, text) {
+    var ctx = (cv || (cv = document.createElement('canvas'))).getContext('2d');
+    ctx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+    var m = ctx.measureText(text), fa = m.fontBoundingBoxAscent, fd = m.fontBoundingBoxDescent;
+    if (!(fa + fd)) return null;
+    return { h: fa + fd, t: fa - m.actualBoundingBoxAscent, b: fa + m.actualBoundingBoxDescent };
+  }
   function inkHits(el, hit) {
     var cs = getComputedStyle(el);
-    if (cs.visibility === 'hidden' || +cs.opacity === 0) return false;
+    // (an element this hid itself is still there: its opacity 0 is ours)
+    if (cs.visibility === 'hidden' || +cs.opacity === 0 && !el.hasAttribute('data-mkc-under')) return false;
     var tag = el.tagName;
     if (tag === 'IMG' || tag === 'svg' || tag === 'CANVAS' || tag === 'VIDEO' || boxShows(cs)) return hit(el.getBoundingClientRect());
     for (var n = el.firstChild; n; n = n.nextSibling) {
       if (n.nodeType === 3) {
         if (!n.nodeValue.trim()) continue;
         var rg = document.createRange(); rg.selectNodeContents(n);
-        var rs = rg.getClientRects();
+        var rs = rg.getClientRects(), m = glyphs(cs, n.nodeValue.trim());
         for (var i = 0; i < rs.length; i++) {
-          var q = rs[i], h = q.height;
-          if (hit({ left: q.left, right: q.right, top: q.top + h * .2, bottom: q.bottom - h * .14, width: q.width, height: h * .66 })) return true;
+          var q = rs[i], k = m ? q.height / m.h : 0;
+          // the glyphs' own top and bottom (canvas metrics scaled to the line box, as
+          // the numeral fit does), not the line's empty ascent and descent
+          var top = m ? q.top + m.t * k : q.top, bottom = m ? q.top + m.b * k : q.bottom;
+          if (hit({ left: q.left, right: q.right, top: top, bottom: bottom, width: q.width, height: bottom - top })) return true;
         }
       } else if (n.nodeType === 1 && inkHits(n, hit)) return true;
     }
