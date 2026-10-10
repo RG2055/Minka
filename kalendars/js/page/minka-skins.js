@@ -278,8 +278,8 @@
     PRESETS.push({label:p[0],group:'dithart',isNew:true,bg:{t:'img',id:'art-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:dark?'244,242,236':'20,20,22',face:face,depth:false,sw:'url(data/skins/skin-art-'+p[1]+'.webp)'});
   });
   // The newer layouts, each on a picture that suits it: [label, face, picture, number, text, depth].
-  [['Biļete','ticket','grain-persiks','196,65,15','28,22,20'],['Biļete · Lapsēns','ticket','mili-lapsens','255,214,170','250,246,240'],
-   ['Žurnāla vāks','cover','photo-fox','244,242,236','250,248,244',1],['Vāks · Magnolija','cover','photo-magnolia','246,214,222','252,246,248',1],
+  [['Biļete','ticket','','196,65,15','28,24,22'],['Biļete · Lapsēns','ticket','mili-lapsens','255,214,170','250,246,240'],
+   ['Žurnāla vāks','cover','photo-fox','244,242,236','250,248,244'],['Vāks · Magnolija','cover','photo-magnolia','246,214,222','252,246,248'],
    ['Pulkstenis','analog','', '255,159,10','244,244,246'],
    ['Akmens · Travertīns','stone','akmens-travertins','70,58,46','64,52,40'],['Akmens · Slāneklis','stone','akmens-slaneklis','228,224,216','232,228,220'],
    ['Akmens · Smilšakmens','stone','akmens-smilsakmens','255,240,224','255,244,232']].forEach(function(p){
@@ -289,8 +289,11 @@
     // Dark text on a light picture: the chips get light plates so their values read.
     if(p[4].split(',').reduce(function(a,v){return a+(+v);},0)<300)window.MinkaCardFaceModel.plateParts.forEach(function(k){face.plates[k]=4;});
     var material=p[2]&&window.MinkaFindCardMaterial(p[2]);
-    var sw=p[2]?'url('+(material?material.path:'data/skins/skin-'+p[2]+'.webp')+')'+(material&&material.background?','+material.background:''):'radial-gradient(circle at 50% 42%,#1d1f25,#050506)';
-    PRESETS.push({label:p[0],group:'layouts',isNew:true,bg:p[2]?{t:'img',id:p[2]}:{t:'hue',rgb:'10,10,12'},num:p[3],na:'1',txt:p[4],face:face,depth:p[5]?undefined:false,sw:sw});
+    // No picture: the ticket is cream paper, the watch a dark dial.
+    var paper=p[1]==='ticket'?'242,236,224':'10,10,12';
+    if(!p[2]&&p[1]==='ticket'){window.MinkaCardFaceModel.plateParts.forEach(function(k){face.plates[k]=2;});face.plates.emoji=1;}
+    var sw=p[2]?'url('+(material?material.path:'data/skins/skin-'+p[2]+'.webp')+')'+(material&&material.background?','+material.background:''):'rgb('+paper+')';
+    PRESETS.push({label:p[0],group:'layouts',isNew:true,keepLayout:true,bg:p[2]?{t:'img',id:p[2]}:{t:'hue',rgb:paper},num:p[3],na:'1',txt:p[4],face:face,depth:false,sw:sw});
   });
   // Plakāts: collector-card look — the picture in a window, a big name below it.
   [['Plakāts · Seja','aesthetic-face','f67a18'],['Plakāts · Kaķis','cat-06','f67a18'],['Plakāts · Ķivere','aesthetic-helmet','64d2ff'],['Plakāts · Kalni','1036','f5b73f']].forEach(function(p){
@@ -2583,7 +2586,8 @@
         if(p.addons)setAddonQuiet(name,JSON.parse(JSON.stringify(p.addons)));
         commit();
         // The look's layout drawn for other names and numbers: make room where they collide (card-faces settle).
-        requestAnimationFrame(function(){ if(window.MinkaCardFaces&&window.MinkaCardFaces.settle)window.MinkaCardFaces.settle(); });
+        // (Not for the new layouts: they are drawn on their own grid, and the card must look like its tile.)
+        if(!p.keepLayout)requestAnimationFrame(function(){ if(window.MinkaCardFaces&&window.MinkaCardFaces.settle)window.MinkaCardFaces.settle(); });
       });
     });
     host.querySelector('[data-skin-section="presets"]').addEventListener('click',renderBundles);

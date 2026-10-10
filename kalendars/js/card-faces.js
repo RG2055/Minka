@@ -522,12 +522,21 @@
       return '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' + a + '</svg>';
     }
     if (face === 'ticket') {
-      // a tinted tear-off stub, the perforation, a barcode at its foot
-      a += '<rect x="72" y="0" width="28" height="100" fill="currentColor" fill-opacity=".14"/>'
-        + '<line x1="72" y1="9" x2="72" y2="91" stroke="currentColor" stroke-opacity=".7" stroke-width=".6" stroke-dasharray="1.6 1.8" vector-effect="non-scaling-stroke"/>';
-      var bars = [1.2, .5, .8, 1.6, .5, 1, .5, 1.4, .7, .5, 1.1, .6, 1.5, .5, .9], bx = 77.5;
-      bars.forEach(function (w, i) { if (bx + w < 95.5) a += '<rect x="' + bx.toFixed(2) + '" y="78" width="' + w + '" height="12" fill="currentColor" fill-opacity=".8"/>'; bx += w + (i % 3 ? .7 : 1.1); });
-      return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + a + '</svg>';
+      // a printed ticket: guilloche security waves on the paper, a tinted stub behind a row
+      // of punched holes, the stub's rotated title and number, a vertical barcode
+      a += '<rect x="72" y="0" width="28" height="100" fill="currentColor" fill-opacity=".12"/>';
+      a += '<g fill="none" stroke="currentColor" stroke-width=".18" stroke-opacity=".2">';
+      for (var w = 0; w < 30; w++) {
+        var y0 = 4 + w * 3.1, d = 'M0 ' + y0;
+        for (var x = 1; x <= 72; x += 1) d += ' L' + x + ' ' + (y0 + 1.3 * Math.sin(x / 3.4 + w * .35)).toFixed(2);
+        a += '<path d="' + d + '"/>';
+      }
+      a += '</g>';
+      for (var hy = 8; hy <= 92; hy += 3.2) a += '<circle cx="72" cy="' + hy.toFixed(1) + '" r=".55" fill="#0000004d"/>';
+      var bars = [1, .4, .7, 1.3, .4, .8, .4, 1.1, .6, .4, .9, .5, 1.2, .4, .7, .5, 1, .4], by = 66;
+      bars.forEach(function (h, i) { if (by + h < 93) a += '<rect x="76" y="' + by.toFixed(2) + '" width="11" height="' + h + '" fill="currentColor" fill-opacity=".85"/>'; by += h + (i % 3 ? .55 : .9); });
+      // the printed words are HTML (sized in cqw with the card; SVG text does not follow a zoomed preview)
+      return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + a + '</svg><span class="tk-admit">IEEJA VIENAM</span><span class="tk-stub">BIĻETE Nº 024</span>';
     }
     if (face === 'analog') {
       // the dial: sixty minute ticks, the hour ticks long and bright

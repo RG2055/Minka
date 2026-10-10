@@ -373,7 +373,7 @@
       note(colorsBox.querySelector('.mk-skin-tool-text'), unreadable ? (paper ? 'Uz Dither papīra teksts ir uz gaišām plāksnītēm: izvēlies tumšāku krāsu.' : 'Dither kartītē teksts ir uz tumšām plāksnītēm: izvēlies gaišāku krāsu, tumša tur nebūtu redzama.') : '');
       // Layouts with a background of their own (a screen, paper, a thermostat) show no
       // picture: Fons says so at the top and dims what would do nothing, with a way out.
-      var ownBg = card.matches('[data-watch-face="winamp"], [data-watch-face="gameboy"], [data-watch-face="thermo"], [data-watch-face="dots"], [data-watch-face="lines"], [data-watch-face="analog"]');
+      var ownBg = card.matches('[data-watch-face="winamp"], [data-watch-face="gameboy"], [data-watch-face="thermo"], [data-watch-face="dots"], [data-watch-face="lines"]');
       var bgSlot = left.querySelector('.org-slot[data-tab="background"]'), fname = host.querySelector('.wf-face-choice[aria-pressed="true"] strong');
       var banner = bgSlot && bgSlot.querySelector(':scope > .org-banner');
       if (ownBg && bgSlot) {
@@ -383,7 +383,7 @@
           banner.querySelector('button').addEventListener('click', function () { show('layout'); });
           bgSlot.prepend(banner);
         }
-        var msg = 'Izkārtojumam „' + (fname ? fname.textContent.trim() : '') + '” ir savs fons, tāpēc attēls, krāsa un zīmējums nav redzami. Attēlu rāda Klasika, Foto stikls, Loks, Moduļi, Dither, Biļete, Žurnāls un Akmens.';
+        var msg = 'Izkārtojumam „' + (fname ? fname.textContent.trim() : '') + '” ir savs fons, tāpēc attēls, krāsa un zīmējums nav redzami. Attēlu rāda Klasika, Foto stikls, Loks, Moduļi, Dither, Biļete, Žurnāls, Pulkstenis un Akmens.';
         if (banner.firstChild.textContent !== msg) banner.firstChild.textContent = msg;
       } else if (banner) banner.remove();
       [host.querySelector('.mk-bg-images'), bg.querySelector('.mk-bg-workspace'), face.querySelector('details.wf-background')].forEach(function (el) {
