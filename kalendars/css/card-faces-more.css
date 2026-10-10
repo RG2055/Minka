@@ -24,13 +24,23 @@
 .card.mk-watch-face[data-watch-face="analog"] {background: #050506 !important;}
 .card.mk-watch-face[data-watch-face="analog"]::before {background-image: radial-gradient(circle at 50% 42%, #1d1f25 0%, #0b0c0f 62%, #040405 100%) !important; background-size: 100% 100% !important;}
 .card.mk-watch-face[data-watch-face="analog"] > .mk-wf-background {display: none !important;}
-.card.mk-watch-face[data-watch-face="analog"] > .mk-wf-art svg {position: absolute; inset: 4%; width: 92%; height: 92%;}
+/* the dial fills the card and is centred on the hands (the generic .mk-wf-art svg rule sets a size too) */
+.card.mk-watch-face[data-watch-face="analog"] > .mk-wf-art svg {position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important;}
 .card.mk-watch-face[data-watch-face="analog"] [data-wf-part] {text-shadow: none !important;}
 :is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="analog"] [data-wf-part="name"] .name-main {color: #f4f4f6 !important; -webkit-text-fill-color: #f4f4f6 !important; font-weight: 600 !important;}
 :is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="analog"] [data-wf-part="name"] .name-sub {color: #8a8d96 !important; -webkit-text-fill-color: #8a8d96 !important;}
 .card.mk-watch-face[data-watch-face="analog"] :is([data-wf-part="fatigue"],[data-wf-part="month"],[data-wf-part="remaining"],[data-wf-part="clock"],[data-wf-part="initials"],[data-wf-part="emoji"]):not([data-wf-plate]):not(.wf-analog),
 .card.mk-watch-face[data-watch-face="analog"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
   background: #ffffff0d !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important; backdrop-filter: none !important;
+}
+/* the coffee, the emoji/initials and fatigue are small round dials inside the ring */
+.card.mk-watch-face[data-watch-face="analog"] [data-wf-part="fatigue"] .mk-mid-meta-label {display: none !important;}
+.card.mk-watch-face[data-watch-face="analog"] [data-wf-part="coffee"] .mk-coffee-step :is(img,svg,.mk-coffee-cup) {max-width: 60% !important; max-height: 60% !important;}
+.card.mk-watch-face[data-watch-face="analog"] :is([data-wf-part="emoji"],[data-wf-part="fatigue"]):not([data-wf-plate]):not(.wf-analog),
+.card.mk-watch-face[data-watch-face="analog"] [data-wf-part="coffee"]:not([data-wf-plate]) .mk-coffee-step {
+  border-radius: 50% !important; aspect-ratio: 1; display: grid !important; place-items: center; padding: 0 !important;
+  width: 26cqw !important; height: 26cqw !important; min-width: 0 !important; min-height: 0 !important; box-sizing: border-box !important;
+  background: radial-gradient(circle, #ffffff12, #ffffff06 70%) !important; box-shadow: inset 0 0 0 1px #ffffff22 !important;
 }
 :is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="analog"] :is(.mk-mid-meta-label,.mk-mid-month-label) {color: var(--wf-tint) !important; -webkit-text-fill-color: var(--wf-tint) !important; opacity: 1 !important;}
 :is(#grafiks-list,#worker-modal,#mk-any) .card.mk-watch-face[data-watch-face="analog"] :is(.mk-mid-meta-value,.mk-mid-month-num,.mk-mid-meta-time) {color: #f4f4f6 !important; -webkit-text-fill-color: #f4f4f6 !important;}
@@ -82,7 +92,7 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 .wf-thumb-ticket small {transform: translateX(-24%);}
 .wf-thumb-cover b {font-family: 'Playfair Display', Georgia, serif !important; font-style: italic !important; font-weight: 800 !important; letter-spacing: 0 !important;}
 .wf-thumb-analog {background: radial-gradient(circle at 50% 42%, #1d1f25, #050506) !important; border-color: #3a3c44 !important;}
-.wf-thumb-analog i svg {position: absolute; inset: 4%; width: 92% !important; height: 92% !important;}
+.wf-thumb-analog i svg {position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;}
 .wf-thumb-analog b {font-size: 70% !important; color: #f4f4f6 !important; background: none !important; -webkit-text-fill-color: #f4f4f6 !important; transform: translateY(70%);}
 .wf-thumb-analog small {color: #ff9f0a !important; transform: translateY(-260%);}
 .wf-thumb-analog::after {content: ''; position: absolute; left: 50%; top: 50%; width: 3px; height: 32%; background: #f4f4f6; border-radius: 3px; transform-origin: 50% 100%; translate: -50% -100%; rotate: 50deg; z-index: 1;}

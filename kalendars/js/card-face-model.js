@@ -46,13 +46,14 @@
     ticket:  [[37,51,84,1],[37,16,72,1],[16,12,100,0],[86,18,52,1],[13,86,66,1],[40,86,62,1],[86,42,56,1],[86,64,52,1],[62,86,56,0]],
     // Žurnāla vāks: the name as the masthead across the top, the number small at the bottom left.
     cover:   [[78,60,54,1],[50,20,170,1],[16,12,100,0],[79,90,52,1],[86,38,58,1],[44,90,54,1],[79,77,58,1],[14,40,56,1],[62,86,56,0]],
-    // Pulkstenis: an analog watch dial; the name above the centre, the hours and the
-    // shift time as complications left and right, the number small at the bottom.
-    analog:  [[50,75,42,1],[50,31,56,1],[16,12,100,0],[25,51,50,1],[15,86,58,1],[85,86,58,1],[75,51,54,1],[85,15,54,1],[62,86,56,0]],
+    // Pulkstenis: an analog watch dial; everything sits inside the ring of ticks as
+    // complications: the name under 12, the hours at 9, the shift time at 3, the number
+    // above 6, and the coffee, emoji/initials and fatigue as small round dials below it.
+    analog:  [[50,58,30,1],[50,28,54,1],[16,12,100,0],[27,47,46,1],[36,73,50,1],[64,73,50,1],[73,47,50,1],[50,80,50,1],[62,86,56,0]],
     // Akmens: the classic grid on a stone slab (card-faces-more.css).
     stone:   [[50,50,90,1],[45,15,80,1],[16,12,100,0],[79,16,66,1],[13,50,80,1],[29,86,80,1],[67,86,84,1],[87,50,80,1],[50,20,100,0]]
   };
-  var moonLayouts={classic:[15,16,70,1],photo:[16,32,70,1],orbit:[50,16,64,1],modular:[16,36,70,1],winamp:[26,15,95,1],dither:[15,16,70,1],gameboy:[17,42,66,1],thermo:[62,15,62,1],dots:[50,15,60,1],lines:[16,40,64,1],ticket:[62,86,56,1],cover:[14,58,54,1],analog:[15,15,54,1],stone:[15,16,70,1]};
+  var moonLayouts={classic:[15,16,70,1],photo:[16,32,70,1],orbit:[50,16,64,1],modular:[16,36,70,1],winamp:[26,15,95,1],dither:[15,16,70,1],gameboy:[17,42,66,1],thermo:[62,15,62,1],dots:[50,15,60,1],lines:[16,40,64,1],ticket:[62,86,56,1],cover:[14,58,54,1],analog:[50,15,60,0],stone:[15,16,70,1]};
   // Default sun/moon spots saved by earlier versions: recognised as "not moved by the person".
   var OLD_MOONS=[[14,68,100,1],[14,76,100,1],[82,39,90,1],[57,12,80,1],[57,11,75,1],[17,34,90,1],[16,34,78,1],[12,13,70,1],[50,13,70,1],[86,40,70,1],[60,12,62,1]];
   /* Faces that bring their own palette (ink, frame, digits): taken when a card
