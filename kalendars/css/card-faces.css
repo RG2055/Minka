@@ -111,15 +111,25 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
   clip-path:none !important;mask-image:none !important;-webkit-mask-image:none !important;text-align:center !important;overflow:visible !important;
 }
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="name"] .name-main {
-  font-size:min(9cqw,calc(82cqw / var(--wf-name-chars,10))) !important;font-weight:750 !important;line-height:1.15 !important;
+  font-size:min(10.5cqw,calc(86cqw / var(--wf-name-chars,10))) !important;font-weight:750 !important;line-height:1.15 !important;
   color:rgb(var(--mk-txt-color,246,247,249)) !important;letter-spacing:-.025em !important;
   text-transform:none !important;text-shadow:0 1px 3px #0008 !important;
 }
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="name"] .name-sub {
-  font-size:min(5.7cqw,calc(76cqw / var(--wf-surname-chars,14))) !important;line-height:1.2 !important;font-weight:600 !important;
+  font-size:min(6.6cqw,calc(80cqw / var(--wf-surname-chars,14))) !important;line-height:1.2 !important;font-weight:650 !important;
   color:rgb(var(--mk-txt-color,246,247,249)) !important;opacity:.8 !important;letter-spacing:.07em !important;
   text-shadow:0 1px 2px #0008 !important;
 }
+/* Readable on any picture: the name, surname, month hours and timer get a halo of the
+   opposite tone (dark behind light text, light behind dark text), not one dark shadow
+   that smears dark letters. Faces with their own ink (layer mk-fx) and Dither keep theirs. */
+html body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) :is(.name-main,.name-sub,.mk-mid-month-num,.mk-mid-month-label,[data-wf-part="remaining"] .val) {
+  text-shadow:0 0 1px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.8),0 0 4px rgba(0,0,0,.6),0 0 9px rgba(0,0,0,.45) !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card.mk-txt-dark:not(.rg-feedback-card) :is(.name-main,.name-sub,.mk-mid-month-num,.mk-mid-month-label,[data-wf-part="remaining"] .val) {
+  text-shadow:0 0 1px rgba(255,255,255,.95),0 0 2px rgba(255,255,255,.9),0 0 4px rgba(255,255,255,.75),0 0 9px rgba(255,255,255,.55) !important;
+}
+html body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .name-sub {opacity:.92 !important;}
 html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="name"] > span {
   flex:none !important;overflow:visible !important;text-overflow:clip !important;
   padding:.1em 0 !important;margin:0 !important;

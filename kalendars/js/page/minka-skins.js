@@ -257,13 +257,14 @@
     PRESETS.push({label:'Dither · '+p[0],group:'dither',isNew:true,bg:{t:'img',id:'dither-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:p[3]?'20,20,20':'241,240,234',fx:p[3],face:face,depth:false,sw:'url(data/skins/skin-dither-'+p[1]+'.webp)'});
   });
   // Dither art: pre-dithered prints (scripts/build-dither-art.py) on the Classic face;
-  // the Dither face would dither them a second time. On a light paper the number
-  // and text take the ink, on a dark paper a light cream: [label, id, ink, paper].
+  // the Dither face would dither them a second time. The number takes the ink: [label, id, ink, paper].
   [['Partenons','partenons','1730b8','d6e1ff'],['Jonu kolonna','kolonnas','1730b8','d6e1ff'],['Piramīda','piramidas','121212','efe9dc'],['Sfinksa','sfinksa','7a3418','f2e3c6'],['Hērakls','herakls','0d0f0e','a6f0cc'],['Atēna','atena','0b5cbf','e3f2ff'],['Kariatīdes','kariatides','c4410f','ffe8d6'],['Apolons','apolons','f0be52','0d0c0a'],['Domātājs','domatajs','121212','efe9dc'],['Konkordijas templis','konkordija','2c4a1c','e8edd8'],['Hērakls naktī','herkuls','ff7a3d','0c0806']].forEach(function(p){
+    // The name and small text stay neutral (near black on light paper, cream on dark) and
+    // every chip gets a solid plate of the paper's kind: the dots never run under text.
     var face=window.MinkaCardFaceModel.preset('classic'), dark=parseInt(p[3].slice(0,2),16)<128;
-    var c=dark?'244,242,236':hexToRgb('#'+p[2]);
     face.tint=p[2];
-    PRESETS.push({label:p[0],group:'dithart',isNew:true,bg:{t:'img',id:'art-'+p[1]},num:c,na:'1',txt:c,face:face,depth:false,sw:'url(data/skins/skin-art-'+p[1]+'.webp)'});
+    window.MinkaCardFaceModel.plateParts.forEach(function(k){face.plates[k]=dark?1:4;});
+    PRESETS.push({label:p[0],group:'dithart',isNew:true,bg:{t:'img',id:'art-'+p[1]},num:hexToRgb('#'+p[2]),na:'1',txt:dark?'244,242,236':'20,20,22',face:face,depth:false,sw:'url(data/skins/skin-art-'+p[1]+'.webp)'});
   });
   // Plakāts: collector-card look — the picture in a window, a big name below it.
   [['Plakāts · Seja','aesthetic-face','f67a18'],['Plakāts · Kaķis','cat-06','f67a18'],['Plakāts · Ķivere','aesthetic-helmet','64d2ff'],['Plakāts · Kalni','1036','f5b73f']].forEach(function(p){
@@ -397,7 +398,7 @@
     var cleanId = String(id || '');
     var material = window.MinkaFindCardMaterial(cleanId);
     if(material) return new URL(material.path+'?v=20260912photos1',document.baseURI).href;
-    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h5' : /^(focus|vapor)-/.test(cleanId) ? '?v=20260927f2' : '');
+    var path = 'data/skins/skin-' + cleanId + '.webp' + (/^aesthetic-/.test(cleanId) ? '?v=2' : /^dither-rtg-/.test(cleanId) ? '?v=20260926h5' : /^(focus|vapor)-/.test(cleanId) ? '?v=20260927f2' : /^art-/.test(cleanId) ? '?v=20261010c' : '');
     try { return new URL(path, document.baseURI).href; }
     catch (e) { return path; }
   }

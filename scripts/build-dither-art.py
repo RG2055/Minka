@@ -142,12 +142,14 @@ def make(src, w, h, dot, style, fx=.5, fy=.5, zoom=1.0, pattern='atkinson', gamm
             if k < 1:
                 for y in range(h):
                     vals[y * w + x] *= k
-    if pocket:   # thin the ink where the card's big number sits (centre)
+    if pocket:   # plain paper where the card's name (top) and big number (centre) sit
         import math
         for y in range(h):
             for x in range(w):
-                d = ((x / w - .5) / .15) ** 2 + ((y / h - .5) / .3) ** 2
-                vals[y * w + x] *= 1 - pocket * math.exp(-d)
+                u, v = x / w, y / h
+                num = pocket * math.exp(-(((u - .5) / .17) ** 4 + ((v - .5) / .26) ** 4))   # flat-topped too
+                name = math.exp(-(((u - .48) / .17) ** 4 + ((v - .15) / .1) ** 4))   # flat-topped: the whole name clear
+                vals[y * w + x] *= 1 - max(num, name)
     if pattern == 'atkinson':
         on = diffuse(vals, w, h, ATKINSON)
     elif pattern == 'fs':
@@ -186,7 +188,7 @@ TONE = ('pattern', 'gamma', 'lo', 'hi', 'sharpen')
 def build(aid, a, src_dir):
     src = next(Path(src_dir).glob(a['src'] + '.*'))
     t = {k: a[k] for k in TONE if k in a}
-    card = make(src, *CARD, a['style'], *a['card'], pocket=.8, **t)
+    card = make(src, *CARD, a['style'], *a['card'], pocket=.93, **t)
     band = make(src, *HEADER, a['style'], *a['header'], fade=('left', .18, .55), **t)
     return card, band
 
