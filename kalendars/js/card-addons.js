@@ -239,7 +239,7 @@
     if (!det) { loadCoffeeTotals(); return {}; }
     var src = (det[coffeeNorm(name)] || {}).sources || {}, out = {};
     // Stored in caffeine cups; a sticker counts drinks (as the Statistics chips do).
-    var eq = { monster: 2, monsterultra: 2, brite: 1.25 };
+    var eq = { monster: 2, monsterultra: 2 };
     Object.keys(src).forEach(function(k) { var n = (Number(src[k]) || 0) / (eq[k] || 1); out[k] = n > 0 ? Math.max(1, Math.round(n)) : 0; });
     return out;
   }

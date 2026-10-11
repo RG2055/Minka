@@ -536,10 +536,10 @@
   function eur(cents) {
     return (Math.max(0, Number(cents) || 0) / 100).toLocaleString('lv-LV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
   }
-  /* Sources are stored in caffeine cups (a 500 ml Monster = 2, Brite = 1.25, as
-     the coffee menu counts them). Next to a drink's icon the number is drinks —
+  /* Sources are stored in whole caffeine cups (a 500 ml Monster = 2, as the coffee
+     menu counts them; a Brite is stored as 1, its 1.25 is only for the mg). Next to a drink's icon the number is drinks —
      cans and cups — like the card's own coffee menu; the "tases" total stays cups. */
-  var COFFEE_EQ = { monster: 2, monsterultra: 2, brite: 1.25 };
+  var COFFEE_EQ = { monster: 2, monsterultra: 2 };
   function drinks(key, units) { var n = (Number(units) || 0) / (COFFEE_EQ[key] || 1); return n > 0 ? Math.max(1, Math.round(n)) : 0; }
   function sourceChips(sources) {
     var icon = window.__minkaCoffeeIcon;

@@ -5986,9 +5986,10 @@ function filterFullList(btn) {
       mycoffee: { label: 'Mana kafija', priceCents: 0, eq: 1 }
     };
     const COFFEE_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'cupcoffee', 'mycoffee'];
-    function coffeeEq(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.max(1, (m && m.eq) || 1); }
-    // Cups are stored as whole numbers, so a drink worth 1.25 cups still counts
-    // as one cup; only the caffeine readout shows the finer figure.
+    // Cups are stored as whole numbers (the coffee server keeps whole deltas), so a
+    // drink worth 1.25 cups still counts as one cup; only the caffeine readout and the
+    // picker's "1.25 tasītes" show the finer figure.
+    function coffeeEq(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.max(1, Math.round((m && m.eq) || 1)); }
     function coffeeMg(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.round(((m && m.eq) || 1) * COFFEE_MG_PER_CUP); }
     // Fixed-price machines (Löfbergs, Cita kafija, energy drinks) can vary between
     // vending machines/stores, so remember the last price the user typed per source
@@ -6693,7 +6694,7 @@ function filterFullList(btn) {
         input.readOnly = (selected === 'philips');
         const caf = picker.querySelector('.mk-coffee-caf');
         if (caf) {
-          const eq = coffeeEq(selected);
+          const eq = (coffeeSourceMeta[cleanCoffeeSource(selected)] || {}).eq || 1;
           const cups = eq === 1 ? '1 tasīte' : (Math.round(eq * 100) / 100) + ' tasītes';
           caf.textContent = '≈ ' + coffeeMg(selected) + ' mg kofeīna · ' + cups;
         }
