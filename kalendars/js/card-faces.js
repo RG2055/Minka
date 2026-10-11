@@ -79,6 +79,7 @@
       });
     })();
   }
+  function tapCoffee() { return !!(window.matchMedia && !window.matchMedia('(hover: hover)').matches); }
   function applyCoffee(card,skin,config) {
     var mode=M.effectiveCoffeeMode(config);
     if(card.dataset.coffeeMode!==(mode?'open':'icon'))delete card.dataset.coffeeExpanded;
@@ -833,9 +834,17 @@
     card.classList.toggle('mk-watch-face', !!config);
     if (!config) {
       delete card.dataset.watchFace; delete card.dataset.watchFinish;
-      delete card.dataset.coffeeMode;delete card.dataset.coffeeContrast;delete card.dataset.coffeePalette;delete card.dataset.coffeeExpanded;
+      delete card.dataset.coffeeContrast;delete card.dataset.coffeePalette;
       var coffeeButton=card.querySelector('button.mk-coffee-mid');
-      if(coffeeButton){coffeeButton.removeAttribute('aria-expanded');coffeeButton.setAttribute('aria-label','Atvērt kafijas izvēlni');}
+      // A touch screen has no hover to open the coffee: there the cup's tap opens − / +
+      // (calendar.js toggles data-coffee-expanded in "icon" mode), as on a face.
+      if(tapCoffee()){
+        if(card.dataset.coffeeMode!=='icon'){delete card.dataset.coffeeExpanded;card.dataset.coffeeMode='icon';}
+        if(coffeeButton){var tapOpen=card.dataset.coffeeExpanded==='true';coffeeButton.setAttribute('aria-expanded',String(tapOpen));coffeeButton.setAttribute('aria-label',tapOpen?'Sakļaut kafijas pogas':'Atvērt kafijas pogas');}
+      }else{
+        delete card.dataset.coffeeMode;delete card.dataset.coffeeExpanded;
+        if(coffeeButton){coffeeButton.removeAttribute('aria-expanded');coffeeButton.setAttribute('aria-label','Atvērt kafijas izvēlni');}
+      }
       card.querySelectorAll('.wf-analog').forEach(function(el) { el.classList.remove('wf-analog'); delete el.dataset.tm; var dl = el.querySelector(':scope > .mk-wf-dial'); if (dl) dl.remove(); });
       card.querySelectorAll('.wf-m3d').forEach(clearM3);
       card.querySelectorAll('.mk-bitnum,.mk-wf-temp').forEach(function(n){n.remove();});

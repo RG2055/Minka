@@ -148,6 +148,10 @@
   input.addEventListener('focus', () => { bar.classList.add('focused'); stopHints(); });
   input.addEventListener('blur',  () => {
     bar.classList.remove('focused');
+    // While results are open the field stays: a tap on a result blurs it first,
+    // and a collapsing field (phone) pulled the list up so the click missed.
+    // Closing the iOS keyboard keeps it too. It closes with the results.
+    if (searchResultsOpen()) return;
     if (!_text) { closeSearchMode(); setTimeout(drainMsgs, 1500); }
   });
   /* Kill hint on first keydown — fires BEFORE any character is inserted */
@@ -228,21 +232,28 @@
   /* ï¿½ï¿½ï¿½ï¿½ Results ï¿½ï¿½ï¿½ï¿½ */
   // Results grow out of the search bar and return into it (js/mk-motion.js).
   // Shared with header-search.js, which renders them while typing.
+  function searchResultsOpen() { return results.style.display === 'block' && !results.classList.contains('is-closing'); }
+  // Results closed after the field lost focus (a result was chosen, a tap
+  // outside): the header goes back to the date, as a blur did before.
+  function afterResultsClosed() {
+    if (bar.classList.contains('search-open') && document.activeElement !== input) closeSearchMode();
+  }
   window.__mkSearchResults = {
     show: function () {
-      if (results.style.display === 'block' && !results.classList.contains('is-closing')) return;
+      if (searchResultsOpen()) return;
       results.classList.remove('is-closing');
       results.style.display = 'block';
       if (window.MinkaMotion) window.MinkaMotion.openSurface(results, { key: 'search-results', origin: bar });
     },
     hide: function () {
       if (results.classList.contains('is-closing')) return;
-      if (results.style.display === 'none' || !window.MinkaMotion) { results.style.display = 'none'; results.innerHTML = ''; return; }
+      if (results.style.display === 'none' || !window.MinkaMotion) { results.style.display = 'none'; results.innerHTML = ''; afterResultsClosed(); return; }
       results.classList.add('is-closing');
       window.MinkaMotion.closeSurface(results, { key: 'search-results', origin: bar }, function () {
         results.classList.remove('is-closing');
         results.style.display = 'none';
         results.innerHTML = '';
+        afterResultsClosed();
       });
     }
   };

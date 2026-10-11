@@ -18,9 +18,11 @@
   let currentNodes = [];
 
   function getQuery(){ return String(input.textContent || '').replace(/\u00a0/g, ' ').trim(); }
-  function isAiQuery(q){
-    const s = String(q || '').trim();
-    return !!s && (s[0] === '?' || /^(kur|kas|cik|vai|kāpēc|kapec|kādēļ|kadel|kā |kad |paskaidro|palīdzi|palidzi)/i.test(s));
+  // The desktop search's fold (mk-search-core.js): lower case, no diacritics,
+  // so "berzins" finds "Bērziņš".
+  function fold(v){
+    if (window.MkSearchCore) return window.MkSearchCore.fold(v);
+    return String(v == null ? '' : v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
   const motion = () => window.__mkSearchResults;
   function showResults(){ if (motion()) motion().show(); else results.style.display = 'block'; }
@@ -58,24 +60,24 @@
     });
     return out;
   }
-  function score(text, q){
-    const src = String(text || '').toLowerCase();
-    const needle = String(q || '').toLowerCase();
+  // `needle` is already folded. Scored once per item, then sorted: folding
+  // inside the comparator cost several ms per keystroke on a long phone list.
+  function score(text, needle){
+    const src = fold(text || '');
     if (!needle) return 9999;
     const idx = src.indexOf(needle);
     if (idx < 0) return 9999;
     return idx + Math.max(0, src.length - needle.length) * 0.01;
   }
+  function byScore(list, nameOf, needle){
+    return list.map(x => [score(nameOf(x), needle), x]).sort((a,b) => a[0] - b[0]).map(p => p[1]);
+  }
   function pickData(q){
-    const ql = q.toLowerCase();
-    const workers = getWorkers()
-      .filter(w => (w.name + ' ' + w.shift).toLowerCase().includes(ql))
-      .sort((a,b) => score(a.name, q) - score(b.name, q))
+    const ql = fold(q);
+    const workers = byScore(getWorkers().filter(w => fold(w.name + ' ' + w.shift).includes(ql)), w => w.name, ql)
       .slice(0, q.length < 2 ? 5 : 8);
     const db = Array.isArray(window.hospitalDatabase) ? window.hospitalDatabase : [];
-    const phones = db
-      .filter(item => (((item && item.name) || '') + ' ' + ((item && item.cat) || '') + ' ' + ((item && item.sub) || '') + ' ' + ((item && item.phone) || '')).toLowerCase().includes(ql))
-      .sort((a,b) => score((a && a.name) || '', q) - score((b && b.name) || '', q))
+    const phones = byScore(db.filter(item => fold(((item && item.name) || '') + ' ' + ((item && item.cat) || '') + ' ' + ((item && item.sub) || '') + ' ' + ((item && item.phone) || '')).includes(ql)), item => (item && item.name) || '', ql)
       .slice(0, q.length < 2 ? 6 : 14);
     return { workers, phones };
   }
@@ -99,7 +101,7 @@
   }
   function render(){
     const q = getQuery();
-    if (!q || isAiQuery(q)) return hide();
+    if (!q) return hide();
     const { workers, phones } = pickData(q);
     const shortMode = q.length < 2;
     if (!workers.length && !phones.length) {
@@ -180,7 +182,7 @@
   // Re-run search automatically once schedule data arrives from async g_init fetch
   document.addEventListener('minka:storeReady', function() {
     var q = getQuery();
-    if (q && q.length >= 2 && !isAiQuery(q)) schedule();
+    if (q && q.length >= 2) schedule();
   }, { once: true });
 
   ['input','paste','cut','keyup','focus'].forEach(function(ev){

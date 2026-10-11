@@ -70,7 +70,44 @@
   if (typeof module === 'object' && module.exports) module.exports = core;
   if (!host || !host.document) return;
   const doc = host.document, root = doc.documentElement;
-  if (root.classList.contains('mk-mobile-shell')) return;
+  // Phone: no header panel here, but the dock and the page take the picture's
+  // tones as on the computer: the same seed and palette, mirrored onto both
+  // <html> as --hxr-surface / --hxr-accent (mk-header-x.js does it there).
+  if (root.classList.contains('mk-mobile-shell')) { tintPhone(); return; }
+  function tintPhone() {
+    let shell = null, storage;
+    try { shell = host.parent !== host ? host.parent.document.documentElement : null; } catch (_) {}
+    if (!shell || host.MINKA_APP === 'rad' || shell.classList.contains('minka-rad')) return;
+    try { storage = host.localStorage; } catch (_) {}
+    const colors = new Map();
+    let queued = false, last = '';
+    function seed() {
+      const chosen = seeds[read(storage).palette];
+      if (chosen) return chosen;
+      const img = doc.querySelector('#minkaBarWrap .mk-header-scenic-img'), src = img?.currentSrc || img?.src;
+      if (img?.complete && img.naturalWidth && !colors.has(src)) {
+        colors.set(src, null);
+        host.MinkaImagePalette?.extract(img).then(result => {
+          if (result) { colors.set(src, mix(result.dominant, '#ffffff', .25)); queue(); }
+        });
+      }
+      const period = doc.getElementById('minkaBarInner')?.dataset.headerPeriod || root.dataset.minkaHeaderPeriod;
+      return colors.get(src) || ({ morning: seeds.peach, day: seeds.mint, sunset: seeds.olive, night: seeds.blue })[period] || seeds.mint;
+    }
+    function apply() {
+      queued = false;
+      const p = palette(seed());
+      if (p.accent + p.surface === last) return;
+      last = p.accent + p.surface;
+      [root, shell].forEach(n => { n.style.setProperty('--hxr-accent', p.accent); n.style.setProperty('--hxr-surface', p.surface); });
+      root.toggleAttribute('data-page-tint', !shell.classList.contains('has-wallpaper-bg'));
+    }
+    function queue() { if (!queued) { queued = true; host.requestAnimationFrame(apply); } }
+    // A new picture (rotation, another day) fires load on its <img>; load does not bubble.
+    doc.addEventListener('load', e => { if (e.target.classList?.contains('mk-header-scenic-img')) queue(); }, true);
+    host.addEventListener('storage', e => { if (e.key === KEY || e.key === null) queue(); });
+    queue();
+  }
   let storage;
   try { storage = host.localStorage; } catch (_) {}
   let state = resolveDay(read(storage));

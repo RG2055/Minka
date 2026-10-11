@@ -533,6 +533,9 @@ function nextNews(){
   }
 
   function tick(){
+    // The light profile is pinned (theme.js) and in it nothing is ever queued:
+    // stop instead of waking every 5 s all day. A day switch schedules one more.
+    if (isLowPerformance()) return;
     cycle++;
     if (!isIdle()) return schedule(5000);
 

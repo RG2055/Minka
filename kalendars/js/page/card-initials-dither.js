@@ -13,7 +13,8 @@
    the letters are drawn once into a small white atlas, each frame copies them
    and lays the card's tint over them in one draw (source-in), then the glow
    behind (destination-over). The loop runs while the pointer moves or the
-   trail fades, then stops and the canvas is cleared. Nothing for reduced
+   trail fades; it pauses once a resting pointer's picture has settled, and
+   stops and clears the canvas when the pointer leaves. Nothing for reduced
    motion, touch, or in a hidden tab. */
 (function () {
   'use strict';
@@ -23,6 +24,9 @@
   var RADIUS = 92;                                  // the circle round the pointer, css px (less on a small card)
   var FLOOR = .34;                                  // the darkest photo still shows this much
   var FADE = .9;                                    // trail: what is left of it each frame
+  // A pointer resting on a card: after this many frames (1.5 s) the trail is long gone
+  // and every frame is the same picture, so the loop stops until the pointer moves.
+  var STILL = 90;
   var BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
   var states = new WeakMap(), active = null, raf = 0, photos = {};
   /* The cards it works on: where its canvas goes, and the person's colour.
@@ -165,10 +169,14 @@
     var atlas = atlasFor(letters, dpr), cols = Math.ceil(canvas.width / atlas.cw), rows = Math.ceil(canvas.height / atlas.ch);
     st = { canvas: canvas, ctx: canvas.getContext('2d'), w: w, h: h, dpr: dpr, cols: cols, rows: rows, color: color, letters: letters,
       atlas: atlas, heat: new Float32Array(cols * rows), light: null, base: baseLight(card),
-      radius: Math.min(RADIUS, .42 * Math.min(w, h)), px: -1, py: -1, inside: false, glow: 0 };
+      radius: Math.min(RADIUS, .42 * Math.min(w, h)), px: -1, py: -1, inside: false, glow: 0, still: 0 };
     st.tint = tintOf(color, null, cols, rows, st.base);
     states.set(card, st);
-    photoOf(photoUrl(card), cols, rows, function (p) { st.light = p && p.lum; if (p) st.tint = tintOf(color, p, cols, rows, st.base); });
+    photoOf(photoUrl(card), cols, rows, function (p) {
+      st.light = p && p.lum; if (p) st.tint = tintOf(color, p, cols, rows, st.base);
+      // a photo that arrives late changes the picture: draw it, even under a resting pointer
+      st.still = 0; if (active === card) run();
+    });
     return st;
   }
 
@@ -226,7 +234,8 @@
       }
       ctx.globalCompositeOperation = 'source-over';
     }
-    if (any || st.inside) raf = requestAnimationFrame(frame);
+    // a resting pointer keeps the last frame on the canvas; the next move (or a late photo) wakes the loop
+    if (any || st.inside) { if (!st.inside || ++st.still < STILL) raf = requestAnimationFrame(frame); }
     else { clear(st); active = null; }
   }
   function clear(st) { st.ctx.clearRect(0, 0, st.canvas.width, st.canvas.height); st.heat.fill(0); st.glow = 0; }
@@ -236,12 +245,12 @@
     if (e.pointerType === 'touch' || reduced()) return;
     var card = e.target && e.target.closest ? e.target.closest(SEL) : null;
     if (active && active !== card) { var old = states.get(active); if (old) old.inside = false; }
-    if (!card) { run(); return; }
+    if (!card) { if (active) run(); return; }
     var st = setup(card), r = card.getBoundingClientRect();
     if (active && active !== card) { var prev = states.get(active); if (prev) clear(prev); }
     active = card;
     // screen px to the card's own px (a scaled or zoomed card)
-    st.px = (e.clientX - r.left) * (st.w / (r.width || st.w)); st.py = (e.clientY - r.top) * (st.h / (r.height || st.h)); st.inside = true;
+    st.px = (e.clientX - r.left) * (st.w / (r.width || st.w)); st.py = (e.clientY - r.top) * (st.h / (r.height || st.h)); st.inside = true; st.still = 0;
     run();
   }, { passive: true });
   document.addEventListener('pointerout', function (e) {

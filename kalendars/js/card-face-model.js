@@ -82,7 +82,9 @@
     if(face==='classic')return fitPart([Math.round(hours[0]-38*scale),Math.round(Math.max(hours[1]<36?24:16,hours[1]-21*scale)),90,1],14.4,14.4);
     return fitPart([Math.round(hours[0]-20*scale),Math.round(hours[1]-21*scale),100,1],16,16);
   }
-  function clean(value, keepSymbolPosition) {
+  // asStored: keep the coordinates exactly as a saved string has them (unpack's
+  // canonical check); a look saved before the sun/moon left the cup still reads.
+  function clean(value, keepSymbolPosition, asStored) {
     value = value && typeof value === 'object' ? value : {};
     var face = faces.indexOf(value.face) >= 0 ? value.face : 'classic';
     var out = { face: face, tint: /^[a-f0-9]{6}$/i.test(value.tint || '') ? value.tint.toLowerCase() : 'd5e6ef',
@@ -122,7 +124,7 @@
     // The sun/moon never sits on the coffee cup (photo bundles with a high numeral put
     // both in the top-left corner): it moves beside the cup, or under it at the edge.
     var mo=out.parts.moon,cf=out.parts.coffee;
-    if(mo[3]&&cf[3]&&Math.abs(mo[0]-cf[0])<15&&Math.abs(mo[1]-cf[1])<13){
+    if(!asStored&&mo[3]&&cf[3]&&Math.abs(mo[0]-cf[0])<15&&Math.abs(mo[1]-cf[1])<13){
       if(cf[0]+17<=90)out.parts.moon=[cf[0]+17,cf[1],mo[2],1];
       else out.parts.moon=[cf[0],Math.min(90,cf[1]+15),mo[2],1];
     }
@@ -146,8 +148,8 @@
     else if (previous && looks[previous.face] && !looks[face]) { var plain = preset(face, null); value.tint = plain.tint; value.metal = plain.metal; value.finish = plain.finish; }
     return clean(value);
   }
-  function pack(value) {
-    var v = clean(value, true);
+  function pack(value) { return packClean(clean(value, true)); }
+  function packClean(v) {
     // v5 adds each element's plate (only when one is chosen, so older looks keep their text)
     var fonted=parts.some(function (key) { return v.fonts[key]; });
     var plated=fonted||parts.some(function (key) { return v.plates[key]; });
@@ -186,9 +188,11 @@
       if (!/^\d{1,2},\d{1,2},\d{2,3},[01]$/.test(a[i + 8])) return null;
       value.parts[parts[i]] = a[i + 8].split(',').map(Number);
     }
-    var result = clean(value, true);
+    var result = clean(value, true, true);
     // Reject noncanonical/out-of-range payloads rather than silently accepting them.
-    var canonical=pack(result).split('~');
+    // Compared before the sun/moon is moved off the cup: older looks keep loading
+    // (a null here let a cloud pull overwrite the saved look with nothing).
+    var canonical=packClean(result).split('~');
     if(legacy){canonical[0]='1';canonical.pop();}
     return canonical.join('~') === text ? clean(result) : null;
   }

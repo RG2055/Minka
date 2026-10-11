@@ -334,3 +334,10 @@
 :root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-range { display: flex !important; align-self: stretch !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-range > button { flex: 1 1 0 !important; min-height: 42px !important; font-size: 14px !important; }
 :root.mk-mobile-shell.mk-mobile-v2 #worker-modal .fh-month-head:has(.fh-range) .fh-month-facts { justify-self: auto !important; flex-wrap: wrap !important; gap: 4px 16px !important; }
+
+/* ── Tonēta lapa kā datorā (index.html "Tinted page"): galvenes bildes tumšais
+   tonis, joprojām tumša lapa. Palete no js/header-appearance.js (telefona daļa,
+   data-page-tint); pirms tā ir, paliek vecā melnā. /rad to nesaņem. */
+:root.mk-mobile-shell.mk-mobile-v2[data-page-tint],
+:root.mk-mobile-shell.mk-mobile-v2[data-page-tint] body,
+:root.mk-mobile-shell.mk-mobile-v2[data-page-tint] #grafiks-app { background-color: color-mix(in srgb, var(--hxr-surface, #000) 24%, #030405) !important; }

@@ -3133,13 +3133,28 @@ function filterFullList(btn) {
 
   // Galvene X (mk-header-x.js) zīmē spārnus pati: tie paši dati, kas šeit
   // kļūst par tekstu, tiek nodoti kā objekts. Nekas netiek rēķināts divreiz.
+  // Kopsavilkums tiek saglabāts uzreiz, bet notikums aiziet tikai tad, kad diena
+  // ir uzzīmēta (mikrouzdevums, nevis kadrs: tas notiek arī "paslēptā" lapā):
+  // galvene, ietilpinot vārdus spārnā, mēra izkārtojumu, un dienas zīmēšanas
+  // vidū (divreiz, katrai lomai) tas lika pārrēķināt visu pusuzzīmēto lapu.
+  let __dutySummaryQueue = null;
   function publishDutySummary(pillId, summary) {
     const role = pillId.indexOf('radiologists') === 0 ? 'rd' : 'rg';
     summary.role = role;
     summary.date = activeDateStr;
     window.__mkDutySummary = window.__mkDutySummary || {};
     window.__mkDutySummary[role] = summary;
-    try { window.dispatchEvent(new CustomEvent('minka:duty-summary', { detail: summary })); } catch (_e) {}
+    if (!__dutySummaryQueue) {
+      __dutySummaryQueue = new Set();
+      Promise.resolve().then(function() {
+        const roles = __dutySummaryQueue;
+        __dutySummaryQueue = null;
+        roles.forEach(function(r) {
+          try { window.dispatchEvent(new CustomEvent('minka:duty-summary', { detail: window.__mkDutySummary[r] })); } catch (_e) {}
+        });
+      });
+    }
+    __dutySummaryQueue.add(role);
   }
   function dutyPerson(w) {
     const parts = String(w && w.name || '').trim().split(/\s+/).filter(Boolean);
