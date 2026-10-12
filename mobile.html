@@ -38,7 +38,7 @@ html.minka-rad .mobile-dock-grid{grid-template-columns:none!important;grid-auto-
     } catch (_e) {}
   }
 
-  var CALENDAR_BUILD = '20261012pd7';
+  var CALENDAR_BUILD = '20261012fx1';
 
   function withCalendarBuild(url) {
     try {
@@ -1185,31 +1185,31 @@ window.__mkDockIcon=function(btnId){
    --hxr-surface / --hxr-accent from kalendars/js/header-appearance.js (phone
    part); before it comes, the plain dark bar. Larger targets than before:
    56 px tall cells with 2 px between them, and the bar sits above the iPhone
-   home indicator instead of reaching under it. /rad keeps its own dock. */
-html:not(.minka-rad){--dock-off:max(8px,calc(env(safe-area-inset-bottom,0px) - 6px));--calendar-bottom:calc(var(--dock-h) + var(--dock-off) + 4px)}
-html:not(.minka-rad) body #dockShelf#dockShelf{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:var(--dock-off);padding:5px!important;border-radius:32px!important;border:1px solid rgba(255,255,255,.07)!important;background:color-mix(in srgb,var(--hxr-surface,#141922) 78%,#0b0e13)!important;box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.045)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;transition:background-color 400ms cubic-bezier(.2,0,0,1)}
+   home indicator instead of reaching under it. /rad: the same bar and tone,
+   only its own two-button layout (the 5-column grid stays RG's). */
+html:not(.mk-dock-plain){--dock-off:max(8px,calc(env(safe-area-inset-bottom,0px) - 6px));--calendar-bottom:calc(var(--dock-h) + var(--dock-off) + 4px)}
+html:not(.mk-dock-plain) body #dockShelf#dockShelf{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));bottom:var(--dock-off);padding:5px!important;border-radius:32px!important;border:1px solid rgba(255,255,255,.07)!important;background:color-mix(in srgb,var(--hxr-surface,#141922) 78%,#0b0e13)!important;box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.045)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;transition:background-color 400ms cubic-bezier(.2,0,0,1)}
 html:not(.minka-rad) #dockShelf#dockShelf .mobile-dock-grid{gap:2px!important;grid-template-columns:1fr 1.25fr 1fr 1fr 1fr!important}
 /* the longest label (IESTATĪJUMI) fits its cell down to 320 px wide phones */
-html:not(.minka-rad) #dockShelf#dockShelf .dock-btn{min-height:56px!important;border-radius:26px!important;background:transparent!important;border:0!important;box-shadow:none!important;transform:none!important;font:750 10.5px/1 'Space Grotesk',system-ui,sans-serif!important;font-size:clamp(8px,calc((100vw - 32px) / 34),10.5px)!important;letter-spacing:.04em!important;color:color-mix(in srgb,var(--hxr-accent,#a7b1c0) 80%,#fff)!important;transition:background-color 200ms cubic-bezier(.2,0,0,1),color 200ms cubic-bezier(.2,0,0,1)!important}
-html:not(.minka-rad) #dockShelf#dockShelf .dock-btn:active{background:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent)!important;color:#fff!important;transition-duration:50ms!important}
-html:not(.minka-rad) #dockShelf#dockShelf .dock-btn.is-active:not(#bolusDocBtn){background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#12151b)!important;color:#fff!important}
-html:not(.minka-rad) #dockShelf#dockShelf .dock-btn.is-active::before{display:none!important}
-html:not(.minka-rad) #dockShelf#dockShelf .dock-btn:focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-btn{min-height:56px!important;border-radius:26px!important;background:transparent!important;border:0!important;box-shadow:none!important;transform:none!important;font:750 10.5px/1 'Space Grotesk',system-ui,sans-serif!important;font-size:clamp(8px,calc((100vw - 32px) / 34),10.5px)!important;letter-spacing:.04em!important;color:color-mix(in srgb,var(--hxr-accent,#a7b1c0) 80%,#fff)!important;transition:background-color 200ms cubic-bezier(.2,0,0,1),color 200ms cubic-bezier(.2,0,0,1)!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-btn:active{background:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent)!important;color:#fff!important;transition-duration:50ms!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-btn.is-active:not(#bolusDocBtn){background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#12151b)!important;color:#fff!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-btn.is-active::before{display:none!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-btn:focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}
 /* BOLUS keeps its frame and warning colours (js/bolus.js); only its surface follows the bar */
-html:not(.minka-rad) #dockShelf#dockShelf #bolusDocBtn{border-radius:22px!important}
-html:not(.minka-rad) #dockShelf#dockShelf #bolusDocBtn .bolus-dock-title{color:inherit!important;text-shadow:none!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf #bolusDocBtn{border-radius:22px!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf #bolusDocBtn .bolus-dock-title{color:inherit!important;text-shadow:none!important}
 /* Themed icons: each pixel takes a tone by its own lightness (data-t, script below) */
-html:not(.minka-rad) #dockShelf#dockShelf .dock-px rect{transition:fill 200ms cubic-bezier(.2,0,0,1)}
-html:not(.minka-rad) #dockShelf#dockShelf .dock-btn:not(:active):not(.is-active) .dock-px rect[data-t="l"]{fill:color-mix(in oklab,var(--hxr-accent,#c8d3e2) 92%,#fff)!important}
-html:not(.minka-rad) #dockShelf#dockShelf .dock-btn:not(:active):not(.is-active) .dock-px rect[data-t="m"]{fill:color-mix(in oklab,var(--hxr-accent,#c8d3e2) 58%,var(--hxr-surface,#2a2f36))!important}
-html:not(.minka-rad) #dockShelf#dockShelf .dock-btn:not(:active):not(.is-active) .dock-px rect[data-t="d"]{fill:color-mix(in oklab,var(--hxr-surface,#2a2f36) 72%,#000)!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-px rect{transition:fill 200ms cubic-bezier(.2,0,0,1)}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-btn:not(:active):not(.is-active) .dock-px rect[data-t="l"]{fill:color-mix(in oklab,var(--hxr-accent,#c8d3e2) 92%,#fff)!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-btn:not(:active):not(.is-active) .dock-px rect[data-t="m"]{fill:color-mix(in oklab,var(--hxr-accent,#c8d3e2) 58%,var(--hxr-surface,#2a2f36))!important}
+html:not(.mk-dock-plain) #dockShelf#dockShelf .dock-btn:not(:active):not(.is-active) .dock-px rect[data-t="d"]{fill:color-mix(in oklab,var(--hxr-surface,#2a2f36) 72%,#000)!important}
 /* The page: the same tinted surface as on the computer, and the strip under the status bar with it */
-html:not(.minka-rad):not(.has-wallpaper-bg),html:not(.minka-rad):not(.has-wallpaper-bg) body,html:not(.minka-rad) #mkStatusStrip{background-color:color-mix(in srgb,var(--hxr-surface,#06101f) 24%,#030405)!important}
+html:not(.mk-dock-plain):not(.has-wallpaper-bg),html:not(.mk-dock-plain):not(.has-wallpaper-bg) body,html:not(.mk-dock-plain) #mkStatusStrip{background-color:color-mix(in srgb,var(--hxr-surface,#06101f) 24%,#030405)!important}
 </style>
 <script>
 (function(){
   // Themed dock icons: a tone per pixel by its own lightness (as index.html).
-  if (document.documentElement.classList.contains('minka-rad')) return;
   // iOS Safari shows :active (the press layer) only when a touch listener exists.
   document.addEventListener('touchstart', function () {}, { passive: true });
   Array.prototype.forEach.call(document.querySelectorAll('#bottomBtnBar .dock-px rect[fill]'), function (r) {

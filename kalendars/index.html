@@ -231,7 +231,7 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
 <link rel="stylesheet" href="css/skin-draw.css?v=20261002mx43">
 <link rel="stylesheet" href="css/card-addons.css?v=20261001tp2">
 <script src="js/emoji3d.js?v=20261010pic1"></script>
-<script src="js/card-addons.js?v=20261011br1" defer></script>
+<script src="js/card-addons.js?v=20261012mob1" defer></script>
 <script src="js/skin-organize.js?v=20261010hd1" defer></script>
 <script src="js/skin-builder.js?v=20261010ec1" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20261001fit2">
@@ -932,17 +932,17 @@ function _mkToast(msg, type) {
 <script src="js/card-contrast.js?v=20260928izs122" defer></script>
 <script src="js/page/minka-skins.js?v=20261010hue2"></script>
 <script src="js/night-plan-history.js?v=20260907fatigue11"></script>
-<script src="js/calendar.js?v=20261012dst1"></script>
+<script src="js/calendar.js?v=20261012mob1"></script>
 <script src="js/depth-cards.js?v=20260912faces17" defer></script>
 <script src="js/daily-cat.js?v=20261012dst1" defer></script>
-<script src="js/header-weather.js?v=20260928mx5" defer></script>
+<script src="js/header-weather.js?v=20261012ld3" defer></script>
 <script src="js/calendar_extras_v4.js?v=20260924perf4"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20261012dst1"></script>
 <script src="js/nakts-pets.js?v=20260928perf1" defer></script>
-<script src="js/nightsplit.js?v=20261012dst1" defer></script>
+<script src="js/nightsplit.js?v=20261012mob1" defer></script>
 <script src="js/page/card-initials-dither.js?v=20261011pf5" defer></script>
 <script src="js/monthcal.js?v=20261008hol1" defer></script>
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
@@ -1304,18 +1304,21 @@ window.addEventListener('message', function(e) {
     var barInput = document.getElementById('minkaBarInput');
     var chipIcon = document.getElementById('minkaNamedayChipIcon');
     var root = document.documentElement;
-    function applySidePanelCompact(panel){
-      if (!panel) return;
-      var duty = panel.querySelector('.duty-vertical');
-      if (!duty) return;
-      panel.classList.remove('compact-duty', 'mini-duty');
-      var available = duty.clientHeight;
-      var needed = duty.scrollHeight;
-      if (needed > available + 8) panel.classList.add('compact-duty');
-      if (needed > available + 72) panel.classList.add('mini-duty');
-    }
+    // All panels are reset, then measured, then classed: one layout for the
+    // lot instead of one per panel.
     function syncSidePanels(){
-      document.querySelectorAll('.side-panel').forEach(applySidePanelCompact);
+      var items = [];
+      document.querySelectorAll('.side-panel').forEach(function(panel){
+        var duty = panel.querySelector('.duty-vertical');
+        if (!duty) return;
+        panel.classList.remove('compact-duty', 'mini-duty');
+        items.push([panel, duty]);
+      });
+      items.map(function(it){ return [it[1].clientHeight, it[1].scrollHeight]; }).forEach(function(m, i){
+        var panel = items[i][0];
+        if (m[1] > m[0] + 8) panel.classList.add('compact-duty');
+        if (m[1] > m[0] + 72) panel.classList.add('mini-duty');
+      });
     }
     var layoutRaf = 0;
     function queueLayoutSync(){
@@ -1696,8 +1699,8 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260926mg1">
 
-<script src="js/page/mood-feedback.js?v=20261012ld2"></script>
-<script src="js/page/mood-trend.js?v=20261002mx43" defer></script>
+<script src="js/page/mood-feedback.js?v=20261012ld3"></script>
+<script src="js/page/mood-trend.js?v=20261012mob1" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20261010cd1">
 
@@ -1969,7 +1972,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
    css/mobile-v2.css + js/mobile-v2.js — vizuālais izkārtojums; ?mv2=0 to atslēdz. */
 (function(){
   if (!document.documentElement.classList.contains('mk-mobile-shell')) return;
-  var v = '20261011pf1';
+  var v = '20261012mob1';
   function css(href) { var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href + '?v=' + v; document.body.appendChild(l); }
   css('css/mobile-fixes.css');
   // Sheets close by dragging down and by the phone's back (with mobile.html).
@@ -2006,7 +2009,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <!-- Galvene X: jaunā RG datora galvene (izslēdzama ar ?hx=0, sk. <head>). -->
 <link rel="stylesheet" id="mk-header-x" href="css/page/mk-header-x.css?v=20261010ax1">
 <script src="js/page/mk-search-core.js?v=20260928hx2" defer></script>
-<script src="js/page/mk-header-x.js?v=20261012dst1" defer></script>
+<script src="js/page/mk-header-x.js?v=20261012ld3" defer></script>
 <!-- Noskaņa X: jaunais noskaņas bloks RG datorā (izslēdzams ar ?mood=0, sk. <head>). -->
 <link rel="stylesheet" id="mk-mood-x" href="css/page/mk-mood-x.css?v=20261010pg4">
 </body>

@@ -267,7 +267,10 @@
   }
   function scapeGeo(card, plot) {
     var mx = card.__mx || {};
-    var W = plot.clientWidth, H = plot.clientHeight;
+    // The size comes from the plot's ResizeObserver (read after the browser's own layout); reading
+    // clientWidth here forced a whole-page layout in the middle of loading (~40 ms).
+    var size = plot.__mxSize;
+    var W = size ? size.W : plot.clientWidth, H = size ? size.H : plot.clientHeight;
     if (W < 120 || H < 200) return null;
     var faceY = mx.faceY || 132, ground = H - (mx.groundGap || 24), amp = 66;   // low enough that the coffee over the points stays clear of the ring
     return { W: W, H: H, cx: W / 2, faceY: faceY, faceR: (mx.faceD || 124) / 2,
@@ -775,7 +778,11 @@
     }
     if (typeof ResizeObserver === 'function') {
       scape.ro = new ResizeObserver(function () {
+        var first = !plot.__mxSize;
+        plot.__mxSize = { W: plot.clientWidth, H: plot.clientHeight };   // layout is fresh here: no forced layout
         clearTimeout(scape.roT);
+        // the first size paints at once (the scape waited for it); later resizes settle first
+        if (first) { if (plot.isConnected) paint(plot.closest('.rg-feedback-card')); return; }
         scape.roT = setTimeout(function () { if (plot.isConnected) paint(plot.closest('.rg-feedback-card')); }, 100);
       });
       scape.ro.observe(plot);
@@ -784,6 +791,8 @@
   function paintScape(card, trend, m) {
     var plot = trend.querySelector('.rg-trend-plot');
     if (!plot) return;
+    // Not measured yet: let the ResizeObserver report the size (it paints then) instead of forcing it now.
+    if (!plot.__mxSize && typeof ResizeObserver === 'function') { wireScape(plot); return; }
     var geo = scapeGeo(card, plot);
     if (!geo) return;
     if (scape.plot !== plot) { scape.plot = plot; scape.sig = ''; wireScape(plot); }
