@@ -134,13 +134,24 @@ html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-pa
 html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .duty-surname {
   grid-column: 2 !important; grid-row: 1 !important; min-width: 0 !important;
   font-size: 15px !important; line-height: 1.15 !important; font-weight: 800 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important;
-  /* tieši tāds pats burts un tonētais stikls kā vārdam */
   font-family: Inter, system-ui, sans-serif !important; letter-spacing: normal !important;
+}
+/* Vārds un uzvārds vienā burtā un vienā tonētajā stiklā katrā dienā (arī
+   kartītēm bez noguruma strīpām, kur stikla noteikums nestrādā): gradients
+   vienmēr tikai burtos, nekad kā kaste aiz teksta. */
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card :is(.duty-name, .duty-surname) {
+  font-family: Inter, system-ui, sans-serif !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   background-image: linear-gradient(180deg,
     rgba(255, 255, 255, .92) 0%,
     color-mix(in srgb, var(--mk-side-glass-accent, #e7d34b) 30%, rgba(255, 255, 255, .62)) 48%,
     color-mix(in srgb, var(--mk-side-glass-accent, #e7d34b) 55%, rgba(255, 255, 255, .22)) 100%) !important;
+  background-color: transparent !important;
+  -webkit-background-clip: text !important;
+          background-clip: text !important;
   -webkit-text-stroke: .6px rgba(255, 255, 255, .62) !important;
+  text-shadow: none !important;
 }
 html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-shift-chip { grid-column: 1 / span 2 !important; grid-row: 2 !important; justify-self: start !important; align-self: center !important; margin: 0 !important; position: static !important; transform: none !important; height: 16px !important; min-height: 0 !important; padding-block: 0 !important; line-height: 16px !important; }
 html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-fatigue {
