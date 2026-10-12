@@ -16,6 +16,21 @@ const MK_FLOW_VIZ = 13;
 const flowLevels = new Float32Array(24);
 const isModernViz = mode => mode === MK_FLOW_VIZ || (mode >= 20 && mode <= 31);
 const modernBaseMode = mode => mode === MK_FLOW_VIZ ? 4 : mode - 20;
+// cliamp termināļa spektri (github.com/bjarneo/cliamp, MIT): tikai Pioneer un Pixel skatiem.
+const MK_TERM_VIZ = {40:'stereo',41:'mirror',42:'retro',43:'terrain',44:'flame',45:'barsdot',46:'redsector'};
+const MK_TERM_BY_LAYOUT = {pioneer:[40,41,42,43],pixel:[44,45,46]};
+const isTermViz = mode => mode >= 40 && mode <= 46;
+const termVizFor = layout => MK_TERM_BY_LAYOUT[layout] || [];
+function mkLoadCliamp(){
+    if (window.rgCliamp) return Promise.resolve(window.rgCliamp);
+    if (!mkLoadCliamp.p) mkLoadCliamp.p = new Promise((resolve, reject) => {
+        const s = document.createElement('script'); s.src = 'js/radio-cliamp.js?v=20261012cl3'; s.async = true;
+        s.onload = () => resolve(window.rgCliamp); s.onerror = () => { mkLoadCliamp.p = null; reject(new Error('cliamp')); };
+        document.head.append(s);
+    });
+    return mkLoadCliamp.p;
+}
+window.mkLoadCliamp = mkLoadCliamp;
 let modernWaveData = null;
 const modernMeter = {level:0};
 const MK_DEFAULT_VIZ = 7;
@@ -66,11 +81,11 @@ let vizStyle = (function(){
         }
         const s = localStorage.getItem('mkRadioViz');
         if (s === 'buddy') return MK_BUDDY_VIZ;
-        if (s && s.indexOf('spectrum:') === 0) { const n = +s.slice(9); if ((n >= 0 && n < MK_BUDDY_VIZ) || n === MK_NO_VIZ || isModernViz(n)) { __mkLastSpectrum = n; return n; } }
+        if (s && s.indexOf('spectrum:') === 0) { const n = +s.slice(9); if ((n >= 0 && n < MK_BUDDY_VIZ) || n === MK_NO_VIZ || isModernViz(n) || isTermViz(n)) { __mkLastSpectrum = n; return n; } }
     } catch(e){}
     return MK_DEFAULT_VIZ;
 })();
-let vizFamily = isModernViz(vizStyle) ? 'new' : 'classic';
+let vizFamily = isTermViz(vizStyle) ? 'term' : isModernViz(vizStyle) ? 'new' : 'classic';
 let isAdjustingVol = false;
 let volTimeout;
 let isFirstPlay = true; 
@@ -604,6 +619,13 @@ const VIZ_MODES = [
     { idx: 8, label: "VU", hint: "VU needle meters" },
     { idx: 9, label: "LED", hint: "LED bar spectrum" },
     { idx: 10, label: "DOT VU", hint: "dot-matrix spectrum" },
+    { idx: 40, label: "STEREO", hint: "cliamp: kreisais un labais kanāls" },
+    { idx: 41, label: "SPOGULIS", hint: "cliamp: spoguļstabiņi" },
+    { idx: 42, label: "RETRO", hint: "cliamp: synthwave saule un režģis" },
+    { idx: 43, label: "KALNI", hint: "cliamp: skaļuma kalni" },
+    { idx: 44, label: "LIESMAS", hint: "cliamp: liesmas" },
+    { idx: 45, label: "PUNKTI", hint: "cliamp: braille punktu stabiņi" },
+    { idx: 46, label: "RED SECTOR", hint: "cliamp: Amiga demo stabiņi" },
     { idx: MK_BUDDY_VIZ, label: "BUDDY", hint: "Viegls pikseļu tēls" },
     { idx: MK_NO_VIZ, label: "Bez vizualizācijas", hint: "Nekas netiek zīmēts" },
 ];
@@ -629,7 +651,7 @@ function ensureVizPicker(){
 
       <div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button></div>
       <div class="vizpick-grid" role="list">
-        ${VIZ_MODES.map(m => `
+        ${VIZ_MODES.filter(m => !isTermViz(m.idx)).map(m => `
           <button class="vizpick-btn" type="button" data-viz="${m.idx}">
             <span class="vizpick-name">${m.label}</span>
           </button>
@@ -741,7 +763,7 @@ function closeVizPicker(){
 
 function cycleVizMode(){
     // Next spectrum mode only
-    const modes=VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ&&isModernViz(m.idx)===(vizFamily==='new'));
+    const modes=vizFamilyModes();
     vizStyle = modes[(modes.findIndex(m => m.idx === vizStyle) + 1) % modes.length].idx;
     mkSaveVizPref();
     updateVizLabel();
@@ -751,7 +773,7 @@ function cycleVizMode(){
 
 function randomVizMode(){
     // Pick random among spectrum modes
-    const candidates = VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ&&isModernViz(m.idx)===(vizFamily==='new')).map(m => m.idx);
+    const candidates = vizFamilyModes().map(m => m.idx);
     vizStyle = candidates[Math.floor(Math.random() * candidates.length)];
     mkSaveVizPref();
     updateVizLabel();
@@ -759,9 +781,14 @@ function randomVizMode(){
     updateVizPickerUI();
 }
 
+function vizFamilyModes(){
+    if(vizFamily==='term'){const list=termVizFor(document.getElementById('radioWindow')?.dataset.radioLayout);return VIZ_MODES.filter(m=>list.includes(m.idx));}
+    return VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ&&!isTermViz(m.idx)&&isModernViz(m.idx)===(vizFamily==='new'));
+}
+
 function setVizStyle(idx){
     if(idx===MK_FLOW_VIZ)idx=24;
-    if(idx!==MK_NO_VIZ)vizFamily=isModernViz(idx)?'new':'classic';
+    if(idx!==MK_NO_VIZ)vizFamily=isTermViz(idx)?'term':isModernViz(idx)?'new':'classic';
     // Spectrum only
     vizStyle = VIZ_MODES.some(m => m.idx === idx) || idx === MK_BUDDY_VIZ ? idx : MK_DEFAULT_VIZ;
     mkSaveVizPref();
@@ -771,6 +798,7 @@ function setVizStyle(idx){
 }
 
 function switchVizFamily(family){
+    if(family==='term'){const list=termVizFor(document.getElementById('radioWindow')?.dataset.radioLayout);if(list.length)setVizStyle(list.includes(vizStyle)?vizStyle:list[0]);return;}
     const base=isModernViz(vizStyle)?modernBaseMode(vizStyle):(vizStyle<=10?vizStyle:4);
     setVizStyle(family==='new'?20+base:(base===11?6:base));
 }
@@ -788,7 +816,7 @@ function updateVizPickerUI(forceWarn=false){
     el.querySelectorAll('[data-viz]').forEach(b => {
         const idx = Number(b.getAttribute('data-viz'));
         b.classList.toggle('active', idx === vizStyle);
-        b.hidden=idx!==MK_NO_VIZ&&isModernViz(idx)!==(vizFamily==='new');
+        b.hidden=idx!==MK_NO_VIZ&&(isTermViz(idx)||isModernViz(idx)!==(vizFamily==='new'));
     });
 
     el.querySelectorAll('[data-viz-family]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.vizFamily===vizFamily)));
@@ -842,7 +870,11 @@ function applyVizMode() {
     document.body.classList.toggle('radio-viz-off', disabled);
     document.body.classList.toggle('radio-viz-flow', isModernViz(vizStyle));
     document.body.classList.toggle('radio-viz-dolphin', vizStyle === 5);
-    if(analyser){const modern=isModernViz(vizStyle);analyser.fftSize=modern?(MK_LOW_SPEC?512:1024):(MK_LOW_SPEC?128:256);analyser.minDecibels=modern?-85:-100;analyser.maxDecibels=modern?-5:-30;analyser.smoothingTimeConstant=modern?.12:.8;}
+    document.body.classList.toggle('radio-viz-term', isTermViz(vizStyle));
+    if(analyser){const modern=isModernViz(vizStyle);analyser.fftSize=modern?(MK_LOW_SPEC?512:1024):(MK_LOW_SPEC?128:256);analyser.minDecibels=modern?-85:-100;analyser.maxDecibels=modern?-5:-30;analyser.smoothingTimeConstant=modern?.12:.8;
+        // cliamp mēra pats (dB → 0..1 un savs izlīdzinājums): pietiekami joslu basam, bez Web Audio izlīdzināšanas.
+        if(isTermViz(vizStyle)){analyser.fftSize=MK_LOW_SPEC?1024:2048;analyser.smoothingTimeConstant=0;}}
+    if(isTermViz(vizStyle)){__termVis=null;void mkLoadCliamp().then(()=>scheduleDraw()).catch(()=>{});}
     // Clear previous layers at selection time, even while paused or in an extra renderer.
     if(dGif){dGif.style.display=vizStyle===5?'block':'none';dGif.style.opacity=vizStyle===5?'1':'0';}
     if(ctx&&cvs)ctx.clearRect(0,0,cvs.width,cvs.height);
@@ -2028,6 +2060,7 @@ function setupAudio() {
     analyser = aCtx.createAnalyser();
     analyser.fftSize = MK_LOW_SPEC ? 128 : 256;
     if(isModernViz(vizStyle)){analyser.fftSize=MK_LOW_SPEC?512:1024;analyser.minDecibels=-85;analyser.maxDecibels=-5;analyser.smoothingTimeConstant=.12;}
+    if(isTermViz(vizStyle)){analyser.fftSize=MK_LOW_SPEC?1024:2048;analyser.smoothingTimeConstant=0;}
     lowNode = aCtx.createBiquadFilter();
     highNode = aCtx.createBiquadFilter();
 
@@ -2714,6 +2747,7 @@ function draw(ts = 0) {
     if (__vizGifOn !== gifOn) { __vizGifOn = gifOn; dGif.style.opacity = gifOn; }
 
     ensureCanvasSize();
+    if (isTermViz(vizStyle)) { drawTermSpectrum(ts || performance.now(), vC); return; }
     // Extra visualizers (VU/LED/DOT) own the canvas in radio_extras_v4.js
     if (vizStyle >= 8 && vizStyle <= 10) {
         return;
@@ -2733,6 +2767,31 @@ function draw(ts = 0) {
         drawClassicSpectrum(vizStyle,ctx,{width:__vizCssW||cvs.clientWidth,height:__vizCssH||cvs.clientHeight},data,vRgb,peaks,frameDelta);
         ctx.restore();
     }
+}
+
+// cliamp spektrs: rūtiņu režģis (cliamp kadru pulkstenis 20–60 fps), krāsas no albuma toņa.
+var __termVis=null,__termFeed=null,__termSrc=null,__termAn=null,__termPal=null,__termPalKey='',__termSize='';
+function termPalette(c){
+    const mix=(t,to)=>'#'+c.map((v,i)=>Math.round(v+(to[i]-v)*t).toString(16).padStart(2,'0')).join('');
+    return {fg:mix(.55,[255,255,255]),dim:mix(.62,[0,0,0]),low:mix(.18,[0,0,0]),mid:mix(.2,[255,255,255]),high:mix(.62,[255,255,255])};
+}
+function drawTermSpectrum(now,vC){
+    const C=window.rgCliamp;
+    if(!C){void mkLoadCliamp().catch(()=>{});return;}
+    const id=MK_TERM_VIZ[vizStyle];
+    if(!__termVis||__termVis.mode.id!==id){__termVis=C.create(id);__termSize='';}
+    if(!__termFeed)__termFeed=new C.Feed();
+    if(__termAn!==analyser){__termAn=analyser;__termSrc=C.analyserSource(analyser);}
+    __termFeed.update(__termSrc,now);
+    const w=__vizCssW||cvs.clientWidth,h=__vizCssH||cvs.clientHeight;if(!w||!h)return;
+    const fit=C.fit(w,h),key=vC.join(',');
+    if(key!==__termPalKey){__termPalKey=key;__termPal=C.palette(termPalette(vC));__termSize='';}
+    const size=w+'x'+h+'@'+cvs.width,changed=__termVis.step(__termFeed,now,fit.cols,fit.rows,!audio.paused);
+    if(!changed&&size===__termSize)return;
+    __termSize=size;
+    const ratio=cvs.width/w;ctx.setTransform(ratio,0,0,ratio,0,0);
+    C.paint(ctx,__termVis.T,w,h,__termPal);
+    ctx.setTransform(1,0,0,1,0,0);
 }
 
 document.getElementById('playBtn').onclick = () => {
@@ -3721,7 +3780,7 @@ function focusRadio(){
   }
 
   const LOOK_KEY='rg_radio_appearance_v1';
-  const DITHER_VIS=['bayer','field','rowled','torus'];
+  const DITHER_VIS=['bayer','field','rowled','torus','yinyang'];
   const LOOK_DEFAULTS={darkness:64,tint:28,glass:24,glow:45,layout:'classic',ampVis:'webamp',ditherVis:'bayer',metalColor:'#9ca4aa',metalLight:50,metalShine:65,pioneerPixels:false,vizFrame:'auto',position:'center',text:'#f3f7f5',background:'',cardName:'',imageCrops:{},vizPositions:{}};
   let appearance;try{appearance={...LOOK_DEFAULTS,...JSON.parse(localStorage.getItem(LOOK_KEY)||'{}')};}catch(_){appearance={...LOOK_DEFAULTS};}
   appearance.imageCrops=cleanImageCrops(appearance.imageCrops);
@@ -3743,6 +3802,8 @@ function focusRadio(){
     // set of geometry reads, instead of a write→read→write cycle per pass.
     if(applyingProfile)return;
     const rw=document.getElementById('radioWindow');if(!rw)return;
+    // Termināļa spektri pieder tikai savam skatam; citā skatā – tā skata parastais spektrs.
+    if(isTermViz(vizStyle)&&!termVizFor(appearance.layout).includes(vizStyle)){if(lookVizFamily==='term')lookVizFamily=null;setVizStyle(appearance.layout==='pixel'?31:MK_DEFAULT_VIZ);}
     const previousLayout=rw.dataset.radioLayout;
     rw.dataset.radioLayout=['classic','clean','pioneer','pixel','amp','dither'].includes(appearance.layout)?appearance.layout:'classic';
     rw.dataset.vizFrame=['on','off'].includes(appearance.vizFrame)?appearance.vizFrame:'auto';
@@ -3801,12 +3862,14 @@ function focusRadio(){
     const framed=appearance.vizFrame==='on'||(appearance.vizFrame!=='off'&&!isModernViz(vizStyle));
     themePanel?.querySelectorAll('[data-viz-frame-choice]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.vizFrameChoice==='on')===framed)));
     themePanel?.querySelectorAll('[data-radio-layout-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.radioLayoutChoice===rw.dataset.radioLayout)));
-    const family=lookVizFamily||(vizStyle===5?'pioneer':vizFamily);
-    themePanel?.querySelectorAll('[data-viz-choice]').forEach(b=>{const idx=Number(b.dataset.vizChoice);b.setAttribute('aria-pressed',String(idx===vizStyle||(vizStyle===MK_FLOW_VIZ&&idx===24)));b.hidden=idx!==MK_NO_VIZ&&(family==='pioneer'||isModernViz(idx)!==(family==='new'));});
-    themePanel?.querySelectorAll('[data-viz-family]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.vizFamily===family)));
+    const termList=termVizFor(appearance.layout);
+    let family=lookVizFamily||(vizStyle===5?'pioneer':vizFamily);
+    if(family==='term'&&!termList.length)family='classic';
+    themePanel?.querySelectorAll('[data-viz-choice]').forEach(b=>{const idx=Number(b.dataset.vizChoice);b.setAttribute('aria-pressed',String(idx===vizStyle||(vizStyle===MK_FLOW_VIZ&&idx===24)));b.hidden=family==='term'?!termList.includes(idx):idx!==MK_NO_VIZ&&(isTermViz(idx)||family==='pioneer'||isModernViz(idx)!==(family==='new'));});
+    themePanel?.querySelectorAll('[data-viz-family]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.vizFamily===family));if(b.dataset.vizFamily==='term')b.hidden=!termList.length;});
     const gallery=themePanel?.querySelector('[data-pioneer-gallery]');
     if(gallery){gallery.hidden=family!=='pioneer';if(!gallery.hidden)void ensurePioneerPlayer().then(player=>player.mountGallery(gallery,()=>{lookVizFamily='pioneer';paintAppearance();})).catch(()=>{gallery.textContent='Neizdevās ielādēt Pioneer. Atver cilni vēlreiz.';});}
-    const familyNote=themePanel?.querySelector('.radio-viz-choices .radio-viz-family-note');if(familyNote)familyNote.textContent=family==='pioneer'?'Pioneer animācijas un audio indikatori.':family==='new'?'Gludas formas. Ātra reakcija uz mūziku.':'Iepriekšējie efekti, delfīni un Buddy.';
+    const familyNote=themePanel?.querySelector('.radio-viz-choices .radio-viz-family-note');if(familyNote)familyNote.textContent=family==='term'?'Termināļa spektri no cliamp (bjarneo/cliamp, MIT), izvēlēti tieši šim skatam.':family==='pioneer'?'Pioneer animācijas un audio indikatori.':family==='new'?'Gludas formas. Ātra reakcija uz mūziku.':'Iepriekšējie efekti, delfīni un Buddy.';
   }
   function lookSnapshot(){const s=getSaved();return {...appearance,theme:s.name,accent:s.accent,accentMode:s.accentMode,eq:window.__eqMode||'none',viz:String(vizStyle)};}
   const GUEST_LOOK_KEY='rg_radio_guest_look_v1';
@@ -3843,6 +3906,7 @@ function focusRadio(){
   }
   function vizPreviewSource(mode){
     if(mode===31)return 'kalendars/data/radio-viz/pixel-wave.svg';
+    if(isTermViz(mode))return `kalendars/data/radio-viz/term-${mode}.svg?v=20261012cl1`;
     return `kalendars/data/radio-viz/${mode===MK_FLOW_VIZ?24:mode}.webp?v=${mode===5?'20260908d1':'20260908c2'}`;
   }
   function vizPreview(mode){
@@ -3882,10 +3946,10 @@ function focusRadio(){
       <div id="radioLookPreview" role="group" aria-label="Fona attēla novietojums. Velc attēlu vai lieto bulttaustiņus." aria-describedby="radioImageHint"><div class="radio-preview-copy"><strong class="radio-preview-station">Radio</strong><span>Tava mūzika</span></div><div class="radio-preview-toolbar" aria-hidden="true">◉ &nbsp; RADIO &nbsp; MŪZIKA</div><div class="radio-preview-buttons" aria-hidden="true">▣ &nbsp; ♫ &nbsp; ◀ &nbsp; <b>▶</b> &nbsp; ▶ &nbsp; ━━</div><div class="radio-viz-sample"><img id="radioLookVizImage" width="600" height="80" decoding="async" alt="Izvēlētās vizualizācijas momentuzņēmums"></div></div>
       <div class="radio-spectrum-position"><button type="button" id="radioMoveSpectrum" aria-pressed="false">Pārvietot spektru</button><button type="button" id="radioResetSpectrum">Atiestatīt pozīciju</button><div id="pioneerDisplayControls" hidden><button type="button" id="pioneerPixelGrid" role="switch" aria-checked="false" title="OEL pikseļu matrica"><span>Pikseļu matrica</span><i aria-hidden="true"></i></button></div><p id="radioSpectrumMoveHint">Ieslēdz, lai priekšskatījumā pārvietotu spektru.</p></div>
       <fieldset id="ampVisControls" class="radio-layout-choices" hidden><legend>Amp spektrs</legend><div class="radio-viz-families"><button type="button" data-amp-vis="webamp" aria-pressed="true">Webamp</button><button type="button" data-amp-vis="classic" aria-pressed="false">Klasiskais Winamp</button><button type="button" data-amp-vis="mirror" aria-pressed="false">Spoguļots</button><button type="button" data-amp-vis="wave" aria-pressed="false">Vilnis</button></div><p class="radio-viz-family-note">Webamp: gaišas joslas ar pīķiem. Klasiskais: zaļi-dzeltenā-oranžā kāpne. Spoguļots: joslas ap viduslīniju. Vilnis: osciloskopa līnija.</p></fieldset>
-      <fieldset id="ditherVisControls" class="radio-layout-choices" hidden><legend>Dither spektrs</legend><div class="radio-viz-families"><button type="button" data-dither-vis="bayer" aria-pressed="true">Bayer</button><button type="button" data-dither-vis="field" aria-pressed="false">Lauks</button><button type="button" data-dither-vis="rowled" aria-pressed="false">Rindas LED</button><button type="button" data-dither-vis="torus" aria-pressed="false">Tors</button></div><p class="radio-viz-family-note">Bayer: joslas, kas uz augšu izšķīst punktos. Lauks: pēdējās sekundes kā punktu ainava. Rindas LED: CRT rindas ar krāsu nobīdi. Tors: RG gredzens, kas pulsē līdzi mūzikai. Krāsa seko albumam.</p></fieldset>
+      <fieldset id="ditherVisControls" class="radio-layout-choices" hidden><legend>Dither spektrs</legend><div class="radio-viz-families"><button type="button" data-dither-vis="bayer" aria-pressed="true">Bayer</button><button type="button" data-dither-vis="field" aria-pressed="false">Lauks</button><button type="button" data-dither-vis="rowled" aria-pressed="false">Rindas LED</button><button type="button" data-dither-vis="torus" aria-pressed="false">Tors</button><button type="button" data-dither-vis="yinyang" aria-pressed="false">Koi</button></div><p class="radio-viz-family-note">Bayer: joslas, kas uz augšu izšķīst punktos. Lauks: pēdējās sekundes kā punktu ainava. Rindas LED: CRT rindas ar krāsu nobīdi. Tors: RG gredzens, kas pulsē līdzi mūzikai. Krāsa seko albumam.</p></fieldset>
       <fieldset id="pioneerMetalControls" hidden><legend>Pioneer korpuss</legend><p>Metāla tonis korpusam un pogām. Displeja izgaismojums seko albumam.</p><div class="pioneer-metal-presets">${(window.rgPioneerLayout?.finishes||[]).map(f=>`<button type="button" data-metal-color="${f.color}" style="--metal-swatch:${f.color}" aria-pressed="false"><i aria-hidden="true"></i><span>${f.name}</span></button>`).join('')}</div><div class="pioneer-metal-custom"><label>Sava krāsa<input type="color" data-look="metalColor" aria-label="Korpusa krāsa"></label><label>Gaišums<input type="range" min="0" max="100" data-look="metalLight"></label><label>Spīdums<input type="range" min="0" max="100" data-look="metalShine"></label><button type="button" id="pioneerMetalReset">Atiestatīt metālu</button></div></fieldset>
       <div id="radioImageTools" class="radio-image-tools" hidden><p id="radioImageHint">Velc attēlu priekšskatījumā.</p><div><label for="radioImageZoom">Attēla izmērs</label><input id="radioImageZoom" type="range" min="60" max="200" step="1" value="100"><output id="radioImageZoomValue" for="radioImageZoom">100%</output><button type="button" id="radioImageReset">Atiestatīt</button></div></div>
-      <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button><button type="button" data-viz-family="pioneer">Pioneer</button></div><p class="radio-viz-family-note"></p><div data-pioneer-gallery hidden></div><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
+      <fieldset class="radio-viz-choices"><legend>Vizualizācija</legend><div class="radio-viz-families"><button type="button" data-viz-family="new">Jaunais skats</button><button type="button" data-viz-family="classic">Classic</button><button type="button" data-viz-family="pioneer">Pioneer</button><button type="button" data-viz-family="term">Termināls</button></div><p class="radio-viz-family-note"></p><div data-pioneer-gallery hidden></div><div class="radio-viz-grid">${[...VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ),getVizMode(MK_NO_VIZ)].map(m=>`<button type="button" data-viz-choice="${m.idx}" aria-pressed="false">${vizPreview(m.idx)}<span>${m.label}</span></button>`).join('')}</div></fieldset>
       <fieldset class="radio-layout-choices"><legend>Spektra logs</legend><div class="radio-viz-families"><button type="button" data-viz-frame-choice="off">Bez loga</button><button type="button" data-viz-frame-choice="on">Ar logu</button></div></fieldset>
       <div class="radio-clean-actions"><button type="button" id="radioEffectsOff">Izslēgt visus efektus</button><button type="button" id="radioBackgroundOff">Bez fona attēla</button></div>
       <details><summary>Pielāgot vairāk</summary>
@@ -4006,8 +4070,8 @@ function focusRadio(){
   const GUEST_VIZ_BY_LAYOUT={
     classic:[0,3,4,7,9,10,MK_BUDDY_VIZ],   // RG pikseļu stabiņi, LED, punktu režģis, spoks
     clean:[21,22,23,24,25,26],             // gludās M3 formas: spogulis, līnija, stabiņi, plūsma, virsotnes, vilnis
-    pioneer:[5,8,9,10,29,30],              // auto magnetola: Pioneer animācijas, VU, LED segmenti
-    pixel:[31],                            // PixelPlayer vilnis
+    pioneer:[5,8,9,10,29,30,40,41,42,43],  // auto magnetola: Pioneer animācijas, VU, LED segmenti + cliamp (stereo, spogulis, retro, kalni)
+    pixel:[31,44,45,46],                   // PixelPlayer vilnis + cliamp (liesmas, punkti, Red Sector)
     amp:[23],dither:[23]                   // tiem savas vizualizācijas (ampVis / ditherVis)
   };
   function guestCycle(name,list,current){
@@ -4047,9 +4111,9 @@ function focusRadio(){
     const fresh=THEMES.filter(t=>t.sv);
     const choices=layout==='pixel'?THEMES.filter(t=>t.pixel):(fresh.length?fresh:THEMES.filter(t=>!t.pixel));
     const theme=rand(choices.filter(t=>t.name!==now.theme))||choices[0]||THEMES[0];
-    const viz=layout==='pixel'?31:nextGuestSpectrum(now.viz,layout);
+    const viz=nextGuestSpectrum(now.viz,layout);
     closeProfileLook();
-    const ditherVis = guestCycle('dither', ['bayer', 'field', 'rowled', 'torus'], now.ditherVis);
+    const ditherVis = guestCycle('dither', DITHER_VIS, now.ditherVis);
     const ampVis = guestCycle('amp', ['webamp', 'classic', 'mirror', 'wave'], now.ampVis);
     applyLookSettings({ ...now, theme: theme.name, layout, viz: String(viz), ditherVis, ampVis, accentMode:'album',accent:theme.chip, background: '', cardName: '' });
     try { syncLookControls(false); } catch (_) {}   // applyLookSettings already painted this look

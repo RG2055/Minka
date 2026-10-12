@@ -739,3 +739,18 @@ html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-b
 }
 html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn.dth-stations svg { color: var(--dth-ink); }
 html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-st-label { display: inline-block; line-height: 0; }
+
+/* cliamp termināļa spektri Pixel skatā: zīmē paši savus punktus – bez joslas fona un svītrām. */
+html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame::before,
+html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame::after { display: none !important; }
+html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame { border-radius: 0 !important; overflow: visible !important; }
+/* Pixel josla ir 26 px – termināļa spektram par zemu: tā aizņem arī tukšo rindu virs sevis (~49 px). */
+@media (min-width: 900px) {
+  html body.radio-viz-term #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) #radioApp > .monitor-frame {
+    grid-row: 3 / 5 !important; height: auto !important; min-height: 26px !important; align-self: stretch !important;
+  }
+}

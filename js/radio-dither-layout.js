@@ -16,8 +16,10 @@
    rendered once per string and cached. */
 (function(){
  'use strict';
- const VIS=['bayer','field','rowled','torus'];
- const VIS_LABEL={bayer:'Bayer',field:'Lauks',rowled:'Rindas LED',torus:'Tors'};
+ const VIS=['bayer','field','rowled','torus','yinyang'];
+ const VIS_LABEL={bayer:'Bayer',field:'Lauks',rowled:'Rindas LED',torus:'Tors',yinyang:'Koi'};
+ // Koi nāk no cliamp (js/radio-cliamp.js, ielādē tikai, kad izvēlēts).
+ const TERM=new Set(['yinyang']);
  const ART_KEY='minka:dither-art:v1';
  // Pixel icons ('#' = on). Drawn at 2 CSS px per pixel.
  const ICON={
@@ -465,6 +467,7 @@
   if(now-last<1000/FPS){raf=requestAnimationFrame(frame);return;}
   last=now;
   if(playing)idle=0;else idle++;
+  if(TERM.has(visStyle)){drawTerm(now,playing,an);if(playing||idle<40)raf=requestAnimationFrame(frame);return;}
   if(an)readSpectrum(an,playing);
   else if(!levels){levels=new Float32Array(visStyle==='bayer'?Math.floor(cols/4):visStyle==='torus'?48:Math.ceil(cols/2));peaks=new Float32Array(levels.length);holds=new Uint8Array(levels.length);}
   // Last idle frame: a still, designed standby shape instead of an empty stage.
@@ -477,6 +480,23 @@
   els.vis.getContext('2d').putImageData(img,0,0);
   // After the music stops, let the bars fall, then hold the last still frame.
   if(playing||idle<40)raf=requestAnimationFrame(frame);
+ }
+ // cliamp spektrs uz Dither skatuves: rūtiņa 6×12 px, punkts 2×2 px – ass, kā 1 bits.
+ let tVis=null,tFeed=null,tSrc=null,tAn=null,tPal=null,tPalKey='';
+ function drawTerm(now,playing,an){
+  const C=window.rgCliamp;
+  if(!C){window.mkLoadCliamp?.().then(()=>drawOnce()).catch(()=>{});return;}
+  if(!tVis||tVis.mode.id!==visStyle)tVis=C.create(visStyle);
+  if(!tFeed)tFeed=new C.Feed();
+  if(an&&tAn!==an){tAn=an;tSrc=C.analyserSource(an);}
+  if(tSrc)tFeed.update(tSrc,now);
+  const cv=els.vis,nc=Math.floor(cv.width/6),nr=Math.floor(cv.height/12);if(nc<4||nr<2)return;
+  if(tPalKey!==inkKey){tPalKey=inkKey;const hex=c=>'#'+c.map(v=>Math.round(v).toString(16).padStart(2,'0')).join(''),mix=(t,b)=>ink.map((v,i)=>b[i]+(v-b[i])*t);
+   tPal=C.palette({fg:'#f1f0ea',dim:hex(mix(.42,[6,6,6])),low:hex(mix(.62,[6,6,6])),mid:hex(ink.map(v=>v+(255-v)*.35)),high:hex(ink)});}
+  tVis.step(tFeed,now,nc,nr,playing);
+  const c=cv.getContext('2d');c.setTransform(1,0,0,1,0,0);c.fillStyle='rgb(6,6,6)';c.fillRect(0,0,cv.width,cv.height);
+  c.setTransform(1,0,0,1,Math.floor((cv.width-nc*6)/2),Math.floor((cv.height-nr*12)/2));
+  C.paint(c,tVis.T,nc*6,nr*12,tPal,null,true);c.setTransform(1,0,0,1,0,0);
  }
  function standby(){
   const L=levels.length;
