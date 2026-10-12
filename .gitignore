@@ -36,3 +36,4 @@ dist/
 
 # downloads for scripts/build-*.py
 .cache/
+.radio-candidates.json

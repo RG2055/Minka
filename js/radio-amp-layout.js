@@ -199,7 +199,7 @@
    else if(act==='toggle')playToggle();
    else if(act==='pause'||act==='stop'){if(audio&&!audio.paused)playToggle();}
    else if(act==='shuffle'){const list=stationsPlain();if(list.length){const pick=list[Math.floor(Math.random()*list.length)];window.selectStation?.(pick.i);}}
-   else if(act==='stations')window.toggleMenu?.(true);
+   else if(act==='stations')window.toggleMenu?.();
    else if(act==='viz')document.getElementById('vizBtn')?.click();
    else if(act==='look')document.getElementById('themeBtn')?.click();
   });

@@ -192,7 +192,7 @@
    else if(act==='next')window.playNext?.();
    else if(act==='toggle')document.getElementById('playBtn')?.click();
    else if(act==='shuffle'){const list=stationsPlain();if(list.length){const p=list[Math.floor(Math.random()*list.length)];window.selectStation?.(p.i);}}
-   else if(act==='stations')window.toggleMenu?.(true);
+   else if(act==='stations')window.toggleMenu?.();
   });
   els.art.addEventListener('click',()=>{artMode=artMode==='duo'?'color':'duo';try{localStorage.setItem(ART_KEY,artMode);}catch(_){}artKey='';syncArt(true);});
   const vol=document.getElementById('vol');

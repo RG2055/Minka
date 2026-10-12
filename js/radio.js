@@ -475,6 +475,8 @@ function toggleMenu(forceOpen) {
         positionStationPicker(el);
     }
 
+    // Kalendārs izgaist, kamēr saraksts ir atvērts; aizverot atgriežas (M3 kustība CSS).
+    document.documentElement.classList.toggle('mk-stations-full', isNowOpen && stationPickerFull());
     if (isNowOpen) {
         el.style.display = 'grid';
         el.style.pointerEvents = '';
@@ -515,7 +517,16 @@ function toggleMenu(forceOpen) {
     }
 }
 
+// Datorā saraksts atveras kalendāra vietā (viss kalendārs uz to brīdi izgaist).
+function stationPickerFull() {
+    return window.innerWidth >= 900 && !document.documentElement.classList.contains('mk-mobile-shell') && !!document.getElementById('calendarEmbed');
+}
 function positionStationPicker(el) {
+    if (stationPickerFull()) {
+        const r = document.getElementById('calendarEmbed').getBoundingClientRect();
+        Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', right: 'auto', bottom: 'auto' });
+        return;
+    }
     // Position near the radio window
     const win = document.getElementById('radioWindow');
     if (win) {
@@ -562,7 +573,8 @@ document.addEventListener('pointerdown', (event) => {
     if (!overlay || overlay.style.display !== 'grid') return;
     const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
     const clickedOverlay = path.includes(overlay) || overlay.contains(event.target);
-    const clickedTrigger = path.some(node => node?.classList?.contains('station-btn'));
+    // Pogas "Stacijas" (arī Amp/Dither) pašas pārslēdz sarakstu: otrs klikšķis to aizver.
+    const clickedTrigger = path.some(node => node?.classList?.contains('station-btn') || node?.dataset?.act === 'stations');
     if (!clickedOverlay && !clickedTrigger) toggleMenu(false);
 }, true);
 
@@ -1123,7 +1135,7 @@ let featuredKeys = new Set();
    directory's own "working" flag does not know that. Results are remembered
    (working: 3 days, failing: 1 day); playback outcomes update them too. */
 const radioHealth = (() => {
-    const KEY = 'minka:radio-health:v1', OK_TTL = 3 * 864e5, FAIL_TTL = 864e5;
+    const KEY = 'minka:radio-health:v2', OK_TTL = 3 * 864e5, FAIL_TTL = 864e5;   // v2: pārbauda ar audio elementu
     let store = {};
     try { store = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (_) {}
     let saveTimer = 0;
@@ -1143,8 +1155,29 @@ const radioHealth = (() => {
         return e[0] ? 'ok' : 'fail';
     };
     const mark = (url, ok) => { if (url) { store[url] = [ok ? 1 : 0, Date.now()]; save(); } };
+    // Pārbauda tieši tā, kā atskaņotājs: audio elements ar crossOrigin="anonymous"
+    // (bez skaņas). fetch() derēja arī stacijām, kuras Chrome audio tik un tā
+    // noraida ("Format error", piem. SomaFM). HLS paliek pie fetch (hls.js ceļš).
+    function probe(url) {
+        if (/\.m3u8(\?|$)/i.test(url) || typeof Audio !== 'function') return probeFetch(url);
+        return new Promise(resolve => {
+            const a = new Audio();
+            a.crossOrigin = 'anonymous'; a.muted = true; a.preload = 'auto';
+            let done = false;
+            const finish = ok => {
+                if (done) return; done = true; clearTimeout(timer);
+                try { a.removeAttribute('src'); a.load(); } catch (_) {}
+                resolve(ok);
+            };
+            const timer = setTimeout(() => finish(a.readyState >= 3), 8000);
+            a.addEventListener('canplay', () => finish(true), { once: true });
+            a.addEventListener('error', () => finish(false), { once: true });
+            a.src = url;
+            a.load();
+        });
+    }
     // One tiny request per station: headers plus the first chunk, then cancelled.
-    async function probe(url) {
+    async function probeFetch(url) {
         const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 7000);
         try {
             const response = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer', signal: controller.signal });
@@ -1173,12 +1206,18 @@ const radioHealth = (() => {
     }
     return { status, mark, check };
 })();
+const STATION_CARD_COLORS = ['#1e3264','#148a08','#b4212f','#8d67ab','#7d4b32','#c4126a','#3d6f86','#b4570a','#2d6fd6','#1f7a5e','#5a3a64','#9b2385'];
+function stationCardColor(station) {
+    const t = String(station?.title || station?.name || '');
+    let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+    return STATION_CARD_COLORS[h % STATION_CARD_COLORS.length];
+}
 function stationStreamUrl(s) { return s ? (s.stream_320 || s.stream_128 || s.stream_hls || s.stream_64 || '') : ''; }
 
 let discoveryGenres = [], discoveryStations = [], discoveryLoaded = false, discoveryLoading = false, discoveryRevision = 0;
 const DISCOVERY_SHOWN = 14;
 let discoveryChecking = false;
-let worldPageKeys = new Set(), worldCountry = '', worldGenre = '', worldQuality = 0, worldOffset = 0;
+let worldPageKeys = new Set(), worldCountry = '', worldGenre = '', worldQuality = 0, worldOffset = 0; // kvalitātes filtrs vairs netiek rādīts
 let worldLoading = false, worldError = '', worldHasNext = false, worldRevision = 0, worldRequest = 0;
 let worldCatalogLoad = null, worldCountries = null, worldStats = null;
 const worldFavoriteAttempts = new Set(), worldFavoritePending = new Set();
@@ -1187,7 +1226,7 @@ function loadWorldCatalog() {
     if (worldCatalogLoad) return worldCatalogLoad;
     worldCatalogLoad = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/radio-catalog.js?v=20260930rperf1';
+        script.src = 'js/radio-catalog.js?v=20261012rv1';
         script.onload = () => resolve(window.rgRadioCatalog);
         script.onerror = () => { script.remove(); worldCatalogLoad = null; reject(new Error('Neizdevās ielādēt staciju katalogu.')); };
         document.head.appendChild(script);
@@ -1228,8 +1267,34 @@ async function loadFeaturedStations() {
     }
 }
 const DISCOVERY_GENRE_NAMES = {pop:'Pop', rock:'Roks', news:'Ziņas', oldies:'Retro', latin:'Latīņu', talk:'Sarunas', public:'Sabiedriskais', dance:'Dance', electronic:'Elektroniskā', jazz:'Džezs', classical:'Klasika', 'classical music':'Klasika', chillout:'Chillout', ambient:'Ambient', house:'House', techno:'Techno', trance:'Trance', 'hip hop':'Hiphops', soul:'Soul', blues:'Blūzs', metal:'Metāls', reggae:'Reggae', country:'Kantrī', '80s':'80. gadi', '90s':'90. gadi'};
+const DISCOVERY_CACHE_KEY = 'minka:radio-discovery:v1';
+function readDiscoveryCache() {
+    try {
+        const c = JSON.parse(localStorage.getItem(DISCOVERY_CACHE_KEY) || 'null');
+        if (!c || Date.now() - c.t > 864e5) return null;
+        worldStats = c.stats || worldStats; worldCountries = c.countries || worldCountries;
+        discoveryGenres = c.genres || discoveryGenres; discoveryStations = Array.isArray(c.stations) ? c.stations : discoveryStations;
+        discoveryRevision++;
+        return c;
+    } catch (_) { return null; }
+}
+// Pārlūkā pārbaudīts pasaules saraksts (scripts/verify-world-radio.mjs) — rāda uzreiz.
+let discoveryVerified = [], discoveryVerifiedLoad = null;
+function loadVerifiedStations() {
+    if (!discoveryVerifiedLoad) discoveryVerifiedLoad = fetch('data/radio-world-verified.json?v=20261012rv2').then(r => r.ok ? r.json() : null)
+        .then(d => { discoveryVerified = Array.isArray(d?.stations) ? d.stations : []; discoveryRevision++; if (stationPickerSource === 'featured') renderStationPickerList(); })
+        .catch(() => { discoveryVerifiedLoad = null; });
+    return discoveryVerifiedLoad;
+}
 async function loadDiscoveryOverview(api) {
+    void loadVerifiedStations();
     if (discoveryLoaded || discoveryLoading) return;
+    const cached = readDiscoveryCache();
+    if (cached) {
+        if (stationPickerSource === 'featured') renderStationPickerList();
+        // Fresh enough: no network at all. Older than 6 h: shown now, refreshed behind.
+        if (Date.now() - cached.t < 6 * 36e5) { discoveryLoaded = true; return; }
+    }
     discoveryLoading = true;
     const results = await Promise.allSettled([api.stats(), api.countries(), api.genres(), api.search()]);
     if (results[0].status === 'fulfilled') worldStats = results[0].value;
@@ -1240,6 +1305,9 @@ async function loadDiscoveryOverview(api) {
         discoveryStations = results[3].value.items.slice(0, 40);
     }
     discoveryLoaded = results.every(r => r.status === 'fulfilled');
+    if (discoveryLoaded) {
+        try { localStorage.setItem(DISCOVERY_CACHE_KEY, JSON.stringify({ t: Date.now(), stats: worldStats, countries: worldCountries, genres: discoveryGenres, stations: discoveryStations })); } catch (_) {}
+    }
     discoveryLoading = false; discoveryRevision++;
     if (stationPickerSource === 'featured') renderStationPickerList();
 }
@@ -1253,13 +1321,19 @@ function discoveryRail(content, label, name) {
 // passed the health check in this browser. Unchecked ones wait as quiet placeholders.
 function discoveryLogoStations() {
     const featured = stationsList.filter(s => s && featuredKeys.has(radioStationKey(s)) && radioHealth.status(stationStreamUrl(s)) !== 'fail');
-    const working = discoveryStations.filter(s => radioHealth.status(stationStreamUrl(s)) === 'ok');
-    return [...featured, ...working].slice(0, DISCOVERY_SHOWN);
+    // Shown at once (no empty placeholders while streams are probed); a station
+    // that fails its check in the background simply drops out of the row.
+    // Vispirms pārlūkā pārbaudītās (neko nerāda, kas šajā pārlūkā jau neizdevās),
+    // tad populārās — tikai pēc tam, kad šis pārlūks tās pārbaudījis.
+    const keys = new Set(featured.map(radioStationKey));
+    const verified = discoveryVerified.filter(s => !keys.has(s.catalogKey) && radioHealth.status(stationStreamUrl(s)) !== 'fail');
+    verified.forEach(s => keys.add(s.catalogKey));
+    const working = discoveryStations.filter(s => !keys.has(radioStationKey(s)) && radioHealth.status(stationStreamUrl(s)) === 'ok');
+    return [...featured, ...verified, ...working].slice(0, DISCOVERY_SHOWN);
 }
 function discoveryLogosHTML(logos) {
-    const waiting = discoveryChecking || discoveryStations.some(s => !radioHealth.status(stationStreamUrl(s)));
-    const holes = waiting ? Math.max(0, Math.min(4, DISCOVERY_SHOWN - logos.length)) : 0;
-    return logos.map(station => `<button type="button" class="discovery-logo" data-discovery-play="${escapeHtml(radioStationKey(station))}" aria-label="Atskaņot ${escapeHtml(station.title)}" title="${escapeHtml(station.title)}"><span class="discovery-logo-img"><img ${stationLogoAttrs(station)} alt="" loading="lazy" decoding="async"></span><span class="discovery-logo-name">${escapeHtml(station.title)}</span></button>`).join('')
+    const holes = !logos.length && !discoveryLoaded ? 6 : 0;
+    return logos.map(station => `<button type="button" class="discovery-logo" style="--st-c:${stationCardColor(station)}" data-discovery-play="${escapeHtml(radioStationKey(station))}" aria-label="Atskaņot ${escapeHtml(station.title)}" title="${escapeHtml(station.title)}"><span class="discovery-logo-tag" aria-hidden="true">RADIO</span><span class="discovery-logo-img"><img ${stationLogoAttrs(station)} alt="" loading="lazy" decoding="async"></span><span class="discovery-logo-name">${escapeHtml(station.title)}</span></button>`).join('')
         + '<span class="discovery-logo is-checking" aria-hidden="true"><span class="discovery-logo-img"></span><span class="discovery-logo-name"></span></span>'.repeat(holes);
 }
 let discoveryRailTimer = 0;
@@ -1278,11 +1352,11 @@ async function checkDiscoveryStations() {
     discoveryChecking = true;
     try {
         const featured = stationsList.filter(s => s && featuredKeys.has(radioStationKey(s)));
-        const queue = [...featured, ...discoveryStations];
+        // Redzamās (izceltās + pārbaudītās), tad populārās, lai aizpildītu izkritušās.
+        const queue = [...featured, ...discoveryVerified.slice(0, DISCOVERY_SHOWN), ...discoveryStations].slice(0, DISCOVERY_SHOWN * 2 + 6);
         // Two checks at a time (the health queue's own limit), in popularity order.
         const worker = async () => {
             while (queue.length) {
-                if (discoveryLogoStations().length >= DISCOVERY_SHOWN) return;
                 const overlay = document.getElementById('stationOverlay');
                 if (!overlay || overlay.style.display !== 'grid' || stationPickerSource !== 'featured') return;
                 const url = stationStreamUrl(queue.shift());
@@ -1361,9 +1435,9 @@ function discoveryOverviewHTML() {
     const countries = [...(worldCountries || [])].sort((a,b) => b.count - a.count).slice(0, 20);
     const logos = discoveryLogoStations();
     return `<div class="discovery-intro"><strong>Atklāj radio</strong><span class="discovery-mouse-hint">Rindas vari vilkt ar peli ↔</span><span>${worldStats ? `${worldStats.stations.toLocaleString('lv-LV')} stacijas pasaules katalogā · ${worldStats.countries} valstis` : 'Mūzika un balsis no visas pasaules'}</span></div>
+        <section class="discovery-section"><div class="discovery-section-head"><h3>Stacijas visā pasaulē</h3><button type="button" class="discovery-link" data-discovery-all>Skatīt visas ↗</button></div>${discoveryRail(discoveryLogosHTML(logos), 'Stacijas', 'stations')}</section>
         <section class="discovery-section"><h3>Pēc žanra</h3>${discoveryRail(tags.map(t => `<button type="button" class="discovery-chip" data-discovery-genre="${escapeHtml(t.name)}"><span>${escapeHtml(DISCOVERY_GENRE_NAMES[t.name] || t.name)}</span>${t.count ? `<small>${discoveryCount(t.count)}</small>` : ''}</button>`).join(''), 'Žanri')}</section>
         <section class="discovery-section"><div class="discovery-section-head"><h3>Pēc valsts</h3><button type="button" class="discovery-link" data-discovery-countries>Visas valstis ↗</button></div>${countries.length ? discoveryRail(countries.map(c => `<button type="button" class="discovery-chip" data-discovery-country="${c.code}">${countryFlag(c.code)}<span>${escapeHtml(c.code === 'US' ? 'ASV' : c.name)}</span><small>${discoveryCount(c.count)}</small></button>`).join(''), 'Valstis') : '<span class="discovery-muted">Valstu saraksts ielādējas, vai atver “Visas valstis”.</span>'}</section>
-        <section class="discovery-section"><div class="discovery-section-head"><h3>Stacijas visā pasaulē</h3><button type="button" class="discovery-link" data-discovery-all>Skatīt visas ↗</button></div>${discoveryRail(discoveryLogosHTML(logos), 'Stacijas', 'stations')}</section>
         <div class="discovery-section-head"><h3>Izcelts klausīšanai</h3><span class="discovery-muted">Katrai savs raksturs</span></div>`;
 }
 let stationKeyPlayRequest = 0;
@@ -1372,7 +1446,7 @@ function playStationKey(key) {
     const index = stationsList.findIndex(s => s && radioStationKey(s) === key);
     if (index >= 0) { selectStation(index); return; }
     if (!/^(rb:|featured:)/.test(key)) return;
-    const known = discoveryStations.find(s => radioStationKey(s) === key);
+    const known = discoveryVerified.find(s => radioStationKey(s) === key) || discoveryStations.find(s => radioStationKey(s) === key);
     if (known) {
         installWorldStations([known]);
         const at = stationsList.findIndex(s => s && radioStationKey(s) === key);
@@ -1403,6 +1477,7 @@ function ensureWorldFavorites(favorites) {
 function countryFlag(code) {
     return /^[A-Z]{2}$/.test(code) ? `<img class="station-country-flag" src="https://flagcdn.com/w40/${code.toLowerCase()}.png" width="24" height="16" alt="" loading="lazy" decoding="async" onerror="this.hidden=true">` : '<span aria-hidden="true">🌍</span>';
 }
+const WORLD_GENRES = [['pop','Pop'],['rock','Roks'],['dance','Dance'],['electronic','Elektroniskā'],['jazz','Džezs'],['classical','Klasika'],['chillout','Chillout'],['ambient','Ambient'],['house','House'],['techno','Techno'],['trance','Trance'],['hip hop','Hiphops'],['soul','Soul'],['blues','Blūzs'],['metal','Metāls'],['reggae','Reggae'],['country','Kantrī'],['80s','80. gadi'],['90s','90. gadi'],['news','Ziņas']];
 function renderWorldCountries() {
     const controls = document.getElementById('worldStationControls');
     const list = controls?.querySelector('#worldCountryList'); if (!list) return;
@@ -1419,12 +1494,12 @@ function syncWorldPicker() {
     if (!visible) { const details = controls.querySelector('details'); if (details) details.open = false; return; }
     if (!controls.querySelector('select')) {
         controls.innerHTML = `<div class="world-directory-heading"><strong>Radio visā pasaulē</strong><span id="worldStationTotal" aria-live="polite">Katalogs no Radio Browser</span></div>
+            <div class="world-chip-row" data-world-countries role="group" aria-label="Valsts"></div>
+            <div class="world-chip-row world-genre-row" data-world-genres role="group" aria-label="Žanrs"></div>
             <div class="world-directory-filters"><details class="world-country-picker"><summary aria-label="Izvēlēties valsti"><span id="worldCountrySelected"></span><span aria-hidden="true">⌄</span></summary>
               <div class="world-country-popover"><input id="worldCountrySearch" type="search" placeholder="Meklēt valsti…" aria-label="Meklēt valsti" autocomplete="off"><div id="worldCountryList" class="world-country-list" role="group" aria-label="Valstis"></div></div>
             </details>
-            <label class="world-genre-label"><span>Žanrs</span><select id="worldStationGenre" aria-label="Stacijas žanrs"><option value="">Visi žanri</option>${[['pop','Pop'],['rock','Roks'],['dance','Dance'],['electronic','Elektroniskā'],['jazz','Džezs'],['classical','Klasika'],['chillout','Chillout'],['ambient','Ambient'],['house','House'],['techno','Techno'],['trance','Trance'],['hip hop','Hiphops'],['soul','Soul'],['blues','Blūzs'],['metal','Metāls'],['reggae','Reggae'],['country','Kantrī'],['80s','80. gadi'],['90s','90. gadi'],['news','Ziņas']].map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></label>
-            <label><span>Kvalitāte</span><select id="worldStationQuality" aria-label="Straumes kvalitāte"><option value="0">Jebkura</option><option value="128">128+ kb/s</option><option value="192">192+ kb/s</option><option value="256">256+ kb/s</option></select></label>
-            <div class="world-station-pages"><button type="button" data-world-page="prev" aria-label="Iepriekšējās stacijas">‹</button><span id="worldStationPage" aria-live="polite"></span><button type="button" data-world-page="next" aria-label="Nākamās stacijas">›</button><button type="button" data-world-retry aria-label="Atjaunot staciju katalogu">↻</button></div></div>`;
+            <div class="world-station-pages"><button type="button" data-world-page="prev" aria-label="Iepriekšējās stacijas">‹</button><span id="worldStationPage" aria-live="polite"></span><button type="button" data-world-page="next" aria-label="Nākamās stacijas">›</button></div></div>`;
         const details = controls.querySelector('details');
         details.addEventListener('toggle', () => { if (details.open) { renderWorldCountries(); controls.querySelector('#worldCountrySearch').focus(); } });
         details.addEventListener('keydown', event => { if (event.key === 'Escape' && details.open) { event.stopPropagation(); details.open = false; details.querySelector('summary').focus(); } });
@@ -1435,23 +1510,29 @@ function syncWorldPicker() {
             controls.querySelector('#worldCountrySearch').value = ''; details.querySelector('summary').focus();
             void loadWorldPage();
         });
-        controls.querySelector('#worldStationQuality').addEventListener('change', event => { worldQuality = Number(event.target.value); worldOffset = 0; void loadWorldPage(); });
-        controls.querySelector('#worldStationGenre').addEventListener('change', event => { worldGenre = event.target.value; worldOffset = 0; void loadWorldPage(); });
+        controls.addEventListener('click', event => {
+            const c = event.target.closest('[data-wc]'), g = event.target.closest('[data-wg]');
+            if (c) { worldCountry = c.dataset.wc; worldOffset = 0; void loadWorldPage(); }
+            else if (g) { worldGenre = g.dataset.wg; worldOffset = 0; void loadWorldPage(); }
+        });
         controls.querySelector('[data-world-page="prev"]').addEventListener('click', () => { worldOffset = Math.max(0, worldOffset - 60); void loadWorldPage(); });
         controls.querySelector('[data-world-page="next"]').addEventListener('click', () => { worldOffset += 60; void loadWorldPage(); });
-        controls.querySelector('[data-world-retry]').addEventListener('click', () => { worldFavoriteAttempts.clear(); failedStationLogos.clear(); ensureWorldFavorites(window.__mkUnifiedMedia?.getRadio()?.favorites || []); void loadWorldPage(); });
     }
-    const genreSelect = controls.querySelector('#worldStationGenre');
-    if (worldGenre && !Array.from(genreSelect.options).some(o => o.value === worldGenre)) { const option = document.createElement('option'); option.value = worldGenre; option.textContent = DISCOVERY_GENRE_NAMES[worldGenre] || worldGenre; genreSelect.appendChild(option); }
-    genreSelect.value = worldGenre;
-    controls.querySelector('#worldStationQuality').value = String(worldQuality);
+    // Valstis un žanri kā krāsainas pogas (Latvija vienmēr pirmā, tad lielākās).
+    const top = [...(worldCountries || [])].sort((a, b) => (b.code === 'LV') - (a.code === 'LV') || b.count - a.count).slice(0, 18);
+    if (worldCountry && !top.some(c => c.code === worldCountry)) { const extra = worldCountries?.find(c => c.code === worldCountry); if (extra) top.unshift(extra); }
+    const countryHtml = `<button type="button" data-wc="" aria-pressed="${!worldCountry}">🌍 <span>Visas</span></button>` + top.map(c => `<button type="button" data-wc="${c.code}" aria-pressed="${c.code === worldCountry}">${countryFlag(c.code)}<span>${escapeHtml(c.code === 'US' ? 'ASV' : c.name)}</span></button>`).join('');
+    const genres = WORLD_GENRES.some(([v]) => v === worldGenre) || !worldGenre ? WORLD_GENRES : [[worldGenre, DISCOVERY_GENRE_NAMES[worldGenre] || worldGenre], ...WORLD_GENRES];
+    const genreHtml = `<button type="button" data-wg="" aria-pressed="${!worldGenre}">Visi žanri</button>` + genres.map(([v, t]) => `<button type="button" data-wg="${escapeHtml(v)}" aria-pressed="${v === worldGenre}">${escapeHtml(t)}</button>`).join('');
+    const cRow = controls.querySelector('[data-world-countries]'), gRow = controls.querySelector('[data-world-genres]');
+    if (cRow.__html !== countryHtml) { cRow.__html = countryHtml; cRow.innerHTML = countryHtml; }
+    if (gRow.__html !== genreHtml) { gRow.__html = genreHtml; gRow.innerHTML = genreHtml; }
     const selected = worldCountries?.find(c => c.code === worldCountry);
-    controls.querySelector('#worldCountrySelected').innerHTML = countryFlag(worldCountry) + `<span>${escapeHtml(selected?.name || 'Visas valstis')}</span>`;
+    controls.querySelector('#worldCountrySelected').innerHTML = '🔍 <span>Meklēt valsti…</span>';
     if (worldStats) controls.querySelector('#worldStationTotal').textContent = `${worldStats.stations.toLocaleString('lv-LV')} stacijas katalogā · ${worldStats.countries} valstis`;
     if (controls.querySelector('details').open) renderWorldCountries();
     controls.querySelector('[data-world-page="prev"]').disabled = worldLoading || worldOffset === 0;
     controls.querySelector('[data-world-page="next"]').disabled = worldLoading || !worldHasNext;
-    controls.querySelector('[data-world-retry]').disabled = worldLoading;
     controls.querySelector('#worldStationPage').textContent = worldLoading ? '…' : `${Math.floor(worldOffset / 60) + 1}. lapa`;
 }
 
@@ -1573,6 +1654,9 @@ document.addEventListener('media-profile-change',()=>{
 
 function stationPickerItems() {
     const query = normalizeStationText(stationPickerQuery);
+    // Typing searches all stations whatever tab is open (a name from another tab
+    // used to look like "nothing found").
+    if (query && stationPickerSource !== 'world') return stationPickerIndex().filter(({ search }) => search.includes(query));
     return stationPickerIndex()
         .filter(({ station }) => stationPickerSource === 'featured' ? featuredKeys.has(radioStationKey(station)) : stationPickerSource === 'world' ? worldPageKeys.has(radioStationKey(station)) : stationPickerSource === 'favorites' ? (window.__mkUnifiedMedia?.getRadio()?.favorites||[]).includes(radioStationKey(station)) : stationPickerSource === 'latvija'
             ? station.group === 'latvija'
@@ -1581,7 +1665,7 @@ function stationPickerItems() {
 }
 
 const STATION_PLAY_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5a1.5 1.5 0 0 1 2.3-1.27l9 5.5a1.5 1.5 0 0 1 0 2.54l-9 5.5A1.5 1.5 0 0 1 8 16.5Z"/></svg>';
-const STATION_SELECTED_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const STATION_SELECTED_ICON = '<svg class="st-eq" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="3.4" height="14" rx="1.7"/><rect x="10.3" y="3" width="3.4" height="18" rx="1.7"/><rect x="15.6" y="7" width="3.4" height="12" rx="1.7"/></svg>';
 
 function updateStationPickerSelection() {
     const list = document.getElementById('stationPickerList');
@@ -1608,14 +1692,24 @@ function renderStationPickerList() {
     }
     list.__catalogue = stationsList;
     list.__filter = key;
+    // Pasaules filtri ritinās kopā ar stacijām (aiziet uz augšu), nevis aizņem
+    // pusi saraksta augstuma; pirms pārzīmēšanas tos izceļ ārā, pēc — ieliek atpakaļ.
+    const worldControls = document.getElementById('worldStationControls');
+    if (worldControls && list.contains(worldControls)) list.before(worldControls);
+    const placeWorldControls = () => { if (stationPickerSource === 'world' && worldControls) list.prepend(worldControls); };
     const scrollTop = list.scrollTop;
     const items = stationPickerItems();
-    if (stationPickerSource === 'world' && worldLoading) { list.innerHTML = '<div class="station-picker-empty" role="status">Ielādē stacijas…</div>'; return; }
+    if (stationPickerSource === 'world' && worldLoading) { list.innerHTML = '<div class="station-picker-empty" role="status">Ielādē stacijas…</div>'; placeWorldControls(); return; }
+    const worldSearch = stationPickerQuery.trim() && stationPickerSource !== 'world'
+        ? `<button type="button" class="station-search-world" data-search-world><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm-9 9h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3Z"/></svg><span>Meklēt „${escapeHtml(stationPickerQuery.trim())}” visā pasaulē</span><b aria-hidden="true">↗</b></button>` : '';
     if (!items.length) {
-        list.innerHTML = '<div class="station-picker-empty" role="status">' + escapeHtml(stationPickerSource === 'world' && worldError ? worldError : 'Neviena stacija neatbilst meklējumam.') + '</div>';
+        const retry = stationPickerSource === 'world' && worldError ? '<button type="button" class="station-search-world" data-world-retry>↻ <span>Mēģināt vēlreiz</span></button>' : '';
+        list.innerHTML = '<div class="station-picker-empty" role="status">' + escapeHtml(stationPickerSource === 'world' && worldError ? worldError : 'Mūsu sarakstā tādas nav.') + '</div>' + retry + worldSearch;
+        placeWorldControls();
         return;
     }
     const discovery = stationPickerSource === 'featured' && !stationPickerQuery;
+    list.dataset.mode = discovery ? 'discovery' : 'grid';
     if (discovery) void checkDiscoveryStations();
     list.innerHTML = (discovery ? discoveryOverviewHTML() + '<div class="discovery-featured-row">' : '') + items.map(({ station, index }) => {
         const isCurrent = index === currentIndex;
@@ -1623,15 +1717,16 @@ function renderStationPickerList() {
         const description = escapeHtml(station.group === 'latvija' && (!station.tooltip || station.tooltip === 'Radio Record')
             ? 'Latvijas radio' : (station.tooltip || 'Radio Record'));
         const offline = radioHealth.status(stationStreamUrl(station)) === 'fail';
-        return `<div class="station-entry"><button class="station-tile${station.group === 'latvija' ? ' station-lv' : ''}${isCurrent ? ' is-current' : ''}${offline ? ' is-offline' : ''}"
-            type="button" data-station-index="${index}" title="${title}&#10;${description}" aria-label="Atskaņot ${title}" aria-description="${description}" aria-current="${isCurrent ? 'true' : 'false'}">
+        return `<div class="station-entry"><button class="station-tile${station.group === 'latvija' ? ' station-lv' : station.group === 'world' ? ' station-world' : ''}${isCurrent ? ' is-current' : ''}${offline ? ' is-offline' : ''}"
+            type="button" style="--st-c:${stationCardColor(station)}" data-station-index="${index}" title="${title}&#10;${description}" aria-label="Atskaņot ${title}" aria-description="${description}" aria-current="${isCurrent ? 'true' : 'false'}">
             <span class="station-logo-wrap">
                 <img class="station-logo" ${stationLogoAttrs(station)} alt="" width="44" height="44" loading="lazy" decoding="async" fetchpriority="low">
             </span>
             <span class="station-copy"><strong>${title}</strong><small>${offline ? '<b class="station-offline-note">Pēdējoreiz nesasniedzama · </b>' : ''}${station.group === 'world' ? countryFlag(station.country) : ''}${description}</small></span>
             <span class="station-play-mark" aria-hidden="true">${isCurrent ? STATION_SELECTED_ICON : STATION_PLAY_ICON}</span>
         </button><button type="button" class="station-favorite" data-favorite-index="${index}" aria-pressed="false" aria-label="Pievienot favorītiem ${title}">☆</button></div>`;
-    }).join('') + (discovery ? '</div>' : '');
+    }).join('') + (discovery ? '</div>' : '') + worldSearch;
+    placeWorldControls();
     updateStationFavorites();
     list.scrollTop = scrollTop;
 }
@@ -1705,6 +1800,21 @@ function renderStationOverlay() {
         }, stationPickerSource === 'world' ? 350 : 80);
     });
     enableDiscoveryDrag(overlay.querySelector('#stationPickerList'));
+    // Uzbraucot uz stacijas, pārlūks jau atver savienojumu ar tās serveri (DNS+TLS),
+    // tāpēc pēc klikšķa skaņa sākas ātrāk. Viena <link> katram serverim.
+    const preconnected = new Set();
+    overlay.querySelector('#stationPickerList')?.addEventListener('pointerover', event => {
+        const tile = event.target.closest('[data-station-index],[data-discovery-play]');
+        if (!tile) return;
+        const key = tile.dataset.discoveryPlay;
+        const station = key ? (stationsList.find(s => s && radioStationKey(s) === key) || discoveryVerified.find(s => s.catalogKey === key) || discoveryStations.find(s => radioStationKey(s) === key))
+            : stationsList[Number(tile.dataset.stationIndex)];
+        let origin = ''; try { origin = new URL(stationStreamUrl(station)).origin; } catch (_) {}
+        if (!origin || preconnected.has(origin) || preconnected.size > 40) return;
+        preconnected.add(origin);
+        const link = document.createElement('link'); link.rel = 'preconnect'; link.href = origin; link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+    });
     overlay.querySelector('#stationPickerList')?.addEventListener('click', event => {
         const scroll = event.target.closest('[data-discovery-scroll]');
         if (scroll) { scroll.parentElement.querySelector('.discovery-rail-content').scrollBy({left:Number(scroll.dataset.discoveryScroll)*320, behavior:'smooth'}); return; }
@@ -1713,6 +1823,19 @@ function renderStationOverlay() {
             worldCountry = shortcut.dataset.discoveryCountry || ''; worldGenre = shortcut.dataset.discoveryGenre || ''; worldQuality = 0;
             overlay.querySelector('[data-station-source="world"]').click();
             if (shortcut.hasAttribute('data-discovery-countries')) overlay.querySelector('.world-country-picker').open = true;
+            return;
+        }
+        if (event.target.closest('[data-world-retry]')) {
+            worldFavoriteAttempts.clear(); failedStationLogos.clear();
+            ensureWorldFavorites(window.__mkUnifiedMedia?.getRadio()?.favorites || []); void loadWorldPage();
+            return;
+        }
+        if (event.target.closest('[data-search-world]')) {
+            const q = stationPickerQuery.trim();
+            overlay.querySelector('[data-station-source="world"]').click();
+            const search = overlay.querySelector('#stationPickerSearch');
+            if (search) search.value = q;
+            stationPickerQuery = q; worldOffset = 0; void loadWorldPage();
             return;
         }
         const preview = event.target.closest('[data-discovery-play]');
@@ -3144,6 +3267,8 @@ function focusRadio(){
       document.getElementById('radioWindow'),
       document.getElementById('pioneerPicker'),
       document.getElementById('ceqPanel'),
+      // Staciju saraksts tonēts tajā pašā albuma / skina krāsā.
+      document.getElementById('stationOverlay'),
       // The dock's radio icon wears the same accent as the player (skin / album).
       document.getElementById('radioIdleBtn'),
       document.getElementById('radioToggle')
@@ -3865,7 +3990,30 @@ function focusRadio(){
 
   // Without a profile the radio wears a different skin every time it is opened
   // (and so on every new shift) — a taste of what a profile would keep.
-  function nextGuestSpectrum(current){
+  // Katram radio skatam savi piemērotie spektri (citi tam nepiestāv); viesim tie
+  // nāk pēc kārtas, līdz katrs ir parādījies, tad cikls sākas no jauna.
+  const GUEST_VIZ_BY_LAYOUT={
+    classic:[0,3,4,7,9,10,MK_BUDDY_VIZ],   // RG pikseļu stabiņi, LED, punktu režģis, spoks
+    clean:[21,22,23,24,25,26],             // gludās M3 formas: spogulis, līnija, stabiņi, plūsma, virsotnes, vilnis
+    pioneer:[5,8,9,10,29,30],              // auto magnetola: Pioneer animācijas, VU, LED segmenti
+    pixel:[31],                            // PixelPlayer vilnis
+    amp:[23],dither:[23]                   // tiem savas vizualizācijas (ampVis / ditherVis)
+  };
+  function guestCycle(name,list,current){
+    const key='rg_radio_guest_cycle_v2:'+name;
+    let seen=[];
+    try{const stored=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(stored))seen=stored.filter(v=>list.includes(v));}catch(_){}
+    let remaining=list.filter(v=>!seen.includes(v));
+    if(!remaining.length){seen=[];remaining=list;}
+    const different=remaining.filter(v=>String(v)!==String(current));
+    const choices=different.length?different:remaining;
+    const chosen=choices[Math.floor(Math.random()*choices.length)];
+    try{localStorage.setItem(key,JSON.stringify([...seen,chosen]));}catch(_){}
+    return chosen;
+  }
+  function nextGuestSpectrum(current,layout){
+    const curated=(GUEST_VIZ_BY_LAYOUT[layout]||[]).filter(n=>n===MK_BUDDY_VIZ||VIZ_MODES.some(m=>m.idx===n));
+    if(curated.length)return guestCycle('viz:'+layout,curated,Number(current));
     const key='rg_radio_guest_spectrum_cycle_v1';
     const modes=[...new Set(VIZ_MODES.filter(m=>m.idx!==MK_NO_VIZ&&m.idx!==31).map(m=>m.idx))];
     let seen=[];
@@ -3888,10 +4036,11 @@ function focusRadio(){
     const fresh=THEMES.filter(t=>t.sv);
     const choices=layout==='pixel'?THEMES.filter(t=>t.pixel):(fresh.length?fresh:THEMES.filter(t=>!t.pixel));
     const theme=rand(choices.filter(t=>t.name!==now.theme))||choices[0]||THEMES[0];
-    const viz=layout==='pixel'?31:nextGuestSpectrum(now.viz);
+    const viz=layout==='pixel'?31:nextGuestSpectrum(now.viz,layout);
     closeProfileLook();
-    const ditherVis = rand(['bayer', 'field', 'rowled', 'torus'].filter(v => v !== now.ditherVis));
-    applyLookSettings({ ...now, theme: theme.name, layout, viz: String(viz), ditherVis, accentMode:'album',accent:theme.chip, background: '', cardName: '' });
+    const ditherVis = guestCycle('dither', ['bayer', 'field', 'rowled', 'torus'], now.ditherVis);
+    const ampVis = guestCycle('amp', ['webamp', 'classic', 'mirror', 'wave'], now.ampVis);
+    applyLookSettings({ ...now, theme: theme.name, layout, viz: String(viz), ditherVis, ampVis, accentMode:'album',accent:theme.chip, background: '', cardName: '' });
     try { syncLookControls(false); } catch (_) {}   // applyLookSettings already painted this look
   }
   // The shell consumes this on every open, including the first after reload.
@@ -4028,3 +4177,24 @@ window.MinkaShiftRadio?.attach(audio);
   window.rgListening=controller;
   document.addEventListener('rg-now-playing-art',()=>controller.metadata());
 })();
+
+/* Staciju saraksts gatavs jau pirms atvēršanas: kad pārlūks ir brīvs, ielādē
+   izcelto sarakstu, žanrus, valstis un populārās stacijas (dienu glabājas
+   pārlūkā), lai saraksts atveras uzreiz, nevis ar tukšām vietām. */
+setTimeout(() => {
+    const go = () => { try { void loadFeaturedStations(); } catch (_) {} };
+    if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 0);
+}, 2500);
+
+/* Kamēr nekas nav atskaņots, vāka vietā izvēlētās stacijas logo (nevis tukšums). */
+function mkFillIdleCover() {
+    try {
+        const c = document.getElementById('npCover'), st = stationsList[currentIndex];
+        if (!c || c.getAttribute('src') || !st) return;
+        const u = stationLogoUrl(st); if (!u) return;
+        npStationLogo = npStationLogo || u; c._mkStationLogo = u;
+        c.src = u; c.style.display = 'block'; c.style.opacity = '0.92';
+    } catch (_) {}
+}
+window.addEventListener('rg-stations-ready', mkFillIdleCover);
+setTimeout(mkFillIdleCover, 1200);

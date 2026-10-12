@@ -58,20 +58,5 @@
     "stream_64": "",
     "prefix": "",
     "coverSource": "https://www.kexp.org/static/assets/img/KEXP_ios_safari_152px.png"
-  },
-  {
-    "id": "soma-groove-salad",
-    "catalogKey": "featured:soma-groove-salad",
-    "title": "SomaFM Groove Salad",
-    "group": "world",
-    "country": "US",
-    "tooltip": "Mierīga ambient un downtempo izlase no SomaFM.",
-    "cover": "data/radio-logos/featured-soma-groove-salad.png",
-    "stream_128": "https://ice2.somafm.com/groovesalad-128-mp3",
-    "stream_320": "https://ice2.somafm.com/groovesalad-128-mp3",
-    "stream_hls": "",
-    "stream_64": "",
-    "prefix": "",
-    "coverSource": "https://somafm.com/logos/400/groovesalad400.png"
   }
 ]

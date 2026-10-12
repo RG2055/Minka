@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261012sv2';
+  var CALENDAR_BUILD = '20261012rv4';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -741,7 +741,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 <link rel="stylesheet" href="css/radio-source.css?v=20260926mo3">
 <link rel="stylesheet" href="css/radio-equalizer.css?v=20260919pixel2">
 <link rel="stylesheet" href="css/radio-pixel.css?v=20260919pixel5">
-<link rel="stylesheet" href="css/radio-deck-v1.css?v=20261012dk4">
+<link rel="stylesheet" href="css/radio-deck-v1.css?v=20261012dkq">
 <link rel="stylesheet" href="css/media-profile.css?v=20261012rd1">
 
 <style>
@@ -1015,7 +1015,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <link rel="stylesheet" href="css/mk-sys.css?v=20260926sp1">
 <script src="js/mk-motion.js?v=20260928mx11"></script>
 <!-- Station picker in M3 on the system tokens above; must follow every older picker sheet. -->
-<link rel="stylesheet" href="css/radio-picker-m3.css?v=20260925pk3">
+<link rel="stylesheet" href="css/radio-picker-m3.css?v=20261012pkg">
 <script src="js/image-palette.js?v=20260919palette2"></script>
 </head>
 <body class="radio-idle">
@@ -1261,12 +1261,11 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
       </div>
 
       <div class="control-panel">
-        <button class="station-btn station-square" onclick="toggleMenu()" title="Stations" aria-label="Stations">
+        <button class="station-btn station-square" onclick="toggleMenu()" title="Stacijas" aria-label="Stacijas">
           <svg class="station-radio-svg" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 8.5 18.5 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <rect x="3" y="8" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
-            <circle cx="8" cy="14" r="2" fill="none" stroke="currentColor" stroke-width="2"/>
-            <path d="M13 12h5M13 16h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="9" r="1.7" fill="currentColor"/>
+            <path d="M12 11 8.6 21M12 11l3.4 10M9.7 17.6h4.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8.5 5.6a4.9 4.9 0 0 0 0 6.8M15.5 5.6a4.9 4.9 0 0 1 0 6.8M5.6 2.9a8.9 8.9 0 0 0 0 12.2M18.4 2.9a8.9 8.9 0 0 1 0 12.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
           </svg>
         </button>
         <button class="viz-icon-btn" id="vizBtn" type="button" title="Pioneer animācijas" aria-label="Pioneer animācijas" aria-haspopup="dialog" aria-expanded="false">
@@ -1361,13 +1360,13 @@ async function loadRadioScripts() {
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
-  await loadAny(['js/radio-amp-layout.js?v=20261012pf2']);
-  await loadAny(['js/radio-dither-layout.js?v=20261012pf1']);
+  await loadAny(['js/radio-amp-layout.js?v=20261012st3']);
+  await loadAny(['js/radio-dither-layout.js?v=20261012st3']);
   await loadAny(['js/radio-listening.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261012sv2']);
+  await loadAny(['js/radio.js?v=20261012rv4']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;

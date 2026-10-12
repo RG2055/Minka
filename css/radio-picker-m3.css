@@ -162,3 +162,311 @@
   #stationOverlay#stationOverlay :is(.station-picker-tabs, .world-station-controls) { padding-left: 14px; padding-right: 14px; }
   #stationOverlay#stationOverlay .station-picker-list { padding: 4px 12px 14px; grid-template-columns: 1fr; }
 }
+
+/* ══ Staciju saraksts kā podkāstu / Spotify radio kartītes ══════════════════
+   Katrai stacijai sava krāsa (--st-c no JS), liels logo visā kartītes augstumā
+   kreisajā pusē, liels nosaukums. Pasaules stacijas "Atklāj" rindā: kvadrātiskas
+   krāsainas flīzes ar RADIO zīmi un apaļu logo. Žanri: krāsainas flīzes.
+   Tikai krāsas un izmēri: bez ēnām uz katras kartītes, bez blur, bez attēlu filtriem. */
+#stationOverlay#stationOverlay .station-picker-list {
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); grid-auto-rows: 88px; gap: 10px;
+}
+#stationOverlay#stationOverlay .station-tile {
+  --st-bg: color-mix(in srgb, var(--st-c, #1e3264) 72%, #0b0d12);
+  contain-intrinsic-size: auto 300px auto 88px;
+  height: 88px !important; grid-template-columns: 88px minmax(0, 1fr) 34px; gap: 12px;
+  padding: 0 14px 0 0 !important; overflow: hidden;
+  border-radius: 18px !important; background: var(--st-bg) !important; color: #fff !important;
+}
+#stationOverlay#stationOverlay .station-entry .station-tile { padding-right: 50px !important; }
+#stationOverlay#stationOverlay .station-tile:hover { background: color-mix(in srgb, var(--st-c, #1e3264) 86%, #0b0d12) !important; }
+#stationOverlay#stationOverlay .station-logo-wrap {
+  width: 88px; height: 88px; border-radius: 0; background: rgba(0, 0, 0, .22); overflow: hidden;
+}
+#stationOverlay#stationOverlay .station-logo-wrap .station-logo { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+/* pasaules favikoni ir dažādi un mazi: vesels logo uz gaišas plāksnes */
+#stationOverlay#stationOverlay .station-world .station-logo-wrap { background: #f4f5f7; }
+#stationOverlay#stationOverlay .station-world .station-logo-wrap .station-logo { object-fit: contain; padding: 12px; box-sizing: border-box; }
+#stationOverlay#stationOverlay .station-copy strong { font: 800 16px/1.2 var(--mk-font-plain, Inter, sans-serif); color: #fff; letter-spacing: -.01em; }
+#stationOverlay#stationOverlay .station-copy small { font: 600 12.5px/1.35 var(--mk-font-plain, Inter, sans-serif); color: rgba(255, 255, 255, .78); }
+#stationOverlay#stationOverlay .station-play-mark { width: 34px; height: 34px; background: #fff; color: #111; }
+#stationOverlay#stationOverlay .station-tile:hover .station-play-mark { background: #fff; color: #000; }
+#stationOverlay#stationOverlay .station-entry > .station-favorite { color: rgba(255, 255, 255, .85); }
+/* atskaņo šobrīd: balta mala + krāsa pilnā spēkā */
+#stationOverlay#stationOverlay .station-tile.is-current {
+  background: color-mix(in srgb, var(--st-c, #1e3264) 92%, #0b0d12) !important; color: #fff !important;
+  box-shadow: inset 0 0 0 3px #fff !important;
+}
+#stationOverlay#stationOverlay .station-tile.is-current .station-copy small { color: rgba(255, 255, 255, .9); }
+#stationOverlay#stationOverlay .station-tile.is-current .station-play-mark { background: #fff; color: #111; }
+#stationOverlay#stationOverlay .station-tile.is-offline { background: color-mix(in srgb, var(--st-c, #1e3264) 30%, #14171c) !important; }
+/* izcelto rinda Atklāj skatā: tās pašas kartītes, mazliet lielākas */
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-tile { height: 104px !important; grid-template-columns: 104px minmax(0, 1fr) 34px; }
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-logo-wrap { width: 104px; height: 104px; }
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-copy strong { font-size: 17px; }
+
+/* meklēšana visā pasaulē: viena skaidra poga saraksta beigās */
+#stationOverlay#stationOverlay .station-search-world {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 20px;
+  border: 0; border-radius: 18px; background: var(--pk-accent-container); color: var(--pk-on-accent-container);
+  font: 700 15px/1.2 var(--mk-font-plain, Inter, sans-serif); cursor: pointer; text-align: left;
+}
+#stationOverlay#stationOverlay .station-search-world svg { width: 22px; height: 22px; flex: 0 0 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+#stationOverlay#stationOverlay .station-search-world span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#stationOverlay#stationOverlay .station-search-world:hover { background: color-mix(in srgb, var(--pk-accent) 30%, var(--pk-accent-container)); }
+
+/* pasaules stacijas: Spotify "Popular radio" flīzes */
+#stationOverlay#stationOverlay .discovery-rail-content[data-rail="stations"] { gap: 12px; }
+#stationOverlay#stationOverlay .discovery-logo {
+  position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: space-between;
+  width: 150px; height: 150px; flex: 0 0 150px; padding: 10px 12px 12px; gap: 6px;
+  border-radius: 16px; background: color-mix(in srgb, var(--st-c, #1e3264) 82%, #0b0d12); color: #fff; overflow: hidden;
+}
+#stationOverlay#stationOverlay .discovery-logo:hover { background: var(--st-c, #1e3264); }
+#stationOverlay#stationOverlay .discovery-logo-tag { align-self: flex-end; font: 800 10px/1 var(--mk-font-plain, Inter, sans-serif); letter-spacing: .14em; color: rgba(255, 255, 255, .85); }
+#stationOverlay#stationOverlay .discovery-logo .discovery-logo-img {
+  align-self: center; width: 64px; height: 64px; border-radius: 50%; background: #f4f5f7; box-shadow: none;
+}
+#stationOverlay#stationOverlay .discovery-logo .discovery-logo-img img { object-fit: contain; padding: 8px; box-sizing: border-box; }
+#stationOverlay#stationOverlay .discovery-logo .discovery-logo-name {
+  min-height: 0; -webkit-line-clamp: 2; text-align: left; font: 800 14px/1.15 var(--mk-font-plain, Inter, sans-serif); color: #fff;
+}
+#stationOverlay#stationOverlay .discovery-logo:hover .discovery-logo-name { color: #fff; }
+#stationOverlay#stationOverlay .discovery-logo.is-checking { background: var(--pk-tile); }
+#stationOverlay#stationOverlay .discovery-logo.is-checking .discovery-logo-tag { display: none; }
+
+/* žanri: krāsainas flīzes ar lielu nosaukumu (kā Spotify "Browse all") */
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip {
+  position: relative; flex-direction: column; align-items: flex-start; justify-content: space-between;
+  width: 150px; height: 84px; flex: 0 0 150px; padding: 12px 14px; border: 0; border-radius: 14px; color: #fff;
+  font: 800 17px/1.1 var(--mk-font-plain, Inter, sans-serif);
+}
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip small { color: rgba(255, 255, 255, .8); font: 700 12px/1.2 var(--mk-font-plain, Inter, sans-serif); }
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip:nth-child(6n+1) { background: #8d67ab; }
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip:nth-child(6n+2) { background: #e8115b; }
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip:nth-child(6n+3) { background: #148a08; }
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip:nth-child(6n+4) { background: #1e3264; }
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip:nth-child(6n+5) { background: #ba5d07; }
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip:nth-child(6n)   { background: #477d95; }
+#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip:hover { filter: none; outline: 2px solid rgba(255, 255, 255, .7); outline-offset: -2px; }
+/* valstis: lielākas, karogs lielāks */
+#stationOverlay#stationOverlay [data-discovery-country].discovery-chip { min-height: 48px; padding: 8px 18px; font-size: 14px; border-radius: 14px; }
+#stationOverlay#stationOverlay .discovery-section { margin-bottom: 22px; }
+#stationOverlay#stationOverlay :is(.discovery-section h3, .discovery-section-head h3) { font: 800 17px/1.3 var(--mk-font-plain, Inter, sans-serif); margin-bottom: 10px; }
+
+/* ══ Tīrāks izvēlētais stāvoklis un Pasaules vadīklas ══════════════════════ */
+/* skan: bez baltas apmales — kartīte pilnā krāsā, baltajā aplī mazs ekvalaizers */
+#stationOverlay#stationOverlay .station-tile.is-current {
+  background: color-mix(in srgb, var(--st-c, #1e3264) 96%, #fff) !important; box-shadow: none !important;
+}
+#stationOverlay#stationOverlay .station-tile.is-current .station-copy strong::after {
+  content: "SKAN"; display: inline-block; margin-left: 8px; padding: 3px 7px 2px; border-radius: 6px; vertical-align: 2px;
+  background: rgba(0, 0, 0, .28); color: #fff; font: 800 9.5px/1 var(--mk-font-plain, Inter, sans-serif); letter-spacing: .12em;
+}
+#stationOverlay#stationOverlay .station-play-mark .st-eq { width: 18px; height: 18px; fill: currentColor; }
+#stationOverlay#stationOverlay .station-play-mark .st-eq rect { transform-box: fill-box; transform-origin: 50% 100%; animation: st-eq .9s ease-in-out infinite alternate; }
+#stationOverlay#stationOverlay .station-play-mark .st-eq rect:nth-child(2) { animation-delay: -.45s; }
+#stationOverlay#stationOverlay .station-play-mark .st-eq rect:nth-child(3) { animation-delay: -.2s; }
+@keyframes st-eq { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) { #stationOverlay#stationOverlay .station-play-mark .st-eq rect { animation: none; } }
+
+/* pasaules logo: neliela gaiša plāksnīte kartītes krāsas laukumā (nevis balts bloks) */
+#stationOverlay#stationOverlay .station-world .station-logo-wrap { display: grid; place-items: center; background: rgba(0, 0, 0, .22); }
+#stationOverlay#stationOverlay .station-world .station-logo-wrap .station-logo {
+  width: 58px; height: 58px; padding: 8px; border-radius: 14px; background: #f4f5f7; object-fit: contain; box-sizing: border-box;
+}
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-world .station-logo-wrap .station-logo { width: 66px; height: 66px; }
+
+/* avota cilnes: gludas tonētas pogas bez apmalēm */
+#stationOverlay#stationOverlay .station-picker-tabs button {
+  height: 40px; padding: 0 18px; border: 0; border-radius: 20px; background: var(--pk-tile); color: var(--pk-on);
+  font: 700 14px/1.2 var(--mk-font-plain, Inter, sans-serif);
+}
+#stationOverlay#stationOverlay .station-picker-tabs button:hover { background: var(--pk-tile-hover); }
+#stationOverlay#stationOverlay .station-picker-tabs button.active,
+#stationOverlay#stationOverlay .station-picker-tabs button[aria-selected="true"] { background: var(--pk-accent); color: var(--pk-on-accent); }
+#stationOverlay#stationOverlay .station-picker-tabs button span { opacity: .7; }
+
+/* Pasaules filtri: tonētas "pill" izvēlnes ar savu bultiņu */
+#stationOverlay#stationOverlay :is(.world-station-controls select, .world-country-picker summary) {
+  -webkit-appearance: none; appearance: none; min-height: 44px; padding: 0 40px 0 16px; border: 0; border-radius: 22px;
+  background-color: var(--pk-tile-hover); color: var(--pk-on); font: 600 14px/1.2 var(--mk-font-plain, Inter, sans-serif); cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a9b3c1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; background-size: 16px;
+}
+#stationOverlay#stationOverlay .world-country-picker summary > span[aria-hidden="true"] { display: none; }
+#stationOverlay#stationOverlay :is(.world-station-controls select, .world-country-picker summary):hover { background-color: color-mix(in srgb, var(--pk-on) 12%, var(--pk-tile-hover)); }
+#stationOverlay#stationOverlay .world-station-pages button {
+  min-width: 44px; min-height: 44px; border: 0; border-radius: 22px; background: var(--pk-tile-hover); color: var(--pk-on); font-size: 18px;
+}
+#stationOverlay#stationOverlay .world-station-pages button:disabled { opacity: .35; }
+#stationOverlay#stationOverlay .world-directory-heading strong { font: 800 17px/1.3 var(--mk-font-plain, Inter, sans-serif); }
+
+/* ══ Visas stacijas kā Spotify "RADIO" flīzes (kvadrāts) — vairāk redzams uzreiz ══
+   Krāsaina flīze, augšā RADIO (vai SKAN ar ekvalaizeru), vidū apaļš logo,
+   apakšā liels nosaukums; zvaigzne augšējā kreisajā stūrī, play parādās virs. */
+#stationOverlay#stationOverlay .station-picker-list {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; grid-auto-rows: auto !important; gap: 12px !important;
+}
+#stationOverlay#stationOverlay .station-entry { position: relative; aspect-ratio: 1; min-width: 0; }
+#stationOverlay#stationOverlay .station-tile,
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-tile {
+  contain-intrinsic-size: auto 150px auto 150px;
+  position: relative; display: flex !important; flex-direction: column; align-items: stretch; justify-content: flex-end;
+  width: 100%; height: 100% !important; aspect-ratio: 1; padding: 12px 12px 12px !important; gap: 0;
+  border-radius: 14px !important; overflow: hidden; text-align: left;
+  background: color-mix(in srgb, var(--st-c, #1e3264) 82%, #0b0d12) !important;
+}
+#stationOverlay#stationOverlay .station-entry .station-tile { padding-right: 12px !important; }
+#stationOverlay#stationOverlay .station-tile:hover { background: var(--st-c, #1e3264) !important; }
+#stationOverlay#stationOverlay .station-tile::before {
+  content: "RADIO"; position: absolute; top: 11px; right: 12px;
+  font: 800 10px/1 var(--mk-font-plain, Inter, sans-serif); letter-spacing: .14em; color: rgba(255, 255, 255, .85);
+}
+#stationOverlay#stationOverlay .station-tile .station-logo-wrap,
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-tile .station-logo-wrap,
+#stationOverlay#stationOverlay .station-world .station-logo-wrap {
+  position: absolute; left: 50%; top: 46%; width: 50%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; background: rgba(0, 0, 0, .25); overflow: hidden; display: block;
+}
+#stationOverlay#stationOverlay .station-tile .station-logo-wrap .station-logo { width: 100%; height: 100%; padding: 0; border-radius: 50%; object-fit: cover; background: none; }
+#stationOverlay#stationOverlay .station-world .station-logo-wrap { background: #f4f5f7; }
+#stationOverlay#stationOverlay .station-world .station-logo-wrap .station-logo,
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-world .station-logo-wrap .station-logo {
+  width: 100%; height: 100%; padding: 16%; border-radius: 50%; object-fit: contain; background: none; box-sizing: border-box;
+}
+#stationOverlay#stationOverlay .station-tile .station-copy { position: relative; z-index: 1; display: block; min-width: 0; }
+#stationOverlay#stationOverlay .station-tile .station-copy strong,
+#stationOverlay#stationOverlay[data-station-view="featured"] .station-copy strong {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; white-space: normal;
+  font: 800 15px/1.15 var(--mk-font-plain, Inter, sans-serif); color: #fff; letter-spacing: -.01em;
+}
+#stationOverlay#stationOverlay .station-tile .station-copy small { display: none; }
+/* play: mazs balts aplis virs logo labajā pusē, redzams uz hover un skanošajai */
+#stationOverlay#stationOverlay .station-tile .station-play-mark {
+  position: absolute; right: 10px; top: calc(46% + 14%); width: 34px; height: 34px; z-index: 2;
+  background: #fff; color: #111; opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s;
+}
+#stationOverlay#stationOverlay .station-tile:is(:hover, :focus-visible, .is-current) .station-play-mark { opacity: 1; transform: none; }
+/* skan: tā pati flīze pilnā krāsā, augšā SKAN */
+#stationOverlay#stationOverlay .station-tile.is-current { background: var(--st-c, #1e3264) !important; box-shadow: none !important; }
+#stationOverlay#stationOverlay .station-tile.is-current::before { content: "SKAN"; color: #fff; }
+#stationOverlay#stationOverlay .station-tile.is-current .station-copy strong::after { content: none; }
+#stationOverlay#stationOverlay .station-tile.is-offline { background: color-mix(in srgb, var(--st-c, #1e3264) 30%, #14171c) !important; }
+/* zvaigzne: augšējā kreisajā stūrī virs flīzes */
+#stationOverlay#stationOverlay .station-entry > .station-favorite {
+  position: absolute; top: 4px; left: 4px; right: auto; z-index: 3; min-width: 32px; min-height: 32px; width: 32px; height: 32px;
+  display: grid; place-items: center; padding: 0; font-size: 18px; color: rgba(255, 255, 255, .85); background: transparent; transform: none;
+}
+#stationOverlay#stationOverlay .station-entry > .station-favorite:hover { background: rgba(0, 0, 0, .25); color: #fff; }
+/* izcelto rinda Atklāj skatā: tās pašas flīzes */
+#stationOverlay#stationOverlay .discovery-featured-row .station-entry { flex: 0 0 150px !important; width: 150px; }
+@media (max-width: 640px) {
+  #stationOverlay#stationOverlay .station-picker-list { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important; }
+}
+
+#stationOverlay#stationOverlay .station-picker-list[data-mode="grid"] { display: grid !important; align-content: start; }
+
+/* ══ Viss saraksts tonēts albuma / skina krāsā (--radio-accent no radio.js) ══ */
+#stationOverlay#stationOverlay {
+  --pk-tint: var(--radio-accent, #64d2ff);
+  --pk-surface: color-mix(in srgb, var(--pk-tint) 13%, #101318);
+  --pk-tile: color-mix(in srgb, var(--pk-tint) 17%, #181c23);
+  --pk-tile-hover: color-mix(in srgb, var(--pk-tint) 26%, #1f242c);
+  --pk-outline: color-mix(in srgb, var(--pk-tint) 24%, #262c36);
+  --pk-accent: color-mix(in srgb, var(--pk-tint) 82%, #fff);
+  --pk-on-accent: #0b0d10;
+  --pk-accent-container: color-mix(in srgb, var(--pk-tint) 34%, #161a20);
+  --pk-on-accent-container: #fff;
+  --pk-on-var: color-mix(in srgb, var(--pk-tint) 22%, #b4bcc8);
+  background: var(--pk-surface) !important;
+  border-color: color-mix(in srgb, var(--pk-tint) 38%, transparent) !important;
+}
+#stationOverlay#stationOverlay .station-picker-search { background: var(--pk-tile-hover); }
+#stationOverlay#stationOverlay .station-picker-search:focus-within { outline-color: var(--pk-accent); }
+
+/* skaitļi: lielāki un akcenta krāsā */
+#stationOverlay#stationOverlay :is(#worldStationTotal, .discovery-intro > span:not(.discovery-mouse-hint)) {
+  font: 700 15px/1.3 var(--mk-font-plain, Inter, sans-serif); color: var(--pk-accent); font-variant-numeric: tabular-nums;
+}
+#stationOverlay#stationOverlay .discovery-mouse-hint { font: 600 12px/1.3 var(--mk-font-plain, Inter, sans-serif); color: var(--pk-on-var); }
+
+/* lapas: skaidri pamanāma "Nākamā lapa" poga, lapas numurs kā plāksnīte */
+#stationOverlay#stationOverlay .world-station-pages { gap: 8px; align-items: center; }
+#stationOverlay#stationOverlay #worldStationPage {
+  min-width: 72px; padding: 0 14px; height: 44px; display: inline-grid; place-items: center; border-radius: 22px;
+  background: var(--pk-tile); color: #fff; font: 800 15px/1 var(--mk-font-plain, Inter, sans-serif); font-variant-numeric: tabular-nums;
+}
+#stationOverlay#stationOverlay .world-station-pages [data-world-page="next"] {
+  min-width: 0; padding: 0 18px 0 20px; display: inline-flex; align-items: center; gap: 8px;
+  background: var(--pk-accent); color: var(--pk-on-accent); font: 800 15px/1 var(--mk-font-plain, Inter, sans-serif);
+}
+#stationOverlay#stationOverlay .world-station-pages [data-world-page="next"]::before { content: "Nākamā lapa"; }
+#stationOverlay#stationOverlay .world-station-pages [data-world-page="next"]:hover { background: #fff; }
+#stationOverlay#stationOverlay .world-station-pages [data-world-page="prev"] { background: var(--pk-tile-hover); color: #fff; font-size: 20px; }
+#stationOverlay#stationOverlay .world-station-pages button:disabled { opacity: .3; }
+
+/* Pasaules filtri: valstis un žanri kā ritināmas pogu rindas (bez nolaižamām izvēlnēm) */
+#stationOverlay#stationOverlay .world-chip-row {
+  display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px; scrollbar-width: none; overscroll-behavior-x: contain;
+}
+#stationOverlay#stationOverlay .world-chip-row::-webkit-scrollbar { display: none; }
+#stationOverlay#stationOverlay .world-chip-row button {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px;
+  border: 0; border-radius: 21px; background: var(--pk-tile-hover); color: #fff; cursor: pointer;
+  font: 700 14px/1 var(--mk-font-plain, Inter, sans-serif); white-space: nowrap;
+}
+#stationOverlay#stationOverlay .world-chip-row button:hover { background: color-mix(in srgb, var(--pk-tint) 36%, #252a33); }
+#stationOverlay#stationOverlay .world-chip-row button[aria-pressed="true"] { background: var(--pk-accent); color: var(--pk-on-accent); }
+/* žanri: katram sava krāsa (kā flīzes Atklāj skatā), izvēlētais balts */
+#stationOverlay#stationOverlay .world-genre-row button:nth-child(6n+2) { background: #8d67ab; }
+#stationOverlay#stationOverlay .world-genre-row button:nth-child(6n+3) { background: #c4126a; }
+#stationOverlay#stationOverlay .world-genre-row button:nth-child(6n+4) { background: #148a08; }
+#stationOverlay#stationOverlay .world-genre-row button:nth-child(6n+5) { background: #1e3264; }
+#stationOverlay#stationOverlay .world-genre-row button:nth-child(6n)   { background: #b4570a; }
+#stationOverlay#stationOverlay .world-genre-row button:nth-child(6n+1):not(:first-child) { background: #3d6f86; }
+#stationOverlay#stationOverlay .world-genre-row button[aria-pressed="true"] { background: #fff !important; color: #111 !important; }
+#stationOverlay#stationOverlay .world-directory-filters { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+/* ══ Saraksts kalendāra vietā: kalendārs izgaist, saraksts aizņem tā rāmi ══
+   M3 kustība: aiziet ar "emphasized accelerate", atgriežas ar "emphasized
+   decelerate". Kad izgaisis, kalendārs ir visibility:hidden — vājš dators to
+   nezīmē zem saraksta. Tikai opacity/transform (kompozitors). */
+@media (min-width: 900px) {
+  #calendarEmbed > iframe {
+    transform-origin: 50% 35%;
+    transition: opacity .4s cubic-bezier(.05, .7, .1, 1), transform .5s cubic-bezier(.05, .7, .1, 1), visibility 0s;
+  }
+  html.mk-stations-full #calendarEmbed > iframe {
+    opacity: 0; transform: scale(.96); visibility: hidden; pointer-events: none;
+    transition: opacity .2s cubic-bezier(.3, 0, .8, .15), transform .25s cubic-bezier(.3, 0, .8, .15), visibility 0s .25s;
+  }
+  html.mk-stations-full #stationOverlay#stationOverlay { border-radius: 28px !important; }
+  html.mk-stations-full #stationOverlay#stationOverlay .station-picker-list { padding: 6px 22px 24px; }
+  html.mk-stations-full #stationOverlay#stationOverlay .station-picker-list { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #calendarEmbed > iframe, html.mk-stations-full #calendarEmbed > iframe { transform: none !important; transition: opacity .15s linear, visibility 0s !important; }
+}
+
+/* Pasaule: filtri ir saraksta iekšā (ritinās prom), valstis un žanri pārnesas
+   jaunās rindās — ritina tikai uz leju, arī ar parastu peli uz Windows. */
+#stationOverlay#stationOverlay .station-picker-list > #worldStationControls { grid-column: 1 / -1; padding: 0 0 6px; }
+#stationOverlay#stationOverlay .world-chip-row { flex-wrap: wrap; overflow: visible; padding: 0 0 10px; }
+#stationOverlay#stationOverlay .world-chip-row button { height: 38px; padding: 0 14px; font-size: 13.5px; }
+
+/* Saraksta augšā: tumša augšdaļa, tonēts horizonts zem cilnēm un pa vidu plāna
+   daudzlīniju skaņas viļņa lente. Viss SVG/CSS, bez attēliem. */
+#stationOverlay#stationOverlay#stationOverlay {
+  --pk-horizon: 136px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 80' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='white' stroke-width='0.7' stroke-opacity='0.55'%3E%3Cpath d='M0,40.0 L8,40.1 L16,40.2 L24,40.4 L32,40.5 L40,40.6 L48,40.7 L56,40.8 L64,41.0 L72,41.3 L80,41.5 L88,41.5 L96,41.1 L104,40.2 L112,39.0 L120,37.7 L128,36.5 L136,35.7 L144,35.2 L152,34.5 L160,33.5 L168,32.0 L176,30.4 L184,29.5 L192,30.2 L200,33.0 L208,37.7 L216,43.5 L224,48.9 L232,52.8 L240,55.0 L248,56.2 L256,57.5 L264,59.8 L272,63.2 L280,66.3 L288,67.1 L296,64.1 L304,56.9 L312,46.7 L320,36.0 L328,27.4 L336,22.2 L344,20.1 L352,19.6 L360,19.0 L368,17.1 L376,14.5 L384,12.6 L392,13.4 L400,17.6 L408,24.8 L416,33.4 L424,41.1 L432,46.6 L440,49.3 L448,49.9 L456,49.7 L464,49.6 L472,50.0 L480,50.7 L488,50.8 L496,49.9 L504,47.9 L512,45.1 L520,42.4 L528,40.1 L536,38.8 L544,38.2 L552,38.2 L560,38.3 L568,38.3 L576,38.3 L584,38.3 L592,38.4 L600,38.6 L608,38.9 L616,39.3 L624,39.7 L632,39.9 L640,40.1'/%3E%3Cpath d='M0,40.1 L8,40.2 L16,40.3 L24,40.4 L32,40.5 L40,40.5 L48,40.6 L56,40.8 L64,41.0 L72,41.2 L80,41.3 L88,41.0 L96,40.4 L104,39.4 L112,38.2 L120,37.1 L128,36.2 L136,35.7 L144,35.3 L152,34.6 L160,33.6 L168,32.2 L176,31.1 L184,31.1 L192,33.0 L200,36.8 L208,42.0 L216,47.4 L224,51.7 L232,54.3 L240,55.5 L248,56.2 L256,57.6 L264,60.1 L272,63.1 L280,64.8 L288,63.4 L296,57.9 L304,48.8 L312,38.2 L320,28.7 L328,22.3 L336,19.5 L344,19.0 L352,19.1 L360,18.3 L368,16.2 L376,14.1 L384,13.8 L392,16.6 L400,22.9 L408,31.3 L416,39.7 L424,46.2 L432,49.9 L440,51.1 L448,50.7 L456,50.2 L464,50.2 L472,50.7 L480,51.0 L488,50.5 L496,48.8 L504,46.2 L512,43.2 L520,40.6 L528,38.8 L536,37.9 L544,37.8 L552,37.9 L560,38.1 L568,38.2 L576,38.2 L584,38.2 L592,38.4 L600,38.7 L608,39.2 L616,39.6 L624,39.9 L632,40.1 L640,40.2'/%3E%3Cpath d='M0,40.1 L8,40.2 L16,40.3 L24,40.4 L32,40.4 L40,40.5 L48,40.6 L56,40.7 L64,40.9 L72,41.0 L80,40.9 L88,40.5 L96,39.7 L104,38.7 L112,37.6 L120,36.7 L128,36.2 L136,35.9 L144,35.5 L152,34.8 L160,33.7 L168,32.6 L176,32.2 L184,33.3 L192,36.2 L200,40.7 L208,45.9 L216,50.4 L224,53.4 L232,54.8 L240,55.2 L248,55.8 L256,57.4 L264,60.0 L272,62.1 L280,62.0 L288,58.2 L296,50.6 L304,40.5 L312,30.6 L320,23.1 L328,19.2 L336,18.4 L344,18.9 L352,19.1 L360,17.9 L368,15.9 L376,14.8 L384,16.3 L392,21.4 L400,29.2 L408,37.9 L416,45.4 L424,50.3 L432,52.1 L440,52.0 L448,51.1 L456,50.5 L464,50.7 L472,51.0 L480,50.9 L488,49.6 L496,47.2 L504,44.1 L512,41.1 L520,38.9 L528,37.7 L536,37.3 L544,37.5 L552,37.8 L560,38.0 L568,38.1 L576,38.1 L584,38.2 L592,38.5 L600,38.9 L608,39.4 L616,39.8 L624,40.1 L632,40.2 L640,40.2'/%3E%3Cpath d='M0,40.2 L8,40.2 L16,40.3 L24,40.4 L32,40.4 L40,40.4 L48,40.6 L56,40.7 L64,40.8 L72,40.8 L80,40.5 L88,39.9 L96,39.1 L104,38.1 L112,37.2 L120,36.6 L128,36.3 L136,36.1 L144,35.8 L152,35.0 L160,34.1 L168,33.4 L176,33.9 L184,35.9 L192,39.6 L200,44.3 L208,48.9 L216,52.3 L224,54.0 L232,54.4 L240,54.4 L248,55.2 L256,57.1 L264,59.3 L272,60.1 L280,57.9 L288,51.9 L296,42.8 L304,32.9 L312,24.4 L320,19.4 L328,17.8 L336,18.5 L344,19.5 L352,19.3 L360,17.8 L368,16.3 L376,16.7 L384,20.3 L392,27.2 L400,35.9 L408,44.2 L416,50.1 L424,53.0 L432,53.2 L440,52.1 L448,51.0 L456,50.7 L464,50.9 L472,51.0 L480,50.2 L488,48.2 L496,45.1 L504,41.9 L512,39.2 L520,37.5 L528,36.9 L536,37.0 L544,37.4 L552,37.7 L560,37.9 L568,38.0 L576,38.1 L584,38.3 L592,38.7 L600,39.2 L608,39.7 L616,40.0 L624,40.2 L632,40.3 L640,40.3'/%3E%3Cpath d='M0,40.2 L8,40.2 L16,40.3 L24,40.3 L32,40.3 L40,40.4 L48,40.5 L56,40.6 L64,40.6 L72,40.5 L80,40.1 L88,39.4 L96,38.5 L104,37.7 L112,37.1 L120,36.8 L128,36.7 L136,36.5 L144,36.0 L152,35.3 L160,34.6 L168,34.6 L176,35.9 L184,38.7 L192,42.9 L200,47.3 L208,51.0 L216,53.2 L224,53.7 L232,53.4 L240,53.5 L248,54.6 L256,56.4 L264,57.8 L272,57.0 L280,52.6 L288,44.9 L296,35.3 L304,26.3 L312,20.1 L320,17.6 L328,18.0 L336,19.5 L344,20.3 L352,19.7 L360,18.2 L368,17.7 L376,20.0 L384,25.6 L392,33.8 L400,42.5 L408,49.5 L416,53.5 L424,54.5 L432,53.4 L440,51.8 L448,50.9 L456,50.8 L464,50.9 L472,50.5 L480,48.9 L488,46.2 L496,42.8 L504,39.7 L512,37.5 L520,36.5 L528,36.5 L536,36.9 L544,37.4 L552,37.7 L560,37.8 L568,37.9 L576,38.1 L584,38.5 L592,39.0 L600,39.5 L608,40.0 L616,40.2 L624,40.3 L632,40.3 L640,40.3'/%3E%3Cpath d='M0,40.2 L8,40.2 L16,40.3 L24,40.3 L32,40.3 L40,40.4 L48,40.5 L56,40.5 L64,40.4 L72,40.2 L80,39.6 L88,38.9 L96,38.1 L104,37.5 L112,37.2 L120,37.1 L128,37.0 L136,36.8 L144,36.3 L152,35.7 L160,35.4 L168,36.1 L176,38.2 L184,41.6 L192,45.7 L200,49.5 L208,52.1 L216,53.0 L224,52.7 L232,52.2 L240,52.5 L248,53.8 L256,55.3 L264,55.5 L272,52.7 L280,46.5 L288,37.8 L296,28.6 L304,21.5 L312,17.8 L320,17.5 L328,19.3 L336,21.0 L344,21.3 L352,20.3 L360,19.3 L368,20.3 L376,24.5 L384,31.7 L392,40.5 L400,48.4 L408,53.6 L416,55.5 L424,54.8 L432,52.9 L440,51.3 L448,50.6 L456,50.7 L464,50.6 L472,49.5 L480,47.1 L488,43.8 L496,40.4 L504,37.7 L512,36.2 L520,35.9 L528,36.3 L536,37.0 L544,37.5 L552,37.7 L560,37.8 L568,38.0 L576,38.3 L584,38.8 L592,39.3 L600,39.9 L608,40.2 L616,40.4 L624,40.4 L632,40.3 L640,40.3'/%3E%3Cpath d='M0,40.2 L8,40.2 L16,40.2 L24,40.2 L32,40.3 L40,40.3 L48,40.4 L56,40.4 L64,40.2 L72,39.8 L80,39.2 L88,38.6 L96,37.9 L104,37.5 L112,37.4 L120,37.5 L128,37.4 L136,37.2 L144,36.7 L152,36.3 L160,36.5 L168,37.9 L176,40.6 L184,44.2 L192,48.0 L200,50.8 L208,52.1 L216,52.0 L224,51.2 L232,50.9 L240,51.5 L248,52.9 L256,53.7 L264,52.3 L272,47.7 L280,40.1 L288,31.2 L296,23.3 L304,18.5 L312,17.3 L320,18.8 L328,21.2 L336,22.5 L344,22.3 L352,21.2 L360,21.2 L368,24.0 L376,30.0 L384,38.3 L392,46.8 L400,53.1 L408,56.2 L416,56.1 L424,54.1 L432,51.9 L440,50.6 L448,50.3 L456,50.4 L464,49.8 L472,47.9 L480,44.8 L488,41.3 L496,38.1 L504,36.1 L512,35.4 L520,35.7 L528,36.4 L536,37.1 L544,37.6 L552,37.7 L560,37.8 L568,38.1 L576,38.5 L584,39.1 L592,39.7 L600,40.2 L608,40.4 L616,40.5 L624,40.4 L632,40.3 L640,40.3'/%3E%3Cpath d='M0,40.2 L8,40.2 L16,40.2 L24,40.2 L32,40.2 L40,40.3 L48,40.3 L56,40.2 L64,40.0 L72,39.5 L80,38.9 L88,38.3 L96,37.9 L104,37.7 L112,37.8 L120,37.9 L128,37.8 L136,37.5 L144,37.1 L152,37.0 L160,37.8 L168,39.8 L176,42.9 L184,46.4 L192,49.4 L200,51.2 L208,51.4 L216,50.5 L224,49.7 L232,49.6 L240,50.6 L248,51.6 L256,51.3 L264,48.2 L272,42.0 L280,33.8 L288,25.7 L296,19.8 L304,17.5 L312,18.5 L320,21.1 L328,23.4 L336,24.1 L344,23.3 L352,22.7 L360,24.1 L368,28.7 L376,36.2 L384,44.8 L392,52.1 L400,56.4 L408,57.2 L416,55.5 L424,52.9 L432,50.8 L440,50.0 L448,49.9 L456,49.7 L464,48.4 L472,45.8 L480,42.2 L488,38.7 L496,36.2 L504,35.0 L512,35.0 L520,35.8 L528,36.7 L536,37.3 L544,37.6 L552,37.8 L560,37.9 L568,38.3 L576,38.9 L584,39.5 L592,40.1 L600,40.5 L608,40.6 L616,40.5 L624,40.4 L632,40.3 L640,40.2'/%3E%3Cpath d='M0,40.1 L8,40.1 L16,40.1 L24,40.2 L32,40.2 L40,40.2 L48,40.2 L56,40.0 L64,39.7 L72,39.2 L80,38.7 L88,38.2 L96,38.0 L104,38.0 L112,38.2 L120,38.3 L128,38.1 L136,37.8 L144,37.6 L152,37.9 L160,39.3 L168,41.8 L176,44.9 L184,48.0 L192,50.0 L200,50.6 L208,50.0 L216,48.8 L224,48.2 L232,48.5 L240,49.5 L248,49.9 L256,48.2 L264,43.5 L272,36.3 L280,28.3 L288,21.6 L296,18.2 L304,18.3 L312,20.8 L320,23.8 L328,25.5 L336,25.4 L344,24.6 L352,25.0 L360,28.1 L368,34.3 L376,42.5 L384,50.5 L392,56.0 L400,58.0 L408,56.8 L416,54.0 L424,51.3 L432,49.7 L440,49.4 L448,49.4 L456,48.6 L464,46.5 L472,43.2 L480,39.6 L488,36.5 L496,34.7 L504,34.4 L512,35.0 L520,36.1 L528,37.0 L536,37.5 L544,37.7 L552,37.9 L560,38.1 L568,38.7 L576,39.3 L584,40.0 L592,40.4 L600,40.7 L608,40.7 L616,40.6 L624,40.4 L632,40.3 L640,40.2'/%3E%3Cpath d='M0,40.1 L8,40.1 L16,40.1 L24,40.1 L32,40.2 L40,40.2 L48,40.1 L56,39.8 L64,39.5 L72,39.0 L80,38.6 L88,38.3 L96,38.3 L104,38.4 L112,38.6 L120,38.6 L128,38.4 L136,38.1 L144,38.2 L152,39.0 L160,40.9 L168,43.6 L176,46.5 L184,48.8 L192,49.8 L200,49.4 L208,48.2 L216,47.1 L224,46.9 L232,47.6 L240,48.3 L248,47.6 L256,44.4 L264,38.5 L272,31.0 L280,24.0 L288,19.4 L296,18.4 L304,20.5 L312,23.8 L320,26.5 L328,27.3 L336,26.7 L344,26.3 L352,28.0 L360,32.9 L368,40.3 L376,48.5 L384,55.1 L392,58.3 L400,58.0 L408,55.4 L416,52.1 L424,49.7 L432,48.8 L440,48.8 L448,48.5 L456,47.0 L464,44.2 L472,40.5 L480,37.0 L488,34.7 L496,33.8 L504,34.3 L512,35.4 L520,36.6 L528,37.4 L536,37.7 L544,37.8 L552,38.0 L560,38.4 L568,39.1 L576,39.8 L584,40.4 L592,40.7 L600,40.8 L608,40.7 L616,40.5 L624,40.4 L632,40.3 L640,40.2'/%3E%3Cpath d='M0,40.1 L8,40.1 L16,40.1 L24,40.1 L32,40.1 L40,40.1 L48,39.9 L56,39.7 L64,39.3 L72,38.9 L80,38.6 L88,38.5 L96,38.6 L104,38.8 L112,38.9 L120,38.9 L128,38.7 L136,38.6 L144,39.0 L152,40.3 L160,42.4 L168,45.1 L176,47.4 L184,48.8 L192,48.9 L200,47.8 L208,46.4 L216,45.6 L224,45.8 L232,46.6 L240,46.7 L248,44.8 L256,40.3 L264,33.6 L272,26.6 L280,21.2 L288,19.0 L296,20.3 L304,23.6 L312,27.0 L320,28.8 L328,28.8 L336,28.1 L344,28.6 L352,31.9 L360,38.2 L368,46.2 L376,53.5 L384,58.1 L392,58.9 L400,56.7 L408,53.1 L416,50.0 L424,48.3 L432,48.0 L440,48.0 L448,47.2 L456,45.0 L464,41.5 L472,37.8 L480,34.9 L488,33.4 L496,33.5 L504,34.6 L512,36.0 L520,37.1 L528,37.7 L536,37.8 L544,38.0 L552,38.3 L560,38.9 L568,39.6 L576,40.3 L584,40.7 L592,40.9 L600,40.8 L608,40.7 L616,40.5 L624,40.3 L632,40.2 L640,40.2'/%3E%3Cpath d='M0,40.1 L8,40.1 L16,40.1 L24,40.1 L32,40.1 L40,40.0 L48,39.8 L56,39.5 L64,39.1 L72,38.9 L80,38.7 L88,38.8 L96,39.0 L104,39.2 L112,39.2 L120,39.1 L128,38.9 L136,39.1 L144,39.9 L152,41.5 L160,43.8 L168,46.1 L176,47.7 L184,48.2 L192,47.4 L200,46.0 L208,44.8 L216,44.4 L224,45.0 L232,45.5 L240,44.7 L248,41.5 L256,36.0 L264,29.3 L272,23.4 L280,20.2 L288,20.4 L296,23.3 L304,27.1 L312,29.9 L320,30.8 L328,30.2 L336,29.8 L344,31.7 L352,36.5 L360,43.8 L368,51.5 L376,57.1 L384,59.3 L392,57.9 L400,54.4 L408,50.6 L416,48.0 L424,47.2 L432,47.3 L440,47.0 L448,45.5 L456,42.5 L464,38.8 L472,35.4 L480,33.3 L488,32.9 L496,33.8 L504,35.3 L512,36.7 L520,37.6 L528,37.9 L536,38.0 L544,38.2 L552,38.6 L560,39.4 L568,40.1 L576,40.7 L584,41.0 L592,41.0 L600,40.8 L608,40.6 L616,40.4 L624,40.3 L632,40.2 L640,40.2'/%3E%3Cpath d='M0,40.0 L8,40.0 L16,40.0 L24,40.0 L32,40.0 L40,39.9 L48,39.7 L56,39.4 L64,39.1 L72,38.9 L80,38.9 L88,39.1 L96,39.3 L104,39.4 L112,39.4 L120,39.3 L128,39.2 L136,39.7 L144,40.8 L152,42.7 L160,44.8 L168,46.6 L176,47.4 L184,47.0 L192,45.7 L200,44.2 L208,43.4 L216,43.5 L224,44.1 L232,44.1 L240,42.2 L248,38.0 L256,32.0 L264,25.9 L272,21.8 L280,20.8 L288,23.0 L296,26.9 L304,30.5 L312,32.3 L320,32.2 L328,31.5 L336,32.0 L344,35.4 L352,41.6 L360,49.1 L368,55.6 L376,59.1 L384,58.8 L392,55.7 L400,51.5 L408,48.1 L416,46.4 L424,46.3 L432,46.5 L440,45.7 L448,43.4 L456,39.8 L464,36.1 L472,33.4 L480,32.4 L488,33.0 L496,34.5 L504,36.2 L512,37.4 L520,38.0 L528,38.1 L536,38.2 L544,38.5 L552,39.1 L560,39.9 L568,40.6 L576,41.0 L584,41.2 L592,41.0 L600,40.7 L608,40.5 L616,40.3 L624,40.2 L632,40.2 L640,40.2'/%3E%3Cpath d='M0,40.0 L8,40.0 L16,40.0 L24,40.0 L32,39.9 L40,39.8 L48,39.6 L56,39.3 L64,39.1 L72,39.1 L80,39.2 L88,39.4 L96,39.6 L104,39.7 L112,39.6 L120,39.5 L128,39.6 L136,40.3 L144,41.8 L152,43.6 L160,45.4 L168,46.5 L176,46.5 L184,45.4 L192,43.9 L200,42.7 L208,42.4 L216,42.9 L224,43.3 L232,42.4 L240,39.5 L248,34.5 L256,28.6 L264,23.9 L272,21.8 L280,23.0 L288,26.6 L296,30.7 L304,33.5 L312,34.1 L320,33.4 L328,33.0 L336,34.8 L344,39.6 L352,46.5 L360,53.5 L368,58.2 L376,59.3 L384,56.9 L392,52.6 L400,48.4 L408,45.9 L416,45.3 L424,45.6 L432,45.5 L440,43.9 L448,40.9 L456,37.1 L464,33.9 L472,32.2 L480,32.2 L488,33.6 L496,35.5 L504,37.1 L512,38.0 L520,38.3 L528,38.3 L536,38.4 L544,38.9 L552,39.7 L560,40.5 L568,41.0 L576,41.3 L584,41.2 L592,40.9 L600,40.6 L608,40.4 L616,40.3 L624,40.2 L632,40.2 L640,40.2'/%3E%3Cpath d='M0,40.0 L8,40.0 L16,40.0 L24,40.0 L32,39.9 L40,39.7 L48,39.5 L56,39.3 L64,39.2 L72,39.3 L80,39.4 L88,39.7 L96,39.8 L104,39.8 L112,39.7 L120,39.7 L128,40.1 L136,41.1 L144,42.6 L152,44.3 L160,45.6 L168,45.9 L176,45.2 L184,43.7 L192,42.3 L200,41.6 L208,41.7 L216,42.3 L224,42.2 L232,40.4 L240,36.6 L248,31.3 L256,26.3 L264,23.3 L272,23.4 L280,26.3 L288,30.5 L296,34.1 L304,35.7 L312,35.3 L320,34.4 L328,34.9 L336,38.1 L344,44.1 L352,51.1 L360,56.7 L368,59.1 L376,57.8 L384,53.8 L392,49.2 L400,45.7 L408,44.3 L416,44.5 L424,44.9 L432,44.2 L440,41.8 L448,38.3 L456,34.7 L464,32.3 L472,31.7 L480,32.7 L488,34.7 L496,36.7 L504,37.9 L512,38.4 L520,38.5 L528,38.5 L536,38.8 L544,39.4 L552,40.2 L560,41.0 L568,41.4 L576,41.4 L584,41.1 L592,40.8 L600,40.5 L608,40.3 L616,40.2 L624,40.2 L632,40.2 L640,40.1'/%3E%3Cpath d='M0,40.0 L8,40.0 L16,40.0 L24,39.9 L32,39.8 L40,39.6 L48,39.5 L56,39.3 L64,39.4 L72,39.5 L80,39.7 L88,39.9 L96,40.0 L104,39.9 L112,39.8 L120,39.9 L128,40.6 L136,41.7 L144,43.2 L152,44.6 L160,45.2 L168,44.9 L176,43.6 L184,42.1 L192,41.0 L200,40.8 L208,41.3 L216,41.7 L224,40.9 L232,38.2 L240,33.8 L248,28.8 L256,25.1 L264,24.1 L272,26.1 L280,30.1 L288,34.2 L296,36.8 L304,37.1 L312,36.1 L320,35.5 L328,37.3 L336,41.9 L344,48.4 L352,54.6 L360,58.3 L368,58.3 L376,55.0 L384,50.2 L392,45.9 L400,43.6 L408,43.3 L416,43.9 L424,44.0 L432,42.5 L440,39.4 L448,35.7 L456,32.7 L464,31.4 L472,32.0 L480,33.8 L488,36.0 L496,37.7 L504,38.6 L512,38.7 L520,38.6 L528,38.7 L536,39.2 L544,40.0 L552,40.8 L560,41.4 L568,41.5 L576,41.3 L584,41.0 L592,40.6 L600,40.3 L608,40.2 L616,40.2 L624,40.2 L632,40.2 L640,40.1'/%3E%3C/g%3E%3C/svg%3E") center top calc(var(--pk-horizon) - 34px) / min(900px, 72%) 68px no-repeat,
+    linear-gradient(180deg, transparent 0 var(--pk-horizon),
+      color-mix(in srgb, var(--pk-tint) 42%, #2a1d10) var(--pk-horizon),
+      color-mix(in srgb, var(--pk-tint) 26%, var(--pk-surface)) calc(var(--pk-horizon) + 46px),
+      var(--pk-surface) calc(var(--pk-horizon) + 96px)),
+    color-mix(in srgb, var(--pk-surface) 70%, #000) !important;
+  background-blend-mode: normal !important;
+}
+/* saturs sākas zem viļņa lentes, lai teksts nekrīt uz tās */
+#stationOverlay#stationOverlay .station-picker-list { padding-top: 30px !important; }

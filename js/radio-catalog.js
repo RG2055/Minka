@@ -82,7 +82,7 @@
     }
     let featuredRequest = null;
     function featured() {
-        if (!featuredRequest) featuredRequest = fetch('data/radio-featured.json?v=20260910').then(r => {
+        if (!featuredRequest) featuredRequest = fetch('data/radio-featured.json?v=20261012rv1').then(r => {
             if (!r.ok) throw new Error('Neizdevās ielādēt staciju izlasi.');
             return r.json();
         }).catch(error => { featuredRequest = null; throw error; });
