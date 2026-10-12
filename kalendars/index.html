@@ -1415,7 +1415,7 @@ window.addEventListener('message', function(e) {
   document.addEventListener('click', function(){ requestAnimationFrame(syncSearchOverlay); }, true);
 })();
 </script>
-<link rel="stylesheet" id="mk-layer-fix-v1" href="css/page/mk-layer-fix-v1.css?v=20260929hg1">
+<link rel="stylesheet" id="mk-layer-fix-v1" href="css/page/mk-layer-fix-v1.css?v=20261012rd2">
 <script src="js/page/header-groups.js?v=20260928hx2"></script>
 <script>
 /* Mobile: make the statistics launcher resilient to transformed bottom nav taps. */
@@ -1920,12 +1920,13 @@ html.host-radio-open body #grafiks-list.grid-view .cards-section.rg-mood-pullup 
   margin: 0 !important;
   pointer-events: auto !important;
 }
+/* Square like everywhere else: the faces are drawn for 1:1 and scale with the card. */
 html.host-radio-open body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
   width: 100% !important;
   min-width: 0 !important;
-  min-height: 112px !important;
-  max-height: 132px !important;
-  aspect-ratio: 1 / .86 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 1 / 1 !important;
 }
 html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk-mid-card {
   display: none !important;
@@ -1937,8 +1938,8 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
     gap: 8px !important;
   }
   html.host-radio-open body #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
-    min-height: 104px !important;
-    max-height: 112px !important;
+    min-height: 0 !important;
+    max-height: none !important;
   }
 }
 </style>
@@ -1950,6 +1951,9 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <link rel="stylesheet" id="mk-integrated-duty-header-v1" href="css/page/mk-integrated-duty-header-v1.css?v=20260924perf1">
 
 <script id="mk-integrated-duty-header-js-v1" src="js/page/mk-integrated-duty-header.js?v=20260926rad3"></script>
+<!-- Cover Flow: the roster as one turning row of square cards while the radio is open (desktop). -->
+<link rel="stylesheet" id="mk-radio-coverflow" href="css/page/radio-coverflow.css?v=20261012cf7">
+<script src="js/page/radio-coverflow.js?v=20261012cf8" defer></script>
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->

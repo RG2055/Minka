@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261012rd1';
+  var CALENDAR_BUILD = '20261012cf8';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1372,6 +1372,27 @@ async function loadRadioScripts() {
   _radioScriptsLoading = false;
   return true;
 }
+/* A cold first open (scripts not pre-warmed yet, mostly the slower PCs) used
+   to start the reveal at once and load radio.js under it: its look and size
+   then landed mid-flight, the window jumped and seemed to fly in twice. Now
+   the button shows it heard the click, the scripts (and the appearance
+   module) come in first, and the window flies once, already in its look. */
+function mkRadioReady(btn) {
+  if (_radioScriptsLoaded && window.rgTheme) return Promise.resolve();
+  if (btn) btn.classList.add('dk-loading');
+  return loadRadioScripts().catch(function (err) { console.error(err); }).then(function () {
+    if (window.rgTheme) return;
+    return new Promise(function (resolve) {
+      var t = setTimeout(resolve, 500);
+      window.addEventListener('rg-theme-ready', function () { clearTimeout(t); resolve(); }, { once: true });
+    });
+  }).then(function () {
+    if (btn) btn.classList.remove('dk-loading');
+    // One frame for the applied look to be laid out before the window is
+    // measured (a timer too: no frames come while the tab is hidden).
+    return new Promise(function (resolve) { requestAnimationFrame(function () { resolve(); }); setTimeout(resolve, 60); });
+  });
+}
 
 </script>
 
@@ -1676,9 +1697,9 @@ function toggleRadio() {
     // Update toggle label
     document.getElementById('radioToggleLabel').textContent = 'RADIO';
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    mkRadioReveal.run(true);
-    // Pre-warm normally has these in; if not, load them in parallel with the reveal.
-    if (!_radioScriptsLoaded) loadRadioScripts().catch(function (err) { console.error(err); });
+    // Pre-warm normally has the scripts in (no wait); a cold open loads first.
+    if (_radioScriptsLoaded && window.rgTheme) mkRadioReveal.run(true);
+    else mkRadioReady(document.getElementById('radioToggle')).then(function () { if (!mkRadioReveal.logicalOpen()) mkRadioReveal.run(true); });
   } else {
     // Close the music engine as well when its shared shell is hidden.
     if (window.setRadioSource) window.setRadioSource('radio');
@@ -1700,11 +1721,15 @@ function radioIdleClick() {
   try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
   const rw = document.getElementById('radioWindow');
   if (rw) rw.style.display = '';
-  if (!(reveal && reveal.run(true))) {
-    document.body.classList.remove('radio-idle');
-    document.body.classList.remove('radio-hidden');
-    syncShellLayout();
-  }
+  // The window flies once, in its final look (a cold open loads the scripts first).
+  mkRadioReady(btn).then(function () {
+    if (window.__mkRadioSupersededByLacitis) return;
+    if (!(reveal && reveal.run(true))) {
+      document.body.classList.remove('radio-idle');
+      document.body.classList.remove('radio-hidden');
+      syncShellLayout();
+    }
+  });
 
   loadRadioScripts().then(function() {
     function tryStart() {
@@ -5552,6 +5577,10 @@ html[data-dock-bar="rezgis"] #dockShelf #bottomBtnBar > .dock-bg{--dock-art:url(
 #dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle) .dock-px rect[fill="#34d399"]{fill:var(--radio-ico)}
 #dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle) .dock-px rect[fill="#a7f3d0"]{fill:color-mix(in srgb,var(--radio-ico) 45%,#fff)}
 #dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle) .dock-alt{--ico-col:var(--radio-ico)}
+/* Cold first open: the icon breathes while the radio loads (mkRadioReady). */
+#dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle).dk-loading :is(.dock-px,.dock-alt){animation:mk-dk-load 900ms cubic-bezier(.2,0,0,1) infinite alternate}
+@keyframes mk-dk-load{from{opacity:1}to{opacity:.45}}
+@media (prefers-reduced-motion:reduce){#dockShelf #bottomBtnBar :is(#radioIdleBtn,#radioToggle).dk-loading :is(.dock-px,.dock-alt){animation:none;opacity:.6}}
 </style>
 <script>
 /* One icon everywhere: a window's header shows the same icon as the dock

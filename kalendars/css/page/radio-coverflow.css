@@ -1,0 +1,108 @@
+/* Cover Flow while the radio is open (desktop): the roster becomes one row of
+   square cards, the middle one facing you, the others turned away on both
+   sides, like the old iPod. js/page/radio-coverflow.js places each card with a
+   single transform (compositor only: no layout, no filters, no reflections),
+   so it stays light on old work PCs. Without the script the roster keeps the
+   square grid from kalendars/index.html. */
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view {
+  position: relative !important;
+  display: block !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  perspective: 1100px;
+  perspective-origin: 50% var(--cf-cy, 50%);
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .cards-section,
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .cards-section > .cards-subgrid {
+  display: contents !important;
+}
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .cards-section-label,
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .cards-divider,
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .rg-feedback-card {
+  display: none !important;
+}
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
+  position: absolute !important;
+  top: var(--cf-cy, 50%) !important;
+  left: 50% !important;
+  width: var(--cf-size, 200px) !important;
+  height: var(--cf-size, 200px) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: calc(var(--cf-size, 200px) / -2) 0 0 calc(var(--cf-size, 200px) / -2) !important;
+  translate: none !important;
+  scale: none !important;
+  rotate: none !important;
+  transform-origin: 50% 50%;
+  transition: transform 420ms cubic-bezier(.2, 0, 0, 1) !important;
+  cursor: pointer;
+}
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card.mk-cf-center { cursor: default; }
+/* Beyond four on each side: not drawn at all. */
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card.mk-cf-far {
+  visibility: hidden !important;
+}
+/* A card jumping round the ring (from one end to the other) moves unseen. */
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card.mk-cf-jump { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) { transition: none !important; }
+}
+/* Things drawn from a card's screen box (charms carried outside the list, the
+   daily cat on a card) would be left behind by the turning cards. */
+html.host-radio-open.mk-cf body > .mk-card-addon-portal { display: none !important; }
+html.host-radio-open.mk-cf .mk-daily-cat-pet { visibility: hidden !important; }
+
+/* Previous / next: small M3 tonal buttons at the row's ends. */
+.mk-cf-nav { display: none; }
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav {
+  position: absolute;
+  top: var(--cf-cy, 50%);
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--hxr-surface, #1a2026) 70%, #0b0e13);
+  color: color-mix(in srgb, var(--hxr-accent, #c8d3e2) 70%, #fff);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .35), inset 0 0 0 1px rgba(255, 255, 255, .08);
+  cursor: pointer;
+  opacity: .78;
+  transition: opacity 160ms cubic-bezier(.2, 0, 0, 1), background-color 160ms cubic-bezier(.2, 0, 0, 1);
+}
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav:hover { opacity: 1; background: color-mix(in srgb, var(--hxr-surface, #1a2026) 55%, #1d232b); }
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav:focus-visible { outline: 2px solid var(--hxr-accent, #c8d3e2); outline-offset: 2px; }
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav svg { width: 22px; height: 22px; }
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-prev { left: 12px; }
+html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-next { right: 12px; }
+
+/* Side columns with the radio open: a short window leaves them ~100-300 px,
+   less than two full cards (their fatigue bars and footer are 120+ px), so
+   only the top of one or two people showed. While that little room is left,
+   each side card keeps its name, shift and fatigue ring, and its fatigue
+   bars become one thin strip under them (the footer waits); the column
+   scrolls. With room for two full cards they stay as they are. */
+html.host-radio-open body #grafiks-app .side-panel .duty-vertical { container: mk-side-col / size; }
+@container mk-side-col (max-height: 300px) {
+  html body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card > .mk-side-nfoot { display: none !important; }
+  html body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card > .mk-side-ticks {
+    display: flex !important; align-items: flex-end !important; gap: 2px !important;
+    height: 18px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 10px 6px !important;
+    overflow: hidden !important; -webkit-mask-image: none !important; mask-image: none !important;
+  }
+  html body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card > .mk-side-ticks > i {
+    flex: 1 1 0 !important; min-width: 0 !important; width: auto !important; margin: 0 !important;
+    height: calc(2px + var(--hr, var(--h, .3)) * 10px) !important; border-radius: 1px !important;
+  }
+  html body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card > .mk-side-ticks > :is(.mk-side-tick-tip, .mk-side-tick-pin) { display: none !important; }
+}

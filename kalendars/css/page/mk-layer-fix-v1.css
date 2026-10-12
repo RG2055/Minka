@@ -781,10 +781,13 @@
   gap: 7px !important;
   padding-bottom: 12px !important;
 }
-:root.host-radio-open .card {
-  min-height: 106px !important;
-  max-height: 122px !important;
-  aspect-ratio: 1 / 0.86 !important;
+/* The cards are drawn for a square (watch faces scale with the card): with
+   the radio open they stay 1:1, only smaller by the denser grid above. The
+   old 1 / 0.86 with a 122 px cap squeezed them and cut their content. */
+:root.host-radio-open .card:not(.rg-feedback-card) {
+  min-height: 0 !important;
+  max-height: none !important;
+  aspect-ratio: 1 / 1 !important;
 }
 :root.host-radio-open .card .card-top {
   padding: 5px 6px 0 !important;
