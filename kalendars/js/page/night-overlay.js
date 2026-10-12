@@ -187,6 +187,11 @@
       clearTimeout(_nsParkTimer);
       _nsParkTimer=setTimeout(function(){ if(!_nsOpen) overlay.classList.add('ns-parked'); }, 1500);
       try { if(window.__ns && typeof window.__ns.warmImages==='function') window.__ns.warmImages(); } catch(_e) {}
+      // Fit the rooms and beds once too (the open does it again, cheaply, at the panel's final size).
+      requestAnimationFrame(function(){
+        if(_nsOpen || !window.__ns) return;
+        try { if(typeof window.__ns._update==='function') window.__ns._update(); } catch(_e) {}
+      });
     }, { timeout: 8000 });
   }, 6000);
 

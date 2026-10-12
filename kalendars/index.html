@@ -1078,7 +1078,7 @@ document.addEventListener('keydown', (e) => {
   </div>
 </div>
 
-<script src="js/page/night-overlay.js?v=20261012nw1"></script>
+<script src="js/page/night-overlay.js?v=20261012nw2"></script>
 <!-- /rad night (radiologists, residents, beds); does nothing for the radiographers -->
 <script src="js/rad-night.js?v=20260926rn14"></script>
 
@@ -1341,7 +1341,19 @@ window.addEventListener('message', function(e) {
       chipIcon.setAttribute('aria-hidden', 'true');
     }
     if (root && !root.__mkRadioObs) {
-      root.__mkRadioObs = new MutationObserver(queueLayoutSync);
+      // These root classes only pause or flag visuals (Nakts motion, the statistics hiding the
+      // weather) and leave the layout as it was; re-fitting the duty panels for them cost a ~37 ms
+      // forced layout on every Nakts open. Any other class change still re-fits.
+      var VISUAL_ONLY = { 'ns-motion-active': 1, 'ns-dragging': 1, 'minka-visuals-hidden': 1, 'mk-weather-paused': 1 };
+      var lastRootClasses = root.className.split(/\s+/);
+      root.__mkRadioObs = new MutationObserver(function(){
+        var now = root.className.split(/\s+/);
+        var changed = now.filter(function(c){ return lastRootClasses.indexOf(c) < 0; })
+          .concat(lastRootClasses.filter(function(c){ return now.indexOf(c) < 0; }));
+        lastRootClasses = now;
+        if (changed.length && changed.every(function(c){ return VISUAL_ONLY[c]; })) return;
+        queueLayoutSync();
+      });
       root.__mkRadioObs.observe(root, { attributes:true, attributeFilter:['class'] });
       window.addEventListener('resize', queueLayoutSync, { passive:true });
       document.querySelectorAll('#radiographers-duty, #radiologists-duty').forEach(function(el){
