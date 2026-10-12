@@ -34,7 +34,7 @@
         dialog = document.createElement('dialog'); dialog.className = 'minka-eq';
         dialog.setAttribute('aria-label', 'Ekvalaizers');
         dialog.innerHTML = `<header><div><span class="minka-eq-kicker">Tava skaņa</span><h2>Ekvalaizers</h2></div><button type="button" data-close aria-label="Aizvērt ekvalaizeru">×</button></header>
-          <div class="minka-eq-switch"><label><input type="checkbox" data-enable> Ieslēgts</label><span>10 joslas · ±12 dB</span></div>
+          <div class="minka-eq-switch"><label><input type="checkbox" data-enable> Ieslēgts</label><span>10 joslas, ±12 dB</span></div>
           <div class="minka-eq-presets" role="group" aria-label="Skaņas preseti">${Object.entries(window.MinkaEqualizer.presets).map(([id, p]) => `<button type="button" data-preset="${id}" aria-pressed="false">${p.label}</button>`).join('')}</div>
           <svg class="minka-eq-curve" viewBox="-2 0 104 50" preserveAspectRatio="none" aria-hidden="true"><path d="M0 25H100"/><polyline fill="none"/></svg>
           <div class="minka-eq-bands">${window.MinkaEqualizer.bands.map((hz, i) => `<label><span>${hz >= 1000 ? hz / 1000 + 'k' : hz}</span><input type="range" orient="vertical" min="-12" max="12" step="1" value="0" data-band="${i}" aria-label="${hz} herci"><output>0</output></label>`).join('')}</div>

@@ -4,7 +4,7 @@
  let setup, catalog, catalogRequest, dialog, list, status, search, category='Visi', observer, stylesReady;
  const inlineGalleries=new Map();
  const base='data/pioneer/', key='mkRadioPioneer';
- const original={id:'original',label:'Delfīns · oriģināls',category:'Oriģināls',color:false,frames:60};
+ const original={id:'original',label:'Delfīns (oriģināls)',category:'Oriģināls',color:false,frames:60};
  let selected=original, selectedId='original';
  try{selectedId=localStorage.getItem(key)||'original';}catch(_){}
  const poster=clip=>base+clip.id+'-poster.webp';
@@ -87,7 +87,7 @@
   image.style.display=active?'block':'none';image.style.opacity=active?'1':'0';
   syncMeter(active,running);if(selected.levels)image.style.display='none';
   setup.button.classList.toggle('active',active);
-  setup.button.setAttribute('aria-label','Pioneer animācijas'+(active?' · '+selected.label:''));
+  setup.button.setAttribute('aria-label','Pioneer animācijas'+(active?': '+selected.label:''));
   for(const container of inlineGalleries.keys())for(const button of container.querySelectorAll('[data-clip]'))button.setAttribute('aria-pressed',String(active&&button.dataset.clip===selected.id));
   if(list)for(const button of list.querySelectorAll('[data-clip]'))button.setAttribute('aria-pressed',String(active&&button.dataset.clip===selected.id));
   window.rgPioneerLayout?.syncMatrix?.();
@@ -106,7 +106,7 @@
   const clip=catalog?.find(c=>c.id===id);if(!clip)return;
   selected=clip;selectedId=id;try{localStorage.setItem(key,id);}catch(_){}
   setup.selectMode();sync();
-  if(status)status.textContent=clip.label+(clip.category==='Indikatori'?' · Bass un augšējās frekvences':'');
+  if(status)status.textContent=clip.label+(clip.category==='Indikatori'?': bass un augšējās frekvences':'');
  }
  function render(){
   observer?.disconnect();list.replaceChildren();

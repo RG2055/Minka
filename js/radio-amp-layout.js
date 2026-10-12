@@ -336,7 +336,7 @@
   els.eqOn.setAttribute('aria-pressed',String(snap.enabled));
   els.autoBtn.setAttribute('aria-pressed',String(snap.auto));
   const match=Object.entries(PRESETS).find(([,p])=>p.g.every((v,i)=>v===snap.gains[i]));
-  els.presetBtn.title=match?'Preseti · '+match[1].label:'Preseti';
+  els.presetBtn.title=match?'Preseti: '+match[1].label:'Preseti';
   panes.eq.classList.toggle('is-off',!snap.enabled);
   drawCurve();
  }

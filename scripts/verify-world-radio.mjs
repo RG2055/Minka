@@ -122,7 +122,7 @@ order.forEach(i => {
   const favicon = String(row.favicon || '').trim().replace(/^http:\/\//i, 'https://');
   out.push({
     id: row.stationuuid, catalogKey: 'rb:' + row.stationuuid, title: cleanTitle(name), group: 'world', country,
-    tooltip: [countryName(country), String(row.tags || '').split(',').filter(Boolean).slice(0, 3).join(', ')].filter(Boolean).join(' · '),
+    tooltip: [countryName(country), String(row.tags || '').split(',').filter(Boolean).slice(0, 3).join(', ')].filter(Boolean).join(': '),
     cover: favicon.startsWith('https://') ? favicon : '', stream_320: url, stream_128: url, stream_hls: '', stream_64: '', prefix: '',
     codec: String(row.codec || '').slice(0, 20), bitrate: Number(row.bitrate) || 0, verifiedMs: res.ms
   });

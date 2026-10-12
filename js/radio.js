@@ -19,6 +19,8 @@ const modernBaseMode = mode => mode === MK_FLOW_VIZ ? 4 : mode - 20;
 // cliamp termināļa spektri (github.com/bjarneo/cliamp, MIT): tikai Pioneer un Pixel skatiem.
 const MK_TERM_VIZ = {40:'stereo',41:'mirror',42:'retro',43:'terrain',44:'flame',45:'barsdot',46:'redsector'};
 const MK_TERM_BY_LAYOUT = {pioneer:[40,41,42,43],pixel:[44,45,46]};
+// "no 241 valsts", "no 200 valstīm" (skaitlis ar galā 1, bet ne 11 – vienskaitlis).
+const countriesFrom = n => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'valsts' : 'valstīm'}`;
 const isTermViz = mode => mode >= 40 && mode <= 46;
 const termVizFor = layout => MK_TERM_BY_LAYOUT[layout] || [];
 function mkLoadCliamp(){
@@ -845,7 +847,7 @@ let pioneerPlayerPromise = null;
 function ensurePioneerPlayer() {
     if (!pioneerPlayerPromise) pioneerPlayerPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/radio-pioneer.js?v=20260910oel1';
+        script.src = 'js/radio-pioneer.js?v=20261012dot1';
         script.onload = () => {
             window.rgPioneer.init({image:dGif, button:document.getElementById('vizBtn'), audio,
                 isActive:() => vizStyle === 5, getAnalyser:() => analyser,
@@ -1258,7 +1260,7 @@ function loadWorldCatalog() {
     if (worldCatalogLoad) return worldCatalogLoad;
     worldCatalogLoad = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        script.src = 'js/radio-catalog.js?v=20261012rv1';
+        script.src = 'js/radio-catalog.js?v=20261012dot1';
         script.onload = () => resolve(window.rgRadioCatalog);
         script.onerror = () => { script.remove(); worldCatalogLoad = null; reject(new Error('Neizdevās ielādēt staciju katalogu.')); };
         document.head.appendChild(script);
@@ -1313,7 +1315,7 @@ function readDiscoveryCache() {
 // Pārlūkā pārbaudīts pasaules saraksts (scripts/verify-world-radio.mjs) — rāda uzreiz.
 let discoveryVerified = [], discoveryVerifiedLoad = null;
 function loadVerifiedStations() {
-    if (!discoveryVerifiedLoad) discoveryVerifiedLoad = fetch('data/radio-world-verified.json?v=20261012rv2').then(r => r.ok ? r.json() : null)
+    if (!discoveryVerifiedLoad) discoveryVerifiedLoad = fetch('data/radio-world-verified.json?v=20261012dot1').then(r => r.ok ? r.json() : null)
         .then(d => { discoveryVerified = Array.isArray(d?.stations) ? d.stations : []; discoveryRevision++; if (stationPickerSource === 'featured') renderStationPickerList(); })
         .catch(() => { discoveryVerifiedLoad = null; });
     return discoveryVerifiedLoad;
@@ -1466,7 +1468,7 @@ function discoveryOverviewHTML() {
     const tags = knownGenres.length ? knownGenres : Object.keys(DISCOVERY_GENRE_NAMES).slice(0, 12).map(name => ({name}));
     const countries = [...(worldCountries || [])].sort((a,b) => b.count - a.count).slice(0, 20);
     const logos = discoveryLogoStations();
-    return `<div class="discovery-intro"><strong>Atklāj radio</strong><span class="discovery-mouse-hint">Rindas vari vilkt ar peli ↔</span><span>${worldStats ? `${worldStats.stations.toLocaleString('lv-LV')} stacijas pasaules katalogā · ${worldStats.countries} valstis` : 'Mūzika un balsis no visas pasaules'}</span></div>
+    return `<div class="discovery-intro"><strong>Atklāj radio</strong><span class="discovery-mouse-hint">Rindas vari vilkt ar peli ↔</span><span>${worldStats ? `${worldStats.stations.toLocaleString('lv-LV')} stacijas no ${countriesFrom(worldStats.countries)} pasaules katalogā` : 'Mūzika un balsis no visas pasaules'}</span></div>
         <section class="discovery-section"><div class="discovery-section-head"><h3>Stacijas visā pasaulē</h3><button type="button" class="discovery-link" data-discovery-all>Skatīt visas ↗</button></div>${discoveryRail(discoveryLogosHTML(logos), 'Stacijas', 'stations')}</section>
         <section class="discovery-section"><h3>Pēc žanra</h3>${discoveryRail(tags.map(t => `<button type="button" class="discovery-chip" data-discovery-genre="${escapeHtml(t.name)}"><span>${escapeHtml(DISCOVERY_GENRE_NAMES[t.name] || t.name)}</span>${t.count ? `<small>${discoveryCount(t.count)}</small>` : ''}</button>`).join(''), 'Žanri')}</section>
         <section class="discovery-section"><div class="discovery-section-head"><h3>Pēc valsts</h3><button type="button" class="discovery-link" data-discovery-countries>Visas valstis ↗</button></div>${countries.length ? discoveryRail(countries.map(c => `<button type="button" class="discovery-chip" data-discovery-country="${c.code}">${countryFlag(c.code)}<span>${escapeHtml(c.code === 'US' ? 'ASV' : c.name)}</span><small>${discoveryCount(c.count)}</small></button>`).join(''), 'Valstis') : '<span class="discovery-muted">Valstu saraksts ielādējas, vai atver “Visas valstis”.</span>'}</section>
@@ -1561,7 +1563,7 @@ function syncWorldPicker() {
     if (gRow.__html !== genreHtml) { gRow.__html = genreHtml; gRow.innerHTML = genreHtml; }
     const selected = worldCountries?.find(c => c.code === worldCountry);
     controls.querySelector('#worldCountrySelected').innerHTML = '🔍 <span>Meklēt valsti…</span>';
-    if (worldStats) controls.querySelector('#worldStationTotal').textContent = `${worldStats.stations.toLocaleString('lv-LV')} stacijas katalogā · ${worldStats.countries} valstis`;
+    if (worldStats) controls.querySelector('#worldStationTotal').textContent = `${worldStats.stations.toLocaleString('lv-LV')} stacijas no ${countriesFrom(worldStats.countries)}`;
     if (controls.querySelector('details').open) renderWorldCountries();
     controls.querySelector('[data-world-page="prev"]').disabled = worldLoading || worldOffset === 0;
     controls.querySelector('[data-world-page="next"]').disabled = worldLoading || !worldHasNext;
@@ -1754,7 +1756,7 @@ function renderStationPickerList() {
             <span class="station-logo-wrap">
                 <img class="station-logo" ${stationLogoAttrs(station)} alt="" width="44" height="44" loading="lazy" decoding="async" fetchpriority="low">
             </span>
-            <span class="station-copy"><strong>${title}</strong><small>${offline ? '<b class="station-offline-note">Pēdējoreiz nesasniedzama · </b>' : ''}${station.group === 'world' ? countryFlag(station.country) : ''}${description}</small></span>
+            <span class="station-copy"><strong>${title}</strong><small>${offline ? '<b class="station-offline-note">Pēdējoreiz nesasniedzama</b>' : ''}${station.group === 'world' ? countryFlag(station.country) : ''}${description}</small></span>
             <span class="station-play-mark" aria-hidden="true">${isCurrent ? STATION_SELECTED_ICON : STATION_PLAY_ICON}</span>
         </button><button type="button" class="station-favorite" data-favorite-index="${index}" aria-pressed="false" aria-label="Pievienot favorītiem ${title}">☆</button></div>`;
     }).join('') + (discovery ? '</div>' : '') + worldSearch;
@@ -3199,7 +3201,7 @@ function focusRadio(){
   ].forEach(([name,description,file,chip])=>THEMES.push({sv:true,name,description,chip,surfaceRGB:[8,14,18],vars:{},image:`kalendars/data/radio-skins/${file}.webp`,preview:`kalendars/data/radio-skins/${file}-preview.webp`}));
 
   THEMES.push(...(window.rgPixel?.palettes||[]).map(p=>({
-    name:'Pixel · '+p.name,description:'Krāsains korpuss · Pixel vilnis',chip:p.accent,
+    name:'Pixel · '+p.name,description:'Krāsains korpuss ar Pixel vilni',chip:p.accent,
     surfaceRGB:p.surface.slice(1).match(/../g).map(v=>parseInt(v,16)),
     background:`linear-gradient(120deg,${p.surface} 55%,${p.accent})`,pixel:p
   })));

@@ -19,7 +19,7 @@
         const country = /^[A-Z]{2}$/.test(row.countrycode) ? row.countrycode : '';
         return { id: row.stationuuid, catalogKey: 'rb:' + row.stationuuid,
             title: String(row.name).trim().slice(0, 180), group: 'world', country,
-            tooltip: [countryName(country), String(row.tags || '').split(',').filter(Boolean).slice(0, 3).join(', ')].filter(Boolean).join(' · '),
+            tooltip: [countryName(country), String(row.tags || '').split(',').filter(Boolean).slice(0, 3).join(', ')].filter(Boolean).join(': '),
             // http: favicons are fetched over https (as Chrome would upgrade
             // them on this https page anyway) instead of being dropped.
             cover: safeURL(String(row.favicon || '').trim().replace(/^http:\/\//i, 'https://')), stream_320: url, stream_128: url,
