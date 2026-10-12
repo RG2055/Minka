@@ -1106,7 +1106,9 @@ async function route(request, env, ctx) {
     // keeps this device's best for the day. Only today or yesterday (Riga), a sane score, a plain name.
     if (url.pathname === "/api/candy" && (method === "GET" || method === "POST")) {
       if (!env.DB) return json(request, { ok: false, error: "no database" }, 503);
-      const riga = (ms) => new Date(ms + 3 * 3600000).toISOString().slice(0, 10);
+      // Riga's calendar day in summer and winter time alike (as the gallery's own rigaDay)
+      const rigaFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Riga", year: "numeric", month: "2-digit", day: "2-digit" });
+      const riga = (ms) => rigaFmt.format(ms);
       const okDay = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && (d === riga(Date.now()) || d === riga(Date.now() - 86400000));
       const voter = (await sha256Hex("candy:" + (request.headers.get("authorization") || ""))).slice(0, 32);
       if (method === "GET") {

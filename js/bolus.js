@@ -217,6 +217,12 @@
     if (now.getHours() < 8) s.setDate(s.getDate() - 1);
     return s.getTime();
   }
+  // The night the clocks go back, 03:00-03:59 happens twice and new Date() picks the
+  // first; a bolus time is in the past, so the second one, once it has passed, is meant.
+  function _laterIfRepeated(ts) {
+    var a = new Date(ts), b = new Date(ts + 3600000);
+    return b.getHours() === a.getHours() && b.getMinutes() === a.getMinutes() && b.getTime() <= Date.now() ? b.getTime() : ts;
+  }
   function _pickTs(room) {
     if (_pick[room] !== null) return _pick[room];
     var saved = _state[room].changedAt;
@@ -227,7 +233,7 @@
       // Before today's saved clock time, the matching past event was yesterday.
       // Never synthesize a future bolus timestamp from an old saved value.
       if (candidate.getTime() > Date.now()) candidate.setDate(candidate.getDate() - 1);
-      return candidate.getTime();
+      return _laterIfRepeated(candidate.getTime());
     }
     return saved;
   }
@@ -836,7 +842,7 @@
       dt.getHours() !== h ||
       dt.getMinutes() !== mi
     ) return null;
-    return dt.getTime();
+    return _laterIfRepeated(dt.getTime());
   }
   function _render() {
     var rooms = document.getElementById('bolus-rooms');

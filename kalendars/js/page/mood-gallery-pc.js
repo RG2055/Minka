@@ -15,7 +15,9 @@
   function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function canvas(w, h) { var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
-  function rigaDay(ms) { return new Date((ms == null ? Date.now() : ms) + 3 * 3600000).toISOString().slice(0, 10); }
+  // Riga's calendar day (summer and winter time alike): en-CA formats as YYYY-MM-DD
+  var RIGA_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Riga', year: 'numeric', month: '2-digit', day: '2-digit' });
+  function rigaDay(ms) { return RIGA_DAY.format(ms == null ? Date.now() : ms); }
   function daysSince(a, b) { return Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 86400000); }
   function seedOf(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   function rng(seed) { var a = seed >>> 0 || 1; return function () { a = (a + 0x6D2B79F5) >>> 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
