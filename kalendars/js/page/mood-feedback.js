@@ -1213,41 +1213,16 @@
       span.replaceChildren(cv);
     });
   }
-  // The face and stage sizes come from a ResizeObserver (read where layout is
-  // already clean): placing the ring on load and on every day switch read them
-  // straight after the card was rebuilt, a forced layout of the whole page each
-  // time. Until the first size is known the ring waits for it (same frame,
-  // before paint); a size change places it again.
-  var mxSizeRo = null, mxRing = null;
-  function mxSize(el) {
-    if (!el) return 0;
-    if (el.__mxSize == null && typeof ResizeObserver === 'function') {
-      if (!mxSizeRo) mxSizeRo = new ResizeObserver(function (entries) {
-        var moved = false;
-        entries.forEach(function (e) {
-          var t = e.target, v = t.classList.contains('rg-mood-glass-lens') ? t.offsetWidth : t.clientWidth;
-          if (t.__mxSize !== v) { t.__mxSize = v; moved = true; }
-        });
-        if (moved && mxRing && mxRing.isConnected) placeMoodStaffMx(mxRing);
-      });
-      if (!el.__mxSizeObserved) { el.__mxSizeObserved = true; mxSizeRo.observe(el); }
-      return -1;
-    }
-    return el.__mxSize != null ? el.__mxSize : (el.classList.contains('rg-mood-glass-lens') ? el.offsetWidth : el.clientWidth);
-  }
   function placeMoodStaffMx(ring) {
     var card = ring && ring.closest('.rg-feedback-card');
     var stage = card && card.querySelector('.rg-mood-stage');
     if (!stage) return;
-    mxRing = ring;
     var lens = card.querySelector('.rg-mood-glass-lens');
-    var lensSize = lens ? mxSize(lens) : 0, stageSize = mxSize(stage);
-    if (lensSize < 0 || stageSize < 0) return;           // placed by the observer, before paint
-    var d = lensSize || 124;                             // layout size, unaffected by the tap pop
+    var d = (lens && lens.offsetWidth) || 124;          // layout size, unaffected by the tap pop
     mxRadioOrb(ring);
     var people = [].slice.call(ring.querySelectorAll('.rg-mood-person'));
     var n = people.length;
-    var W = stageSize || 300;
+    var W = stage.clientWidth || 300;
     // Busy shifts get smaller glass, so the ring never crowds.
     var big = n > 10 ? 34 : n > 7 ? 38 : 42, small = big - 14;
     var rx = Math.min(W / 2 - 24, 136);
@@ -2911,23 +2886,14 @@
      zināms, tad pilns saraksts. Logs izaug no burbuļa un atgriežas tajā. */
   var gallery = null, galleryOrigin = null, galleryClosing = false;
   var monthGapRo = null;
-  // The pill sits between the two side pills, so it only moves when they or
-  // the stage change size: measured from the ResizeObserver (layout is clean
-  // there) and never on the paint call itself, which ran during the card's
-  // first mount and forced a layout of the whole page (~25 ms at load).
-  function mxPlaceMonth(card, measured) {
+  function mxPlaceMonth(card) {
     var top = card && card.querySelector('.mx-month-top');
     var left = card && card.querySelector('.rg-mood-side--left .rg-mood-pill'), right = card && card.querySelector('.rg-mood-side--right .rg-mood-pill');
     if (!top || !left || !right) return;
     if (!monthGapRo && typeof ResizeObserver === 'function') {
-      monthGapRo = new ResizeObserver(function () { mxPlaceMonth(list.querySelector('.rg-feedback-card'), true); });
+      monthGapRo = new ResizeObserver(function () { mxPlaceMonth(list.querySelector('.rg-feedback-card')); });
     }
-    if (monthGapRo) {
-      [left, right, top.parentElement].forEach(function (el) {
-        if (el && !el.__mxGap) { el.__mxGap = true; monthGapRo.observe(el); }
-      });
-      if (!measured) return;
-    }
+    if (monthGapRo && !left.__mxGap) { left.__mxGap = right.__mxGap = true; monthGapRo.observe(left); monthGapRo.observe(right); }
     var stage = top.parentElement.getBoundingClientRect(), l = left.getBoundingClientRect(), r = right.getBoundingClientRect();
     if (!l.width || !r.width || !stage.width) return;
     var a = l.right - stage.left + 8, b = r.left - stage.left - 8;
