@@ -609,13 +609,7 @@
   function syncPaletteToRoot() {
     var wrap = $('minkaBarWrap');
     if (!wrap) return;
-    // header-appearance.js writes the palette inline: read it there, which costs
-    // nothing; computed styles (a style recalculation) only for the CSS default.
-    var acc = wrap.style.getPropertyValue('--hs-accent').trim(), surf = wrap.style.getPropertyValue('--hs-surface').trim();
-    if (!acc || !surf) {
-      var cs = getComputedStyle(wrap);
-      acc = acc || cs.getPropertyValue('--hs-accent').trim(); surf = surf || cs.getPropertyValue('--hs-surface').trim();
-    }
+    var cs = getComputedStyle(wrap), acc = cs.getPropertyValue('--hs-accent').trim(), surf = cs.getPropertyValue('--hs-surface').trim();
     if (!acc || acc + surf === lastPal) return;
     lastPal = acc + surf;
     root.style.setProperty('--hxr-accent', acc);
@@ -1983,9 +1977,7 @@
     adopt();
     ['rg', 'rd'].forEach(renderWing);
     renderDate();
-    // The tone reads the wings' boxes: in the next frame, before it is painted,
-    // where the header's layout is computed once instead of again here.
-    requestAnimationFrame(applyTone);
+    applyTone();
     paintBmcCount();
     ['mkBdayBadge', 'mkNamedayBar', 'mkDayChip'].forEach(function (id) {
       var n = $(id);
