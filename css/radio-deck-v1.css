@@ -596,9 +596,6 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="am
 html body #radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn[data-act="stations"] {
   width: auto !important; padding: 0 12px 0 8px !important; gap: 8px !important;
 }
-html body #radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn[data-act="stations"]::after {
-  content: "STACIJAS"; font: 800 11px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: .12em; color: var(--dth-ink, #78dcc8);
-}
 
 /* "Stacijas" poga radio stilā: attēls iekrāsots albuma krāsā, tonēta mala,
    tonēts aplis ar bultiņu, kas nepieskaras malai. (Pēdējais vārds šai pogai.) */
@@ -714,3 +711,31 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="am
     min-width: 0 !important; padding: 0 6px !important; flex: 1 1 auto !important;
   }
 }
+/* Pixel un Jauns: visi EQ efekti redzami bez sānu ritināšanas — divās rindās */
+@media (min-width: 900px) {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]):not(.music-source) #eqRow {
+    flex-wrap: wrap !important; overflow: visible !important; height: auto !important; gap: 4px !important;
+    padding: 0 !important; margin: 0 !important; scrollbar-width: none; -webkit-mask-image: none !important; mask-image: none !important;
+  }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]):not(.music-source) #eqRow > .epb {
+    flex: 1 1 auto !important; min-width: 0 !important; height: 24px !important; min-height: 24px !important; padding: 0 8px !important;
+  }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]):not(.music-source) #eqRow .epb-label { font-size: 10px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]):not(.music-source) .eq-wrap { height: auto !important; align-self: end !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .bottom-console { grid-template-rows: auto auto minmax(0, 1fr) 26px 52px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioApp { grid-template-rows: 42px auto auto minmax(0, 1fr) 52px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel { grid-template-rows: 42px minmax(0, 1fr) 52px !important; }
+}
+
+/* RG Dither "STACIJAS": gaišs dither teksts uz tumšas pogas ar tintes rāmi (kā pārējās
+   Dither pogas) — agrāk tinte uz tintes bija grūti salasāma. Hover: tintes punkti. */
+html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn.dth-stations {
+  width: auto !important; padding: 0 12px 0 9px !important; gap: 9px !important; color: var(--dth-text, #f1f0ea) !important;
+  background: linear-gradient(var(--dth-raise), var(--dth-raise)) padding-box, var(--dth-frame-ink) !important;
+  animation: none !important;
+}
+html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn.dth-stations:hover {
+  background: var(--dth-dots) padding-box, linear-gradient(var(--dth-raise), var(--dth-raise)) padding-box, var(--dth-frame-ink) !important;
+}
+html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn.dth-stations svg { color: var(--dth-ink); }
+html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-st-label { display: inline-block; line-height: 0; }

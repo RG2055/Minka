@@ -20,7 +20,7 @@ html body #radioWindow[data-radio-layout="dither"].music-source .dth-shell{displ
 html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .dth-shell{
  --dth-ink-rgb:120,220,200;--dth-ink:rgb(var(--dth-ink-rgb));
  --dth-paper:#050505;--dth-deck:#0b0b0b;--dth-raise:#141414;
- --dth-text:#f1f0ea;--dth-dim:#a3a29b;--dth-grey:rgba(255,255,255,.34);
+ --dth-text:#f6f5ef;--dth-dim:#cfcec6;--dth-grey:rgba(255,255,255,.34);
  /* 2px checker frame: transparent border over a checker border-box layer */
  --dth-frame:repeating-conic-gradient(var(--dth-grey) 0 25%,transparent 0 50%) 0 0/2px 2px border-box;
  --dth-frame-ink:repeating-conic-gradient(var(--dth-ink) 0 25%,transparent 0 50%) 0 0/2px 2px border-box;
@@ -30,7 +30,7 @@ html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .dth-shell
 }
 /* deck: checker frame + a dithered shade from the top (25% → 12% → none) */
 .dth-deck{position:relative;height:238px;box-sizing:border-box;display:grid;grid-template-rows:26px minmax(0,1fr) 42px;gap:10px;padding:10px 14px 12px;border:2px solid transparent;border-radius:4px;
- background:linear-gradient(var(--dth-deck),var(--dth-deck)) padding-box,var(--dth-frame);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+ background:var(--dth-skin,none) right top/1140px 238px no-repeat padding-box,linear-gradient(color-mix(in srgb,var(--dth-deck) 90%,var(--dth-ink)),var(--dth-deck)) padding-box,var(--dth-frame);box-shadow:0 10px 24px rgba(0,0,0,.45)}
 /* dithered shade from the top edge: a 25% band, then a sparser 6% band */
 .dth-deck::before,.dth-deck::after{content:"";position:absolute;left:0;right:0;pointer-events:none;z-index:0}
 .dth-deck::before{top:0;height:8px;background:conic-gradient(at 1px 1px,transparent 75%,rgba(255,255,255,.1) 0) 0 0/2px 2px}
@@ -45,7 +45,7 @@ html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .dth-shell
 .dth-song .dth-dt,.dth-artist .dth-dt,.dth-brand .dth-dt{-webkit-mask:none;mask:none;background:none}
 .dth-song .dth-dt::before,.dth-artist .dth-dt::before,.dth-brand .dth-dt::before{content:"";position:absolute;inset:0;background:rgba(var(--dth-ink-rgb),.8);-webkit-mask:var(--dts) 0 0/100% 100% no-repeat;mask:var(--dts) 0 0/100% 100% no-repeat}
 .dth-song .dth-dt::after,.dth-artist .dth-dt::after,.dth-brand .dth-dt::after{content:"";position:absolute;inset:0;background:currentColor;-webkit-mask:var(--dt) 0 0/100% 100% no-repeat;mask:var(--dt) 0 0/100% 100% no-repeat}
-.dth-artist .dth-dt::before{background:rgba(255,255,255,.35)}
+.dth-artist .dth-dt::before{background:rgba(0,0,0,.8)}
 
 /* ---- head ---- */
 .dth-head{display:flex;align-items:center;gap:10px;min-width:0}

@@ -3362,6 +3362,17 @@ function focusRadio(){
   }
 
   function applyAlbumColor(color){
+    // Albuma krāsa atnāk asinhroni; ja tas notiek atvēršanas lidojuma laikā,
+    // pilna pārzīmēšana bloķēja ~180 ms un lidojums noraustījās — tā gaida
+    // lidojuma beigas (pārējā pārzīmēšana notiek uzreiz, lai stāvoklis ir pareizs).
+    if(document.body.classList.contains('radio-anim')){
+      clearInterval(applyAlbumColor._wait);
+      applyAlbumColor._wait=setInterval(()=>{
+        if(document.body.classList.contains('radio-anim'))return;
+        clearInterval(applyAlbumColor._wait);applyAlbumColor._wait=0;applyAlbumColor(color);
+      },120);
+      return;
+    }
     albumColor=color;
     // The header follows the album independently of the player's fixed palette.
     document.getElementById('radioWindow')?.style.setProperty('--radio-album-color', color);

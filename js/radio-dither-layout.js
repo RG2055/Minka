@@ -75,9 +75,11 @@
   const d=c.getImageData(0,0,w,h).data,glyph=new Uint8Array(w*h),shadow=new Uint8Array(w*h);
   // Solid where the glyph is mostly covered; the anti-aliased rim breaks into Bayer dots.
   // Small text (<16px) is plain crisp 1-bit: dots on a 10px stroke would eat it.
-  const rim=size>=16;
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const a=d[(y*w+x)*4+3]/255;glyph[y*w+x]=rim?(a>.62||a>.18+.44*(B4[(y&3)*4+(x&3)]+.5)/16?1:0):(a>.42?1:0);}
-  if(o.shadow)for(let y=1;y<h;y++)for(let x=1;x<w;x++){const i=y*w+x;if(glyph[i-w-1]&&!glyph[i]&&((x+y)&1)===0)shadow[i]=1;}
+  // The mask is drawn in device pixels (scale 1/dpr), so letters stay sharp
+  // 1-bit on Retina too; dots and the shadow keep a 1 CSS px cell (q).
+  const rim=o.size>=16,q=Math.max(1,Math.round(1/scale));
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const a=d[(y*w+x)*4+3]/255;glyph[y*w+x]=rim?(a>.5||a>.24+.26*(B4[((y/q|0)&3)*4+((x/q|0)&3)]+.5)/16?1:0):(a>.45?1:0);}
+  if(o.shadow)for(let y=q;y<h;y++)for(let x=q;x<w;x++){const i=y*w+x;if(glyph[i-q*w-q]&&!glyph[i]&&(((x/q|0)+(y/q|0))&1)===0)shadow[i]=1;}
   m={w,h,scale,url:bake(glyph,w,h,scale),shadow:o.shadow?bake(shadow,w,h,scale):''};
   maskCache.set(key,m);if(maskCache.size>240)maskCache.delete(maskCache.keys().next().value);
   return m;
@@ -85,13 +87,13 @@
  // Put dithered `text` into `host` (keeps the real text for screen readers).
  function dtext(host,text,o){
   text=String(text==null?'':text);
-  if(host.__dt===text+'|'+(o.size||0))return;host.__dt=text+'|'+(o.size||0);
+  const tag=text+'|'+(o.size||0)+'|'+(window.devicePixelRatio||1);if(host.__dt===tag)return;host.__dt=tag;
   let sr=host.querySelector(':scope>.dth-sr'),dt=host.querySelector(':scope>.dth-dt');
   if(!sr){sr=document.createElement('span');sr.className='dth-sr';host.append(sr);}
   if(!dt){dt=document.createElement('span');dt.className='dth-dt';dt.setAttribute('aria-hidden','true');host.append(dt);}
   sr.textContent=text;
   if(!text){dt.style.width='0px';return;}
-  const m=textMask(text,o);
+  const m=textMask(text,o.scale?o:{...o,scale:1/Math.max(1,Math.round(window.devicePixelRatio||1))});
   dt.style.width=m.w*m.scale+'px';dt.style.height=m.h*m.scale+'px';
   dt.style.setProperty('--dt',`url("${m.url}")`);
   if(m.shadow)dt.style.setProperty('--dts',`url("${m.shadow}")`);else dt.style.removeProperty('--dts');
@@ -113,7 +115,7 @@
    if(!label)return;
    b.classList.add('dth-dt-host');
    const holder=b.querySelector(':scope>.dth-dt-wrap')||b.appendChild(Object.assign(document.createElement('span'),{className:'dth-dt-wrap'}));
-   dtext(holder,label,{size:10,weight:700,mono:true});
+   dtext(holder,label,{size:11.5,weight:700,mono:true});
   });
  }
  function watchBar(bar){
@@ -130,7 +132,7 @@
  // ---------- build ----------
  function build(rw){
   if(built)return;built=true;
-  const css=document.createElement('link');css.rel='stylesheet';css.href='css/radio-dither-layout.css?v=20260924dth4';css.onload=()=>{window.syncShellLayout?.();if(active){startVis();renderText(true);}};document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href='css/radio-dither-layout.css?v=20261012dtx3';css.onload=()=>{window.syncShellLayout?.();if(active){startVis();renderText(true);}};document.head.append(css);
   shell=document.createElement('div');shell.className='dth-shell';shell.dataset.noDither='';
   shell.innerHTML=`
    <section class="dth-deck" aria-label="RG Dither atskaņotājs">
@@ -161,7 +163,7 @@
       <button type="button" class="dth-btn dth-play" data-act="toggle" title="Atskaņot" aria-label="Atskaņot">${icon('play')}</button>
       <button type="button" class="dth-btn" data-act="next" title="Nākamā stacija" aria-label="Nākamā stacija">${icon('next')}</button>
       <button type="button" class="dth-btn" data-act="shuffle" title="Nejauša stacija" aria-label="Nejauša stacija">${icon('shuffle')}</button>
-      <button type="button" class="dth-btn" data-act="stations" title="Stacijas" aria-label="Stacijas">${icon('list')}</button>
+      <button type="button" class="dth-btn dth-stations" data-act="stations" title="Stacijas" aria-label="Stacijas">${icon('list')}<span class="dth-st-label" aria-hidden="true"></span></button>
      </div>
      <input type="range" class="dth-range dth-seek" min="0" max="3600" step="1" value="0" aria-label="Pozīcija" data-seek disabled>
      <div class="dth-vis-pick" role="group" aria-label="Spektrs">${VIS.map(v=>`<button type="button" data-vis-choice="${v}" aria-pressed="false"></button>`).join('')}</div>
@@ -176,8 +178,10 @@
  function renderText(force){
   if(force)shell.querySelectorAll('.dth-sr').forEach(sr=>{sr.parentElement.__dt='';});
   dtext(els.brand,'RG DITHER',{size:15,weight:800,mono:true,shadow:true});
-  shell.querySelectorAll('[data-vis-choice]').forEach(b=>dtext(b,VIS_LABEL[b.dataset.visChoice].toUpperCase(),{size:10,weight:700,mono:true}));
-  dtext(els.tag,'['+VIS_LABEL[visStyle].toUpperCase()+']',{size:10,weight:700,mono:true});
+  // "STACIJAS" tādā pašā dither burtā kā pārējās pogas (asi, salasāmi)
+  const stLabel=shell.querySelector('.dth-st-label'); if(stLabel)dtext(stLabel,'STACIJAS',{size:12,weight:800,mono:true});
+  shell.querySelectorAll('[data-vis-choice]').forEach(b=>dtext(b,VIS_LABEL[b.dataset.visChoice].toUpperCase(),{size:11.5,weight:700,mono:true}));
+  dtext(els.tag,'['+VIS_LABEL[visStyle].toUpperCase()+']',{size:11,weight:700,mono:true});
   if(force)syncState();
  }
  function stationsPlain(){return (typeof stationsList!=='undefined'?stationsList:[]).map((s,i)=>({s,i})).filter(x=>x.s&&x.s.group!=='separator');}
@@ -213,7 +217,7 @@
   const a=engineAudio();if(!a)return;timeBound=true;
   const update=()=>{if(!active)return;dtext(els.time,fmt(a.currentTime),{size:13,weight:700,mono:true});
    const finite=Number.isFinite(a.duration)&&a.duration>0;
-   els.seek.disabled=!finite;dtext(els.live,finite?fmt(a.duration):'LIVE',{size:10,weight:700,mono:true});
+   els.seek.disabled=!finite;dtext(els.live,finite?fmt(a.duration):'LIVE',{size:11,weight:700,mono:true});
    setRange(els.seek,finite?(a.currentTime/a.duration)*3600:0);};
   a.addEventListener('timeupdate',update);a.addEventListener('emptied',update);
   a.addEventListener('play',()=>{update();if(active)startVis();});
@@ -247,11 +251,11 @@
   els.play.title=playing?'Pauze':'Atskaņot';els.play.setAttribute('aria-label',els.play.title);
   const st=document.getElementById('curStation')?.textContent.trim()||'RG RADIO';
   const ar=document.getElementById('npArtist')?.textContent.trim()||'',ti=document.getElementById('npTitle')?.textContent.trim()||'';
-  setLine(els.song,ti||st,{size:21,weight:760,shadow:true});
-  setLine(els.artist,ti?(ar||st):(ar||(playing?'Tiešraide':'Izvēlies staciju')),{size:15,weight:620,shadow:true});
-  dtext(els.station,(ti?st:'').toUpperCase(),{size:10,weight:700,mono:true});
-  const m=(document.getElementById('ui-kbps')?.textContent||'').match(/(\d{2,3})/);dtext(els.kbps,m?m[1]+' KBPS':'',{size:10,weight:700,mono:true});
-  if(!timeBound){dtext(els.time,'00:00',{size:13,weight:700,mono:true});dtext(els.live,'LIVE',{size:10,weight:700,mono:true});}
+  setLine(els.song,ti||st,{size:22,weight:720,shadow:true});
+  setLine(els.artist,ti?(ar||st):(ar||(playing?'Tiešraide':'Izvēlies staciju')),{size:16,weight:640,shadow:true});
+  dtext(els.station,(ti?st:'').toUpperCase(),{size:11,weight:700,mono:true});
+  const m=(document.getElementById('ui-kbps')?.textContent||'').match(/(\d{2,3})/);dtext(els.kbps,m?m[1]+' KBPS':'',{size:11,weight:700,mono:true});
+  if(!timeBound){dtext(els.time,'00:00',{size:13,weight:700,mono:true});dtext(els.live,'LIVE',{size:11,weight:700,mono:true});}
   syncArt();
   startVis();
  }
@@ -270,7 +274,31 @@
   if(key===inkKey)return false;
   inkKey=key;ink=next;
   shell.style.setProperty('--dth-ink-rgb',key);
+  paintDeck();
   return true;
+ }
+ // ---------- deck skin: a fine x-dot halftone wave in the album tint ----------
+ // Dense dark tint at the top, bright tint through the middle, pale sparse
+ // dots towards the bottom. Painted once per colour into a 1140×238 image
+ // (1 CSS px per dot, no animation), so weak PCs pay nothing per frame.
+ // Rank in a 4×4 cell: centre dot → x → 3×3 → closed, like the crosses in print.
+ const XRANK=[1,5,2,9, 6,0,7,12, 3,8,4,10, 13,11,14,15];
+ let deckUrl='',deckKey='';
+ function paintDeck(){
+  const key=ink.join(',');if(key===deckKey)return;deckKey=key;
+  const W=1140,H=238,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const c=cv.getContext('2d'),img=c.createImageData(W,H),px=img.data;
+  const deep=ink.map(v=>Math.round(v*.34)),pale=ink.map(v=>Math.round(v+(255-v)*.72));
+  for(let y=0;y<H;y++){const v=y/H;for(let x=0;x<W;x++){const u=x/W;
+   let t=.9-v*1.05+.16*Math.sin(u*5.4+v*2.4)+.22*(u-.5)+.06*Math.sin(u*17-v*6);
+   t=t<0?0:t>1?1:t;
+   const d=.06+.86*t;if(d<=(XRANK[(y&3)*4+(x&3)]+.5)/16)continue;
+   const k=t>.55?(t-.55)/.45:t/.55,a=t>.55?ink:pale,b=t>.55?deep:ink,i=(y*W+x)*4;
+   px[i]=a[0]+(b[0]-a[0])*k;px[i+1]=a[1]+(b[1]-a[1])*k;px[i+2]=a[2]+(b[2]-a[2])*k;
+   px[i+3]=t>.55?150:Math.round(70+80*t/.55);}}
+  c.putImageData(img,0,0);
+  cv.toBlob(blob=>{if(!blob||key!==deckKey)return;const old=deckUrl;deckUrl=URL.createObjectURL(blob);
+   shell.style.setProperty('--dth-skin',`url("${deckUrl}")`);if(old)setTimeout(()=>URL.revokeObjectURL(old),1500);});
  }
 
  // ---------- album art ----------

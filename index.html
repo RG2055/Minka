@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261012rv4';
+  var CALENDAR_BUILD = '20261012dtx';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -741,7 +741,12 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 <link rel="stylesheet" href="css/radio-source.css?v=20260926mo3">
 <link rel="stylesheet" href="css/radio-equalizer.css?v=20260919pixel2">
 <link rel="stylesheet" href="css/radio-pixel.css?v=20260919pixel5">
-<link rel="stylesheet" href="css/radio-deck-v1.css?v=20261012dkq">
+<link rel="stylesheet" href="css/radio-deck-v1.css?v=20261012dks">
+<!-- Dither/Amp/Pioneer stili ielādējas fonā jau lapas sākumā (nebloķē), lai aukstā
+     radio atvēršanā uz mirkli nerādās parastais radio rāmis pirms skata stila. -->
+<link rel="stylesheet" href="css/radio-dither-layout.css?v=20261012dtx3" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/radio-amp-layout.css?v=20260920amp24" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/radio-pioneer-layout.css?v=20260910oel1" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="css/media-profile.css?v=20261012rd1">
 
 <style>
@@ -1361,12 +1366,12 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
   await loadAny(['js/radio-amp-layout.js?v=20261012st3']);
-  await loadAny(['js/radio-dither-layout.js?v=20261012st3']);
+  await loadAny(['js/radio-dither-layout.js?v=20261012dtx3']);
   await loadAny(['js/radio-listening.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261012rv4']);
+  await loadAny(['js/radio.js?v=20261012op2']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
@@ -1519,25 +1524,27 @@ const mkRadioReveal = (function () {
     nextGuestLook = false;
     try { window.rgTheme.randomGuest(); } catch (_e) {}
   }
-  // A cold first open can reveal before the lazy appearance module is ready.
+  // Pirmais viesa izskats tiek uzlikts, kamēr radio vēl ir aizvērts (kad izskata
+  // modulis gatavs, brīvā brīdī) — atvēršana tikai lido, neko nepārstilo. Agrāk
+  // pirmajā atvēršanā izskats mainījās lidojuma sākumā un šķita, ka radio atveras divreiz.
   window.addEventListener('rg-theme-ready', function () {
     const classes = document.body.classList;
-    if (!classes.contains('radio-hidden') && !classes.contains('radio-idle')) prepareGuestLook();
+    if (classes.contains('radio-hidden') || classes.contains('radio-idle')) rollNextLook(document.getElementById('radioWindow'));
   });
   function rollNextLook(rw) {
     const roll = function () {
       const b = document.body.classList;
-      if (!b.contains('radio-hidden') || b.contains('radio-anim')) return;   // reopened already
+      if (!(b.contains('radio-hidden') || b.contains('radio-idle')) || b.contains('radio-anim')) return;   // reopened already
       prepareGuestLook();
       try {
         const m = /url\("?([^")]+)"?\)/.exec(rw.style.backgroundImage || '');
         if (m) { const img = new Image(); img.src = m[1]; if (img.decode) img.decode().catch(function () {}); }
       } catch (_e) {}
     };
-    setTimeout(function () {
-      if ('requestIdleCallback' in window) requestIdleCallback(roll, { timeout: 2000 });
-      else roll();
-    }, 700);
+    // Tūlīt pēc aizvēršanas (logs jau neredzams): brīvā brīdī, bet ne vēlāk kā
+    // pēc ~0,25 s, lai arī ātra atkārtota atvēršana jau sāk ar jauno izskatu.
+    if ('requestIdleCallback' in window) requestIdleCallback(roll, { timeout: 250 });
+    else setTimeout(roll, 50);
   }
   // The state the UI is heading for: during a reveal, its target.
   function logicalOpen() {
@@ -1600,7 +1607,9 @@ const mkRadioReveal = (function () {
       from = livePose(running);
       abandon(running);
     }
-    if (open) prepareGuestLook(); else nextGuestLook = true;
+    // Atvēršana nekad nemaina izskatu (skina attēls citādi uz mirkli parādījās un
+    // pazuda). Jaunais viesa izskats tiek uzlikts tūlīt pēc aizvēršanas (rollNextLook).
+    if (open) nextGuestLook = false; else nextGuestLook = true;
     const body = document.body;
     const pose = reduced() ? null : buttonPose(rw);
     body.classList.add('radio-anim');
