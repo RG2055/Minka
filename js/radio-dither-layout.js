@@ -205,6 +205,8 @@
   const cover=document.getElementById('npCover');if(cover)mo.observe(cover,{attributes:true,attributeFilter:['src']});
   document.addEventListener('rg-now-playing-art',()=>{if(active)syncState();});
   document.addEventListener('visibilitychange',()=>{if(active&&!document.hidden)startVis();});
+  // Shown again after being minimized: pick the loop back up.
+  new MutationObserver(()=>{if(active&&radioShown()&&!raf)startVis();}).observe(document.body,{attributes:true,attributeFilter:['class']});
  }
  function bindTime(){
   if(timeBound)return;
@@ -424,9 +426,13 @@
    const lv=t>.93?3:q(t,x,y);if(lv)dot(x,y,pal[lv]);
   }
  }
+ // The radio minimized (or idle): nothing to draw. Its guest look is rolled
+ // while it is closed, which can switch the hidden window to this layout; the
+ // loop then drew the spectrum unseen for as long as the music played.
+ function radioShown(){const b=document.body.classList;return !b.contains('radio-hidden')&&!b.contains('radio-idle');}
  function frame(now){
   raf=0;
-  if(!active||document.hidden||!img)return;
+  if(!active||document.hidden||!img||!radioShown())return;
   const a=engineAudio(),an=typeof analyser!=='undefined'?analyser:null,playing=!!a&&!a.paused&&!!an;
   if(now-last<1000/FPS){raf=requestAnimationFrame(frame);return;}
   last=now;

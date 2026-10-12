@@ -220,3 +220,46 @@
 
   sync();
 })();
+
+/* With the radio open both side columns share one scale (--mk-cf-z, never
+   below 75 %): the fuller column decides, so the two sides always match.
+   Re-checked when the radio opens, a column's size changes or a day switch
+   brings other people. */
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  if (root.classList.contains('mk-mobile-shell')) return;
+  var queued = 0, ro = null, watched = new Set();
+  function cols() { return Array.prototype.slice.call(document.querySelectorAll('#grafiks-app .side-panel .duty-vertical')); }
+  function fit() {
+    queued = 0;
+    var list = cols();
+    list.forEach(function (c) {
+      if (!watched.has(c)) { watched.add(c); if (ro) ro.observe(c); new MutationObserver(schedule).observe(c, { childList: true }); }
+    });
+    var panels = list.map(function (c) { return c.closest('.side-panel'); }).filter(Boolean);
+    var set = function (z) { panels.forEach(function (p) { if (z) p.style.setProperty('--mk-cf-z', z); else p.style.removeProperty('--mk-cf-z'); }); };
+    set('');
+    if (!root.classList.contains('host-radio-open')) return;
+    var over = function () { var w = 0; list.forEach(function (c) { if (c.clientHeight) w = Math.max(w, c.scrollHeight / c.clientHeight); }); return w; };
+    var z = 1;
+    for (var k = 0; k < 5 && over() > 1.002 && z > 0.75; k++) {
+      z = Math.max(0.75, z / over() * 0.99);
+      set(z.toFixed(3));
+    }
+  }
+  function schedule() { if (!queued) queued = requestAnimationFrame(fit); }
+  if (typeof ResizeObserver === 'function') {
+    var last = new WeakMap();
+    ro = new ResizeObserver(function (entries) {
+      if (entries.some(function (e) { var h = Math.round(e.contentRect.height); var was = last.get(e.target); last.set(e.target, h); return was !== h; })) schedule();
+    });
+  }
+  window.addEventListener('daySelected', function () { schedule(); setTimeout(schedule, 150); });
+  var wasOpen = root.classList.contains('host-radio-open');
+  new MutationObserver(function () {
+    var open = root.classList.contains('host-radio-open');
+    if (open !== wasOpen) { wasOpen = open; schedule(); }
+  }).observe(root, { attributes: true, attributeFilter: ['class'] });
+  schedule();
+})();

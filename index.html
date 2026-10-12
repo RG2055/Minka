@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261012sg2';
+  var CALENDAR_BUILD = '20261012dk4';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -736,11 +736,12 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
   <link rel="stylesheet" href="css/radio_extras_v4.css?v=20260930rperf1">
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
-<link rel="stylesheet" href="css/radio_polish_v1.css?v=20260708b">
+<link rel="stylesheet" href="css/radio_polish_v1.css?v=20261012pl3">
 <link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260926mo2">
 <link rel="stylesheet" href="css/radio-source.css?v=20260926mo3">
 <link rel="stylesheet" href="css/radio-equalizer.css?v=20260919pixel2">
 <link rel="stylesheet" href="css/radio-pixel.css?v=20260919pixel5">
+<link rel="stylesheet" href="css/radio-deck-v1.css?v=20261012dk4">
 <link rel="stylesheet" href="css/media-profile.css?v=20261012rd1">
 
 <style>
@@ -1360,14 +1361,14 @@ async function loadRadioScripts() {
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
-  await loadAny(['js/radio-amp-layout.js?v=20260920amp24']);
-  await loadAny(['js/radio-dither-layout.js?v=20260924dth24']);
+  await loadAny(['js/radio-amp-layout.js?v=20261012pf2']);
+  await loadAny(['js/radio-dither-layout.js?v=20261012pf1']);
   await loadAny(['js/radio-listening.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20260919pixel2']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261001sec1']);
-  await loadAny(['js/radio_extras_v4.js?v=20260930rperf1']);
+  await loadAny(['js/radio.js?v=20261012dk3']);
+  await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;

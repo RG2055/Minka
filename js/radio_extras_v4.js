@@ -28,7 +28,7 @@ const RG_holdCnt = new Int32Array(128).fill(0);
 const PEAK_HOLD  = 380;
 const PEAK_DECAY = 0.91;
 const RG_EXTRA_LOW_SPEC = !!(window.__mkPerfProfile && window.__mkPerfProfile.lowSpec);
-const RG_EXTRA_FRAME_MS = 1000 / (RG_EXTRA_LOW_SPEC ? 30 : 60);
+const RG_EXTRA_FRAME_MS = 1000 / 30;   // 30 fps on every computer (see radio.js MK_VIZ_FRAME_MS)
 let RG_extraLastFrameTs = 0;
 let RG_extraFreqData = null;
 
@@ -249,6 +249,12 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
   if (!cvs) { setTimeout(hookExtraViz, 500); return; }
   const _ctx = cvs.getContext('2d');
   let extraVizRaf = 0;
+  // The canvas size from a ResizeObserver: reading clientWidth/Height in every
+  // frame forced a layout whenever anything else on the page had just changed.
+  let cssW = 0, cssH = 0;
+  if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(function (entries) { const r = entries[entries.length - 1].contentRect; cssW = r.width | 0; cssH = r.height | 0; }).observe(cvs);
+  }
 
   function shouldRunExtraViz() {
     return !document.hidden &&
@@ -279,7 +285,7 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
     const data = RG_extraFreqData;
     analyser.getByteFrequencyData(data);
 
-    const w = cvs.clientWidth | 0, h = cvs.clientHeight | 0;
+    const w = cssW || (cvs.clientWidth | 0), h = cssH || (cvs.clientHeight | 0);
     const ratio=Math.min(window.devicePixelRatio||1,RG_EXTRA_LOW_SPEC?1.5:2);
     if(cvs.width!==Math.round(w*ratio)||cvs.height!==Math.round(h*ratio)){cvs.width=Math.round(w*ratio);cvs.height=Math.round(h*ratio);}
     _ctx.save();_ctx.scale(ratio,ratio);

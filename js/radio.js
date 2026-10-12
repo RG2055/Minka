@@ -6,7 +6,9 @@ const _warn = (...a) => { if (RG_DEBUG) console.warn(...a); };
 const _err  = (...a) => { if (RG_DEBUG) console.error(...a); };
 const MK_PERF = window.__mkPerfProfile || {};
 const MK_LOW_SPEC = !!MK_PERF.lowSpec;
-const MK_VIZ_FRAME_MS = 1000 / (MK_LOW_SPEC ? 30 : 60);
+// Spectra draw at 30 fps on every computer: smooth to the eye, half the work
+// of 60 (they were 60 everywhere but on the PCs marked low-spec).
+const MK_VIZ_FRAME_MS = 1000 / 30;
 // Buddy is an optional lightweight Classic visualizer.
 const MK_BUDDY_VIZ = 11;
 const MK_NO_VIZ = 12;
@@ -2558,7 +2560,7 @@ function draw(ts = 0) {
         return;
     }
     scheduleDraw();
-    const frameMs = isModernViz(vizStyle) ? 1000 / (MK_LOW_SPEC ? 30 : 60) : MK_VIZ_FRAME_MS;
+    const frameMs = MK_VIZ_FRAME_MS;
     if (frameMs && ts && (ts - __vizLastFrameTs) < frameMs - .5) return;
     const frameDelta=Math.min(64,Math.max(8,(ts||performance.now())-__vizLastFrameTs));
     __vizLastFrameTs = ts || performance.now();
@@ -3632,8 +3634,11 @@ function focusRadio(){
     rw.style.setProperty('background-position',['left','center','right','top','bottom'].includes(appearance.position)?appearance.position:'center','important');
     rw.style.setProperty('background-size','cover','important');
     if(appearance.layout==='pioneer'||appearance.layout==='amp'||appearance.layout==='dither'){['border-color','border-top-color','box-shadow'].forEach(p=>rw.style.removeProperty(p));}
-    else{rw.style.setProperty('border-color','transparent','important');
-    rw.style.setProperty('border-top-color',`rgba(225,239,246,${glass*.42})`,'important');
+    else{// centrēta kartīte: viena vienmērīga mala visapkārt (augšējā vien noapaļotos stūros izskatījās nogriezta)
+    const edge=`rgba(225,239,246,${glass*.42})`;
+    rw.style.setProperty('border-color',edge,'important');
+    rw.style.setProperty('border-top-color',edge,'important');
+    rw.style.setProperty('--radio-edge',edge);
     rw.style.setProperty('box-shadow',`inset 0 ${glass*2}px ${glass*12}px rgba(224,243,255,${glass*.22}),0 8px 24px rgba(0,0,0,.16)`,'important');
     }
     // A restrained text fallback keeps names legible on the dark overlay.

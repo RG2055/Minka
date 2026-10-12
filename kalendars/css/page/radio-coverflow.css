@@ -85,3 +85,78 @@ html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-na
 html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav svg { width: 22px; height: 22px; }
 html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-prev { left: 12px; }
 html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-next { right: 12px; }
+
+/* Side columns with the radio open: everyone visible at once. The full side
+   card (212 px, scaled to at most 45 % by its own fit) does not fit five
+   people next to the radio, so while the radio is open each person is one
+   row, the same on every day and on both sides: icon, the name (the whole
+   width up to the ring) as first name + surname on one line, the shift chip under it, the
+   fatigue ring on the right and today's fatigue bars as a thin strip along
+   the bottom. js/page/radio-coverflow.js draws both columns a little smaller
+   together (--mk-cf-z, never below 75 %) when even that does not fit. */
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card {
+  zoom: var(--mk-cf-z, 1) !important;
+  display: grid !important; grid-template-columns: 44px minmax(0, 1fr) !important; grid-template-rows: auto auto !important; grid-template-areas: none !important;
+  column-gap: 8px !important; row-gap: 4px !important; align-items: center !important;
+  height: auto !important; min-height: 0 !important; padding: 6px 10px 6px 8px !important; margin-bottom: 0 !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card > .mk-side-nfoot { display: none !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card > .mk-side-card-main,
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-card-body > .name-row,
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-card-body .mk-side-name-wrap,
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-card-body > .badge-row { display: contents !important; }
+/* The emoji large (as on the full card), in its own column through both lines,
+   whole and never over the text: today's 3D picture and other days' emoji alike. */
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-icon-rail {
+  grid-column: 1 !important; grid-row: 1 / span 2 !important; align-self: center !important; justify-self: center !important;
+  width: 44px !important; min-width: 0 !important; max-width: 44px !important; height: 46px !important; min-height: 0 !important; max-height: 46px !important;
+  display: grid !important; place-items: center !important; margin: 0 !important; padding: 0 !important; transform: none !important;
+  position: relative !important; inset: auto !important; overflow: visible !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-icon-rail .mk-emoji-side {
+  /* The full card enlarges its emoji with zoom (2.75): here it is shown at its
+     own size – an animated emoji's 45 px film, a plain emoji at 38 px. */
+  zoom: 1 !important; width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important;
+  font-size: 38px !important; line-height: 1 !important; display: grid !important; place-items: center !important;
+  position: static !important; inset: auto !important; transform: none !important; margin: 0 !important; translate: none !important; scale: none !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-icon-rail .mk-side-initials { font-size: 18px !important; transform: none !important; position: static !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-card-body {
+  grid-column: 2 !important; grid-row: 1 !important; overflow: visible !important; min-width: 0 !important; height: auto !important; max-height: none !important; padding: 0 !important; margin: 0 !important; position: static !important;
+  display: grid !important; grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto !important;
+  grid-template-rows: auto auto !important; align-items: baseline !important; column-gap: 5px !important; row-gap: 3px !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .duty-name {
+  grid-column: 1 !important; grid-row: 1 !important; min-width: 0 !important; flex-shrink: 0;
+  font-size: 15px !important; line-height: 1.15 !important; font-weight: 800 !important;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .duty-surname {
+  grid-column: 2 !important; grid-row: 1 !important; min-width: 0 !important;
+  font-size: 15px !important; line-height: 1.15 !important; font-weight: 800 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important;
+  /* tieši tāds pats burts un tonētais stikls kā vārdam */
+  font-family: Inter, system-ui, sans-serif !important; letter-spacing: normal !important;
+  background-image: linear-gradient(180deg,
+    rgba(255, 255, 255, .92) 0%,
+    color-mix(in srgb, var(--mk-side-glass-accent, #e7d34b) 30%, rgba(255, 255, 255, .62)) 48%,
+    color-mix(in srgb, var(--mk-side-glass-accent, #e7d34b) 55%, rgba(255, 255, 255, .22)) 100%) !important;
+  -webkit-text-stroke: .6px rgba(255, 255, 255, .62) !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-shift-chip { grid-column: 1 / span 2 !important; grid-row: 2 !important; justify-self: start !important; align-self: center !important; margin: 0 !important; position: static !important; transform: none !important; height: 16px !important; min-height: 0 !important; padding-block: 0 !important; line-height: 16px !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-fatigue {
+  grid-column: 3 !important; grid-row: 1 / span 2 !important; justify-self: end !important; align-self: center !important; margin-left: 4px !important;
+  position: static !important; inset: auto !important; transform: none !important; margin: 0 !important; width: auto !important; min-width: 0 !important; max-width: 40px !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-ring { width: 38px !important; height: 38px !important; min-width: 0 !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-fatigue-caption { display: none !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card > .mk-side-ticks {
+  grid-column: 2 !important; grid-row: 2 !important; position: static !important; transform: none !important;
+  display: flex !important; align-items: flex-end !important; gap: 2px !important;
+  height: 8px !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+  -webkit-mask-image: none !important; mask-image: none !important; overflow: hidden !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card > .mk-side-ticks > i {
+  flex: 1 1 0 !important; min-width: 0 !important; width: auto !important; margin: 0 !important;
+  height: calc(2px + var(--hr, var(--h, .3)) * 6px) !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card > .mk-side-ticks > :is(.mk-side-tick-tip, .mk-side-tick-pin) { display: none !important; }

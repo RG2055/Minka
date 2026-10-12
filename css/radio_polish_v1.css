@@ -210,3 +210,42 @@ html #radioWindow #eqRow #ceqTriggerBtn.active {
 /* ── 7. Header row: calm the branding, kill glow text */
 #radioWindow #timeDisp { text-shadow: none !important; color: rgba(255,255,255,0.55) !important; }
 #radioWindow .brand-text { text-shadow: none !important; letter-spacing: 0.18em !important; }
+
+/* ── 2026-10-12: readable small controls ───────────────────────────────────
+   Classic and clean show the EQ presets as a row of text chips: they were
+   20 px tall with 7.5 px labels, hard to read and to hit. Now 26 px with
+   9 px labels, still one row (the look stays: quiet chips, one filled active pill). The
+   codec/quality caption under the artwork was 7 px. The volume slider keeps
+   its hairline look but takes the pointer over 20 px instead of 4. */
+html body #radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"]):not(.music-source) .epb {
+  min-height: 26px !important;
+  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+html body #radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"]):not(.music-source) .epb .epb-label {
+  font-size: 9px !important;
+  letter-spacing: .03em !important;
+}
+html body #radioWindow[data-radio-layout="classic"]:not(.music-source) :is(.meta-tag, #ui-codec, #ui-kbps) {
+  font-size: 9px !important;
+}
+html body #radioWindow .fader.fader {
+  height: 20px !important;
+  background: linear-gradient(rgba(255, 255, 255, .18), rgba(255, 255, 255, .18)) center / 100% 4px no-repeat !important;
+  border-radius: 0 !important;
+}
+/* One row at any window width: when the chips do not fit they scroll sideways
+   (wheel, trackpad, drag) under a soft fade, instead of wrapping onto a
+   second line that pushed against the window's bottom edge. */
+html body #radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"]):not(.music-source) #eqRow {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+  overscroll-behavior-x: contain;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+}
+html body #radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"]):not(.music-source) #eqRow::-webkit-scrollbar { display: none; }
+html body #radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"]):not(.music-source) #eqRow > * { flex: 0 0 auto !important; }

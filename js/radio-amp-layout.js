@@ -357,7 +357,7 @@
  // Two looks: "webamp" (default) — slim light bars with falling peak caps;
  // "classic" — chunky green→yellow→orange ladder like the original Winamp.
  let visStyle='webamp';
- const VIS_FPS=(window.__mkPerfProfile&&window.__mkPerfProfile.lowSpec)?40:60;
+ const VIS_FPS=30;   // every computer alike, as the other spectra
  let visRaf=0,visLast=0,visBars=0,visLevels=null,visPeaks=null,visHold=null,visBins=null,visData=null,visWave=null,visIdle=0,visGrad=null,visGradKey='';
  function visSetup(an){
   visBars=visStyle==='classic'?16:26;
@@ -370,9 +370,11 @@
   }
   visData=new Uint8Array(n);
  }
+ // Nothing to draw while the radio is minimized or idle (see the dither layout).
+ function ampShown(){const b=document.body.classList;return !b.contains('radio-hidden')&&!b.contains('radio-idle');}
  function visFrame(ts){
   visRaf=0;
-  if(!active||document.hidden)return;
+  if(!active||document.hidden||!ampShown())return;
   const cv=els.vis,audio=window.__ampAudio;
   const an=(typeof analyser!=='undefined')?analyser:null;
   const playing=!!audio&&!audio.paused&&!!an;
@@ -454,6 +456,8 @@
  }
  function stopVis(){if(visRaf)cancelAnimationFrame(visRaf);visRaf=0;}
  document.addEventListener('visibilitychange',()=>{if(active&&!document.hidden)startVis();});
+ // Shown again after being minimized: pick the loop back up.
+ new MutationObserver(()=>{if(active&&ampShown()&&!visRaf)startVis();}).observe(document.body,{attributes:true,attributeFilter:['class']});
  // ---------- apply ----------
  function apply(rw,settings={}){
   const enabled=rw.dataset.radioLayout==='amp';
