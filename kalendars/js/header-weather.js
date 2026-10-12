@@ -212,7 +212,9 @@
     layer.style.setProperty('--mk-weather-mid', Math.round((height + 18) * 0.45) + 'px');
     syncScenery();
   }
-  syncHeight();
+  // The observer reports the header's first size itself (after layout, so the
+  // read is free); measuring here as well forced a layout during start-up.
+  if (typeof ResizeObserver !== 'function') syncHeight();
   if (typeof ResizeObserver === 'function') {
     var resizeObserver = new ResizeObserver(syncHeight);
     resizeObserver.observe(header);
