@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261012ld2';
+  var CALENDAR_BUILD = '20261012pd5';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -3111,13 +3111,28 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.d
   </section>
 </div>
 
-<div id="planotajsSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171195;pointer-events:auto;background:transparent;">
-  <section id="planotajsSheetPanel" aria-label="Grafika plānotājs" style="position:absolute;inset:0;width:100%;height:100dvh;min-height:0;border:0;border-radius:0;background:#141019;box-shadow:none;overflow:hidden;pointer-events:auto;">
-    <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(56,189,248,.07);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
-      <span style="display:flex;align-items:center;gap:8px;"><span>Plānotājs</span></span>
-      <button type="button" onclick="closePlanotajsSheet()" aria-label="Aizvērt plānotāju" style="width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.24);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;">×</button>
+<style>
+/* Windows opened from the dock (Plānotājs, Pusdienas) sit in the calendar's own frame, as Kalendārs
+   and Statistika do: 6 px from the edges, 28 px corners, ending above the dock (the bottom is set by
+   mkFrameSheet). One close button everywhere: the calendar's round 40 px tonal button. */
+.mk-frame-sheet{position:absolute;top:6px;left:6px;right:6px;bottom:92px;border-radius:28px;overflow:hidden;pointer-events:auto;box-shadow:0 18px 50px rgba(0,0,0,.45);}
+.mk-sheet-head{height:56px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 20px 0 20px;color:#eef2f8;font:600 16px/1 'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;}
+.mk-sheet-x{flex:none;width:40px;height:40px;display:inline-grid;place-items:center;padding:0;border:0;border-radius:20px;background:rgba(255,255,255,.09);color:#eef2f8;cursor:pointer;transition:border-radius 350ms cubic-bezier(.42,1.67,.21,.9),background-color 150ms cubic-bezier(.2,0,0,1);}
+.mk-sheet-x:hover{background:rgba(255,255,255,.14);}
+.mk-sheet-x:active{border-radius:12px;}
+.mk-sheet-x:focus-visible{outline:2px solid #a8c7fa;outline-offset:2px;}
+.mk-sheet-x svg{width:20px;height:20px;}
+</style>
+<!-- Plānotājs: in the calendar's frame like Kalendārs (6 px in, round corners, ending above the dock,
+     which stays usable); its close is the calendar's round 40 px button, 16/20 px in from the corner,
+     well clear of the window's own close button on Windows. -->
+<div id="planotajsSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171195;pointer-events:none;background:transparent;">
+  <section id="planotajsSheetPanel" class="mk-frame-sheet" aria-label="Grafika plānotājs" style="background:#141019;">
+    <div class="mk-sheet-head">
+      <span class="mk-sheet-title">Plānotājs</span>
+      <button type="button" class="mk-sheet-x" onclick="closePlanotajsSheet()" aria-label="Aizvērt plānotāju" title="Aizvērt (Esc)"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.47 4.47a.75.75 0 0 1 1.06 0L10 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L11.06 10l4.47 4.47a.75.75 0 1 1-1.06 1.06L10 11.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L8.94 10 4.47 5.53a.75.75 0 0 1 0-1.06Z"/></svg></button>
     </div>
-    <iframe id="planotajsSheetFrame" title="Grafika plānotājs" style="display:block;width:100%;height:calc(100% - 38px);border:0;background:#141019;" referrerpolicy="no-referrer"></iframe>
+    <iframe id="planotajsSheetFrame" title="Grafika plānotājs" style="display:block;width:100%;height:calc(100% - 56px);border:0;background:#141019;" referrerpolicy="no-referrer"></iframe>
   </section>
 </div>
 
@@ -3135,7 +3150,7 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.d
 <!-- Pusdienas: the whole page above the dock, like Kalendārs; the dock stays clickable (the
      container lets pointer events through, only the panel takes them). -->
 <div id="pusdienasSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171190;pointer-events:none;background:transparent;">
-  <section id="pusdienasSheetPanel" role="dialog" aria-label="Pusdienas" style="position:absolute;left:0;right:0;top:0;bottom:92px;border-radius:0 0 28px 28px;background:#0E1828;box-shadow:0 18px 50px rgba(0,0,0,.5);overflow:hidden;pointer-events:auto;">
+  <section id="pusdienasSheetPanel" class="mk-frame-sheet" role="dialog" aria-label="Pusdienas" style="background:#0E1828;">
     <iframe id="pusdienasSheetFrame" title="Pusdienas" style="display:block;width:100%;height:100%;border:0;background:#0E1828;" referrerpolicy="no-referrer"></iframe>
   </section>
 </div>
@@ -3956,6 +3971,13 @@ window.addEventListener('message', function(e) {
    and back into their dock button (js/mk-motion.js). The sheet stays shown
    while it closes (data-closing) and is hidden when that has played; a
    reopen during the close simply takes over. */
+/* The bottom of a frame sheet: just above the dock bar, whatever its height (desktop, narrow, iPhone inset). */
+function mkFrameSheet(panel) {
+  var bar = document.getElementById('bottomBtnBar');
+  if (!panel) return;
+  var top = bar ? bar.getBoundingClientRect().top : window.innerHeight;
+  panel.style.bottom = Math.max(6, Math.round(window.innerHeight - top + 8)) + 'px';
+}
 function mkSheetOpen(sheet, panel, key, btn) {
   delete sheet.dataset.closing;
   if (window.MinkaMotion) window.MinkaMotion.openSurface(panel || sheet, { key: key, origin: btn });
@@ -4000,10 +4022,8 @@ function mkSheetClose(sheet, panel, key, btn, done) {
 
   function positionPlanotajsSheet() {
     var sheet = document.getElementById('planotajsSheet');
-    var panel = document.getElementById('planotajsSheetPanel');
-    if (!sheet || !panel || sheet.style.display === 'none') return;
-    panel.style.width = '100%';
-    panel.style.height = (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px';
+    if (!sheet || sheet.style.display === 'none') return;
+    mkFrameSheet(document.getElementById('planotajsSheetPanel'));
   }
 
   window.openPlanotajsLauncher = function openPlanotajsLauncher() {
@@ -4177,13 +4197,8 @@ window.addEventListener('message', function(e) {
     return !!sheet && sheet.style.display !== 'none' && sheet.dataset.closing !== '1';
   }
 
-  // The panel ends just above the dock bar, whatever its height (desktop, narrow, iPhone inset).
   function positionPusdienasSheet() {
-    var panel = document.getElementById('pusdienasSheetPanel');
-    var bar = document.getElementById('bottomBtnBar');
-    if (!panel || !isOpen()) return;
-    var top = bar ? bar.getBoundingClientRect().top : window.innerHeight;
-    panel.style.bottom = Math.max(0, Math.round(window.innerHeight - top + 8)) + 'px';
+    if (isOpen()) mkFrameSheet(document.getElementById('pusdienasSheetPanel'));
   }
 
   // mode: 'narvesen' | 'wolt' (from the count pills), or nothing to keep the frame's own choice.

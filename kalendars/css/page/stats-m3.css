@@ -24,7 +24,8 @@
   z-index: 20000;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  /* Fills the calendar's frame like Kalendārs does (the frame gives the corners and ends above the dock). */
+  padding: 0;
   background: var(--mk-sys-scrim);
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -33,15 +34,15 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(1120px, 96vw) !important;
-  /* A fixed height: switching tabs never resizes the dialog. */
-  height: min(860px, 88vh);
-  max-height: 88vh !important;
+  width: 100% !important;
+  /* The whole frame: switching tabs never resizes it. */
+  height: 100%;
+  max-height: none !important;
   overflow: hidden;
   border: 0 !important;
-  border-radius: var(--mk-shape-xl) !important;
+  border-radius: 0 !important;
   background: var(--mk-sys-surface-container-low) !important;
-  box-shadow: var(--mk-elev-3) !important;
+  box-shadow: none !important;
   color: var(--mk-sys-on-surface);
   font: var(--mk-type-body-m);
   font-feature-settings: "tnum" 1;
@@ -52,7 +53,7 @@
   align-items: center;
   gap: 12px;
   flex: none;
-  padding: 16px 16px 4px 24px;
+  padding: 16px 20px 4px 24px;
 }
 .mk-stats-mark {
   display: grid;
@@ -88,7 +89,12 @@
   cursor: pointer;
   isolation: isolate;
 }
-.mk-stats-close { margin-left: auto; }
+/* Card charms that hang past the roster's edge are lifted to the document (card-addons.js, z 60000):
+   with the statistics over the whole frame they would hang over it, so they hide while it is open. */
+html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon.mk-card-addon-portal.is-visible { display: none !important; }
+/* The close is the calendar's: a filled round 40 px button, 16/20 px in from the corner (head padding). */
+.mk-stats-close { margin-left: auto; background: var(--mk-sys-surface-container-high) !important; color: var(--mk-sys-on-surface) !important; transition: border-radius 350ms cubic-bezier(.42, 1.67, .21, .9); }
+.mk-stats-close:active { border-radius: 12px !important; }
 .mk-stats-close::after,
 #stats-modal .db-icon-btn::after {
   content: '';
