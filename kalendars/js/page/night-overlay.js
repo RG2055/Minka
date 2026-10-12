@@ -109,6 +109,7 @@
         rest(function(){
           if(typeof window.__ns._update==='function') window.__ns._update();
           else if(typeof window.__ns._render==='function') window.__ns._render();
+          if(typeof window.__ns.lights==='function') requestAnimationFrame(function(){ if(_nsOpen) window.__ns.lights(); });
 
         });
         // The cat is a separate fixed layer: it jumps onto the bed once the

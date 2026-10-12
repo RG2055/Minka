@@ -4141,6 +4141,9 @@
 
   window.__ns={
     _render: render,
+    // Atvēršana: dīkstāvē jau sagatavots panelis netiek pārzīmēts, tāpēc LED
+    // (pagājušais laiks bildē) jāieslēdz atsevišķi – citādi tas neparādījās.
+    lights: function(){ ledCards(); },
     warmImages: warmImages,
     closeTimeWheel: function(){ closeTimeWheel(false); },
     _update: update,
