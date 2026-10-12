@@ -2859,26 +2859,6 @@ window.addEventListener('DOMContentLoaded', () => {
       <span>MOBILE</span>
     </button>
 
-	    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
-
-	    <button id="pusdienasDockBtn" onclick="openPusdienasLauncher()" title="Pusdienas">
-	      <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 7px #f59e0b;flex-shrink:0;animation:rledPulse 3.4s ease-in-out infinite;"></div>
-	      <svg class="dock-px pusdienas-pixel" width="28" height="28" viewBox="0 0 14 14" shape-rendering="crispEdges" aria-hidden="true">
-	        <rect x="8" y="1" width="2" height="1" fill="#ffe8a3"/><rect x="10" y="2" width="2" height="1" fill="#ffe8a3"/>
-	        <rect x="7" y="2" width="4" height="1" fill="#fbbf24"/><rect x="6" y="3" width="6" height="1" fill="#f59e0b"/>
-	        <rect x="5" y="4" width="7" height="1" fill="#f59e0b"/><rect x="4" y="5" width="8" height="1" fill="#d97706"/>
-	        <rect x="4" y="6" width="7" height="1" fill="#d97706"/><rect x="3" y="7" width="7" height="1" fill="#b45309"/>
-	        <rect x="3" y="8" width="6" height="1" fill="#92400e"/><rect x="2" y="9" width="5" height="1" fill="#78350f"/>
-	        <rect x="1" y="10" width="4" height="1" fill="#fde68a"/><rect x="0" y="11" width="2" height="1" fill="#fff7cc"/>
-	        <rect x="2" y="11" width="2" height="1" fill="#fde68a"/><rect x="1" y="12" width="2" height="1" fill="#fff7cc"/>
-	      </svg>
-	      <span>PUSDIENAS</span>
-	    </button>
-
-	    <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
-
-
-
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
     <button id="radioIdleBtn" onclick="radioIdleClick()" title="RG Radio" aria-label="RG Radio">
@@ -2892,6 +2872,13 @@ window.addEventListener('DOMContentLoaded', () => {
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="1.04" height="1.04" fill="#34d399"/><rect x="6" y="1" width="1.04" height="1.04" fill="#34d399"/><rect x="5" y="2" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="3" width="9.04" height="1.04" fill="#34d399"/><rect x="0" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="8" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="5" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="6" y="5" width="1.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="6" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="7" width="9.04" height="1.04" fill="#34d399"/></svg>
       <span id="radioToggleLabel">RADIO</span>
       <span id="radioToggleIcon"><svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </button>
+    <!-- Pusdienas: right after Radio. The two numbers right of the icon are today's deals,
+         Narvesen (yellow) and Wolt (orange); tapping one opens straight into that section. -->
+    <button id="pusdienasDockBtn" onclick="openPusdienasLauncher(event)" title="Pusdienas">
+      <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="0" width="1.04" height="4.04" fill="#fde68a"/><rect x="3" y="0" width="1.04" height="4.04" fill="#fde68a"/><rect x="1" y="3" width="3.04" height="1.04" fill="#fbbf24"/><rect x="2" y="4" width="1.04" height="5.04" fill="#f59e0b"/><rect x="6" y="0" width="2.04" height="1.04" fill="#fbbf24"/><rect x="5" y="1" width="3.04" height="4.04" fill="#fbbf24"/><rect x="7" y="5" width="1.04" height="4.04" fill="#f59e0b"/></svg>
+      <span class="pd-counts" aria-hidden="true"><b class="pd-nv" id="pdCountNv" data-mode="narvesen" hidden></b><b class="pd-wolt" id="pdCountWolt" data-mode="wolt" hidden></b></span>
+      <span>PUSDIENAS</span>
     </button>
     <button id="dockMoreBtn" type="button" aria-expanded="false" aria-controls="dockMoreMenu" title="Pārējie rīki">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
@@ -2949,7 +2936,7 @@ body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!import
   var menu = document.getElementById('dockMoreMenu');
   var items = document.getElementById('dockMoreItems');
   if (!moreBtn || !menu || !items) return;
-  ['settingsDockBtn','mobileDockBtn','pusdienasDockBtn','lacitisDockBtn'].forEach(function(id){
+  ['settingsDockBtn','mobileDockBtn','lacitisDockBtn'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) items.appendChild(el);
   });
@@ -3051,6 +3038,16 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#monthCalDocBtn{--dk-acc
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#planotajsDockBtn{--dk-acc:#38bdf8}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#statsDocBtn{--dk-acc:#1fe091}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>:is(#radioIdleBtn,#radioToggle){--dk-acc:var(--radio-accent,#ff8a5c)}
+html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>#pusdienasDockBtn{--dk-acc:#ffa53d}
+/* Pusdienas: today's deal counts beside the icon in each brand's own colours, Narvesen yellow on
+   the left, Wolt blue on the right (from pusdieninas.pages.dev/api/counts; hidden until known or when zero) */
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts{position:absolute!important;z-index:2!important;left:0;right:0;top:0;height:44px;display:block!important;pointer-events:none}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b{position:absolute;top:15px;display:block;min-width:20px;height:14px;padding:0 4px;border-radius:7px;font:800 9.5px/14px 'Space Grotesk',system-ui,sans-serif;letter-spacing:0;text-align:center;font-variant-numeric:tabular-nums;cursor:pointer;pointer-events:auto;transition:filter 150ms cubic-bezier(.2,0,0,1)}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b[hidden]{display:none}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b:hover{filter:brightness(1.25)}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-nv{right:calc(50% + 14px);background:#ffd23f;color:#1b365d}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-wolt{left:calc(50% + 14px);background:#009de0;color:#fff}
+@media(max-width:720px){#dockShelf #bottomBtnBar>#pusdienasDockBtn>.pd-counts{display:block!important;height:56px}#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b{top:21px;min-width:16px;padding:0 3px;font-size:8.5px}#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-nv{right:calc(50% + 12px)}#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-wolt{left:calc(50% + 12px)}}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover,html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{color:#eef3fa!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{color:#fff!important}
 html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){color:color-mix(in srgb,var(--hxr-accent,#a7b1c0) 80%,#fff)!important;transition:background-color 200ms cubic-bezier(.2,0,0,1),color 200ms cubic-bezier(.2,0,0,1)!important}
@@ -3085,7 +3082,7 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)
   }
   tones();
   // BOLUS has its own frame (progress ring, warning colours): not marked.
-  var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|mc-open)(\s|$)/;
+  var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|mc-open|pusdienas-open)(\s|$)/;
   function sync() {
     var found = false;
     Array.prototype.forEach.call(bar.querySelectorAll(':scope > button'), function (b) {
@@ -3135,13 +3132,11 @@ html:not(.minka-rad) #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)
   </section>
 </div>
 
-<div id="pusdienasSheet" aria-hidden="true" onclick="if(event.target===this) closePusdienasSheet()" style="display:none;position:fixed;inset:0;z-index:171190;pointer-events:auto;background:transparent;">
-  <section id="pusdienasSheetPanel" aria-label="Pusdienas" onclick="event.stopPropagation()" style="position:absolute;right:12px;bottom:86px;width:min(560px,calc(100vw - 24px));height:min(720px,calc(100dvh - 108px));min-height:500px;border-radius:18px;border:1px solid rgba(255,255,255,.18);background:#181818;box-shadow:0 18px 60px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.05) inset;overflow:hidden;pointer-events:auto;">
-    <div style="height:38px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;">
-      <span style="display:flex;align-items:center;gap:8px;"><span>🍗</span><span>Pusdienas</span></span>
-      <button type="button" onclick="closePusdienasSheet()" aria-label="Aizvērt Pusdienas" style="width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.24);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;">×</button>
-    </div>
-    <iframe id="pusdienasSheetFrame" title="Pusdienas" style="display:block;width:100%;height:calc(100% - 38px);border:0;background:#181818;" referrerpolicy="no-referrer"></iframe>
+<!-- Pusdienas: the whole page above the dock, like Kalendārs; the dock stays clickable (the
+     container lets pointer events through, only the panel takes them). -->
+<div id="pusdienasSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171190;pointer-events:none;background:transparent;">
+  <section id="pusdienasSheetPanel" role="dialog" aria-label="Pusdienas" style="position:absolute;left:0;right:0;top:0;bottom:92px;border-radius:0 0 28px 28px;background:#0E1828;box-shadow:0 18px 50px rgba(0,0,0,.5);overflow:hidden;pointer-events:auto;">
+    <iframe id="pusdienasSheetFrame" title="Pusdienas" style="display:block;width:100%;height:100%;border:0;background:#0E1828;" referrerpolicy="no-referrer"></iframe>
   </section>
 </div>
 
@@ -4168,77 +4163,85 @@ window.addEventListener('message', function(e) {
 </script>
 
 <script>
-/* Pusdienas launcher fallback: keep it outside the large dock script so a legacy error cannot break the button. */
+/* Pusdienas (pusdieninas.pages.dev): opens like Kalendārs, over the whole page down to the dock,
+   which stays usable below it; the dock button toggles it. The frame stays loaded after closing,
+   so reopening is instant. Kept outside the large dock script so a legacy error cannot break it. */
 (function(){
-  var PUSDIENAS_URL = 'https://pusdieninas.pages.dev/';
+  var ORIGIN = 'https://pusdieninas.pages.dev';
 
   function suppressBuddy() {
     if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
   }
-
-  function positionPusdienasSheet() {
+  function isOpen() {
     var sheet = document.getElementById('pusdienasSheet');
-    var panel = document.getElementById('pusdienasSheetPanel');
-    var btn = document.getElementById('pusdienasDockBtn');
-    if (!sheet || !panel || !btn || sheet.style.display === 'none') return;
-    var rect = btn.getBoundingClientRect();
-    var margin = 12;
-    var gap = 10;
-    var width = Math.min(560, window.innerWidth - margin * 2);
-    var height = Math.min(720, window.innerHeight - rect.height - margin * 2 - gap);
-    height = Math.max(500, height);
-    if (height > window.innerHeight - margin * 2) height = window.innerHeight - margin * 2;
-    var left = rect.left + rect.width / 2 - width / 2;
-    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
-    var bottom = window.innerHeight - rect.top + gap;
-    if (bottom + height > window.innerHeight - margin) {
-      bottom = Math.max(margin, window.innerHeight - height - margin);
-    }
-    panel.style.width = width + 'px';
-    panel.style.height = height + 'px';
-    panel.style.left = left + 'px';
-    panel.style.right = 'auto';
-    panel.style.bottom = bottom + 'px';
+    return !!sheet && sheet.style.display !== 'none' && sheet.dataset.closing !== '1';
   }
 
-  window.openPusdienasLauncher = function openPusdienasLauncher() {
+  // The panel ends just above the dock bar, whatever its height (desktop, narrow, iPhone inset).
+  function positionPusdienasSheet() {
+    var panel = document.getElementById('pusdienasSheetPanel');
+    var bar = document.getElementById('bottomBtnBar');
+    if (!panel || !isOpen()) return;
+    var top = bar ? bar.getBoundingClientRect().top : window.innerHeight;
+    panel.style.bottom = Math.max(0, Math.round(window.innerHeight - top + 8)) + 'px';
+  }
+
+  // mode: 'narvesen' | 'wolt' (from the count pills), or nothing to keep the frame's own choice.
+  window.openPusdienasLauncher = function openPusdienasLauncher(ev) {
+    var pill = ev && ev.target && ev.target.closest ? ev.target.closest('.pd-counts [data-mode]') : null;
+    var mode = pill ? pill.dataset.mode : '';
+    if (isOpen() && !mode) { closePusdienasSheet(); return; }
     var sheet = document.getElementById('pusdienasSheet');
     var frame = document.getElementById('pusdienasSheetFrame');
     var btn = document.getElementById('pusdienasDockBtn');
-    if (!sheet || !frame) {
-      window.open(PUSDIENAS_URL, 'pusdienas', 'popup=yes,width=560,height=760,resizable=yes,scrollbars=yes,toolbar=no,location=no,menubar=no,status=no');
-      return;
-    }
-    var wasShown = sheet.style.display !== 'none' && sheet.dataset.closing !== '1';
+    var url = ORIGIN + '/?rg=1' + (mode ? '#' + mode : ''); // rg=1: the page shows its close button
+    if (!sheet || !frame) { window.open(url, 'pusdienas'); return; }
+    var wasShown = isOpen();
     sheet.style.display = 'block';
     sheet.setAttribute('aria-hidden', 'false');
     if (btn) btn.classList.add('pusdienas-open');
     positionPusdienasSheet();
     if (!wasShown) mkSheetOpen(sheet, document.getElementById('pusdienasSheetPanel'), 'pusdienas', btn);
-    if (frame.src !== PUSDIENAS_URL) {
-      frame.removeAttribute('srcdoc');
-      frame.src = PUSDIENAS_URL;
-    }
+    if (!frame.src || frame.src.indexOf(ORIGIN) !== 0) frame.src = url;
+    else if (mode) frame.src = url; // same page, new hash: the frame switches section without reloading
     suppressBuddy();
   };
 
   window.closePusdienasSheet = function closePusdienasSheet() {
     var sheet = document.getElementById('pusdienasSheet');
-    var frame = document.getElementById('pusdienasSheetFrame');
     var btn = document.getElementById('pusdienasDockBtn');
-    if (sheet && sheet.dataset.closing === '1') return;
-    if (sheet) {
-      sheet.setAttribute('aria-hidden', 'true');
-      mkSheetClose(sheet, document.getElementById('pusdienasSheetPanel'), 'pusdienas', btn, function () {
-        sheet.style.display = 'none';
-        if (frame) frame.src = 'about:blank';
-      });
-    } else if (frame) frame.src = 'about:blank';
+    if (!sheet || sheet.dataset.closing === '1' || sheet.style.display === 'none') return;
+    sheet.setAttribute('aria-hidden', 'true');
+    mkSheetClose(sheet, document.getElementById('pusdienasSheetPanel'), 'pusdienas', btn, function () {
+      sheet.style.display = 'none';
+    });
     if (btn) btn.classList.remove('pusdienas-open');
     suppressBuddy();
   };
 
+  // Esc inside the frame (with no dish open) asks to close; Esc out here closes too.
+  window.addEventListener('message', function (e) {
+    if (e.origin === ORIGIN && e.data && e.data.type === 'pusdienas-close') closePusdienasSheet();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isOpen()) closePusdienasSheet();
+  });
   window.addEventListener('resize', positionPusdienasSheet);
+
+  // Dock counts: Narvesen posters and Wolt dishes on sale today, refreshed every 10 minutes.
+  function loadCounts() {
+    if (document.hidden) return;
+    fetch(ORIGIN + '/api/counts', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
+      if (!c) return;
+      var nv = document.getElementById('pdCountNv'), wo = document.getElementById('pdCountWolt'), btn = document.getElementById('pusdienasDockBtn');
+      if (nv) { nv.textContent = c.narvesen; nv.hidden = !c.narvesen; nv.title = 'Narvesen: ' + c.narvesen + ' akcijas'; }
+      if (wo) { wo.textContent = c.wolt; wo.hidden = !c.wolt; wo.title = 'Wolt: ' + c.wolt + ' atlaides'; }
+      if (btn) btn.setAttribute('aria-label', 'Pusdienas: Narvesen ' + c.narvesen + ' akcijas, Wolt ' + c.wolt + ' atlaides');
+    }).catch(function () {});
+  }
+  setTimeout(loadCounts, 1500);
+  setInterval(loadCounts, 10 * 60 * 1000);
+  document.addEventListener('visibilitychange', loadCounts);
 })();
 </script>
 
@@ -5524,6 +5527,8 @@ html[data-dock-bar="rezgis"] #dockShelf #bottomBtnBar > .dock-bg{--dock-art:url(
 #dockShelf #bottomBtnBar #statsDocBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Crect%20fill=%22white%22%20x=%223%22%20y=%2212%22%20width=%225%22%20height=%229%22%20rx=%221.5%22/%3E%3Crect%20fill=%22white%22%20x=%229.5%22%20y=%223%22%20width=%225%22%20height=%2218%22%20rx=%221.5%22/%3E%3Crect%20fill=%22white%22%20x=%2216%22%20y=%228%22%20width=%225%22%20height=%2213%22%20rx=%221.5%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M5%2020v-7M12%2020V4M19%2020v-11%22/%3E%3C/svg%3E");--ico-col:#1fe091;}
 #dockShelf #bottomBtnBar #radioIdleBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M17.5%202.6%2018.3%204.5%2010.4%207.5H19a2%202%200%200%201%202%202v9.5a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V9.5c0-.9.5-1.6%201.3-1.9L17.5%202.6ZM8%2017.5a2.8%202.8%200%201%200%200-5.6%202.8%202.8%200%200%200%200%205.6ZM14%2012v2h5v-2h-5Zm0%203.6v2h5v-2h-5Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22m5%208%2013-4.5M5%208h14a1.5%201.5%200%200%201%201.5%201.5v9.5A1.5%201.5%200%200%201%2019%2020.5H5A1.5%201.5%200%200%201%203.5%2019V9.5A1.5%201.5%200%200%201%205%208Z%22/%3E%3Ccircle%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20cx=%228.5%22%20cy=%2214.3%22%20r=%222.6%22/%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M14%2012.5h4M14%2016h4%22/%3E%3C/svg%3E");--ico-col:#ff8a5c;}
 #dockShelf #bottomBtnBar #radioToggle .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22white%22%20d=%22M17.5%202.6%2018.3%204.5%2010.4%207.5H19a2%202%200%200%201%202%202v9.5a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2V9.5c0-.9.5-1.6%201.3-1.9L17.5%202.6ZM8%2017.5a2.8%202.8%200%201%200%200-5.6%202.8%202.8%200%200%200%200%205.6ZM14%2012v2h5v-2h-5Zm0%203.6v2h5v-2h-5Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22m5%208%2013-4.5M5%208h14a1.5%201.5%200%200%201%201.5%201.5v9.5A1.5%201.5%200%200%201%2019%2020.5H5A1.5%201.5%200%200%201%203.5%2019V9.5A1.5%201.5%200%200%201%205%208Z%22/%3E%3Ccircle%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20cx=%228.5%22%20cy=%2214.3%22%20r=%222.6%22/%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M14%2012.5h4M14%2016h4%22/%3E%3C/svg%3E");--ico-col:#ff8a5c;}
+/* Pusdienas: fork and knife (Material "restaurant"), warm amber */
+#dockShelf #bottomBtnBar #pusdienasDockBtn .dock-alt{--ico-fill:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%20-960%20960%20960%22%3E%3Cpath%20fill=%22white%22%20d=%22M280-80v-366q-51-14-85.5-56T160-600v-280h80v280h40v-280h80v280h40v-280h80v280q0%2056-34.5%2098T360-446v366h-80Zm400%200v-320H560v-280q0-83%2058.5-141.5T760-880v800h-80Z%22/%3E%3C/svg%3E");--ico-line:url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%3E%3Cpath%20fill=%22none%22%20stroke=%22white%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20d=%22M6%203v5.5a3%203%200%200%200%206%200V3M9%203v18M18%2021V3c-2.2.9-3.5%203.3-3.5%206.2V14H18%22/%3E%3C/svg%3E");--ico-col:#ffa53d;}
 /* Radio icon: the player's own accent (skin colour, or the album colour in
    album mode; radio.js sets --radio-accent on these buttons). Coral until the
    radio has loaded. The pixel art keeps its shape, only its two inks change. */
@@ -5569,7 +5574,7 @@ window.__mkDockIcon=function(btnId){
     root.dataset.dockTint=['white','accent','muted'].indexOf(s.dockTint)>=0?s.dockTint:'color';
   }
   function addIcons(){
-    ['#nsToggleBtnParent','#bolusDocBtn','#monthCalDocBtn','#planotajsDockBtn','#statsDocBtn','#radioIdleBtn','#radioToggle'].forEach(function(sel){
+    ['#nsToggleBtnParent','#bolusDocBtn','#monthCalDocBtn','#planotajsDockBtn','#statsDocBtn','#radioIdleBtn','#radioToggle','#pusdienasDockBtn'].forEach(function(sel){
       var b=document.querySelector('#bottomBtnBar '+sel),px=b&&b.querySelector('.dock-px');
       if(!px||(px.nextElementSibling&&px.nextElementSibling.classList.contains('dock-alt')))return;
       var i=document.createElement('i');i.className='dock-alt';i.setAttribute('aria-hidden','true');px.after(i);
