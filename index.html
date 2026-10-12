@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261012fx1';
+  var CALENDAR_BUILD = '20261012rd1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -741,7 +741,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 <link rel="stylesheet" href="css/radio-source.css?v=20260926mo3">
 <link rel="stylesheet" href="css/radio-equalizer.css?v=20260919pixel2">
 <link rel="stylesheet" href="css/radio-pixel.css?v=20260919pixel5">
-<link rel="stylesheet" href="css/media-profile.css?v=20260924dth2">
+<link rel="stylesheet" href="css/media-profile.css?v=20261012rd1">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -3024,12 +3024,13 @@ html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:active{background:color-mix
    tones — a pixel icon keeps its details as three tones by its own lightness (light,
    mid, dark: data-t, set by the dock script below) — and under the pointer, when
    pressed or when its window is open, it shows its own colours again. Colour only,
-   200 ms on the effects curve. The other icon sets take the light tone. */
+   200 ms on the effects curve. The other icon sets take the light tone. RADIO is
+   not toned: it always wears the player's own colour (album / skin, --radio-accent). */
 html #dockShelf#dockShelf #bottomBtnBar .dock-px rect {transition: fill 200ms cubic-bezier(.2,0,0,1);}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on) .dock-px rect[data-t="l"] {fill: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 92%, #fff) !important;}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on) .dock-px rect[data-t="m"] {fill: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 58%, var(--hxr-surface, #2a2f36)) !important;}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on) .dock-px rect[data-t="d"] {fill: color-mix(in oklab, var(--hxr-surface, #2a2f36) 72%, #000) !important;}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on) .dock-alt {--dock-ico: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 92%, #fff) !important;}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="l"] {fill: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 92%, #fff) !important;}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="m"] {fill: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 58%, var(--hxr-surface, #2a2f36)) !important;}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="d"] {fill: color-mix(in oklab, var(--hxr-surface, #2a2f36) 72%, #000) !important;}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-alt {--dock-ico: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 92%, #fff) !important;}
 html #dockShelf#dockShelf #bottomBtnBar>button .dock-alt {transition: background-color 200ms cubic-bezier(.2,0,0,1);}
 /* the open window's item takes the colour of its icon */
 html #dockShelf#dockShelf #bottomBtnBar>#nsToggleBtnParent{--dk-acc:#7ea6ff}
@@ -3485,7 +3486,7 @@ html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
 
 <script src="kalendars/js/daybook-model.js?v=20260928perf1" defer></script>
 <script src="js/radio-daybook.js?v=20260928mx1" defer></script>
-<script src="js/media-profile.js?v=20260926pin1" defer></script>
+<script src="js/media-profile.js?v=20261012rd1" defer></script>
 <script src="js/radio-source.js?v=20260927wb4" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">

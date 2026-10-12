@@ -3780,6 +3780,9 @@ function filterFullList(btn) {
         }
         const cardEl = main.parentElement;
         main.insertAdjacentHTML('afterend', sideTicksHtml(entry, now, false, { score: cardEl.dataset.fatScore, label: cardEl.dataset.fatLabel }));
+        // The card styles key on this class (a :has(> .mk-side-ticks) made every
+        // style change on the page re-check the side cards).
+        cardEl.classList.add('mk-has-ticks');
         // First time this shift is shown: the track fades up into place, one
         // compositor animation for the whole row, a few ms apart per card.
         const row = main.nextElementSibling;
@@ -3820,7 +3823,7 @@ function filterFullList(btn) {
       if (tip && tip.innerHTML !== tipHtml) tip.innerHTML = tipHtml;
     } else if (item.ticks) {
       const main = el.querySelector(':scope > .mk-side-card-main');
-      if (main) main.insertAdjacentHTML('afterend', item.ticks);
+      if (main) { main.insertAdjacentHTML('afterend', item.ticks); el.classList.add('mk-has-ticks'); }
     }
   }
   function patchSideCards(container, items) {
@@ -3896,7 +3899,7 @@ function filterFullList(btn) {
       const card = (fatigue, ticks) => {
         const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
         return `
-        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}" style="${sideVars}" data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
+        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}${ticks ? ' mk-has-ticks' : ''}" style="${sideVars}" data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
           <div class="mk-side-card-main">
             <div class="mk-side-icon-rail">
               ${personEmoji ? `<span class="mk-emoji-side" data-mk-emoji-click="1">${mkEscAttr(personEmoji)}</span>` : ''}
@@ -4574,8 +4577,14 @@ function filterFullList(btn) {
     }
 
     // ── Sun / Moon icon overlay ──────────────────────────────────────────
+    // The bar is rebuilt on every live tick (5 s on low-spec PCs), but its
+    // icons and hour marks only change with the shift: rewriting identical
+    // markup made the whole page lay out again each time (~75 ms).
     function updateBarIcons(iconsEl, startMs, endMs, dur) {
       if (!iconsEl) return;
+      var key = startMs + '|' + endMs;
+      if (iconsEl._mkKey === key) return;
+      iconsEl._mkKey = key;
       function toPct(ms) { return Math.max(0, Math.min(100, (ms - startMs) / dur * 100)); }
       var icons = [];
       // Sun at 14:00 on shift-start date
@@ -4624,6 +4633,9 @@ function filterFullList(btn) {
     // ── Time ruler below bar ─────────────────────────────────────────────
     function updateBarRuler(rulerEl, startMs, endMs, dur) {
       if (!rulerEl) return;
+      var key = startMs + '|' + endMs;
+      if (rulerEl._mkKey === key) return;
+      rulerEl._mkKey = key;
       // Fixed anchors: 08, 14, 20, 02, 08 (6-hour grid)
       var anchors = [[0,8],[0,14],[0,20],[1,2],[1,8],[1,14],[1,20],[2,2],[2,8]];
       var sunH  = { 14: true };
@@ -4725,14 +4737,19 @@ function filterFullList(btn) {
       if (track) {
         if (effectiveOverlay && effectiveOverlay.segments && effectiveOverlay.segments.length) {
           const splitGradient = buildNightSplitGradient(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end);
+          track._mkBg = '';
           track.style.setProperty('background', splitGradient + ', linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.00) 35%, rgba(255,255,255,0.15) 48%, rgba(255,255,255,0.26) 50%, rgba(255,255,255,0.15) 52%, rgba(255,255,255,0.00) 65%, transparent 100%)', 'important');
           track.classList.add('has-night-split');
           track.style.setProperty('box-shadow', 'inset 0 0 0 1px rgba(255,255,255,0.05)', 'important');
         } else {
-          track.classList.remove('has-night-split');
+          // classList.remove() rewrites the attribute even when the class is absent.
+          if (track.classList.contains('has-night-split')) track.classList.remove('has-night-split');
           var dnBg = buildDayNightTrackBg(activeStart.getTime(), activeEnd.getTime());
-          track.style.setProperty('background', dnBg, 'important');
-          track.style.setProperty('box-shadow', 'inset 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(255,255,255,0.03)', 'important');
+          if (track._mkBg !== dnBg) {
+            track._mkBg = dnBg;
+            track.style.setProperty('background', dnBg, 'important');
+            track.style.setProperty('box-shadow', 'inset 0 1px 3px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(255,255,255,0.03)', 'important');
+          }
         }
       }
       try { if (window.__syncStarsOverlay) window.__syncStarsOverlay(); } catch(_e) {}
@@ -4740,7 +4757,8 @@ function filterFullList(btn) {
       var iconsEl = document.getElementById('shift-bar-icons');
       if (!effectiveOverlay || !(effectiveOverlay.segments && effectiveOverlay.segments.length)) {
         updateBarIcons(iconsEl, activeStart.getTime(), activeEnd.getTime(), totalDur);
-      } else if (iconsEl) {
+      } else if (iconsEl && iconsEl._mkKey !== '') {
+        iconsEl._mkKey = '';
         iconsEl.innerHTML = '';
       }
       // Time ruler below bar
@@ -4760,12 +4778,12 @@ function filterFullList(btn) {
           labelsEl.innerHTML = buildNightSplitMeta(effectiveOverlay.segments, effectiveOverlay.start, effectiveOverlay.end, displayNow);
           labelsEl.hidden = false;
           initNsBarDrag(labelsEl);
-        } else {
+        } else if (!labelsEl.hidden || labelsEl.firstChild) {
           labelsEl.innerHTML = '';
           labelsEl.hidden = true;
         }
       }
-      if (belowEl) {
+      if (belowEl && (!belowEl.hidden || belowEl.firstChild)) {
         belowEl.innerHTML = '';
         belowEl.hidden = true;
       }
@@ -5467,10 +5485,24 @@ function filterFullList(btn) {
         if (rNow.getAttribute('aria-label') !== _rnLabel) rNow.setAttribute('aria-label', _rnLabel);
       }
     }
-    if (rNow && _layoutCompactRulerNow(wrap, rNow, scrubPct)) {
-      var _pending = rNow.closest('.sl-ruler.sl-ruler-pending');
+    if (rNow) _scheduleRulerLayout(wrap, rNow, scrubPct);
+  }
+  // The ruler is measured in the next frame, before it is painted: the live
+  // tick wrote the clock texts just before, and anything else that changed the
+  // page meanwhile (the mood card's month line turns every 5 s) made each read
+  // here a full layout of the whole page — ~80 ms every few seconds. In the
+  // frame that layout is computed once anyway.
+  var _rulerFrame = 0, _rulerArgs = null;
+  function _scheduleRulerLayout(wrap, rNow, scrubPct) {
+    _rulerArgs = [wrap, rNow, scrubPct];
+    if (_rulerFrame) return;
+    _rulerFrame = requestAnimationFrame(function() {
+      _rulerFrame = 0;
+      var a = _rulerArgs; _rulerArgs = null;
+      if (!a || !a[1].isConnected || !_layoutCompactRulerNow(a[0], a[1], a[2])) return;
+      var _pending = a[1].closest('.sl-ruler.sl-ruler-pending');
       if (_pending) { _pending.classList.remove('sl-ruler-pending'); _playRulerEnter(_pending); }
-    }
+    });
   }
 
   function buildShiftLanes(stops, axisStart, axisEnd, nowDate, nsOverlay, counterStart, counterEnd) {
@@ -8937,3 +8969,25 @@ window.addEventListener('message', function(e) {
   if (!e || !e.data || e.data.type !== 'hostLayoutChanged') return;
   window.__minkaHostLayout(e.data);
 });
+
+/* Keyboard focus in a card's coffee control: .mk-coffee-kbd on the card. The
+   card styles used to ask :has(.mk-mid-coffee :focus-visible), and that one
+   selector made every style change anywhere on the page re-check all cards
+   (~9 ms each, every live tick of the clock). Same look, set from here. */
+(function () {
+  function card(el) { return el && el.closest ? el.closest('.card') : null; }
+  document.addEventListener('focusin', function (e) {
+    var t = e.target, c = card(t);
+    if (!c || !t.closest('.mk-mid-coffee')) return;
+    var kbd = false;
+    try { kbd = t.matches(':focus-visible'); } catch (_e) {}
+    if (kbd && !c.classList.contains('mk-coffee-kbd')) c.classList.add('mk-coffee-kbd');
+  }, true);
+  document.addEventListener('focusout', function (e) {
+    var c = card(e.target);
+    if (!c || !c.classList.contains('mk-coffee-kbd')) return;
+    var next = e.relatedTarget;
+    if (next && next.closest && next.closest('.mk-mid-coffee') && card(next) === c) return;
+    c.classList.remove('mk-coffee-kbd');
+  }, true);
+})();

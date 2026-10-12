@@ -482,9 +482,9 @@ html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-ed
   html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
   html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:has(.mk-mid-coffee :focus-visible) :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
 
 /* ── Per-element colour and iOS-style full tint ──────────────────────── */
 /* An element with its own colour carries its own --wf-tint; the numeral's

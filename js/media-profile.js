@@ -40,12 +40,14 @@
  registerTrigger.addEventListener('click',()=>{open();status('Izvēlies savu vārdu un izveido PIN. Favorīti un izskats paliks tavi.');});
  seg.append(trigger,registerTrigger);
  $('radioSourceBar')?.prepend(seg,exitTrigger);
- /* Logged-out hint in the tour popover's look (driver.css + .media-radio-tour),
-    but without the driver.js engine: that library swallows every click outside
-    its active element, which would lock the radio. This is plain DOM, pinned
-    above the login pill, and never intercepts anything. ✕ hides it until the
-    radio is opened again. */
- let hint=null,hintDismissed=false,hintLoading=false;
+ /* Logged-out hint: an M3 rich tooltip next to the login pill — small, tonal,
+    and quiet. It comes a moment after the radio has opened (not with it),
+    leaves by itself after a few seconds, and is shown at most once a week;
+    ✕ keeps it away for a month. Plain DOM, never intercepts a click outside
+    itself (driver.js swallowed every click and would lock the radio). */
+ let hint=null,hintDismissed=false,hintTimer=0,hintHideTimer=0;
+ const TIP_SEEN='mkRadioLoginTipAt',TIP_OFF='mkRadioLoginTipOff',DAY=864e5;
+ function tipAllowed(){try{const now=Date.now();if(now-(+localStorage.getItem(TIP_OFF)||0)<30*DAY)return false;return now-(+localStorage.getItem(TIP_SEEN)||0)>=7*DAY;}catch(_){return false;}}
  // Idle no longer means display:none (the window is pre-warmed in layout), and
  // radio-anim is the dock-button reveal in flight: neither counts as open.
  function radioOpen(){const win=$('radioWindow'),cls=document.body.classList;if(!win||cls.contains('radio-hidden')||cls.contains('radio-idle')||cls.contains('radio-anim'))return false;try{const cs=getComputedStyle(win);return cs.display!=='none'&&cs.visibility!=='hidden'&&seg.getClientRects().length>0;}catch(_){return false;}}
@@ -54,25 +56,40 @@
   hint.style.visibility='';
   const w=hint.offsetWidth,h=hint.offsetHeight;
   const left=Math.max(8,Math.min(b.right-w,innerWidth-w-8));
-  hint.style.left=left+'px';hint.style.top=Math.max(8,b.top-h-12)+'px';
-  const arrow=hint.querySelector('.driver-popover-arrow');if(arrow)arrow.style.left=Math.max(14,Math.min(w-24,b.left+b.width/2-left-5))+'px';
+  hint.style.left=left+'px';hint.style.top=Math.max(8,b.top-h-10)+'px';
+  hint.style.setProperty('--tip-arrow',Math.max(14,Math.min(w-22,b.left+b.width/2-left-5))+'px');
  }
- async function showLoginHint(){
-  if(session||hintDismissed||hint||hintLoading||tour||!radioOpen()||(typeof matchMedia==='function'&&matchMedia('(max-width: 520px)').matches))return;
-  hintLoading=true;
-  try{await loadAsset('vendor/driver/1.8.0/driver.css',true);}catch(_){hintLoading=false;return;}
-  hintLoading=false;
-  if(session||hintDismissed||hint||tour||!radioOpen())return;
-  hint=document.createElement('div');hint.className='driver-popover media-radio-tour media-login-hint driver-popover-side-top driver-popover-align-end';hint.setAttribute('role','note');
-  hint.innerHTML='<div class="driver-popover-arrow driver-popover-arrow-side-top driver-popover-arrow-align-end"></div><header class="driver-popover-title">Radio profils</header><div class="driver-popover-description">Saglabā favorītus, vairāk radio, izskats.</div>';
-  const close=document.createElement('button');close.type='button';close.className='driver-popover-close-btn';close.setAttribute('aria-label','Aizvērt paziņojumu');close.textContent='×';
-  close.addEventListener('click',()=>{hintDismissed=true;hideLoginHint();});
-  hint.prepend(close);document.body.append(hint);positionHint();
-  // The window may still be sliding in; settle the position over the next frames.
-  let n=0;const settle=()=>{positionHint();if(++n<12&&hint)requestAnimationFrame(settle);};requestAnimationFrame(settle);
+ function showLoginHint(){
+  if(session||hintDismissed||hint||hintTimer||tour||!radioOpen()||!tipAllowed()||(typeof matchMedia==='function'&&matchMedia('(max-width: 520px)').matches))return;
+  // A beat after the window has arrived, so it never jumps out with it.
+  hintTimer=setTimeout(()=>{
+   hintTimer=0;
+   if(session||hintDismissed||hint||tour||!radioOpen()||!tipAllowed())return;
+   try{localStorage.setItem(TIP_SEEN,String(Date.now()));}catch(_){}
+   hint=document.createElement('div');hint.className='media-login-tip';hint.setAttribute('role','note');
+   // The player's own colour (radio.js writes it inline on the window); <body> only has the old default.
+   const acc=($('radioWindow')?.style.getPropertyValue('--radio-accent')||'').trim();if(acc)hint.style.setProperty('--radio-accent',acc);
+   hint.innerHTML='<svg class="media-login-tip-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.6-7.5 10-7.5 10Z" fill="currentColor"/></svg><span><b>Radio profils</b> saglabā favorītus un izskatu</span>';
+   const close=document.createElement('button');close.type='button';close.className='media-login-tip-x';close.setAttribute('aria-label','Aizvērt');
+   close.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+   close.addEventListener('click',()=>{hintDismissed=true;try{localStorage.setItem(TIP_OFF,String(Date.now()));}catch(_){}hideLoginHint();});
+   hint.append(close);document.body.append(hint);positionHint();
+   requestAnimationFrame(()=>{if(hint)hint.classList.add('is-in');});
+   hintHideTimer=setTimeout(()=>{hintDismissed=true;hideLoginHint();},6500);
+  },1400);
  }
- function hideLoginHint(){if(hint){hint.remove();hint=null;}}
- function syncLoginHint(){if(session||!radioOpen()){hideLoginHint();if(!radioOpen())hintDismissed=false;}else void showLoginHint();positionHint();}
+ function hideLoginHint(){
+  clearTimeout(hintTimer);hintTimer=0;clearTimeout(hintHideTimer);hintHideTimer=0;
+  if(!hint)return;const el=hint;hint=null;el.classList.remove('is-in');el.classList.add('is-out');
+  setTimeout(()=>el.remove(),200);
+ }
+ // Runs on every <body> class change (day switches too): class flags only;
+ // computed styles are read just before a tip could actually be shown.
+ function syncLoginHint(){
+  const cls=document.body.classList,closed=cls.contains('radio-hidden')||cls.contains('radio-idle');
+  if(session||closed){hideLoginHint();if(closed)hintDismissed=false;return;}
+  if(hint)positionHint();else if(!hintTimer&&!hintDismissed)showLoginHint();
+ }
  if(typeof MutationObserver==='function')new MutationObserver(syncLoginHint).observe(document.body,{attributes:true,attributeFilter:['class']});
  window.addEventListener('resize',positionHint,{passive:true});
  {const win=$('radioWindow');if(win){win.addEventListener('transitionend',positionHint);if(typeof ResizeObserver==='function')new ResizeObserver(positionHint).observe(win);}}

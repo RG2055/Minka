@@ -2005,6 +2005,10 @@
   }
   function ledCards(scope){
     if(!st || !st.sl) return;
+    // Closed panel: nothing to light. Each day switch re-renders the night plan
+    // and this measured every card and drew its picture into a canvas (~45 ms of
+    // forced layout and canvas work a click); opening renders again and lights it.
+    if(!window.__nsOverlayOpen) return;
     if(!_led.timer) _led.openedAt=performance.now();   // the panel has just opened: sweep in
     nsClockTick();
     (scope||document).querySelectorAll('#nsPanel .nsc-full-card[data-i]').forEach(function(card){

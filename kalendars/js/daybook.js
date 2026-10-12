@@ -37,8 +37,11 @@
     var wrap = stage.querySelector('.rg-mood-blob-wrap');
     var card = stage.closest('.rg-feedback-card');
     if (!now || !wrap || !card) return;
-    // One spot per station and selected day; a new day or station rolls again.
-    var key = state.name + '|' + selectedDay();
+    // One spot per station: a new station rolls again. (It used to roll again
+    // on every day switch too, and each roll re-laid out the whole mood card —
+    // ~35 ms more per click while the radio played. The ring of people turns,
+    // so a spot picked against one day's bubbles is no worse on the next.)
+    var key = state.name;
     if (!force && now.dataset.placedFor === key) return;
     // Size varies a little too — never above the base size.
     now.style.setProperty('--b', 'calc(clamp(82px, 45cqw, 100px) * ' + (0.8 + Math.random() * 0.2).toFixed(2) + ')');
@@ -81,7 +84,7 @@
     if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout();
   }
   var lastAngle = -999;
-  var placeTimer = 0;
+  var placeTimer = 0, placeFrame = 0;
   window.addEventListener('resize', function () {
     window.clearTimeout(placeTimer);
     placeTimer = window.setTimeout(function () {
@@ -126,8 +129,17 @@
     var top = now.querySelector('.rg-mood-now-station > span');
     if (top.textContent !== state.name) top.textContent = state.name;
     if (!on) return;
-    placeBadge(stage, false);
-    window.requestAnimationFrame(function () {
+    // Placed in the next frame, before it is painted: paint() runs while a day
+    // switch is still building the roster, where measuring forced an extra
+    // layout of the whole page (~40 ms a click with the radio playing).
+    if (!placeFrame) placeFrame = window.requestAnimationFrame(function () {
+      placeFrame = 0;
+      var st = document.querySelector('.rg-feedback-card .rg-mood-stage.is-radio');
+      if (st) placeBadge(st, false);
+    });
+    // The marquee only needs measuring when the name changes.
+    if (top.parentNode.dataset.mqFor !== state.name) window.requestAnimationFrame(function () {
+      top.parentNode.dataset.mqFor = state.name;
       [top].forEach(function (el) {
         var box = el.parentNode, over = el.scrollWidth - box.clientWidth;
         box.classList.toggle('is-overflow', over > 2);

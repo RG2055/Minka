@@ -176,7 +176,7 @@
 }
 /* Hover/fokuss — stikls kļūst redzams, un pogas izslīd no piluļa. */
 #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-coffee-step,
-#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee:has(:focus-visible) .mk-coffee-step {
+#grafiks-list.grid-view .card.mk-mid-card.mk-coffee-kbd:not(.rg-feedback-card) .mk-mid-coffee .mk-coffee-step {
   border-color: rgba(255, 255, 255, .24) !important;
   background:
     linear-gradient(150deg, rgba(255, 255, 255, .20), rgba(255, 255, 255, .06) 55%, rgba(255, 255, 255, .02)) !important;
@@ -262,8 +262,8 @@
    un pazūd, kad pele aiziet nost. */
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-coffee-sub,
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):hover .mk-coffee-add,
-:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee:has(:focus-visible) .mk-coffee-sub,
-:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) .mk-mid-coffee:has(:focus-visible) .mk-coffee-add {
+:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card.mk-coffee-kbd:not(.rg-feedback-card) .mk-mid-coffee .mk-coffee-sub,
+:root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card.mk-coffee-kbd:not(.rg-feedback-card) .mk-mid-coffee .mk-coffee-add {
   flex: 0 0 17px !important;
   width: 17px !important;
   min-width: 17px !important;
