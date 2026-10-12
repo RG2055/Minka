@@ -479,7 +479,9 @@
     var d = parseDMY(shiftToday());
     if (!d) return 0;
     d.setHours(8, 0, 0, 0);
-    return Math.max(0, Math.min(1, (Date.now() - d.getTime()) / 86400000));
+    // To 08:00 the next day by the wall clock (25 h / 23 h on DST nights).
+    var e = new Date(d); e.setDate(e.getDate() + 1);
+    return Math.max(0, Math.min(1, (Date.now() - d.getTime()) / (e - d)));
   }
   // The front sits right above the ruler's fill.
   function ledFrontX() {

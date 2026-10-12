@@ -2718,23 +2718,34 @@ function filterFullList(btn) {
     if (!dd || !mm || !yy) return null;
     const start = new Date(yy, mm - 1, dd, 0, 0, 0, 0);
     if (startHour < 8) start.setDate(start.getDate() + 1);
+    const midnight = new Date(start);
     const wholeMinutes = Math.round(startHour * 60);
     start.setMinutes(wholeMinutes);
     const end = new Date(start);
     end.setHours(endOpt.h, endOpt.m, 0, 0);
     if (end <= start) end.setDate(end.getDate() + 1);
 
-    const totalMin = Math.max(1, Math.round((end - start) / 60000));
+    // Split wall-clock minutes like the Nakts panel (nightsplit.js calc), so on
+    // DST nights both show the same boundaries (02:00–04:00 is then 3 h or 1 h).
+    let endMinutes = endOpt.h * 60 + endOpt.m;
+    if (end.getDate() !== start.getDate()) endMinutes += 1440;
+    const totalMin = Math.max(1, endMinutes - wholeMinutes);
     const n = ordered.length;
     const base = Math.floor(totalMin / n);
     const rem = totalMin % n;
-    let cursor = new Date(start);
+    let cursor = wholeMinutes;
+    // A minute the March jump skips (03:40) counts from the jump (04:00), as in nightsplit.js nsMinMs.
+    const atMinute = function(min) {
+      const d = new Date(midnight); d.setMinutes(min);
+      if (d.getHours() * 60 + d.getMinutes() !== min % 1440) d.setTime(d.getTime() - d.getMinutes() * 60000);
+      return d;
+    };
     const resolvedColors = getNightSplitColorOrder(ordered);
     const segments = ordered.map(function(w, index) {
-      const segStart = new Date(cursor);
+      const segStart = atMinute(cursor);
       const len = base + (index < rem ? 1 : 0);
-      cursor = new Date(cursor.getTime() + len * 60000);
-      const segEnd = new Date(cursor);
+      cursor += len;
+      const segEnd = atMinute(cursor);
       return {
         worker: w,
         name: String(w.name || ''),
@@ -3056,12 +3067,22 @@ function filterFullList(btn) {
     return { start, end };
   }
 
+  // 08:00 → 08:00 the next day by the wall clock: 25 h / 23 h on DST nights.
+  function nextDaySameTime(d) {
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    return next;
+  }
+
   function getDisplayNowForDate(dateStr, actualNow) {
     const now = actualNow instanceof Date ? actualNow : new Date();
     const parts = String(dateStr || '').split('.').map(Number);
     if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return now;
     const mapped = new Date(parts[2], parts[1] - 1, parts[0], now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
     if (now.getHours() < 8) mapped.setDate(mapped.getDate() + 1);
+    // Same calendar day: use the real instant. Rebuilding from wall-clock fields
+    // lands 1 h early in the repeated 03:xx hour on the October DST night.
+    if (mapped.getFullYear() === now.getFullYear() && mapped.getMonth() === now.getMonth() && mapped.getDate() === now.getDate()) return now;
     return mapped;
   }
 
@@ -3096,6 +3117,7 @@ function filterFullList(btn) {
     out.isActive = now >= start && now < end;
     out.isUpcoming = now < start;
     out.remainingMs = Math.max(0, end - now);
+    out.endMs = end.getTime();
     if (out.isDone) out.statusText = 'Maiņa beigusies';
     else if (out.isActive) {
       out.timerText = formatRemainingHHMMSS(out.remainingMs);
@@ -4961,7 +4983,7 @@ function filterFullList(btn) {
         _laneStops = [];
         const _fd = new Date(+_sp[2], +_sp[1]-1, +_sp[0], 8, 0, 0);
         _laneAxisStart = _fd;
-        _laneAxisEnd   = new Date(_fd.getTime() + 24 * 3600000);
+        _laneAxisEnd   = nextDaySameTime(_fd);
         _laneNow       = _fd;
 
         for (const _src of [store, storeRad]) {
@@ -4992,14 +5014,14 @@ function filterFullList(btn) {
           const _minMs = Math.min.apply(null, _laneStops.map(function(s) { return s.start.getTime(); }));
           _laneAxisStart = new Date(_minMs);
           _laneAxisStart.setHours(8, 0, 0, 0);
-          _laneAxisEnd = new Date(_laneAxisStart.getTime() + 24 * 3600000);
+          _laneAxisEnd = nextDaySameTime(_laneAxisStart);
         }
       } else {
         // Past date: show that day's completed workers (100% progress)
         _laneStops = [];
         const _fd = new Date(+_sp[2], +_sp[1]-1, +_sp[0], 8, 0, 0);
         _laneAxisStart = _fd;
-        _laneAxisEnd   = new Date(_fd.getTime() + 24 * 3600000);
+        _laneAxisEnd   = nextDaySameTime(_fd);
         _laneNow       = _laneAxisEnd; // 100% — all shifts completed
 
         for (const _src of [store, storeRad]) {
@@ -5030,7 +5052,7 @@ function filterFullList(btn) {
           const _minMs = Math.min.apply(null, _laneStops.map(function(s) { return s.start.getTime(); }));
           _laneAxisStart = new Date(_minMs);
           _laneAxisStart.setHours(8, 0, 0, 0);
-          _laneAxisEnd = new Date(_laneAxisStart.getTime() + 24 * 3600000);
+          _laneAxisEnd = nextDaySameTime(_laneAxisStart);
           _laneNow = _laneAxisEnd;
         }
       }
@@ -5491,7 +5513,9 @@ function filterFullList(btn) {
     groups.forEach(function(g) {
       if (g.shiftH >= 15 && g.shiftH < 24) {
         const endMs = g.end instanceof Date ? g.end.getTime() : g.end;
-        const derived = endMs - g.shiftH * 3600000;
+        // Wall-clock time back, so a DST night keeps the 12:00 start.
+        const _d = new Date(endMs); _d.setMinutes(_d.getMinutes() - Math.round(g.shiftH * 60));
+        const derived = _d.getTime();
         const curStart = g.start instanceof Date ? g.start.getTime() : g.start;
         if (derived < curStart) g.start = new Date(derived);
       }
@@ -6999,6 +7023,8 @@ function filterFullList(btn) {
             + ` data-date="${escapeHtml(activeDateStr)}"`
             + ` data-start="${escapeHtml(start)}"`
             + ` data-end="${escapeHtml(end)}"`
+            // The real end for the analog dial (card-faces.js): wall minutes are 1 h off on DST days.
+            + ` data-end-ms="${uiState.endMs}"`
             + ` data-shift="${escapeHtml(String(uiState.shiftHours || w.shift || ''))}">`
             + `<span class="val">${escapeHtml(uiState.timerText)}</span></span>`;
         }

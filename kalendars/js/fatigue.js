@@ -719,9 +719,11 @@
         if(t<timeline.start||t>timeline.end){samples.push(null);continue;}
         const v=timeline.at(t);samples.push({t,score:v.score,asleep:!!v.asleep});
       }
-      const perDay=24/stepHours;
-      for(let d=0;d*perDay<samples.length-1;d++){
-        const day=samples.slice(d*perDay,(d+1)*perDay).filter(Boolean),awake=day.filter(v=>!v.asleep),pool=awake.length?awake:day;
+      // Days by the calendar, not every 24 samples: DST Sundays have 25 or 23 hours.
+      const byDay=Array.from({length:new Date(year,month,0).getDate()},()=>[]);
+      samples.forEach((v,i)=>{const t=from+i*stepHours*HOUR;if(v&&t<to)byDay[new Date(t).getDate()-1].push(v);});
+      for(const day of byDay){
+        const awake=day.filter(v=>!v.asleep),pool=awake.length?awake:day;
         if(!pool.length){days.push(null);continue;}
         let peak=pool[0];for(const v of pool)if(v.score>peak.score)peak=v;
         days.push({peak:peak.score,peakAt:peak.t,mean:Math.round(pool.reduce((a,v)=>a+v.score,0)/pool.length)});
@@ -760,10 +762,14 @@
     if(range!=='day'&&range!=='week')return {i0:0,i1:n,range:'month'};
     const at=Math.min(Math.max(+anchor||Date.now(),series.from),series.to-1);
     const day=new Date(at);if(day.getHours()<8)day.setDate(day.getDate()-1);day.setHours(8,0,0,0);
-    const len=range==='day'?24:7*24;
-    let i0=Math.round((+day-(range==='week'?3*24*HOUR:0)-series.from)/(series.stepHours*HOUR));
-    i0=Math.max(0,Math.min(n-len/series.stepHours,i0));
-    return {i0,i1:Math.min(n,i0+len/series.stepHours),range};
+    // Whole days by the wall clock (08:00 to 08:00): 25 or 23 samples on a DST night.
+    const start=new Date(day);
+    if(range==='week')start.setDate(start.getDate()-3);
+    const end=new Date(start);end.setDate(end.getDate()+(range==='day'?1:7));
+    const step=series.stepHours*HOUR,len=Math.round((+end-+start)/step);
+    let i0=Math.round((+start-series.from)/step);
+    i0=Math.max(0,Math.min(n-len,i0));
+    return {i0,i1:Math.min(n,i0+len),range};
   }
   function monthCurveHtml(workerName,year,month,opts={}){
     const series=monthSeries(workerName,year,month,1);
@@ -771,7 +777,6 @@
     const now=Date.now(),win=curveWindow(series,opts.range,opts.anchor);
     const S=series.samples.slice(win.i0,win.i1+1),step=series.stepHours*HOUR;
     const wFrom=series.from+win.i0*step,wTo=series.from+win.i1*step,span=wTo-wFrom;
-    const hours=Math.round(span/HOUR);
     const pct=t=>(100*(t-wFrom)/span).toFixed(3);
     const y=v=>(100-v).toFixed(1);
     const paths={awake:'',sleep:'',awakeF:'',sleepF:''};let prevKey=null;
@@ -789,11 +794,13 @@
     let weekends='',ticks='';
     if(win.range==='day'){
       // every four hours from the shift start: 08, 12, 16, 20, 00, 04, 08
-      for(let h=0;h<=hours;h+=4){const t=wFrom+h*HOUR,d=new Date(t);ticks+=`<span style="left:${pct(t)}%"${h===hours?' class="is-end"':''}>${String(d.getHours()).padStart(2,'0')}:00</span>`;}
+      // (by the wall clock, so a DST night still ends at 08:00)
+      for(const d=new Date(wFrom);+d<=wTo;d.setHours(d.getHours()+4)){const t=+d;ticks+=`<span style="left:${pct(t)}%"${t===wTo?' class="is-end"':''}>${String(d.getHours()).padStart(2,'0')}:00</span>`;}
     }else{
       const first=new Date(wFrom);first.setHours(0,0,0,0);
       for(let d=new Date(first);+d<wTo;d.setDate(d.getDate()+1)){
-        const t=+d,dow=d.getDay(),x=(Math.max(t,wFrom)-wFrom)/step,w=(Math.min(t+24*HOUR,wTo)-Math.max(t,wFrom))/step;
+        const nx=new Date(d);nx.setDate(nx.getDate()+1);
+        const t=+d,dow=d.getDay(),x=(Math.max(t,wFrom)-wFrom)/step,w=(Math.min(+nx,wTo)-Math.max(t,wFrom))/step;
         if((dow===0||dow===6)&&w>0)weekends+=`<rect x="${x}" y="0" width="${w}" height="100" class="fmc-we"/>`;
         if(t>=wFrom&&(win.range==='week'||dow===1||t===series.from))ticks+=`<span style="left:${pct(t)}%">${d.getDate()}.${d.getMonth()+1}.</span>`;
       }

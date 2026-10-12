@@ -81,8 +81,12 @@
   function dayNumber(date) {
     return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / DAY_MS);
   }
+  // Before 08:00 by the wall clock it is still yesterday's pet day (minus 8 h
+  // would flip an hour off on the DST nights).
   function petDayDate(date) {
-    return new Date(date.getTime() - DAY_START_HOUR * 60 * 60 * 1000);
+    var d = new Date(date);
+    if (d.getHours() < DAY_START_HOUR) d.setDate(d.getDate() - 1);
+    return d;
   }
   function petDayKey(date) {
     return localDayKey(petDayDate(date));

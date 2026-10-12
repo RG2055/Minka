@@ -162,6 +162,10 @@
       else phase = now < s ? 'soon' : 'done';
     }
     var left = phase === 'on' ? Math.max(0, e - now) : phase === 'soon' ? s - now : s == null ? 0 : e - s;
+    // On duty the calendar gives the real end (the same wall time): wall minutes are 1 h off on DST days.
+    var endAt = el.dataset.endMs ? new Date(+el.dataset.endMs) : null;
+    if (phase === 'on' && endAt && !el.dataset.dialNow && endAt.getHours() * 60 + endAt.getMinutes() === e % 1440)
+      left = Math.max(0, Math.round((endAt.getTime() - Math.floor(d.getTime() / 60000) * 60000) / 60000));
     var big = s == null ? '' : phase === 'on' || phase === 'soon' ? dur(left) : Math.round(left / 60) + 'h';
     var small = { on: 'ATLIKUŠAS', soon: 'LĪDZ ' + hhmm(s), done: 'BEIGUSIES', plan: s == null ? '' : hhmm(s).slice(0, 2) + '–' + hhmm(e).slice(0, 2) }[phase] || '';
     active = phase === 'on';
@@ -717,7 +721,10 @@
   // hours against the clock when they apply, otherwise a fixed spot per person.
   function waProgress(card) {
     var timer = card.querySelector('.duty-timer'), m = timer && /(\d+):(\d\d):(\d\d)/.exec(timer.textContent), hours = +card.dataset.dutyHours || 0;
-    if (m && hours) return Math.max(0, Math.min(1, 1 - ((+m[1]) * 3600 + (+m[2]) * 60 + (+m[3])) / (hours * 3600)));
+    // The shift's real length: 25 h / 23 h for a 24 h duty over a DST night.
+    var endMs = timer && +timer.dataset.endMs, total = hours * 3600;
+    if (endMs) { var from = new Date(endMs); from.setMinutes(from.getMinutes() - Math.round(hours * 60)); total = (endMs - from) / 1000; }
+    if (m && hours) return Math.max(0, Math.min(1, 1 - ((+m[1]) * 3600 + (+m[2]) * 60 + (+m[3])) / total));
     var span = card.querySelector('.mk-mid-meta-time'), range = span && /(\d{1,2})\D+(\d{1,2})/.exec(span.textContent);
     if (range) {
       var now = new Date(), t = now.getHours() + now.getMinutes() / 60, start = +range[1], end = +range[2];

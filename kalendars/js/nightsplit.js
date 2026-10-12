@@ -1727,15 +1727,18 @@
     if(!today || !slot) return {status:TXT_NEXT, active:false, pct:0, left:'', label:''};
     var now = new Date();
     var cur = now.getHours()*60 + now.getMinutes();
-    if(st && typeof st.sh === 'number' && st.sh >= 20 && cur < Math.round(st.sh*60)) cur += 1440;
-    if(cur >= slot.s && cur < slot.e){
-      var total = Math.max(1, slot.e - slot.s);
-      var elapsed = Math.max(0, cur - slot.s);
-      var leftMin = Math.max(0, slot.e - cur);
+    var base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if(st && typeof st.sh === 'number' && st.sh >= 20 && cur < Math.round(st.sh*60)){ cur += 1440; base.setDate(base.getDate()-1); }
+    // Real instants (minute precision, as before): DST nights stay in step with the wall-clock labels.
+    var t = Math.floor(now.getTime()/60000)*60000, a = nsMinMs(base, slot.s), z = nsMinMs(base, slot.e);
+    if(t >= a && t < z){
+      var total = Math.max(1, (z - a)/60000);
+      var elapsed = Math.max(0, (t - a)/60000);
+      var leftMin = Math.max(0, (z - t)/60000);
       var pct = Math.max(0, Math.min(100, (elapsed / total) * 100));
       return {status:TXT_ACTIVE, active:true, pct:pct, left:fm(leftMin), label:'Atlikušais'};
     }
-    if(cur >= slot.e) return {status:TXT_DONE, active:false, pct:100, left:'', label:''};
+    if(t >= z) return {status:TXT_DONE, active:false, pct:100, left:'', label:''};
     return {status:TXT_NEXT, active:false, pct:0, left:'', label:''};
   }
 
@@ -1799,7 +1802,7 @@
     });
   }
   function clockPopText(pop,slot){
-    var p=ledProgress(slot), total=slot.e-slot.s, t=pop.querySelector('.nsc-clock-status');
+    var p=ledProgress(slot), total=ledSlotMinutes(slot), t=pop.querySelector('.nsc-clock-status');
     if(!t) return;
     t.textContent = p>=1 ? 'Pabeigts' : p>0 ? 'Atlicis '+clockLeft(total*(1-p)) : 'Sāksies pēc '+clockLeft((function(){ var q=ledProgressAt(slot); return q; })());
   }
@@ -1807,7 +1810,13 @@
   function ledProgressAt(slot){
     var parts=activeDateKey().match(/^(\d{2})\.(\d{2})\.(\d{4})$/); if(!parts || !st || !st.sl.length) return 0;
     var base=new Date(+parts[3],+parts[2]-1,+parts[1]); if(st.sl[0].s<12*60) base.setDate(base.getDate()+1);
-    return (base.getTime()+slot.s*60000-Date.now())/60000;
+    return (nsMinMs(base,slot.s)-Date.now())/60000;
+  }
+  // The part's real length in minutes (3 h for 02:00–04:00 on the October DST night).
+  function ledSlotMinutes(slot){
+    var parts=activeDateKey().match(/^(\d{2})\.(\d{2})\.(\d{4})$/); if(!parts || !st || !st.sl.length) return slot.e-slot.s;
+    var base=new Date(+parts[3],+parts[2]-1,+parts[1]); if(st.sl[0].s<12*60) base.setDate(base.getDate()+1);
+    return (nsMinMs(base,slot.e)-nsMinMs(base,slot.s))/60000;
   }
   // A card's accent comes from its picture and can be almost black; on the
   // dark dial it must still read, so lift it toward white until it does.
@@ -1874,7 +1883,8 @@
     var parts=activeDateKey().match(/^(\d{2})\.(\d{2})\.(\d{4})$/); if(!parts) return 0;
     var base=new Date(+parts[3],+parts[2]-1,+parts[1]);
     if(st.sl[0].s<12*60) base.setDate(base.getDate()+1);
-    var start=base.getTime()+slot.s*60000, end=base.getTime()+slot.e*60000, now=Date.now();
+    // Wall-clock minutes to real instants, like dreamPhones (DST nights).
+    var start=nsMinMs(base,slot.s), end=nsMinMs(base,slot.e), now=Date.now();
     if(now>=end) return 1;
     if(now<=start) return 0;
     return (now-start)/Math.max(1,end-start);
@@ -2179,7 +2189,35 @@
       if(st.sh>=12){ if(h<8) cur+=1440; }
       else if(h>=8) cur-=1440;
     }
+    // A DST night: inside a part whose real length differs from its wall
+    // minutes, move by its real share, so the cursor never runs back in the
+    // repeated hour and reaches the part's end when it really ends.
+    if(st && Array.isArray(st.sl)){
+      var b=nsClockBase(), t=now.getTime();
+      for(var i=0;i<st.sl.length;i++){
+        var sl=st.sl[i], a=nsMinMs(b,sl.s), z=nsMinMs(b,sl.e);
+        if(t>=a && t<z){ if(z-a!==(sl.e-sl.s)*60000) cur=sl.s+(t-a)/(z-a)*(sl.e-sl.s); break; }
+      }
+    }
     return cur;
+  }
+  // The real instant of a night minute (slot.s/slot.e are wall-clock minutes
+  // from base): setMinutes walks the wall clock, so on DST nights 02:00–04:00
+  // really lasts 3 h (October) or 1 h (March). A minute the March jump skips
+  // (03:40) is over the moment the clock jumps, i.e. at 04:00.
+  function nsMinMs(base,min){
+    var d=new Date(base); d.setMinutes(min);
+    if(d.getHours()*60+d.getMinutes()!==((min%1440)+1440)%1440) d.setTime(d.getTime()-d.getMinutes()*60000);
+    return d.getTime();
+  }
+  // Midnight the slots count from, by the clock: the duty day turns at 08:00.
+  function nsClockBase(){
+    var now=new Date(), b=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    if(st && typeof st.sh==='number'){
+      if(st.sh>=12){ if(now.getHours()<8) b.setDate(b.getDate()-1); }
+      else if(now.getHours()>=8) b.setDate(b.getDate()+1);
+    }
+    return b;
   }
   function nsLeftText(min){
     min=Math.max(0,Math.ceil(min));
@@ -2194,12 +2232,13 @@
     var todayStr=window.__g_todayStr || window.__todayDateStr;
     var today=window.__activeDateStr && todayStr && window.__activeDateStr===todayStr;
     if(!today || !slots || !slots[i]) return null;
-    var s=slots[i];
-    if(cur>=s.s && cur<s.e) return {cls:'is-now', text:'Vēl '+nsLeftText(s.e-cur)};
-    if(cur>=s.e) return {cls:'is-done', text:'Beigusies'};
+    // Real instants, not wall minutes: on DST nights the minutes left stay true.
+    var s=slots[i], b=nsClockBase(), now=Date.now(), a=nsMinMs(b,s.s), z=nsMinMs(b,s.e);
+    if(now>=a && now<z) return {cls:'is-now', text:'Vēl '+nsLeftText((z-now)/60000)};
+    if(now>=z) return {cls:'is-done', text:'Beigusies'};
     // Countdown only for the very next person, and only within 12 h.
-    var prevStarted = i===0 || cur>=slots[i-1].s;
-    if(prevStarted && s.s-cur<=12*60) return {cls:'is-next', text:'Pēc '+nsLeftText(s.s-cur)};
+    var prevStarted = i===0 || now>=nsMinMs(b,slots[i-1].s);
+    if(prevStarted && a-now<=12*3600000) return {cls:'is-next', text:'Pēc '+nsLeftText((a-now)/60000)};
     return null;
   }
   // The person whose part it is now colours the window (M3 tonal surfaces, the seed is
@@ -2217,7 +2256,8 @@
   function nsTintIndex(slots,cur){
     var todayStr=window.__g_todayStr || window.__todayDateStr;
     if(!(window.__activeDateStr && todayStr && window.__activeDateStr===todayStr)) return 0;
-    for(var i=0;i<slots.length;i++) if(cur<slots[i].e) return i;
+    var b=nsClockBase(), now=Date.now();
+    for(var i=0;i<slots.length;i++) if(now<nsMinMs(b,slots[i].e)) return i;
     return slots.length-1;
   }
   function nsTintPanel(card){
@@ -2263,7 +2303,8 @@
     var labels=bar.parentNode && bar.parentNode.querySelector('.ns-flow-labels');
     var chip=labels && labels.querySelector('.ns-flow-now-chip');
     if(!chip) return;
-    var h=Math.floor(((cur%1440)+1440)%1440/60), m=Math.floor(((cur%60)+60)%60);
+    // The real clock: on a DST night the cursor's minutes are not the wall time.
+    var d=new Date(), h=d.getHours(), m=d.getMinutes();
     var text=(h<10?'0':'')+h+':'+(m<10?'0':'')+m;
     if(chip.textContent!==text) chip.textContent=text;
     var W=labels.clientWidth, cw=chip.offsetWidth;
@@ -2382,11 +2423,14 @@
     try{
       var now = new Date();
       var cur = now.getHours()*60 + now.getMinutes();
+      var base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       var firstStart = st.sl[0] ? st.sl[0].s : 0;
-      if(firstStart >= 20*60 && cur < 12*60) cur += 1440;
+      if(firstStart >= 20*60 && cur < 12*60) base.setDate(base.getDate()-1);
+      // Real instants, so the devices move beds when the wall clock says so on DST nights too.
+      var t = Math.floor(now.getTime()/60000)*60000;
       for(var ai=0; ai<st.sl.length; ai++){
         var sl = st.sl[ai];
-        if(cur >= sl.s && cur < sl.e){ activeIdx = ai; break; }
+        if(t >= nsMinMs(base, sl.s) && t < nsMinMs(base, sl.e)){ activeIdx = ai; break; }
       }
     }catch(_e){ activeIdx = -1; }
     var deviceIdx = activeIdx >= 0 ? activeIdx : 0;
@@ -3286,7 +3330,8 @@
       var c=getCol(s.w.name);
       var rt=slotRealtime(s);
       var tr=fatigueTrend(s.w.name);
-      var dur=Math.floor(s.d/60)+'h'+(((s.d%60))?String(s.d%60).padStart(2,'0')+'m':'');
+      // Real length: 02:00–04:00 is 3h on the October DST night.
+      var dm=ledSlotMinutes(s), dur=Math.floor(dm/60)+'h'+(((dm%60))?String(dm%60).padStart(2,'0')+'m':'');
       var fatPct=s.w.fs||0;
       var fatCol=fatPct>70?'#ff3b30':(fatPct>45?'#ff9500':(fatPct>20?'#ffd60a':'#30d158'));
       var statusCls=rt.active?'active':(rt.status==='NĀKAMĀ'?'upnext':'done');
