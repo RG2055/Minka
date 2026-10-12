@@ -2915,21 +2915,6 @@ function focusRadio(){
       }
     },
     {
-      name: 'Neon pilsēta',
-      description: 'Tumšs kino neons',
-      chip: '#ef5f45',
-      surfaceRGB: [9,8,16],
-      image: 'kalendars/data/radio-skins/neon-city-2400x400.jpg',
-      preview: 'kalendars/data/radio-skins/neon-city-preview.jpg',
-      vars: {
-        '--bg-color': '#07060b',
-        '--panel': '#100d16',
-        '--search-bar-bg': '#17121d',
-        '--search-border': 'rgba(239,95,69,.16)',
-        '--search-hover': '#211827'
-      }
-    },
-    {
       name: 'Dziļais okeāns',
       description: 'Tumšs un mierīgs',
       chip: '#53c9e8',
@@ -3013,6 +2998,23 @@ function focusRadio(){
     ['Pilsēta miglā','Kluss, sapņains siluets','fog-city','#9ab9a9'],
     ['Ziemeļblāzma','Nakts debesis un zaļa gaisma','aurora','#87c9b0']
   ].forEach(([name,description,file,chip])=>THEMES.push({name,description,chip,surfaceRGB:[8,14,18],vars:{},image:`kalendars/data/radio-skins/${file}.webp`,preview:`kalendars/data/radio-skins/${file}-preview.webp`}));
+  // Super Visuals foni, sagriezti radio dekam (1140×238 → 1536×321).
+  [
+    ['Zilā zīda vilnis','Tumši zils zīds un gaisma','sv-zila-zida-vilnis','#3f78fd'],
+    ['Nakts kalni','Zili kalni tumsā','sv-nakts-kalni','#3d8eff'],
+    ['Galaktika','Violeti mākoņi un zvaigznes','sv-galaktika','#c98d74'],
+    ['Zeme no kosmosa','Planētas mala naktī','sv-zeme-no-kosmosa','#3da3ff'],
+    ['Violetais mirdzums','Dziļa nakts ar gaismu','sv-violetais-mirdzums','#8d5ce0'],
+    ['Zilie stari','Gaismas strēles tumsā','sv-zilie-stari','#4083fc'],
+    ['Zelta ceļš','Mirdzošs ceļš miglā','sv-zelta-cels','#e99c53'],
+    ['Mākoņu jūra','Saulriets virs mākoņiem','sv-makonu-jura','#f8ac72'],
+    ['Kalnu krēsla','Oranža vakara gaisma','sv-kalnu-kresla','#f88f45'],
+    ['Kāpas','Silts tuksnesis un debesis','sv-kapas','#ff993d'],
+    ['Smaragda dūmi','Tumši zaļš un oglēm sarkans','sv-smaragda-dumi','#c3ad79'],
+    ['Tirkīza līnija','Tumsa un vēsa gaisma','sv-tirkiza-linija','#6ecfcb'],
+    ['Komētas','Oranžas strēles naktī','sv-kometas','#ffa73d'],
+    ['Sarkanie monolīti','Dramatiska vakara gaisma','sv-sarkanie-monoliti','#dc7260']
+  ].forEach(([name,description,file,chip])=>THEMES.push({sv:true,name,description,chip,surfaceRGB:[8,14,18],vars:{},image:`kalendars/data/radio-skins/${file}.webp`,preview:`kalendars/data/radio-skins/${file}-preview.webp`}));
 
   THEMES.push(...(window.rgPixel?.palettes||[]).map(p=>({
     name:'Pixel · '+p.name,description:'Krāsains korpuss · Pixel vilnis',chip:p.accent,
@@ -3882,7 +3884,9 @@ function focusRadio(){
     const now = lookSnapshot();
     // All five layouts rotate. Pixel keeps its default wave and album colors.
     const layout = rand(['classic', 'clean', 'pioneer', 'amp', 'dither', 'pixel'].filter(l => l !== now.layout));
-    const choices=THEMES.filter(t=>!!t.pixel===(layout==='pixel'));
+    // Viesim katrā ieslēgšanā viens no jaunajiem Super Visuals foniem (Pixel paliek ar savām paletēm).
+    const fresh=THEMES.filter(t=>t.sv);
+    const choices=layout==='pixel'?THEMES.filter(t=>t.pixel):(fresh.length?fresh:THEMES.filter(t=>!t.pixel));
     const theme=rand(choices.filter(t=>t.name!==now.theme))||choices[0]||THEMES[0];
     const viz=layout==='pixel'?31:nextGuestSpectrum(now.viz);
     closeProfileLook();

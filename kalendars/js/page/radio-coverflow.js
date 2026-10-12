@@ -239,14 +239,32 @@
     });
     var panels = list.map(function (c) { return c.closest('.side-panel'); }).filter(Boolean);
     var set = function (z) { panels.forEach(function (p) { if (z) p.style.setProperty('--mk-cf-z', z); else p.style.removeProperty('--mk-cf-z'); }); };
-    set('');
+    var tight = function (on) { panels.forEach(function (p) { p.classList.toggle('mk-cf-tight', on); }); };
+    set(''); tight(false);
     if (!root.classList.contains('host-radio-open')) return;
     var over = function () { var w = 0; list.forEach(function (c) { if (c.clientHeight) w = Math.max(w, c.scrollHeight / c.clientHeight); }); return w; };
-    var z = 1;
-    for (var k = 0; k < 5 && over() > 1.002 && z > 0.75; k++) {
-      z = Math.max(0.75, z / over() * 0.99);
-      set(z.toFixed(3));
-    }
+    var shrink = function () {
+      var z = 1;
+      for (var k = 0; k < 5 && over() > 1.002 && z > 0.75; k++) {
+        z = Math.max(0.75, z / over() * 0.99);
+        set(z.toFixed(3));
+      }
+    };
+    shrink();
+    /* Zemiem ekrāniem (MacBook): ja pat 75 % neietilpst, katrs cilvēks vienā
+       zemākā rindā (maiņa aiz uzvārda) un mērogs no jauna – teksts nekļūst sīkāks. */
+    if (over() > 1.002) { set(''); tight(true); shrink(); }
+    /* Garš vārds + uzvārds: tikai tai kartītei burti par 1–4 px mazāki (ne zem
+       11 px), lai uzvārds redzams pilnībā; pārējie paliek 15 px. */
+    list.forEach(function (c) {
+      Array.prototype.forEach.call(c.querySelectorAll(':scope > .mk-side-card'), function (card) {
+        card.style.removeProperty('--mk-cf-fs');
+        var n = card.querySelector('.duty-name'), s = card.querySelector('.duty-surname');
+        if (!n || !s) return;
+        var cut = function () { return n.scrollWidth > n.clientWidth + 1 || s.scrollWidth > s.clientWidth + 1; };
+        for (var fs = 14; fs >= 11 && cut(); fs--) card.style.setProperty('--mk-cf-fs', fs + 'px');
+      });
+    });
   }
   function schedule() { if (!queued) queued = requestAnimationFrame(fit); }
   if (typeof ResizeObserver === 'function') {

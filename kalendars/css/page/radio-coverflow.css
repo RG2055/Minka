@@ -128,12 +128,12 @@ html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-pa
 }
 html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .duty-name {
   grid-column: 1 !important; grid-row: 1 !important; min-width: 0 !important; flex-shrink: 0;
-  font-size: 15px !important; line-height: 1.15 !important; font-weight: 800 !important;
+  font-size: var(--mk-cf-fs, 15px) !important; line-height: 1.15 !important; font-weight: 800 !important;
   white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important;
 }
 html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .duty-surname {
   grid-column: 2 !important; grid-row: 1 !important; min-width: 0 !important;
-  font-size: 15px !important; line-height: 1.15 !important; font-weight: 800 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important;
+  font-size: var(--mk-cf-fs, 15px) !important; line-height: 1.15 !important; font-weight: 800 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin: 0 !important;
   font-family: Inter, system-ui, sans-serif !important; letter-spacing: normal !important;
 }
 /* Vārds un uzvārds vienā burtā un vienā tonētajā stiklā katrā dienā (arī
@@ -171,3 +171,27 @@ html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-pa
   height: calc(2px + var(--hr, var(--h, .3)) * 6px) !important;
 }
 html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card > .mk-side-ticks > :is(.mk-side-tick-tip, .mk-side-tick-pin) { display: none !important; }
+
+/* Zems ekrāns (13" MacBook): kad pat 75 % visi cilvēki neietilpst, JS ieliek
+   .mk-cf-tight abām kolonnām – kartīte divās rindās trīs vietā: 1. rinda vārds
+   uzvārds visā platumā līdz aplim (kā parasti, nekas netiek atņemts),
+   2. rinda maiņa un tai blakus noguruma strīpa. Lieliem ekrāniem nekas nemainās. */
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card {
+  grid-template-rows: auto !important; padding: 5px 10px 5px 8px !important; row-gap: 0 !important;
+}
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-icon-rail { grid-row: 1 !important; width: 34px !important; max-width: 34px !important; height: 34px !important; max-height: 34px !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-icon-rail .mk-emoji-side { font-size: 28px !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-card-body { grid-row: 1 !important; grid-template-rows: auto 16px !important; row-gap: 3px !important; align-items: center !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-shift-chip { grid-column: 1 / span 2 !important; grid-row: 2 !important; justify-self: start !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-fatigue { grid-column: 3 !important; grid-row: 1 / span 2 !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card .mk-side-ring { width: 32px !important; height: 32px !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card > .mk-side-ticks { grid-column: 2 !important; grid-row: 1 !important; align-self: end !important; justify-self: stretch !important; height: 8px !important;
+  width: auto !important; min-width: 0 !important; max-width: none !important; overflow: hidden !important; margin: 0 38px 4px 50px !important; }
+html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.side-panel.mk-cf-tight :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card.mk-side-card > .mk-side-ticks > i { min-width: 0 !important; }
+
+/* Platiem ekrāniem (Windows 1920): ar atvērtu radio sānu kolonnas līdz 300 px
+   (16 % ekrāna), lai garie vārdi + uzvārdi ietilpst pilnā izmērā. 13" MacBook
+   paliek 230 px (16 % no 1440). Cover Flow pats pielāgojas atlikušajai vietai. */
+html.host-radio-open:not(.mk-mobile-shell) body #grafiks-app .side-panel.side-panel.side-panel {
+  width: clamp(230px, 16vw, 300px) !important;
+}
