@@ -176,6 +176,20 @@
     }
   });
 
+  // The parked panel (content-visibility: hidden) has never been laid out, so the first open paid for
+  // that layout on the click (~80 ms frame, more on a weak PC). Do it once while the page is idle, the
+  // same way the dock button's hover warm-up does; the browser keeps it, so every open is a cheap one.
+  setTimeout(function(){
+    var idle = window.requestIdleCallback || function(fn){ return setTimeout(fn, 1); };
+    idle(function(){
+      if(_nsOpen || !overlay.classList.contains('ns-parked')) return;
+      overlay.classList.remove('ns-parked');
+      clearTimeout(_nsParkTimer);
+      _nsParkTimer=setTimeout(function(){ if(!_nsOpen) overlay.classList.add('ns-parked'); }, 1500);
+      try { if(window.__ns && typeof window.__ns.warmImages==='function') window.__ns.warmImages(); } catch(_e) {}
+    }, { timeout: 8000 });
+  }, 6000);
+
   // Escape to close
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'&&_nsOpen){ toggleNsOverlay(); try{window.parent.postMessage({type:'nsClosed'},window.location.origin);}catch(ex){} }
