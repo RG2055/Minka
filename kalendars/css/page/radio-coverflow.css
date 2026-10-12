@@ -85,24 +85,3 @@ html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-na
 html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav svg { width: 22px; height: 22px; }
 html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-prev { left: 12px; }
 html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-next { right: 12px; }
-
-/* Side columns with the radio open: a short window leaves them ~100-300 px,
-   less than two full cards (their fatigue bars and footer are 120+ px), so
-   only the top of one or two people showed. While that little room is left,
-   each side card keeps its name, shift and fatigue ring, and its fatigue
-   bars become one thin strip under them (the footer waits); the column
-   scrolls. With room for two full cards they stay as they are. */
-html.host-radio-open body #grafiks-app .side-panel .duty-vertical { container: mk-side-col / size; }
-@container mk-side-col (max-height: 300px) {
-  html body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card > .mk-side-nfoot { display: none !important; }
-  html body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card > .mk-side-ticks {
-    display: flex !important; align-items: flex-end !important; gap: 2px !important;
-    height: 18px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 10px 6px !important;
-    overflow: hidden !important; -webkit-mask-image: none !important; mask-image: none !important;
-  }
-  html body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card > .mk-side-ticks > i {
-    flex: 1 1 0 !important; min-width: 0 !important; width: auto !important; margin: 0 !important;
-    height: calc(2px + var(--hr, var(--h, .3)) * 10px) !important; border-radius: 1px !important;
-  }
-  html body #grafiks-app .side-panel.side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-side-card > .mk-side-ticks > :is(.mk-side-tick-tip, .mk-side-tick-pin) { display: none !important; }
-}
