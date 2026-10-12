@@ -430,17 +430,7 @@
     return classes + '|' + properties;
   }
 
-  /* A roster rebuild (day switch) places add-ons on every card at once. Read
-     each card's computed surface and size on its own and every card forced a
-     full style/layout of the fresh roster between the previous card's writes
-     (~25 ms a switch on a fast Mac, several times that on a phone). While a
-     batch is open the reads wait and run together in flushBatch(): one style
-     pass for all surfaces, one layout for all sizes. */
-  var batch = null;
-  var surfaceCache = new Map();
   function syncCardSurface(card, surface, force) {
-    if (force) surfaceCache.clear();   // a look was edited: copies may be stale
-    if (batch) { batch.surfaces.push([card, surface, force]); return; }
     var signature = surfaceSignature(card);
     if (!force && surface.dataset.surfaceSignature === signature) return;
     var wasActive = card.classList.contains('mk-addon-active');
@@ -508,66 +498,6 @@
     if (reach >= base.h * .3) return { scale: reach / base.h, y: y };
     return { scale: .3, y: y + base.h * .3 - reach };
   }
-  function flushBatch() {
-    var b = batch;
-    batch = null;
-    if (!b) return;
-    var jobs = b.surfaces.filter(function(job) {
-      job.push(surfaceSignature(job[0]));
-      return job[2] || job[1].dataset.surfaceSignature !== job[3];
-    });
-    // A person's card looks the same on every day it is built: the copied
-    // surface is kept per look, so a day switch reads no styles at all for
-    // the people already seen (one style pass of the fresh roster each).
-    var look = '|' + (document.documentElement.getAttribute('data-theme') || '')
-      + '|' + (document.body && document.body.getAttribute('data-theme') || '') + '|' + window.innerWidth;
-    var keys = jobs.map(function(job) { return job[2] ? '' : (job[0].getAttribute('data-worker') || '') + '|' + job[3] + look; });
-    var todo = jobs.filter(function(job, i) { return !keys[i] || !surfaceCache.has(keys[i]); });
-    // The surface copies the card as it looks without its add-on class.
-    var active = todo.map(function(job) {
-      var on = job[0].classList.contains('mk-addon-active');
-      if (on) job[0].classList.remove('mk-addon-active');
-      return on;
-    });
-    var read = todo.map(function(job) {
-      var style = getComputedStyle(job[0]);
-      return { background: style.background, blendMode: style.backgroundBlendMode,
-        boxShadow: style.boxShadow, borderRadius: style.borderRadius };
-    });
-    todo.forEach(function(job, i) { if (active[i]) job[0].classList.add('mk-addon-active'); });
-    var values = jobs.map(function(job, i) {
-      var at = todo.indexOf(job);
-      if (at < 0) return surfaceCache.get(keys[i]);
-      if (keys[i]) {
-        if (surfaceCache.size > 200) surfaceCache.clear();
-        surfaceCache.set(keys[i], read[at]);
-      }
-      return read[at];
-    });
-    jobs.forEach(function(job, i) {
-      var card = job[0], surface = job[1], v = values[i];
-      card.style.setProperty('--mk-addon-card-radius', v.borderRadius);
-      surface.style.setProperty('background', v.background, 'important');
-      surface.style.setProperty('background-blend-mode', v.blendMode, 'important');
-      surface.style.setProperty('box-shadow', v.boxShadow, 'important');
-      surface.style.setProperty('border-radius', v.borderRadius, 'important');
-      surface.style.setProperty('clip-path', 'inset(0 round ' + v.borderRadius + ')', 'important');
-      surface.dataset.surfaceSignature = job[3];
-    });
-    var sizes = b.geometry.map(function(image) {
-      var card = image.parentElement;
-      return card ? [card.clientWidth, card.clientHeight] : null;
-    });
-    b.geometry.forEach(function(image, i) {
-      if (sizes[i]) writeAddonGeometry(image, sizes[i][0], sizes[i][1]);
-    });
-  }
-  // Card size for a new add-on: now, or with the batch's single layout.
-  function placeGeometry(image, card) {
-    if (batch) batch.geometry.push(image);
-    else writeAddonGeometry(image, card.clientWidth, card.clientHeight);
-  }
-
   function writeAddonGeometry(image, cardWidth, cardHeight, imageHeight) {
     var offsetX = Number(image.dataset.addonX) || 0;
     var offsetY = Number(image.dataset.addonY) || 0;
@@ -692,7 +622,7 @@
         card.insertBefore(surface, card.firstChild);
         needsGeometry = true;
       }
-      if (needsGeometry) placeGeometry(existing, card);
+      if (needsGeometry) writeAddonGeometry(existing, card.clientWidth, card.clientHeight);
       existing.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
       if (item.aspect) existing.style.setProperty('--mk-addon-aspect', item.aspect);
       else existing.style.removeProperty('--mk-addon-aspect');
@@ -727,7 +657,7 @@
     image.style.setProperty('--mk-addon-scale', scale);
     image.style.setProperty('--mk-addon-dock-y', (Number(item.dockY) || 3) + 'px');
     if (item.aspect) image.style.setProperty('--mk-addon-aspect', item.aspect);
-    placeGeometry(image, card);
+    writeAddonGeometry(image, card.clientWidth, card.clientHeight);
     image.addEventListener('load', function() {
       scheduleAddonGeometry();
       scheduleSectionClearance();
@@ -1019,12 +949,9 @@
     scanFrame = 0;
     observeCardRoots();
     var all = readAll();
-    batch = { surfaces: [], geometry: [] };
-    try {
-      document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(card) {
-        applyToCard(card, all[normName(card.getAttribute('data-worker'))] || null);
-      });
-    } finally { flushBatch(); }
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(card) {
+      applyToCard(card, all[normName(card.getAttribute('data-worker'))] || null);
+    });
     scheduleSectionClearance();
     scheduleTopperClearance();
     scheduleAddonPortals(80);
@@ -1037,12 +964,9 @@
 
   function applyRosterNow() {
     var all = readAll();
-    batch = { surfaces: [], geometry: [] };
-    try {
-      document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(card) {
-        applyToCard(card, all[normName(card.getAttribute('data-worker'))] || null);
-      });
-    } finally { flushBatch(); }
+    document.querySelectorAll('#grafiks-list .card[data-worker]').forEach(function(card) {
+      applyToCard(card, all[normName(card.getAttribute('data-worker'))] || null);
+    });
     syncSectionClearance(true);
   }
 

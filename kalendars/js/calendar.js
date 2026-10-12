@@ -2084,11 +2084,8 @@ function filterFullList(btn) {
   }
   function g_selectDayHeld(date) {
     const root = document.documentElement;
-    // Phones switch at once: the hold kept the old day's snapshot (and the old
-    // pill highlight) on screen while pictures came over the mobile network, so
-    // a tap looked ignored, and full-screen snapshots are heavy for a phone GPU.
     if (typeof document.startViewTransition !== 'function' || document.hidden || root.classList.contains('mk-schedule-booting')
-      || root.classList.contains('mk-mobile-shell') || g_dayComplete.has(g_dayKey(date))) {
+      || g_dayComplete.has(g_dayKey(date))) {
       g_selectDay(date);
       g_noteDayComplete(date);
       return;
@@ -5914,22 +5911,12 @@ function filterFullList(btn) {
   let coffeeStorageRefresh = 0;
   let coffeeStorageListening = false;
 
-  let g_rosterWidth = null, g_rosterWidthObs = null, g_rosterWidthEl = null;
   function g_updateList() {
     const container = document.getElementById('grafiks-list');
     // Read the stable width before invalidating the old roster. The synchronous
     // finalizer can then size the replacement grid without forcing an extra
     // layout read after dozens of new nodes have been inserted.
-    // Kept by a ResizeObserver: reading clientWidth here forced a layout of the
-    // old day (dirtied by the pill highlight) on every switch.
-    if (g_rosterWidthEl !== container && typeof ResizeObserver === 'function') {
-      if (g_rosterWidthObs) g_rosterWidthObs.disconnect();
-      g_rosterWidth = null;
-      g_rosterWidthEl = container;
-      g_rosterWidthObs = new ResizeObserver(() => { g_rosterWidth = container.clientWidth; });
-      g_rosterWidthObs.observe(container);
-    }
-    const rosterWidth = Math.max(0, (g_rosterWidth != null ? g_rosterWidth : container.clientWidth) || 0);
+    const rosterWidth = Math.max(0, container.clientWidth || 0);
     // The feedback card contains the largest DOM/SVG subtree in the roster and
     // does not belong to a specific employee. Reuse it across day changes
     // instead of parsing and constructing the same markup on every click.

@@ -470,16 +470,6 @@
   function cushionRgb(file){ var i=BED_PILLOWS.filter(function(p){ return p[3]; }).map(function(p){ return p[0]; }).indexOf(file); return CUSHION_RGB[(i<0?0:i)%CUSHION_RGB.length]; }
   function bedAccSrc(id){ return 'assets/rooms/beds/acc-'+id+'.webp?v='+BED_V; }
   function accOf(list,v){ var n=+v||0; return n>0&&n<list.length?list[n]:null; }
-  // The accessory's landing animation (.is-new, fill both) restarts without forcing a layout: a new
-  // node just gets the class, an existing one replays its animation. (void offsetWidth here cost a
-  // whole-page layout each time, ~20 ms per bed while the night panel was prepared after load.)
-  function popIn(node){
-    if(!node.classList.contains('is-new')){ node.classList.add('is-new'); return; }
-    var anims=node.getAnimations ? node.getAnimations() : [];
-    if(anims.length){ anims.forEach(function(a){ try{ a.cancel(); a.play(); }catch(_e){} }); return; }
-    node.classList.remove('is-new');
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){ node.classList.add('is-new'); }); });
-  }
   function applyBedAcc(el,skin){
     var card=el.querySelector('.ns-room-bed-card'); if(!card) return;
     var rgb=null;
@@ -492,11 +482,11 @@
         rgb=cushionRgb(it[0]);
         var tk=src+'|'+rgb;
         if(node.__tk!==tk){ node.__tk=tk; node.style.setProperty('--acc-w',(it[2]/512*100).toFixed(1)+'%'); node.dataset.acc=it[0];
-          tintedBed(rgb,src).then(function(u){ if(node.__tk!==tk) return; node.src=u; popIn(node); }).catch(function(){ node.src=src; }); }
+          tintedBed(rgb,src).then(function(u){ if(node.__tk!==tk) return; node.src=u; node.classList.remove('is-new'); void node.offsetWidth; node.classList.add('is-new'); }).catch(function(){ node.src=src; }); }
         return;
       }
       node.__tk='';
-      if(node.getAttribute('src')!==src){ node.src=src; node.style.setProperty('--acc-w',(it[2]/512*100).toFixed(1)+'%'); node.dataset.acc=it[0]; popIn(node); }
+      if(node.getAttribute('src')!==src){ node.src=src; node.style.setProperty('--acc-w',(it[2]/512*100).toFixed(1)+'%'); node.dataset.acc=it[0]; node.classList.remove('is-new'); void node.offsetWidth; node.classList.add('is-new'); }
     });
   }
   window.__nsBedStyles={ styles:BED_STYLES, pillows:BED_PILLOWS, toys:BED_TOYS, src:bedStyleSrc };
