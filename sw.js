@@ -63,8 +63,15 @@ self.addEventListener('activate', event => {
       if (key === CACHE) continue;
       try {
         const old = await caches.open(key);
-        const reqs = await old.keys();
-        for (const req of reqs) {
+        // Keep only the newest ?v= of each file (keys() is in insertion order):
+        // older variants are never requested again and used to pile up forever.
+        const latest = new Map();
+        for (const req of await old.keys()) {
+          const u = new URL(req.url);
+          u.searchParams.delete('v');
+          latest.set(u.href, req);
+        }
+        for (const req of latest.values()) {
           // Never carry over code assets: unversioned .js/.css/.html change in
           // place between releases, so migrating the old copy would serve stale
           // code for one extra reload after every update. Dropping them here

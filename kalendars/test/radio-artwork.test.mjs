@@ -28,6 +28,12 @@ test('an update drops opaque entries (possibly cached errors) and keeps the rest
  let done;events.activate({waitUntil:p=>done=p});await done;
  assert.deepEqual(put,['https://app.example/data/radio-logos/lr1.png']);
 });
+test('an update carries only the newest ?v= of each file, so old variants do not pile up',async()=>{
+ const put=[];const old={keys:async()=>['bed.webp?v=1','bed.webp?v=2','emoji.json?v=7&w=40','emoji.json?v=8&w=40','emoji.json?v=8&w=80','plain.png'].map(p=>({url:'https://app.example/data/'+p})),match:async()=>({type:'basic'})};
+ const events=worker({caches:{keys:async()=>['minka-old','CURRENT'],open:async name=>name==='minka-old'?old:{put:async req=>put.push(req.url.slice(25)),match:async()=>undefined},delete:async()=>true}});
+ let done;events.activate({waitUntil:p=>done=p});await done;
+ assert.deepEqual(put,['bed.webp?v=2','emoji.json?v=8&w=40','emoji.json?v=8&w=80','plain.png']);
+});
 test('a station logo that failed once is not requested again; Latvian rows fall back to the bundled logo',()=>{
  const c=vm.createContext({});
  vm.runInContext(extract(radio,'const LACITIS_RADIO_LOGO_BASE','const LV_STATION_EXTRA_LOGOS')+extract(radio,'const LV_STATION_EXTRA_LOGOS','let stationPickerSource')+extract(radio,'function normalizeStationText(','function radioStationKey(')+extract(radio,'function escapeHtml(s){','function updateVizLabel(')+';this.failed=failedStationLogos;',c);
