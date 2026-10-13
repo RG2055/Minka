@@ -12,6 +12,8 @@ const b=await chromium.launch();
 async function run(){
   const ctx=await b.newContext({viewport:{width:1440,height:900},timezoneId:'Europe/Riga'});
   await ctx.addInitScript(()=>{window.__lt=[];try{new PerformanceObserver(l=>{for(const e of l.getEntries())window.__lt.push(e.duration);}).observe({type:'longtask',buffered:true});}catch(_){}});
+  // PERF_BLOCK=regex: serve matching CSS as empty (what-if experiment for lazy loading).
+  if(process.env.PERF_BLOCK)await ctx.route(new RegExp(process.env.PERF_BLOCK),r=>r.fulfill({status:200,contentType:'text/css',body:''}));
   const p=await ctx.newPage(); await p.clock.setFixedTime(T);
   const errs=[]; p.on('pageerror',e=>errs.push(e.message.slice(0,120)));
   const cdp=await ctx.newCDPSession(p);
