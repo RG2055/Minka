@@ -30,6 +30,16 @@ node run-all.mjs http://127.0.0.1:8012 http://127.0.0.1:8024
 | `computed-style-compare.mjs` | every element's computed CSS in 11 UI states (search results, modals, night panel, mobile…) compared between two versions — catches CSS that a screenshot misses |
 | `offline.mjs` | after one visit the calendar loads offline from the service worker |
 
+## Performance (not part of run-all; numbers, not pass/fail)
+
+```bash
+node perf-startup.mjs http://127.0.0.1:8012 3 4 out/perf.json   # 3 cold starts, CPU ×4 slower: requests, KB, script/style/layout ms, long tasks
+node soak.mjs http://127.0.0.1:8012 30 5 out/soak.json          # repeat day/night/month/modal/search/radio; heap, nodes, listeners, timers after GC
+```
+
+`soak.mjs` with 300+ cycles (~45 min) is the long-session check. Compare two
+versions on the same machine in the same conditions; single runs are noisy.
+
 ## Visual comparison (before/after a change)
 
 Randomness is seeded per call site and animations are frozen, so identical code
