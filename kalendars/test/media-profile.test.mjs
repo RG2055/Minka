@@ -7,7 +7,7 @@ function harness({storage=memory(),fetchHandler,restored=true,now=Date.now(),sav
  const elements=new Map(),events={},documentEvents={},timers=new Map(),applied=[],requests=[],started=[];let timer=0,clock=now;
  class ClockDate extends Date{constructor(...args){super(...(args.length?args:[clock]));}static now(){return clock;}}
  class Element{
-  constructor(tag='div'){this.tag=tag;this.children=[];this.dataset={};this.style={};this.attributes={};this.classList={add(){},remove(){},toggle(){}};this.listeners={};this.open=false;this.textContent='';}
+  constructor(tag='div'){this.tag=tag;this.children=[];this.dataset={};this.style={};this.attributes={};this.classList={add(){},remove(){},toggle(){},contains(){return false;}};this.listeners={};this.open=false;this.textContent='';}
   set id(id){this._id=id;elements.set(id,this);}get id(){return this._id;}
   set innerHTML(html){this.html=html;for(const m of html.matchAll(/id="([^"]+)"/g)){const el=new Element();el.id=m[1];}}
   append(...els){this.children.push(...els);}prepend(...els){this.children.unshift(...els);}replaceChildren(...els){this.children=els;}

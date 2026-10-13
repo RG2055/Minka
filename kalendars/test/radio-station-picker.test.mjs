@@ -6,7 +6,7 @@ const source=fs.readFileSync(new URL('../../js/radio.js',import.meta.url),'utf8'
 const section=(a,b)=>source.slice(source.indexOf(a),source.indexOf(b,source.indexOf(a)));
 function harness() {
   let writes=0, buttons=[];
-  const list={scrollTop:128,
+  const list={scrollTop:128,dataset:{},
     set innerHTML(html){writes++; buttons=[...html.matchAll(/data-station-index="(\d+)"[^>]+aria-current="(true|false)"/g)].map(m=>{
       const b={index:+m[1],selected:m[2]==='true',mark:{innerHTML:''},setAttribute(){},querySelector:()=>b.mark};
       b.classList={toggle:(name,on)=>b.selected=on}; return b;
@@ -62,8 +62,8 @@ test('Escape and outside clicks close; station rows and trigger do not',()=>{
   assert.deepEqual(closed,[false,false]);
 });
 test('picker stays within narrow and short windows when resized',()=>{
-  const el={style:{}}, c=vm.createContext({window:{innerWidth:320,innerHeight:480},document:{getElementById:id=>id==='radioWindow'?{getBoundingClientRect:()=>({width:320,top:300})}:null}});
-  vm.runInContext(section('function positionStationPicker(',"window.addEventListener('resize', () => {"),c);
+  const el={style:{}}, c=vm.createContext({window:{innerWidth:320,innerHeight:480},document:{documentElement:{classList:{contains:()=>false}},getElementById:id=>id==='radioWindow'?{getBoundingClientRect:()=>({width:320,top:300})}:null}});
+  vm.runInContext(section('function stationPickerFull(',"window.addEventListener('resize', () => {"),c);
   for(const [width,height] of [[320,480],[877,754],[1280,720],[320,180]]){
     c.window.innerWidth=width;c.window.innerHeight=height;c.positionStationPicker(el);
     assert.ok(parseFloat(el.style.left)>=12);assert.ok(parseFloat(el.style.left)+parseFloat(el.style.width)<=width-12);
@@ -88,7 +88,7 @@ test('opening defaults to current profile favorites and clears stale searches',(
   const tabs=['favorites','featured','record','latvija'].map(source=>({dataset:{stationSource:source},classList:{toggle(){}},setAttribute(name,value){this[name]=value;}}));
   const overlay={style:{display:'none'},setAttribute(){},querySelector:()=>search,querySelectorAll:()=>tabs};
   const c=vm.createContext({window:{__mkUnifiedMedia:{getSession:()=>session,getRadio:()=>({favorites})}},
-    document:{getElementById:id=>id==='stationOverlay'?overlay:null,querySelectorAll:()=>[]},
+    document:{documentElement:{classList:{toggle(){}}},getElementById:id=>id==='stationOverlay'?overlay:null,querySelectorAll:()=>[]},
     positionStationPicker(){},renderStationOverlay(){},loadFeaturedStations(){},clearTimeout(){},requestAnimationFrame(){},
     stationPickerSource:'latvija',stationPickerQuery:'old search',stationPickerSearchTimer:0});
   vm.runInContext(section('function toggleMenu(', 'function positionStationPicker('),c);

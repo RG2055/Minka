@@ -11,7 +11,7 @@ test('disabled visualizer stops before sampling audio or scheduling another fram
 });
 test('selecting no visualizer survives preferences, hides display, and releasing it restarts drawing',()=>{
  const classes=new Set(),saved=[],frames=[];
- const c=vm.createContext({isModernViz:m=>m===13||(m>=20&&m<=30),vizFamily:'classic',analyser:null,MK_FLOW_VIZ:13,MK_NO_VIZ:12,MK_BUDDY_VIZ:11,MK_DEFAULT_VIZ:7,VIZ_MODES:[{idx:0},{idx:7},{idx:12}],vizStyle:7,__mkLastSpectrum:7,dGif:{style:{}},ctx:{clearRect(){}},cvs:{width:100,height:40},Event:class {},window:{dispatchEvent(){},__slowedWave:{stop(){saved.push('wave stopped');}}},document:{body:{classList:{toggle(k,v){v?classes.add(k):classes.delete(k);},remove(k){classes.delete(k);}}}},localStorage:{setItem:(k,v)=>saved.push(v)},updateVizLabel(){},updateVizPickerUI(){},mkUpdateVizToggle(){},scheduleDraw(){frames.push('frame');}});
+ const c=vm.createContext({isTermViz:m=>m>=40&&m<=46,isModernViz:m=>m===13||(m>=20&&m<=30),vizFamily:'classic',analyser:null,MK_FLOW_VIZ:13,MK_NO_VIZ:12,MK_BUDDY_VIZ:11,MK_DEFAULT_VIZ:7,VIZ_MODES:[{idx:0},{idx:7},{idx:12}],vizStyle:7,__mkLastSpectrum:7,dGif:{style:{}},ctx:{clearRect(){}},cvs:{width:100,height:40},Event:class {},window:{dispatchEvent(){},__slowedWave:{stop(){saved.push('wave stopped');}}},document:{body:{classList:{toggle(k,v){v?classes.add(k):classes.delete(k);},remove(k){classes.delete(k);}}}},localStorage:{setItem:(k,v)=>saved.push(v)},updateVizLabel(){},updateVizPickerUI(){},mkUpdateVizToggle(){},scheduleDraw(){frames.push('frame');}});
  vm.runInContext(extract('function setVizStyle(idx){','function updateVizPickerUI')+extract('function applyVizMode() {','function tick()'),c);
  vm.runInContext('setVizStyle(12);',c);assert.equal(c.vizStyle,12);assert.ok(saved.includes('spectrum:12'));assert.ok(classes.has('radio-viz-off'));assert.equal(frames.length,0);
  vm.runInContext('setVizStyle(7);',c);assert.equal(classes.has('radio-viz-off'),false);assert.equal(frames.length,1);
@@ -36,12 +36,12 @@ test('appearance menu stays in bounds after resizing from a small window to a ta
  assert.ok(parseFloat(panel.style.top)+panel.getBoundingClientRect().height<=1428);assert.equal(panel.style.maxHeight,'900px');
  c.window.innerWidth=900;c.window.innerHeight=600;c.positionPanel();assert.ok(parseFloat(panel.style.top)+panel.getBoundingClientRect().height<=588);
 });
-test('new CENTER draws 24 rounded bars at high DPI with a 60 fps ceiling',()=>{
+test('new CENTER draws 24 rounded bars at high DPI with a 30 fps ceiling',()=>{
  const bars=[],ctx={clearRect(){},beginPath(){},roundRect(...args){bars.push(args);},fill(){}};
- const c=vm.createContext({isModernViz:m=>m>=20&&m<=30,modernBaseMode:m=>m-20,MK_LOW_SPEC:false,MK_NO_VIZ:12,MK_FLOW_VIZ:13,MK_BUDDY_VIZ:11,MK_VIZ_FRAME_MS:0,vizStyle:24,__drawScheduled:false,__vizLastFrameTs:0,__vizFreqData:null,__radioVizAccentRGB:[30,215,96],__radioImageSkin:true,lookPreviewActive:false,modernMeter:{level:0},flowLevels:new Float32Array(24),radioVisualsInactive:()=>false,audio:{paused:false},analyser:{fftSize:128,frequencyBinCount:128,getByteFrequencyData(data){data.fill(180);},getByteTimeDomainData(data){data.fill(180);}},isAdjustingVol:false,scheduleDraw(){},dGif:{style:{}},ledPoint:{style:{}},ledHalo:{style:{}},modernWaveData:null,ctx,cvs:{width:0,height:0,clientWidth:400,clientHeight:64},window:{devicePixelRatio:2},performance:{now:()=>100}});
+ const c=vm.createContext({isTermViz:m=>m>=40&&m<=46,isModernViz:m=>m>=20&&m<=30,modernBaseMode:m=>m-20,MK_LOW_SPEC:false,MK_NO_VIZ:12,MK_FLOW_VIZ:13,MK_BUDDY_VIZ:11,MK_VIZ_FRAME_MS:1000/30,vizStyle:24,__drawScheduled:false,__vizLastFrameTs:0,__vizFreqData:null,__radioVizAccentRGB:[30,215,96],__radioImageSkin:true,lookPreviewActive:false,modernMeter:{level:0},flowLevels:new Float32Array(24),radioVisualsInactive:()=>false,audio:{paused:false},analyser:{fftSize:128,frequencyBinCount:128,getByteFrequencyData(data){data.fill(180);},getByteTimeDomainData(data){data.fill(180);}},isAdjustingVol:false,scheduleDraw(){},dGif:{style:{}},ledPoint:{style:{}},ledHalo:{style:{}},modernWaveData:null,ctx,cvs:{width:0,height:0,clientWidth:400,clientHeight:64},window:{devicePixelRatio:2},performance:{now:()=>100}});
  vm.runInContext(extract('function ensureCanvasSize(){','// Pixel Buddy uses')+extract('function drawModernSpectrum(',"document.getElementById('playBtn').onclick"),c);
  c.draw(100);assert.equal(bars.length,24);assert.equal(c.cvs.width,800);assert.ok(bars.every(([x,y,w,h,r])=>x>=0&&y>=0&&r===Math.min(w/2,h/2)&&h>=2));
- c.draw(108);assert.equal(bars.length,24);c.draw(118);assert.equal(bars.length,48);
+ c.draw(108);c.draw(130);assert.equal(bars.length,24);c.draw(134);assert.equal(bars.length,48);
 });
 for(let mode=0;mode<=10;mode++)test('new mode '+mode+' renders bounded geometry from real analyser samples',()=>{
  let calls=0;
@@ -73,7 +73,7 @@ test('visualization choices use small static snapshots for every real renderer',
  assert.match(preview,/<img class="radio-viz-thumbnail"/);assert.doesNotMatch(preview,/<canvas|requestAnimationFrame|getContext/);
 });
 test('leaving DOLPHIN clears its layer immediately for every mode, including paused extras',()=>{
- const c=vm.createContext({vizStyle:5,MK_NO_VIZ:12,isModernViz:n=>n>=20,analyser:null,peaks:[50,80],__vizLastFrameTs:99,dGif:{style:{}},ctx:{clearRect(){}},cvs:{width:800,height:128},window:{dispatchEvent(){},__slowedWave:{stop(){}}},Event:class{},document:{body:{classList:{toggle(){},remove(){}}}},scheduleDraw(){},milkdropStop(){}});
+ const c=vm.createContext({vizStyle:5,MK_NO_VIZ:12,isTermViz:m=>m>=40&&m<=46,isModernViz:n=>n>=20,analyser:null,peaks:[50,80],__vizLastFrameTs:99,dGif:{style:{}},ctx:{clearRect(){}},cvs:{width:800,height:128},window:{dispatchEvent(){},__slowedWave:{stop(){}}},Event:class{},document:{body:{classList:{toggle(){},remove(){}}}},scheduleDraw(){},milkdropStop(){}});
  c.ensurePioneerPlayer=()=>Promise.resolve({sync(){}});
  vm.runInContext(extract('function applyVizMode() {','function tick()'),c);
  for(const mode of [...Array(13).keys(),20,24,30]){c.vizStyle=5;c.applyVizMode();assert.equal(c.dGif.style.display,'block');c.vizStyle=mode;c.applyVizMode();assert.equal(c.dGif.style.display,mode===5?'block':'none');assert.equal(c.peaks[0],0);}

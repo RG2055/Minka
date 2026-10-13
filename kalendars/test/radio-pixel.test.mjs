@@ -10,7 +10,7 @@ test('album color is available to the header without changing a fixed radio pale
  const start=source.indexOf('  function applyAlbumColor('),end=source.indexOf('  function rgbToAccent(',start);
  const properties=new Map(),calls=[];
  let mode='custom';
- const context={albumColor:null,document:{getElementById:()=>({style:{setProperty:(k,v)=>properties.set(k,v)}})},getSaved:()=>({accentMode:mode}),appearance:{layout:'pixel'},applyAccent:color=>calls.push(color),applyAlbumSurface(){},paintAppearance(){}};
+ const context={albumColor:null,document:{body:{classList:{contains:()=>false}},getElementById:()=>({style:{setProperty:(k,v)=>properties.set(k,v)}})},getSaved:()=>({accentMode:mode}),appearance:{layout:'pixel'},applyAccent:color=>calls.push(color),applyAlbumSurface(){},paintAppearance(){}};
  vm.runInNewContext(source.slice(start,end),context);
  context.applyAlbumColor('#d74466');
  assert.equal(properties.get('--radio-album-color'),'#d74466');
@@ -57,9 +57,9 @@ test('Pixel palettes have readable text and mint transport; album accents recolo
 
 test('random Pixel opens keep album colors and the default wave, without pinning a palette',()=>{
  const source=fs.readFileSync(new URL('../../js/radio.js',import.meta.url),'utf8');
- const start=source.indexOf('  function randomGuestLook(){'),end=source.indexOf('  (window.rgTheme = window.rgTheme || {}).randomGuest',start);
+ const start=source.indexOf('  const GUEST_VIZ_BY_LAYOUT={'),end=source.indexOf('  (window.rgTheme = window.rgTheme || {}).randomGuest',start);
  let applied;
- const context={window:{},Math:Object.assign(Object.create(Math),{random:()=>.99}),lookSnapshot:()=>({layout:'classic',theme:'Old',viz:'24',accentMode:'custom'}),THEMES:[{name:'Photo',chip:'#abcdef'},{name:'Pixel · Olīva',chip:'#ddd17b',pixel:{}}],VIZ_MODES:[{idx:24},{idx:31}],MK_NO_VIZ:12,MK_BUDDY_VIZ:11,closeProfileLook(){},applyLookSettings:value=>applied=value,syncLookControls(){}};
+ const context={window:{},Math:Object.assign(Object.create(Math),{random:()=>.99}),lookSnapshot:()=>({layout:'classic',theme:'Old',viz:'24',accentMode:'custom'}),THEMES:[{name:'Photo',chip:'#abcdef'},{name:'Pixel · Olīva',chip:'#ddd17b',pixel:{}}],VIZ_MODES:[{idx:24},{idx:31}],MK_NO_VIZ:12,MK_BUDDY_VIZ:11,DITHER_VIS:['bayer'],closeProfileLook(){},applyLookSettings:value=>applied=value,syncLookControls(){}};
  vm.runInNewContext(source.slice(start,end),context);context.randomGuestLook();
  assert.equal(applied.layout,'pixel');assert.equal(applied.viz,'31');assert.equal(applied.accentMode,'album');
  context.window.__mkUnifiedMedia={getSession:()=>({name:'Saved profile'})};applied=null;context.randomGuestLook();assert.equal(applied,null);
@@ -67,14 +67,16 @@ test('random Pixel opens keep album colors and the default wave, without pinning
 
 test('non-Pixel random rotation exhausts every other visualizer before repeating, across reloads',()=>{
  const source=fs.readFileSync(new URL('../../js/radio.js',import.meta.url),'utf8');
- const start=source.indexOf('  function nextGuestSpectrum('),end=source.indexOf('  // The shell consumes this',start);
+ const start=source.indexOf('  const GUEST_VIZ_BY_LAYOUT={'),end=source.indexOf('  // The shell consumes this',start);
  assert.ok(start>=0,'random spectrum rotation exists');
  const data=new Map(),localStorage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};
  const modes=[...Array(13).keys(),...Array.from({length:12},(_,i)=>20+i)].map(idx=>({idx}));
- const boot=()=>{const c={localStorage,VIZ_MODES:modes,MK_NO_VIZ:12,Math};vm.runInNewContext(source.slice(start,end),c);return c;};
+ const boot=()=>{const c={localStorage,VIZ_MODES:modes,MK_NO_VIZ:12,MK_BUDDY_VIZ:11,Math};vm.runInNewContext(source.slice(start,end),c);return c;};
  const selected=[];let c=boot();
  for(let i=0;i<23;i++){if(i===10)c=boot();selected.push(c.nextGuestSpectrum(String(selected.at(-1)??31)));}
  assert.equal(new Set(selected).size,23);assert.ok(!selected.includes(31));assert.ok(!selected.includes(12));
  for(const mode of [8,9,10,11,20,30])assert.ok(selected.includes(mode),'includes mode '+mode);
  assert.notEqual(c.nextGuestSpectrum(String(selected.at(-1))),selected.at(-1));
+ const classic=[];for(let i=0;i<7;i++)classic.push(c.nextGuestSpectrum(String(classic.at(-1)??''),'classic'));
+ assert.deepEqual([...classic].sort((a,b)=>a-b),[0,3,4,7,9,10,11],'a layout cycles through its own curated spectra');
 });

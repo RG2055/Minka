@@ -48,8 +48,9 @@ test('settle only reflows if that is still owed, and the guest look waits', () =
   assert.match(settle, /reflow\(p\.me\)/);
   assert.match(reveal, /if \(me\.laidOut\) return;\s*me\.laidOut = true;/, 'a reflow runs once per reveal');
   const roll = reveal.slice(reveal.indexOf('function rollNextLook(rw)'), reveal.indexOf('function logicalOpen'));
-  assert.match(roll, /setTimeout\(function \(\) \{\s*if \('requestIdleCallback' in window\) requestIdleCallback\(roll/,
-    'the restyle of the hidden window waits for the cards to finish fading in');
+  assert.match(roll, /if \('requestIdleCallback' in window\) requestIdleCallback\(roll, \{ timeout: 250 \}\)/,
+    'the restyle of the hidden window waits for idle time right after closing (c76ba3ba: no 700 ms delay)');
+  assert.match(roll, /b\.contains\('radio-anim'\)\) return;/, 'and never runs during a reveal');
 });
 
 test('the cards fade back in from wherever the dim currently is', () => {
