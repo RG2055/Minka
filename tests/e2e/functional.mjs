@@ -109,6 +109,16 @@ await test('night panel opens and shows night stats rows', async()=>{ const p=aw
   await p.evaluate(()=>window.toggleNsOverlay(false)); ok(await waitFor(()=>p.evaluate(()=>window.__nsOverlayOpen!==true)),'did not close');
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); });
 
+// ef746038: the idle-prepared panel was not redrawn on open, so the passed-time LED grid never showed.
+await test('night panel at 04:30: passed parts carry the LED grid, the current one is filling', async()=>{
+  const ctx=await b.newContext({viewport:{width:1440,height:900},timezoneId:TZ}); const p=await ctx.newPage(); await p.clock.setFixedTime(new Date('2026-09-25T04:30:00+03:00'));
+  p.__errs=[]; p.on('pageerror',e=>p.__errs.push(e.message.slice(0,160)));
+  await p.goto(BASE+'/kalendars/index.html',{waitUntil:'load'}); await p.waitForTimeout(5000);
+  await p.evaluate(()=>window.toggleNsOverlay(true));
+  const lit=()=>p.evaluate(()=>[...document.querySelectorAll('#nsPanel canvas.nsc-led')].map(c=>{const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i])n++;return n;}));
+  ok(await waitFor(async()=>(await lit()).filter(n=>n>1000).length>=3,9000),'LED grid missing: '+JSON.stringify(await lit()));
+  const n=await lit(); ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await ctx.close(); return n.length+' LED layers'; });
+
 // 3cb2c7c dropped swap(): a card dropped on another did nothing (the drag swallows the error).
 await test('night panel: a time-slot card dropped on another swaps the sleepers, a bed on a bed swaps the beds', async()=>{ const p=await cal();
   await p.evaluate(()=>window.toggleNsOverlay(true));

@@ -7,7 +7,7 @@ const [A,B]=process.argv.slice(2); const T=new Date('2026-09-24T10:30:00+03:00')
 const KILL='*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
 const states=[
  ['kal-default','/kalendars/index.html',null],
- ['kal-search','/kalendars/index.html',async p=>{await p.click('#mkSearchLaunch'); await p.keyboard.type('alpha',{delay:20}); await p.waitForTimeout(1200);}],
+ ['kal-search','/kalendars/index.html',async p=>{await p.click(await p.locator('#hxTop .hx-search').count()?'#hxTop .hx-search':'#mkSearchLaunch'); await p.keyboard.type('alpha',{delay:20}); await p.waitForTimeout(1200);}],
  ['kal-worker-modal','/kalendars/index.html',async p=>{await p.locator('#grafiks-list .card.card-rd').first().click(); await p.waitForTimeout(1500);}],
  ['kal-comments','/kalendars/index.html',async p=>{await p.locator('[data-rg-write="comment"]').first().click(); await p.waitForTimeout(2000);}],
  ['kal-night','/kalendars/index.html',async p=>{await p.evaluate(()=>toggleNsOverlay(true)); await p.waitForTimeout(3500);}],
