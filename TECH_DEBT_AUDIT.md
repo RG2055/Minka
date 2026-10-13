@@ -76,6 +76,8 @@ Statuss: ✅ izdarīts, ⏳ nākamais, 📝 tikai dokumentēts (vajag lēmumu va
 | 8baa297a | satura heši būvēšanā; radio skatu JS ņem lapas `<link>` URL | e2e uz būvētā dist 19/19; 120/120 heši sakrīt |
 | ac6473f6 | SW navigation preload | vm tests; Chromium: preload `enabled`, offline tests iziet |
 
+| 168d0d8f | CSS tīrīšana: −3 nelādēti kalendāra CSS (145 KB), −97 Buddy noteikumi, −36 `.ceq-*`, −5 `.lm-login` (−5356 rindas) | 466/466, e2e 19/19, computed-style pret bāzi 164 vērt. (troksnis 547) |
+
 Pirms izlaišanas: bumpot `CACHE` sw.js un versijas UI (izlaiduma ierasta kārtība).
 
 Computed-style salīdzinājums bāze (ef746038) pret jauno: vienīgās strukturālās atšķirības ir izņemtais `color-thief` `<script>` (−1 elements). Pārējais ir zināmās sacensības (noskaņas apļa transformācijas, sub-pikseļu platumi, asinhronā radio albuma krāsa), kas parādās arī salīdzinājumā bāze pret bāzi (547 vērtības).
