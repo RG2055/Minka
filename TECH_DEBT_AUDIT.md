@@ -60,6 +60,10 @@ Statuss: ✅ izdarīts, ⏳ nākamais, 📝 tikai dokumentēts (vajag lēmumu va
 - **Īsti dati (lietotāja ielogošanās, Mac, bez palēnināšanas):** dienas pārslēgšana līdz nākamajam kadram 12–75 ms (mediāna ~20), nakts panelis atvērt/aizvērt 21–35 ms.
 - **Skriptu apvienošana.** 90 skripti un 83 CSS ir daudz, bet ar SW un HTTP/2 pieprasījumu skaits nav pierādīts kā galvenais izdevums. Vispirms jāizmēra ar ieslēgtu SW.
 
+- **Bez iframe (viens dokuments).** Izpēte (2026-10-13): JS nosaukumu konflikti gandrīz nav (5 + 5 dubultas bibliotēkas), ID 2; bet ~240 selektori trāpa otram dokumentam (čaulas CSS maina ~50 % kalendāra elementu), ~150 starplapu izsaukumi, 9 `storage` klausītāji apvienotā lapā klusi pārstātu strādāt, ~90 skata `@media` + 191 vw/vh, 13 `position:fixed`. Ieguvums: ~0,3 MB kaudzes un 146 KB JS vienreiz. Iframe šobrīd norobežo stilu pārrēķinus — apvienojot vājajā datorā var kļūt lēnāk. **Neveikt ātruma dēļ.** Ja kārtības dēļ: (1) ziņu kopne 150 izsaukumu vietā, (2) `storage` → `BroadcastChannel`, (3) kalendāra CSS tvērums zem saknes būvēšanā, tikai tad (4) apvienošana.
+- **Vienota datu glabātuve.** Vienīgā mērāmā problēma (nakts plānu pārparsēšana) salabota. Pārējie pēc datuma augošie ieraksti (~100–200 KB/gadā) tiek lasīti pēc precīzas atslēgas; tīrīšanai datu zaudēšanas risks (daļa var būt vienīgā kopija). Atlikts līdz kopnei/iframe darbam.
+- **Starta izmēra robeža** (`scripts/size-budget.json`): būvēšana un CI apstājas, ja startā saistītais JS/CSS pārsniedz robežu.
+
 ## Žurnāls
 
 | Commits | Kas | Pārbaude |
@@ -77,6 +81,9 @@ Statuss: ✅ izdarīts, ⏳ nākamais, 📝 tikai dokumentēts (vajag lēmumu va
 | ac6473f6 | SW navigation preload | vm tests; Chromium: preload `enabled`, offline tests iziet |
 
 | 168d0d8f | CSS tīrīšana: −3 nelādēti kalendāra CSS (145 KB), −97 Buddy noteikumi, −36 `.ceq-*`, −5 `.lm-login` (−5356 rindas) | 466/466, e2e 19/19, computed-style pret bāzi 164 vērt. (troksnis 547) |
+
+| 3deb5662 | starta izmēra robeža būvēšanā; computed-style-compare + 6 radio izskati | negatīvā pārbaude: pārsniegums aptur būvi |
+| 4d4b8c39 | `bundle.css` bez 12 čaulas radio noteikumiem | computed-style kalendārā: troksnis |
 
 Pirms izlaišanas: bumpot `CACHE` sw.js un versijas UI (izlaiduma ierasta kārtība).
 
