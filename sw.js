@@ -89,6 +89,9 @@ self.addEventListener('activate', event => {
       }
       await caches.delete(key);
     }
+    // Navigation preload: the HTML request starts while this worker is still
+    // waking up (hundreds of ms on the slow, AV-scanned work PCs).
+    try { await self.registration.navigationPreload?.enable(); } catch (_e) {}
     await self.clients.claim();
     // Tell the pages which version just took over. A document that is already
     // open keeps running the code it loaded, so without this the release only
@@ -208,7 +211,8 @@ self.addEventListener('fetch', event => {
   // behavior of stale-while-revalidate navigations.
   if (request.mode === 'navigate') {
     event.respondWith(
-      revalidatingFetch(request)
+      Promise.resolve(event.preloadResponse).catch(() => null)
+        .then(preloaded => preloaded || revalidatingFetch(request))
         .then(response => {
           event.waitUntil(safeCachePut(request, response.clone()));
           return response;

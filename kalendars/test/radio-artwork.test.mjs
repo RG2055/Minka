@@ -34,6 +34,13 @@ test('an update carries only the newest ?v= of each file, so old variants do not
  let done;events.activate({waitUntil:p=>done=p});await done;
  assert.deepEqual(put,['bed.webp?v=2','emoji.json?v=8&w=40','emoji.json?v=8&w=80','plain.png']);
 });
+test('navigations use the preloaded response when there is one and enable preload on activate',async()=>{
+ let fetched=0,enabled=0;const events={};worker({caches:{keys:async()=>[],match:async()=>undefined,open:async()=>({put:async()=>{},match:async()=>undefined,keys:async()=>[]})},fetch:async()=>{fetched++;return new Response('net');},self:{registration:{scope:'https://app.example/',navigationPreload:{enable:async()=>{enabled++;}}},location:{origin:'https://app.example'},addEventListener:(t,h)=>events[t]=h,clients:{claim:async()=>{},matchAll:async()=>[]}}});
+ let done;events.activate({waitUntil:p=>done=p});await done;assert.equal(enabled,1);
+ const nav=preloadResponse=>new Promise(res=>events.fetch({request:{method:'GET',url:'https://app.example/index.html',mode:'navigate',destination:'document',cache:'default'},preloadResponse,respondWith:p=>res(p),waitUntil(){}}));
+ assert.equal(await (await nav(Promise.resolve(new Response('pre')))).text(),'pre');assert.equal(fetched,0);
+ assert.equal(await (await nav(undefined)).text(),'net');assert.equal(fetched,1);
+});
 test('a station logo that failed once is not requested again; Latvian rows fall back to the bundled logo',()=>{
  const c=vm.createContext({});
  vm.runInContext(extract(radio,'const LACITIS_RADIO_LOGO_BASE','const LV_STATION_EXTRA_LOGOS')+extract(radio,'const LV_STATION_EXTRA_LOGOS','let stationPickerSource')+extract(radio,'function normalizeStationText(','function radioStationKey(')+extract(radio,'function escapeHtml(s){','function updateVizLabel(')+';this.failed=failedStationLogos;',c);
