@@ -4,6 +4,7 @@
 //   node scripts/build-pages.mjs && npx wrangler pages deploy dist --project-name rg-minka
 import { cp, mkdir, rm, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -52,11 +53,39 @@ async function walk(dir) {
 }
 await walk(dist);
 
+// Content hashes: every literal ?v= in shipped CSS url() and HTML src/href gets
+// the target file's hash appended (?v=20261012rd1 → ?v=20261012rd1.3f9a0c2e),
+// so a file changed without bumping its ?v= still gets a new URL. Cloudflare
+// keeps ?v= files for a year, so a forgotten bump used to mean stale code.
+// The date prefix stays (theme.js shows it). CSS goes first: its own bytes
+// change here before the HTML hashes it. Refs built in JS ('…?v=' + V) are untouched.
+const isLocal = (ref) => ref && !/^(?:[a-z][\w+.-]*:|\/\/|#|%23)/i.test(ref) && !/['"+`{}$<>\s]/.test(ref) && !ref.startsWith('/.well-known/');
+const hashes = new Map();
+const hashOf = async (file) => {
+  if (!hashes.has(file)) hashes.set(file, createHash('sha1').update(await readFile(file)).digest('hex').slice(0, 8));
+  return hashes.get(file);
+};
+async function stampVersions(file, pattern) {
+  const text = await readFile(file, 'utf8');
+  const stamps = new Map();
+  for (const m of text.matchAll(pattern)) {
+    const ref = m.groups.ref, target = path.resolve(ref.startsWith('/') ? dist : path.dirname(file), '.' + (ref.startsWith('/') ? '' : '/') + decodeURIComponent(ref.split('?')[0]));
+    if (isLocal(ref) && existsSync(target)) stamps.set(ref, `${ref.replace(/\?v=[\w.-]*/, (v) => v.split('.')[0])}.${await hashOf(target)}`);
+  }
+  if (stamps.size) await writeFile(file, text.replace(pattern, (all, ...args) => {
+    const { ref } = args.at(-1);
+    return stamps.has(ref) ? all.replace(ref, stamps.get(ref)) : all;
+  }));
+  return stamps.size;
+}
+let stamped = 0;
+for (const file of shipped.filter((f) => f.endsWith('.css'))) stamped += await stampVersions(file, /url\(\s*["']?(?<ref>[^"')\s]+\?v=[\w.-]+)/g);
+for (const file of shipped.filter((f) => f.endsWith('.html'))) stamped += await stampVersions(file, /\s(?:src|href)=["'](?<ref>[^"']+\?v=[\w.-]+)/g);
+
 // Every literal local src/href in shipped HTML and url() in shipped CSS must
 // exist in dist/, and so must the service worker's precache list. Refs built
 // at runtime ('…' + v) are not visible here and stay the author's job.
 const missing = [];
-const isLocal = (ref) => ref && !/^(?:[a-z][\w+.-]*:|\/\/|#|%23)/i.test(ref) && !/['"+`{}$<>\s]/.test(ref) && !ref.startsWith('/.well-known/');
 const check = (from, ref, base) => {
   const clean = decodeURIComponent(ref.replace(/[?#].*$/, ''));
   if (!clean) return;
@@ -78,4 +107,4 @@ if (missing.length) {
   console.error(`Missing files referenced from dist (${missing.length}):\n  ${missing.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`dist: ${files} files, ${(bytes / 1048576).toFixed(1)} MB, all literal refs present`);
+console.log(`dist: ${files} files, ${(bytes / 1048576).toFixed(1)} MB, ${stamped} refs content-hashed, all literal refs present`);

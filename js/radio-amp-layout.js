@@ -118,7 +118,7 @@
  // ---------- build ----------
  function build(rw){
   if(built)return;built=true;
-  const css=document.createElement('link');css.rel='stylesheet';css.href='css/radio-amp-layout.css?v=20260920amp24';css.onload=()=>window.syncShellLayout?.();document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-amp-layout.css"]')?.href||'css/radio-amp-layout.css?v=20260920amp24';css.onload=()=>window.syncShellLayout?.();document.head.append(css);
   shell=document.createElement('div');shell.className='amp-shell';
   shell.innerHTML=`
    <section class="amp-pane amp-main" aria-label="Atskaņotājs">
