@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261013led1';
+  var CALENDAR_BUILD = '20261013pf1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -729,11 +729,11 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 <!-- Non-critical CSS loaded async -->
 <link rel="preload" as="style" href="css/improvements.css?v=20260910pioneer2"
   onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" as="style" href="css/radio_extras_v4.css?v=20260930rperf1"
+<link rel="preload" as="style" href="css/radio_extras_v4.css?v=20261013pf1"
   onload="this.onload=null;this.rel='stylesheet'">
 <noscript>
   <link rel="stylesheet" href="css/improvements.css?v=20260910pioneer2">
-  <link rel="stylesheet" href="css/radio_extras_v4.css?v=20260930rperf1">
+  <link rel="stylesheet" href="css/radio_extras_v4.css?v=20261013pf1">
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
 <link rel="stylesheet" href="css/radio_polish_v1.css?v=20261012pl3">
@@ -1364,9 +1364,9 @@ async function loadRadioScripts() {
     document.head.appendChild(_fa);
   }
   await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
-  await loadAny(['js/radio-pioneer-layout.js?v=20260914reveal2']);
-  await loadAny(['js/radio-amp-layout.js?v=20261012dot1']);
-  await loadAny(['js/radio-dither-layout.js?v=20261012cl3']);
+  await loadAny(['js/radio-pioneer-layout.js?v=20261013pf1']);
+  await loadAny(['js/radio-amp-layout.js?v=20261013pf1']);
+  await loadAny(['js/radio-dither-layout.js?v=20261013pf1']);
   await loadAny(['js/radio-listening.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
@@ -5126,8 +5126,8 @@ body.mk-low-motion *::after {
 })();
 </script>
 
-<link rel="stylesheet" href="css/radio-ambience.css?v=20260908ambient3">
-<script src="js/radio-ambience.js?v=20260928izs122"></script>
+<link rel="stylesheet" href="css/radio-ambience.css?v=20261013pf1">
+<script src="js/radio-ambience.js?v=20261013pf1"></script>
 <link rel="stylesheet" href="css/calendar-surfaces.css?v=20260908surfaces3">
 <link rel="stylesheet" href="css/mk-spring.css?v=20260926sp1">
 
