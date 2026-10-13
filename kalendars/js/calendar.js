@@ -2625,11 +2625,18 @@ function filterFullList(btn) {
     { bg:'rgba(255,80,200,0.68)', accent:'#ff6edc' }
   ];
 
-  function getNightSplitSavedMap() {
+  // The live tick reads this every few seconds and the store grows by a night
+  // each day: parse only when the stored text changed. Writers pass fresh=true
+  // and get their own copy to mutate.
+  let nightSplitMapRaw = null, nightSplitMapParsed = {};
+  function getNightSplitSavedMap(fresh) {
     try {
       const raw = localStorage.getItem(NIGHT_SPLIT_STORE_KEY);
+      if (!fresh && raw === nightSplitMapRaw) return nightSplitMapParsed;
       const parsed = raw ? JSON.parse(raw) : {};
-      return parsed && typeof parsed === 'object' ? parsed : {};
+      const map = parsed && typeof parsed === 'object' ? parsed : {};
+      if (!fresh) { nightSplitMapRaw = raw; nightSplitMapParsed = map; }
+      return map;
     } catch(_e) {
       return {};
     }
@@ -2819,7 +2826,7 @@ function filterFullList(btn) {
 
   function saveNightSplitOrder(dateStr, newOrder) {
     try {
-      const map = getNightSplitSavedMap();
+      const map = getNightSplitSavedMap(true);
       const saved = map[dateStr] || {};
       map[dateStr] = window.MinkaNightHistory.save(saved, { sh: saved.sh || 0, ei: saved.ei !== undefined ? saved.ei : 0, order: newOrder, mode: saved.mode || 'fatigue', savedAt: Date.now() });
       localStorage.setItem(NIGHT_SPLIT_STORE_KEY, JSON.stringify(map));
