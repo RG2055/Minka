@@ -21,3 +21,5 @@ jobs:
           node scripts/privacy-check.mjs --range HEAD
       - name: Regression tests
         run: node --test kalendars/test/*.test.mjs
+      - name: Build dist and check every referenced file exists
+        run: node scripts/build-pages.mjs
