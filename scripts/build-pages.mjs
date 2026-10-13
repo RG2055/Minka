@@ -107,4 +107,32 @@ if (missing.length) {
   console.error(`Missing files referenced from dist (${missing.length}):\n  ${missing.join('\n  ')}`);
   process.exit(1);
 }
+
+// Size budget: the JS and CSS each page links at startup (literal refs only;
+// lazily loaded features are not counted). Growing past it stops the build —
+// raise scripts/size-budget.json on purpose, in the same commit, with a reason.
+const budget = JSON.parse(await readFile(path.join(root, 'scripts/size-budget.json'), 'utf8'));
+const over = [], sizes = {};
+for (const [page, limit] of Object.entries(budget.pages)) {
+  const file = path.join(dist, page), html = await readFile(file, 'utf8'), seen = new Set();
+  let js = 0, css = 0;
+  for (const m of html.matchAll(/<(script|link)\b[^>]*>/g)) {
+    const tag = m[0], ref = (tag.match(/\s(?:src|href)=["']([^"']+)["']/) || [])[1];
+    const isCss = m[1] === 'link' && /rel=["'](stylesheet|preload)["']/.test(tag) && /\.css(\?|$)/.test(ref || '');
+    if (!ref || !isLocal(ref) || (m[1] === 'link' && !isCss)) continue;
+    const target = path.resolve(ref.startsWith('/') ? dist : path.dirname(file), '.' + (ref.startsWith('/') ? '' : '/') + decodeURIComponent(ref.split('?')[0]));
+    if (seen.has(target) || !existsSync(target)) continue;
+    seen.add(target);
+    const size = (await stat(target)).size;
+    if (isCss) css += size; else js += size;
+  }
+  sizes[page] = { jsKB: Math.round(js / 1024), cssKB: Math.round(css / 1024) };
+  if (sizes[page].jsKB > limit.jsKB) over.push(`${page}: JS ${sizes[page].jsKB} KB > ${limit.jsKB} KB`);
+  if (sizes[page].cssKB > limit.cssKB) over.push(`${page}: CSS ${sizes[page].cssKB} KB > ${limit.cssKB} KB`);
+}
+if (over.length) {
+  console.error(`Startup size budget exceeded (scripts/size-budget.json):\n  ${over.join('\n  ')}`);
+  process.exit(1);
+}
 console.log(`dist: ${files} files, ${(bytes / 1048576).toFixed(1)} MB, ${stamped} refs content-hashed, all literal refs present`);
+console.log('startup JS/CSS within budget: ' + Object.entries(sizes).map(([p, s]) => `${p} ${s.jsKB}/${s.cssKB} KB`).join(', '));

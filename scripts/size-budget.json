@@ -1,0 +1,17 @@
+{
+  "note": "Startup JS/CSS (KB, uncompressed) each page links directly. Set from the 2026-10-13 measurement with ~3 % headroom; lower it when something gets lighter, raise it only on purpose.",
+  "pages": {
+    "index.html": {
+      "jsKB": 352,
+      "cssKB": 490
+    },
+    "kalendars/index.html": {
+      "jsKB": 2890,
+      "cssKB": 2015
+    },
+    "mobile.html": {
+      "jsKB": 289,
+      "cssKB": 164
+    }
+  }
+}

@@ -17,6 +17,8 @@ const states=[
  ['kal-mobile','/kalendars/index.html?mobile=1',null,{width:390,height:844}],
  ['main-stats','/index.html',async p=>{await p.evaluate(()=>openStatsFromDock()); await p.waitForTimeout(3000);}],
  ['main-default','/index.html',null],
+ // Radio in each of its 6 looks (the open window and its station list); ONLY=radio-classic,… runs a subset.
+ ...['classic','clean','pioneer','pixel','amp','dither'].map(l=>['radio-'+l,'/index.html',async p=>{await p.evaluate(()=>toggleRadio()); await p.waitForTimeout(2500); await p.evaluate(l=>window.rgTheme.applyProfile({layout:l}),l); await p.waitForTimeout(3000);}]),
 ];
 const b=await chromium.launch();
 async function grab(base,[name,url,fn,vp]){ const ctx=await b.newContext({viewport:vp||{width:1440,height:900},timezoneId:TZ}); const p=await ctx.newPage(); await p.clock.setFixedTime(T);
