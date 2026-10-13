@@ -19,7 +19,7 @@ Mērījumi ir sintētiskajā serverī (`scripts/local-audit-server.mjs`, viltoti
 
 Galvenais starta izdevums ir **stilu pārrēķins un izkārtojums**, nevis JS. Tas nav saistīts ar CSS apjomu (sk. #16), bet ar to, cik bieži un cik plaši pārrēķins tiek izraisīts (#14, #17). CPU profilā JS pašlaiks ir ~1,9 s, "(program)" (stili, izkārtojums, parsēšana) ~1,85 s. Lielākie JS punkti startā: `fatigue.js` 275 ms, `calendar.js` 254 ms, `mood-trend.js` 167 ms, `nightsplit.js` 164 ms, `mk-header-x.js` 150 ms (4× palēninājumā).
 
-**Ilgā sesija** (`tests/e2e/soak.mjs`): 30 ciklu tests (dienas, nakts panelis, mēneša kalendārs, darbinieka logs, meklēšana, radio atvērt/aizvērt) pēc iesildīšanās noplūdi nerāda. Kaudze 16,2→16,4 MB, mezgli un taimeri stabili, klausītāji +1 ciklā (871→880). 300 ciklu rezultāti: skatīt žurnālu zemāk.
+**Ilgā sesija** (`tests/e2e/soak.mjs`): 300 ciklu tests (~45 min) pēc iesildīšanās: klausītāji 881→896, `setInterval` 19–20, DOM 11,3–13,7 k bez tendences, 0 kļūdu; kaudze 16,6→20,6 MB (~15 KB/ciklā). Kaudzes momentuzņēmumu salīdzinājums (`heap-diff.mjs`, 120 cikli, +2,6 MB): 1,4 MB ir JIT kompilētais kods, pārējais pārlūka izkārtojuma objekti un CDP mērīšanas artefakti (`DOMTimer`, `PerformanceLongTaskTiming` – lietotne garos uzdevumus nevāc). JS līmenī gaidošie taimeri neuzkrājas (katrā vietā ≤1). **Noplūde RG kodā nav atrasta.** Agrākais 30 ciklu tests (dienas, nakts panelis, mēneša kalendārs, darbinieka logs, meklēšana, radio atvērt/aizvērt) pēc iesildīšanās noplūdi nerāda. Kaudze 16,2→16,4 MB, mezgli un taimeri stabili, klausītāji +1 ciklā (871→880). 300 ciklu rezultāti: skatīt žurnālu zemāk.
 
 ## Prioritizētais saraksts
 
@@ -46,12 +46,18 @@ Statuss: ✅ izdarīts, ⏳ nākamais, 📝 tikai dokumentēts (vajag lēmumu va
 | 18 | `emoji-hover-animation.js` MutationObserver uz visu `body` + `elementFromPoint` ~1×/s | dzīves cikla audits | ~1 ms/s | failam ir divu nokāršanās vēsture | 📝 neaiztikt bez iemesla |
 | 19 | `radio.js` ik sekundi raksta laiku arī paslēptā radio | dzīves cikla audits | niecīgs | atverot uz mirkli redzams vecs laiks | 📝 |
 | 20 | Mazi neierobežoti keši (`mxGlyphCache`, `lyricsCache`, `_led.grids`, `_bedImages`) un dubults `visibilitychange` klausītājs `mood-feedback.js:1274` | dzīves cikla audits, nav izraisīts testos | mazs | — | 📝 |
+| 21 | `?v=` ar roku: aizmirsts bumps = vecs kods gadu | SW audits | Automātiski satura heši dist kopijā (297 atsauces) / augsta | JS būvētie URL paliek ar roku | ✅ |
+| 22 | SW navigācija gaida, kamēr SW pamostas | `sw.js` network-first bez preload | Navigation preload / vidēja (lokāli neizmērāms) | nav: bez preload uzvedība tā pati | ✅ |
+| 23 | Minifikācija (esbuild, katrs fails atsevišķi) | eksperiments: gzip 1,76 → 1,20 MB, e2e 19/19; **starts nemainās** (skripti 670 → 644 ms, stili/izkārtojums vienādi, n=9) | tikai lejupielādes izmērs | atkarība + grūtāk lasāmas kļūdas | ❌ pagaidām nē |
+| 24 | Radio sasildīšana katrā startā parsē ~500 KB radio JS + Font Awesome CSS, arī ja radio neatver | `index.html:1676` | — | apzināts lēmums: citādi pirmā atvēršana lēnajos datoros "lec divreiz" | 📝 lietotāja izvēle |
 | 13 | Nelietoti, bet liela apjoma izejas faili tiek izvietoti (`photo-prompts.json`, `noto-ids.json`, `card-addons/*.json`) | resursu audits | ~130 KB mazāk dist | skripti tos lasa no repo, tāpēc izslēgt būvēšanā, nevis dzēst | 📝 |
 
 ## Atliktie lēmumi
 
-- **Satura heši `?v=` vietā.** Vienkāršākais drošais solis: `build-pages.mjs` dist kopijā pārraksta literālās HTML/CSS atsauces uz `?v=VECAIS.<sha1-8>`. Izpildlaikā būvētie ceļi (~20 vietas: `BED_V`, emoji3d `V`, `music-webamp.js VERSION`…) paliek ar roku. Pirmajā izvietošanā mainās visi URL (viena pilna ielāde). Vēl neieviests.
-- **Minifikācija.** Repo nav pārnēsājama minifikatora (oxc/lightningcss ir tikai Mac binārie failiem Webamp avotā). Ieguvums pēc gzip būtu neliels, salīdzinot ar stilu pārrēķina izmaksām. Atlikts.
+- **Satura heši** ieviesti (#21). Izpildlaikā būvētie ceļi (~20 vietas: `BED_V`, emoji3d `V`, `music-webamp.js VERSION`…) paliek ar roku. Pirmajā izvietošanā mainās visi URL (viena pilna ielāde).
+- **Minifikācija** izmērīta (#23): startu nepaātrina. Atgriezties, ja darbā problēma izrādās tīkls.
+- **Vite/Parcel.** Neievieš: ~130 klasiskie skripti ar kopīgiem globāliem, `onclick` HTML, iframe un izpildlaikā būvēti URL; ieguvumi (heši, CI vārti) iegūti ar esošo būvi. Atgriezties, kad konkrēta daļa tiek pārrakstīta par moduli.
+- **Īsti dati (lietotāja ielogošanās, Mac, bez palēnināšanas):** dienas pārslēgšana līdz nākamajam kadram 12–75 ms (mediāna ~20), nakts panelis atvērt/aizvērt 21–35 ms.
 - **Skriptu apvienošana.** 90 skripti un 83 CSS ir daudz, bet ar SW un HTTP/2 pieprasījumu skaits nav pierādīts kā galvenais izdevums. Vispirms jāizmēra ar ieslēgtu SW.
 
 ## Žurnāls
@@ -67,5 +73,9 @@ Statuss: ✅ izdarīts, ⏳ nākamais, 📝 tikai dokumentēts (vajag lēmumu va
 | 50e2a269 | e2e LED tests nakts panelim; computed-style-compare atjaunots Galvenei X | pret ef746038~1 krīt (`LED grid missing`), pret HEAD iziet |
 | 1ba46586 | nakts pauzes noteikumi uz `#nsOverlay` | 60–70 → 11–13 ms par pārslēgšanu; LED pikseļi identiski; radio-ambience testi 8/8 |
 | 0a816f9f | nakts plānu krātuves parsēšanas kešs | jauns tests, 465/465 |
+| 8baa297a | satura heši būvēšanā; radio skatu JS ņem lapas `<link>` URL | e2e uz būvētā dist 19/19; 120/120 heši sakrīt |
+| ac6473f6 | SW navigation preload | vm tests; Chromium: preload `enabled`, offline tests iziet |
+
+Pirms izlaišanas: bumpot `CACHE` sw.js un versijas UI (izlaiduma ierasta kārtība).
 
 Computed-style salīdzinājums bāze (ef746038) pret jauno: vienīgās strukturālās atšķirības ir izņemtais `color-thief` `<script>` (−1 elements). Pārējais ir zināmās sacensības (noskaņas apļa transformācijas, sub-pikseļu platumi, asinhronā radio albuma krāsa), kas parādās arī salīdzinājumā bāze pret bāzi (547 vērtības).
