@@ -12,7 +12,7 @@ const b=await chromium.launch();
 async function run(){
   const ctx=await b.newContext({viewport:{width:1440,height:900},timezoneId:'Europe/Riga'});
   await ctx.addInitScript(()=>{window.__lt=[];try{new PerformanceObserver(l=>{for(const e of l.getEntries())window.__lt.push(e.duration);}).observe({type:'longtask',buffered:true});}catch(_){}});
-  // PERF_BLOCK=regex: serve matching CSS as empty (what-if experiment for lazy loading).
+  // PERF_PAGE=/kalendars/index.html measures another page; PERF_BLOCK=regex: serve matching CSS as empty (what-if experiment for lazy loading).
   if(process.env.PERF_BLOCK)await ctx.route(new RegExp(process.env.PERF_BLOCK),r=>r.fulfill({status:200,contentType:'text/css',body:''}));
   const p=await ctx.newPage(); await p.clock.setFixedTime(T);
   const errs=[]; p.on('pageerror',e=>errs.push(e.message.slice(0,120)));
@@ -23,10 +23,10 @@ async function run(){
   cdp.on('Network.responseReceived',e=>{const r=reqs.get(e.requestId)||{};r.url=e.response.url;r.type=e.type;reqs.set(e.requestId,r);});
   cdp.on('Network.loadingFinished',e=>{const r=reqs.get(e.requestId)||{};r.bytes=e.encodedDataLength;reqs.set(e.requestId,r);});
   const t0=Date.now();
-  await p.goto(BASE+'/index.html',{waitUntil:'load'}); const loadMs=Date.now()-t0;
+  await p.goto(BASE+(process.env.PERF_PAGE||'/index.html'),{waitUntil:'load'}); const loadMs=Date.now()-t0;
   let usableMs=null;
-  for(let i=0;i<300&&usableMs===null;i++){
-    const f=p.frames().find(f=>/kalendars\/index\.html/.test(f.url()));
+  for(let i=0;i<(process.env.PERF_NOCARDS?0:300)&&usableMs===null;i++){
+    const f=p.frames().find(f=>/kalendars\/index\.html/.test(f.url()))||(process.env.PERF_PAGE?p.mainFrame():null);
     if(f&&await f.evaluate(()=>document.querySelectorAll('#grafiks-list .card').length>=4).catch(()=>false))usableMs=Date.now()-t0;
     else await p.waitForTimeout(100);
   }

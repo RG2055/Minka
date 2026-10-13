@@ -107,6 +107,7 @@
   function attach(host, opts) {
     if (!host) return;
     ensureCss();
+    panelTexture();
     var entry = hosts.find(function (e) { return e.host === host; });
     if (!entry) {
       var cv = document.createElement('canvas');
@@ -151,6 +152,7 @@
     }
     root.style.setProperty('--mk-dither-panel', 'url(' + c.toDataURL('image/png') + ')');
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', panelTexture); else panelTexture();
+  // Only the gallery's panels use the texture and they open through attach();
+  // writing a :root variable at startup restyled the whole calendar for nothing.
   window.MinkaDitherBackdrop = { attach: attach, detach: detach, panelTexture: panelTexture };
 })();
