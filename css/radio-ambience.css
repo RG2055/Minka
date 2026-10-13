@@ -53,10 +53,10 @@ html.minka-ambient-active body #grafiks-app .side-panel {
   to { transform: translate(2%, -2%) scale(1.04); }
 }
 /* Pause CSS and SVG walkers together, including when the parent PWA is hidden. */
-html:not(.ns-motion-active) #nsPanel .ns-bed-dream *,
-html:not(.ns-motion-active) #nsPanel .ns-room-walker,
-html:not(.ns-motion-active) #nsPanel .ns-room-walker *,
-html:not(.ns-motion-active) #nsPanel .ns-room-bed-zzz span {
+#nsOverlay:not(.ns-motion-active) #nsPanel .ns-bed-dream *,
+#nsOverlay:not(.ns-motion-active) #nsPanel .ns-room-walker,
+#nsOverlay:not(.ns-motion-active) #nsPanel .ns-room-walker *,
+#nsOverlay:not(.ns-motion-active) #nsPanel .ns-room-bed-zzz span {
   animation-play-state: paused !important;
 }
 @media (prefers-reduced-motion: reduce) {

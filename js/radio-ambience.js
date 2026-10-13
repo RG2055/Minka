@@ -91,7 +91,10 @@
     root.classList.toggle('minka-visuals-hidden', !visible);
     // The night scene and the expanded radio never animate at the same time.
     const nightActive = visible && !expanded && !!overlay?.classList.contains('open');
-    root.classList.toggle('ns-motion-active', nightActive && !motion.matches && !modestDevice);
+    const nightMotion = nightActive && !motion.matches && !modestDevice;
+    root.classList.toggle('ns-motion-active', nightMotion);
+    // The pause rules key off the overlay: a class change on <html> restyled the whole calendar (~5× slower).
+    overlay?.classList.toggle('ns-motion-active', nightMotion);
     dreams.forEach(updateDream);
     if (typeof window.__nsSyncWalkerMotion === 'function') window.__nsSyncWalkerMotion(nightActive);
     if (radio && frame?.contentWindow) {
