@@ -17,10 +17,14 @@ function harness(saved='original'){
  window.rgPioneer.init({image,button,audio:eventTarget(),isActive:()=>active,isRunning:()=>running,selectMode:()=>{active=true;selectedMode++;},disable:()=>active=false});
  return {api:window.rgPioneer,image,classes,requests,store,document,buttonAttrs,active:v=>active=v,running:v=>running=v,emit:event=>listeners[event]?.forEach(fn=>fn()),selectedMode:()=>selectedMode};
 }
-test('all 83 source clips have small native WebP animations and static posters',()=>{
+test('every offered clip ships exactly the WebP files the player loads; still clips ship none',()=>{
  assert.equal(catalog.length,83);assert.equal(new Set(catalog.map(c=>c.id)).size,83);
+ const file=name=>new URL('data/pioneer/'+name+'.webp',root);
  for(const clip of catalog){
-  for(const suffix of ['', '-poster']){const data=fs.readFileSync(new URL('data/pioneer/'+clip.id+suffix+'.webp',root));assert.equal(data.toString('ascii',8,12),'WEBP');if(!suffix)assert.equal(data.length,clip.bytes);}
+  // radio-pioneer.js offers frames>1 || levels>0; meters draw from -levels, animations from the full file.
+  const offered=clip.frames>1||clip.levels>0, used=!offered?[]:clip.levels>0?['-poster','-levels']:['','-poster'];
+  for(const suffix of used){const data=fs.readFileSync(file(clip.id+suffix));assert.equal(data.toString('ascii',8,12),'WEBP');if(!suffix)assert.equal(data.length,clip.bytes);}
+  if(!offered||clip.levels>0)assert.equal(fs.existsSync(file(clip.id)),false,clip.id+' full clip is never loaded');
   assert.ok(clip.bytes<510000);assert.ok(clip.width<=256&&clip.height<=96);
  }
  assert.equal(catalog.filter(c=>c.color).length,24);

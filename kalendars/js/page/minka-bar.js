@@ -52,7 +52,7 @@
     sp: 'https://www.lsm.lv/rss/?lang=lv&catid=12',    // Sports
   };
   const FEEDS_LABELS = {v:'Veselība',l:'Latvija',r:'Rīga',sv:'Sabiedrība',ek:'Ekonomika',pa:'Pasaule',sp:'Sports'};
-  /* VARDA ï¿½ tiek izmantots no data/varda.js (window.LATVIAN_NAMEDAYS) */
+  /* VARDA - tiek izmantots no data/namedays.local.js (window.LATVIAN_NAMEDAYS) */
   function openExternalLink(url) {
     const target = String(url || '').trim();
     if (!target) return;
