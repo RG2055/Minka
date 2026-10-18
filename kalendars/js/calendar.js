@@ -6066,11 +6066,18 @@ function filterFullList(btn) {
     // drink worth 1.25 cups still counts as one cup; only the caffeine readout and the
     // picker's "1.25 tasītes" show the finer figure.
     function coffeeEq(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.max(1, Math.round((m && m.eq) || 1)); }
-    // Caffeine this person has logged in the current duty day, per drink (a Monster is 160 mg).
-    function coffeeMgToday(name) {
-      const sources = getCoffeeDetail(name).sources || {};
-      return Math.round(Object.keys(sources).reduce((sum, k) => sum + (Number(sources[k]) || 0) * ((coffeeSourceMeta[k] || {}).eq || 1) * COFFEE_MG_PER_CUP, 0));
+    // Caffeine in stored sources. They hold whole cup units per drink (a Monster is
+    // stored as 2), so units / coffeeEq = drinks, and each drink has its exact eq
+    // (Monster 160 mg, Brite 100 mg). The statistics use the same function.
+    function coffeeSourcesMg(sources) {
+      sources = sources || {};
+      return Math.round(Object.keys(sources).reduce((sum, k) => {
+        const meta = coffeeSourceMeta[k];   // stored details only hold known sources; anything else is not caffeine we know
+        return meta ? sum + (Number(sources[k]) || 0) / coffeeEq(k) * meta.eq * COFFEE_MG_PER_CUP : sum;
+      }, 0));
     }
+    window.__minkaCoffeeMg = coffeeSourcesMg;
+    function coffeeMgToday(name) { return coffeeSourcesMg(getCoffeeDetail(name).sources); }
     function coffeeMg(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.round(((m && m.eq) || 1) * COFFEE_MG_PER_CUP); }
     // Fixed-price machines (Löfbergs, Cita kafija, energy drinks) can vary between
     // vending machines/stores, so remember the last price the user typed per source

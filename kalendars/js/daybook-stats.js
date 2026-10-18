@@ -558,6 +558,10 @@
     });
     return parts.length ? parts.join('') : '<span class="db-dim">—</span>';
   }
+  // Caffeine through the calendar's own calculation (calendar.js coffeeSourcesMg:
+  // a Monster 160 mg, a Brite 100 mg); 1 g and up reads in grams.
+  function caffeineMg(sources) { return window.__minkaCoffeeMg ? window.__minkaCoffeeMg(sources || {}) : 0; }
+  function mgText(mg) { return mg >= 1000 ? (Math.round(mg / 100) / 10).toLocaleString('lv-LV') + ' g' : Math.round(mg) + ' mg'; }
   function coffeeRows(people) {
     // people: [{name, cups, cents, sources}] → one row per person, cups first.
     var list = people.filter(function (p) { return p.cups > 0; }).sort(function (a, c) { return c.cups - a.cups || a.name.localeCompare(c.name, 'lv'); });
@@ -570,6 +574,8 @@
         + '<span class="db-coffee-name"><b>' + esc(shortName(p.name)) + '</b></span>'
         + '<span class="db-coffee-srcs">' + sourceChips(p.sources) + '</span>'
         + '<span class="db-coffee-cups"><b>' + p.cups + '</b><small>' + (p.cups === 1 ? 'tase' : 'tases') + '</small></span>'
+        + '<span class="db-coffee-mg"' + (p.over ? ' title="Dienas virs 400 mg kofeīna: ' + p.over + '"' : '') + '><b>' + mgText(p.mg || 0) + '</b>'
+          + (p.over ? '<small class="db-coffee-over">⚠ ' + p.over + '</small>' : '<small>kofeīns</small>') + '</span>'
         + '<span class="db-coffee-eur"><b>' + eur(p.cents) + '</b><small>iztērēts</small></span></button>';
     }), '</div>', CAP);
   }
@@ -587,11 +593,14 @@
       days++;
       var det = details[key] || {};
       Object.keys(counts[key] || {}).forEach(function (name) {
-        var p = people[M.norm(name)] || (people[M.norm(name)] = { name: byKey[M.norm(name)] || name, cups: 0, cents: 0, sources: {} });
+        var p = people[M.norm(name)] || (people[M.norm(name)] = { name: byKey[M.norm(name)] || name, cups: 0, cents: 0, sources: {}, mg: 0, over: 0 });
         p.cups += Math.max(0, Number(counts[key][name]) || 0);
         var d = det[name] || {};
         p.cents += Math.max(0, Number(d.spendCents) || 0);
         Object.keys(d.sources || {}).forEach(function (k) { p.sources[k] = (p.sources[k] || 0) + (Number(d.sources[k]) || 0); });
+        var dayMg = caffeineMg(d.sources);
+        p.mg += dayMg;
+        if (dayMg > 400) p.over++;
       });
     });
     return { people: Object.values(people), days: days };
@@ -603,7 +612,7 @@
     shiftsAll().forEach(function (e) { byKey[M.norm(e.name)] = e.name; });
     return Object.keys(totals).map(function (k) {
       var d = details[k] || {};
-      return { name: byKey[k] || k, cups: totals[k], cents: d.spendCents || 0, sources: d.sources || {} };
+      return { name: byKey[k] || k, cups: totals[k], cents: d.spendCents || 0, sources: d.sources || {}, mg: caffeineMg(d.sources) };
     });
   }
   function coffeeView(b) {
@@ -627,7 +636,8 @@
         }).catch(function () {});
     }
     var drinkers = month.people.filter(function (p) { return p.cups > 0; }).length;
-    return '<div class="db-tiles db-tiles--3">' + tile(cups || (coffee.busy ? '…' : '—'), 'Tases šomēnes', '', '#f5b73f') + tile(eur(cents), 'Iztērēts šomēnes', '')
+    var mg = month.people.reduce(function (n, p) { return n + (p.mg || 0); }, 0);
+    return '<div class="db-tiles db-tiles--4">' + tile(cups || (coffee.busy ? '…' : '—'), 'Tases šomēnes', '', '#f5b73f') + tile(mg ? mgText(mg) : '—', 'Kofeīns šomēnes', '', '#ffb77c') + tile(eur(cents), 'Iztērēts šomēnes', '')
       + tile(drinkers || '—', 'Cilvēki', 'šomēnes') + '</div>'
       + (cups ? '<div class="db-coffee-sum">' + sourceChips(sum) + '</div>' : '')
       + section(monthLabel(state.month), coffee.busy ? '<span class="db-loading">Ielādē…</span>' : '', coffeeRows(month.people), '#f5b73f')
