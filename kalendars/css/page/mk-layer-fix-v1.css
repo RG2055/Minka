@@ -6317,19 +6317,20 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   border-radius: 15px !important; background: var(--m3-surface-container-highest, rgba(255,255,255,.08)) !important; color: var(--m3-on-surface) !important;
   white-space: nowrap !important;
 }
-.mk-caf-chip b { font-weight: 700 !important; color: var(--m3-tertiary, #ffb77c) !important; }
+.mk-caf-chip b { font-weight: 700 !important; }
 .mk-caf-chip svg { width: 18px !important; height: 18px !important; flex: none !important; }
-.mk-caf-chip:first-child svg { fill: var(--m3-tertiary, #ffb77c) !important; }
-.mk-caf-day { grid-column: 1 / -1 !important; display: grid !important; gap: 4px !important; font-size: 12px !important; }
+/* this drink is orange everywhere: its chip and its piece of the bar */
+.mk-caf-chip.is-add { color: #ffb77c !important; }
+.mk-caf-chip.is-add svg { fill: #ffb77c !important; }
+.mk-caf-day { grid-column: 1 / -1 !important; display: grid !important; gap: 5px !important; font-size: 13px !important; justify-items: end !important; }
 .mk-caf-day i {
-  display: block !important; height: 4px !important; border-radius: 2px !important;
-  --caf: #6ee7a8;
-  background: linear-gradient(90deg, var(--caf) var(--before), color-mix(in srgb, var(--caf) 55%, transparent) var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
+  display: block !important; justify-self: stretch !important; height: 6px !important; border-radius: 3px !important;
+  background: linear-gradient(90deg, rgba(255,255,255,.62) var(--before), #ffb77c var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
 }
-.mk-caf-day b { font-weight: 700 !important; color: var(--m3-on-surface) !important; }
-.mk-caf-day.is-high i { --caf: #fbbf24; }
-.mk-caf-day.is-over i { --caf: #f87171; }
-.mk-caf-day.is-over { color: #fca5a5 !important; }
+.mk-caf-day b { font-weight: 800 !important; font-size: 15px !important; color: #6ee7a8 !important; }
+.mk-caf-day.is-high b { color: #fbbf24 !important; }
+.mk-caf-day.is-over i { background: #f87171 !important; }
+.mk-caf-day.is-over, .mk-caf-day.is-over b { color: #f87171 !important; }
 /* Saglabāt: M3 filled button — pilna kapsula, primary virsma. */
 .mk-coffee-save {
   width: 100% !important;
