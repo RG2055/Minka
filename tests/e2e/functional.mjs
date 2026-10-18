@@ -41,6 +41,16 @@ await test('coffee picker opens from a card', async()=>{ const p=await cal();
   await p.keyboard.press('Escape'); await p.waitForTimeout(400);
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); });
 
+await test('coffee picker: the day\'s mood faces rate the day through the mood card', async()=>{ const p=await cal();
+  await p.locator('button.mk-coffee-mid').first().click();
+  ok(await waitFor(()=>p.evaluate(()=>document.querySelectorAll('.mk-coffee-picker .mk-coffee-mood [data-mood]').length===5)),'no 5 mood faces in coffee picker');
+  const key=await p.evaluate(()=>document.querySelector('.mk-coffee-picker .mk-coffee-mood [data-mood]').dataset.mood);
+  const before=await p.evaluate(k=>{const d=JSON.parse(localStorage.getItem('minkaShiftPulseV2')||'{}');return Object.values(d).reduce((s,x)=>s+(Number(x&&x[k])||0),0);},key);
+  await p.locator('.mk-coffee-picker .mk-coffee-mood [data-mood]').first().click();
+  ok(await waitFor(()=>p.evaluate(([k,b])=>{const d=JSON.parse(localStorage.getItem('minkaShiftPulseV2')||'{}');return Object.values(d).reduce((s,x)=>s+(Number(x&&x[k])||0),0)>b;},[key,before])),'face tap did not add a vote');
+  ok(await p.evaluate(()=>!!document.querySelector('.mk-coffee-picker')),'picker closed after the mood tap');
+  ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return 'voted '+key; });
+
 await test('mood rating: tapping a face records a vote', async()=>{ const p=await cal();
   await p.evaluate(()=>{window.__posts=[];const f=window.fetch;window.fetch=function(u,o){if(o&&o.method==='POST')window.__posts.push(String(typeof u==='string'?u:u.url));return f.apply(this,arguments);};});
   const before=await p.locator('.rg-pulse-tap').first().evaluate(e=>e.closest('.card').innerText);

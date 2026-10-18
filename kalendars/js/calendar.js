@@ -6686,6 +6686,23 @@ function filterFullList(btn) {
         </label>
         <div class="mk-coffee-caf"></div>
         <button class="mk-coffee-save" type="button">Saglabāt</button>`;
+      // The day's mood faces under the coffee: far more people log coffee than rate
+      // the day, so one more tap here rates it, through the mood card's own buttons.
+      const moodTaps = [...document.querySelectorAll('.rg-feedback-card [data-rg-pulse]')].filter(b => b.getAttribute('aria-disabled') !== 'true');
+      if (moodTaps.length) {
+        const mood = document.createElement('div');
+        mood.className = 'mk-coffee-mood';
+        mood.innerHTML = '<div class="mk-coffee-picker-title">Noskaņa</div><div class="mk-coffee-mood-row" role="group" aria-label="Noskaņa">'
+          + moodTaps.map(b => `<button type="button" data-mood="${escapeHtml(b.dataset.rgPulse)}" aria-label="${escapeHtml(b.getAttribute('aria-label') || '')}"><span aria-hidden="true">${escapeHtml(b.dataset.emoji || '')}</span></button>`).join('') + '</div>';
+        mood.addEventListener('click', e => {
+          const face = e.target.closest('[data-mood]');
+          if (!face) return;
+          e.preventDefault(); e.stopPropagation();
+          document.querySelector(`.rg-feedback-card [data-rg-pulse="${CSS.escape(face.dataset.mood)}"]`)?.click();
+          face.classList.remove('is-picked'); void face.offsetWidth; face.classList.add('is-picked');
+        });
+        picker.insertBefore(mood, picker.querySelector('.mk-coffee-save'));
+      }
       if (card && card.classList.contains('mk-watch-face')) {
         const remove = document.createElement('button');
         remove.type = 'button'; remove.className = 'mk-coffee-remove';
@@ -6772,7 +6789,10 @@ function filterFullList(btn) {
         if (caf) {
           const eq = (coffeeSourceMeta[cleanCoffeeSource(selected)] || {}).eq || 1;
           const cups = eq === 1 ? '1 tasīte' : (Math.round(eq * 100) / 100) + ' tasītes';
-          caf.textContent = '≈ ' + coffeeMg(selected) + ' mg kofeīna · ' + cups;
+          const mg = coffeeMg(selected), share = Math.min(100, Math.round(mg / 400 * 100));   // EFSA: up to 400 mg a day is safe for adults
+          caf.innerHTML = '<span class="mk-caf-chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg><b>≈' + mg + ' mg</b> kofeīna</span>'
+            + '<span class="mk-caf-chip">' + coffeeIcon(selected) + escapeHtml(cups) + '</span>'
+            + '<span class="mk-caf-day" style="--share:' + share + '%"><i></i>' + share + ' % no 400 mg dienas devas</span>';
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {

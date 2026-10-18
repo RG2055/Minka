@@ -3528,10 +3528,15 @@
     }
   };
   function paintCounts() {
-    var counts = pulseCounts();
+    var counts = pulseCounts(), day = shiftDayKey();
     list.querySelectorAll('[data-rg-count]').forEach(function (item) {
       var count = Math.max(0, Number(counts[item.dataset.rgCount]) || 0);
+      // a vote rolls the number up (CSS .is-roll): only a rise on the same day,
+      // never a repaint or a switch to another day
+      var shown = item.dataset.rgDay === day ? Number(item.dataset.rgShown) : NaN;
       item.textContent = count ? String(count) : '';
+      if (count > shown) { item.classList.remove('is-roll'); void item.offsetWidth; item.classList.add('is-roll'); }
+      item.dataset.rgShown = String(count); item.dataset.rgDay = day;
     });
     var card = list.querySelector('.rg-feedback-card');
     if (!card) return;
