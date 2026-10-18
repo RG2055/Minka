@@ -84,12 +84,14 @@ test('a short window flips the picker above the button rather than off-screen', 
   assert.equal(picker.style.top, '142px', 'above the + (420 - 270 - 8)');
 });
 
-test('a picker taller than the window turns into two columns instead of scrolling', () => {
-  const short = harness({ innerHeight: 500, contentHeight: 600 });
-  short.place();
-  assert.ok(short.classes.has('is-wide'));
-  assert.deepEqual(short.moved, [['mk-coffee-picker-title', 'mk-coffee-source-row'], ['mk-coffee-price-row', 'mk-coffee-save']]);
-  const tall = harness({ innerHeight: 900, contentHeight: 600 });
-  tall.place();
-  assert.equal(tall.classes.has('is-wide'), false);
+test('on a desktop-wide window the picker is always two columns (never scrolls, same for everyone); phones keep one', () => {
+  for (const innerHeight of [500, 900]) {
+    const desk = harness({ innerHeight, contentHeight: 600 });
+    desk.place();
+    assert.ok(desk.classes.has('is-wide'), 'wide at height ' + innerHeight);
+    assert.deepEqual(desk.moved, [['mk-coffee-picker-title', 'mk-coffee-source-row'], ['mk-coffee-price-row', 'mk-coffee-save']]);
+  }
+  const phone = harness({ innerWidth: 390, innerHeight: 800 });
+  phone.place();
+  assert.equal(phone.classes.has('is-wide'), false);
 });

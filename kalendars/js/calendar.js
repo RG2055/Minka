@@ -6750,10 +6750,11 @@ function filterFullList(btn) {
         // reserve room for it — otherwise the Saglabāt button can land behind the
         // nav and be untappable.
         const bottomGuard = mobileShell ? 126 : 96;
-        // Never a scrolling picker, never smaller icons: when it does not fit the
-        // window's height it turns into two columns (sources | the rest), same sizes.
+        // Never a scrolling picker, never smaller icons: wherever the window is wide
+        // enough it is two columns (sources | the rest), the same for every person
+        // (fitting by height made it change with whether a "remove" row was there).
         const room = Math.max(96, window.innerHeight - bottomGuard - 16);
-        if (!picker.classList.contains('is-wide') && picker.scrollHeight > room && window.innerWidth >= 620) {
+        if (!picker.classList.contains('is-wide') && window.innerWidth >= 620) {
           const left = document.createElement('div'), right = document.createElement('div');
           left.className = right.className = 'mk-coffee-col';
           [...picker.children].forEach(el => (el.matches('.mk-coffee-picker-title, .mk-coffee-source-row, .mk-coffee-size-row') ? left : right).appendChild(el));
