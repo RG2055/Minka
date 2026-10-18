@@ -6325,8 +6325,18 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-caf-day { grid-column: 1 / -1 !important; display: grid !important; gap: 5px !important; font-size: 13px !important; justify-items: end !important; }
 .mk-caf-day > i {
   display: block !important; justify-self: stretch !important; height: 6px !important; border-radius: 3px !important;
-  background: linear-gradient(90deg, rgba(255,183,124,.5) var(--before), #ffb77c var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
+  position: relative !important;
+  background: linear-gradient(90deg, rgba(255,183,124,.5) var(--before), rgba(255,183,124,.3) var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
 }
+/* the piece this drink adds: taller, bright and breathing so it reads as "this much more" (opacity only, compositor) */
+.mk-caf-day > i::after {
+  content: ''; position: absolute; left: var(--before); width: calc(var(--after) - var(--before)); top: -2px; bottom: -2px;
+  border-radius: 4px; background: #ffb77c; box-shadow: 0 0 8px rgba(255,183,124,.7);
+  animation: mkCafAdd 1.4s ease-in-out infinite alternate;
+}
+.mk-caf-day.is-over > i::after { background: #fca5a5; box-shadow: 0 0 8px rgba(248,113,113,.8); }
+@keyframes mkCafAdd { from { opacity: 1; } to { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .mk-caf-day > i::after { animation: none; } }
 .mk-caf-day b { font-weight: 800 !important; font-size: 15px !important; color: #6ee7a8 !important; }
 .mk-caf-day.is-high b { color: #fbbf24 !important; }
 .mk-caf-day.is-over > i { background: #f87171 !important; }

@@ -7311,6 +7311,19 @@ function filterFullList(btn) {
             postCoffeeDelta(w.name, -remEq, card, removedSrc ? { source: removedSrc } : null);
           };
         }
+        // − and + are small (14–16 px): a click that just misses one, or lands on a label
+        // some faces draw over it, presses that button instead of opening the card
+        if (coffeeBtn || coffeeSub) card.addEventListener('click', (e) => {
+          if (card.classList.contains('wf-editing') || e.target.closest('button, a, input, select, textarea, label')) return;
+          let near = null, best = 11;
+          for (const b of [coffeeSub, coffeeBtn]) {
+            const r = b && b.getBoundingClientRect();
+            if (!r || !r.width) continue;
+            const d = Math.hypot(Math.max(r.left - e.clientX, 0, e.clientX - r.right), Math.max(r.top - e.clientY, 0, e.clientY - r.bottom));
+            if (d < best) { best = d; near = b; }
+          }
+          if (near) { e.preventDefault(); e.stopPropagation(); near.click(); }
+        }, true);
         return card;
       } else {
         const row = document.createElement('div');

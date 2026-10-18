@@ -151,7 +151,10 @@
 .db-coffee-mg b { font-size: 15px; font-weight: 800; color: #ffb77c; }
 .db-coffee-mg small { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--stx-t3); }
 .db-coffee-mg { min-width: 120px; }
-.db-coffee-mg.is-over { cursor: help; }
+.db-coffee-mg.is-over { position: relative; cursor: help; }
+.db-mg-tip { position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 5; width: max-content; max-width: 230px; padding: 8px 11px; border-radius: 10px; background: #11161f; color: #e8edf3; box-shadow: 0 8px 24px rgba(0,0,0,.45); font: 500 12.5px/1.4 Inter, system-ui, sans-serif; font-style: normal; text-align: left; white-space: normal; opacity: 0; translate: 0 4px; pointer-events: none; transition: opacity .15s ease, translate .15s ease; }
+.db-mg-tip b { color: #f87171; font-size: inherit; font-weight: 800; }
+.db-coffee-mg.is-over:hover .db-mg-tip, .db-coffee-mg.is-open .db-mg-tip { opacity: 1; translate: 0 0; }
 .db-coffee-mg.is-over small { color: #f87171; }
 .db-coffee-cups small { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--stx-t3); }
 .db-coffee-sum { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 14px; margin-bottom: 16px; border-radius: 14px; background: var(--stx-card2); border: 1px solid var(--stx-border-soft); }

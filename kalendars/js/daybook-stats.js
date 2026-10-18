@@ -574,8 +574,9 @@
         + '<span class="db-coffee-name"><b>' + esc(shortName(p.name)) + '</b></span>'
         + '<span class="db-coffee-srcs">' + sourceChips(p.sources) + '</span>'
         + '<span class="db-coffee-cups"><b>' + p.cups + '</b><small>' + (p.cups === 1 ? 'tase' : 'tases') + '</small></span>'
-        + '<span class="db-coffee-mg' + (p.over ? ' is-over" title="' + p.over + (p.over === 1 ? ' dienā' : ' dienās') + ' kofeīns pārsniedza drošo dienas devu 400 mg' : '') + '"><b>' + mgText(p.mg || 0) + '</b>'
-          + '<small>' + (p.over ? p.over + ' d. &gt; 400 mg' : 'kofeīns') + '</small></span>'
+        + '<span class="db-coffee-mg' + (p.over ? ' is-over' : '') + '"><b>' + mgText(p.mg || 0) + '</b>'
+          + '<small>' + (p.over ? p.over + ' d. &gt; 400 mg' : 'kofeīns') + '</small>'
+          + (p.over ? '<i class="db-mg-tip" role="tooltip">' + p.over + (p.over === 1 ? ' dienā' : ' dienās') + ' kofeīns pārsniedza drošo dienas devu <b>400 mg</b></i>' : '') + '</span>'
         + '<span class="db-coffee-eur"><b>' + eur(p.cents) + '</b><small>iztērēts</small></span></button>';
     }), '</div>', CAP);
   }
@@ -1121,6 +1122,7 @@
     if (chrome && typeof chrome.body.focus === 'function') { try { chrome.body.focus({ preventScroll: true }); } catch (_e) {} }
   }
 
+  var openMg = null; // the over-limit note opened by a tap
   document.addEventListener('click', function (e) {
     var wrap = e.target.closest('#stats-table-wrap');
     if (!wrap) return;
@@ -1128,6 +1130,9 @@
     var more = e.target.closest('[data-db-more]');
     if (more) { var cap = more.closest('.db-cap'); if (cap) cap.classList.add('is-open'); return; }
     var t;
+    // the over-limit label explains itself on hover; a tap toggles the same note instead of opening the person
+    if ((t = e.target.closest('.db-coffee-mg.is-over'))) { if (openMg && openMg !== t) openMg.classList.remove('is-open'); openMg = t.classList.toggle('is-open') ? t : null; return; }
+    if (openMg) { openMg.classList.remove('is-open'); openMg = null; }
     if ((t = e.target.closest('[data-db-nav]'))) { var dir = +t.dataset.dbNav; state.month = shiftMonth(state.month, dir); state.day = ''; render('month', { dir: dir }); return; }
     if ((t = e.target.closest('[data-db-group]'))) { if (state.group === t.dataset.dbGroup) return; state.group = t.dataset.dbGroup; render('filter'); return; }
     if ((t = e.target.closest('[data-db-tab]'))) { if (tabSelected(t.dataset.dbTab)) return; state.tab = t.dataset.dbTab; state.person = ''; state.day = ''; render('tab'); return; }
