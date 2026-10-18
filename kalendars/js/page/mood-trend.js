@@ -614,6 +614,38 @@
     G.above = above; G.near = near;
     skyCheck(true);
   }
+  /* The line in the app's one-ink Bayer dither (MinkaDither.bayer8): a solid core
+     and a halo of dots thinning out. Drawn with the curve, once per data or size
+     change, over the line's own band only (~1 ms); no frames, files or requests. */
+  var ditherCv = null;
+  function ditherLine(ctx, line, trace, dpr) {
+    var bayer = window.MinkaDither && window.MinkaDither.bayer8;
+    if (!bayer || line.length < 2) return false;
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, pad = 9;
+    line.forEach(function (p) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+    var bx = Math.max(0, Math.floor((x0 - pad) * dpr)), by = Math.max(0, Math.floor((y0 - pad) * dpr));
+    var bw = Math.min(ctx.canvas.width, Math.ceil((x1 + pad) * dpr)) - bx, bh = Math.min(ctx.canvas.height, Math.ceil((y1 + pad) * dpr)) - by;
+    if (bw < 1 || bh < 1) return false;
+    if (!ditherCv) ditherCv = document.createElement('canvas');
+    ditherCv.width = bw; ditherCv.height = bh;
+    var c = ditherCv.getContext('2d', { willReadFrequently: true });
+    c.setTransform(dpr, 0, 0, dpr, -bx, -by);
+    c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#fff';
+    // widest and faintest first: the alpha left behind falls off with the distance
+    [[15, .07], [9, .15], [5, .3], [2.4, 1]].forEach(function (s) { c.globalAlpha = s[1]; c.lineWidth = s[0]; trace(c); c.stroke(); });
+    var img = c.getImageData(0, 0, bw, bh), d = img.data, cell = Math.max(1, Math.round(dpr));
+    for (var y = 0, i = 0; y < bh; y++) {
+      var row = (((y + by) / cell | 0) & 7) * 8;
+      for (var x = 0; x < bw; x++, i += 4) {
+        var a = d[i + 3] / 255;
+        if (a > .97 || a > bayer[row + (((x + bx) / cell | 0) & 7)]) { d[i] = 143; d[i + 1] = 220; d[i + 2] = 255; d[i + 3] = 255; }
+        else d[i + 3] = 0;
+      }
+    }
+    c.setTransform(1, 0, 0, 1, 0, 0); c.putImageData(img, 0, 0);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(ditherCv, bx, by); ctx.restore();
+    return true;
+  }
   // The curve, above the sky: drawn once per data or size change.
   function drawScape(card, plot, m, geo) {
     var cv = layerCanvas(plot, 'rg-scape');
@@ -641,15 +673,16 @@
     var path = first < 0 ? [] : pts.slice(first);
     if (path.length > 1) {
       var line = monotone(path.map(function (p) { return [p.x, p.y]; }), 12);
-      var trace = function () { ctx.beginPath(); line.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); };
+      var trace = function (c) { c.beginPath(); line.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); };
       ctx.save();
-      // one unbroken line: a dark edge so it reads on the bright clouds, a
-      // soft wide halo (a plain wider stroke, no blur) and the line itself
-      trace();
+      // a dark edge so the line reads on the bright clouds
+      trace(ctx);
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = 4.2; ctx.stroke();
-      ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke();
-      ctx.strokeStyle = '#8fdcff'; ctx.lineWidth = 2; ctx.stroke();
+      if (!ditherLine(ctx, line, trace, dpr)) {
+        ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke();
+        ctx.strokeStyle = '#8fdcff'; ctx.lineWidth = 2; ctx.stroke();
+      }
       ctx.restore();
     }
     // The sky's characters fill down to this curve: move their border too.
