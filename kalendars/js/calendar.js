@@ -7311,10 +7311,12 @@ function filterFullList(btn) {
             postCoffeeDelta(w.name, -remEq, card, removedSrc ? { source: removedSrc } : null);
           };
         }
-        // − and + are small (14–16 px): a click that just misses one, or lands on a label
-        // some faces draw over it, presses that button instead of opening the card
+        // − and + are small (14–16 px): a mouse click that just misses one, or lands on a label
+        // some faces draw over it, presses that button instead of opening the card. Desktop
+        // only: on the phone the pill sits in the card's middle, where a tap must open the card.
         if (coffeeBtn || coffeeSub) card.addEventListener('click', (e) => {
-          if (card.classList.contains('wf-editing') || e.target.closest('button, a, input, select, textarea, label')) return;
+          if (card.classList.contains('wf-editing') || document.documentElement.classList.contains('mk-mobile-shell') || !window.matchMedia('(pointer: fine)').matches) return;
+          if (e.target.closest('button, a, input, select, textarea, label')) return;
           let near = null, best = 11;
           for (const b of [coffeeSub, coffeeBtn]) {
             const r = b && b.getBoundingClientRect();
