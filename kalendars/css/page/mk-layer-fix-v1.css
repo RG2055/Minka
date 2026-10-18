@@ -7368,7 +7368,8 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 .mk-caf-tip b { color: #fff !important; font-size: 12.5px !important; }
 .mk-caf-info:is(:hover, :focus-visible) .mk-caf-tip { opacity: 1; translate: 0 0; }
-.mk-caf-key { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: #b8c2d0; }
+.mk-caf-key { display: grid; gap: 4px; margin-top: 8px; color: #b8c2d0; }
+.mk-caf-key > span { display: flex; align-items: center; gap: 8px; }
 .mk-caf-key i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; }
 .mk-caf-key i.is-before { background: rgba(255,255,255,.62); }
-.mk-caf-key i.is-add { background: #ffb77c; margin-left: 6px; }
+.mk-caf-key i.is-add { background: #ffb77c; }

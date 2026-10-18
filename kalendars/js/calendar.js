@@ -6867,7 +6867,7 @@ function filterFullList(btn) {
             + '<span><b>' + after + '</b> / 400 mg' + (after > 400 ? ' ⚠' : '')
             + '<span class="mk-caf-info" tabindex="0" role="button" aria-label="Par 400 mg">i<span class="mk-caf-tip" role="tooltip">'
             + '<b>400 mg</b> ir droša kofeīna dienas deva pieaugušajam (EFSA), vienā reizē līdz 200 mg.'
-            + '<span class="mk-caf-key"><i class="is-before"></i>šodien jau <i class="is-add"></i>šis dzēriens</span></span></span></span></span>';
+            + '<span class="mk-caf-key"><span><i class="is-before"></i>Jau izdzerts šodien</span><span><i class="is-add"></i>Tagad pievienosi</span></span></span></span></span></span>';
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {
