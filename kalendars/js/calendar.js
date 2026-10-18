@@ -6863,8 +6863,11 @@ function filterFullList(btn) {
           const tip = (before ? 'Šodien ' + before + ' + ' + mg + ' = ' + after : 'Šis dzēriens ' + mg) + ' mg kofeīna; droša dienas deva 400 mg';
           caf.innerHTML = '<span class="mk-caf-chip is-add" title="Šis dzēriens"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg><b>+' + mg + ' mg</b></span>'
             + '<span class="mk-caf-chip">' + buildCoffeeCup('filled') + escapeHtml(cups) + '</span>'
-            + '<span class="mk-caf-day ' + level + '" style="--before:' + pct(before) + ';--after:' + pct(after) + '" title="' + tip + '" aria-label="' + tip + '"><i></i>'
-            + '<span><b>' + after + '</b> / 400 mg' + (after > 400 ? ' ⚠' : '') + '</span></span>';
+            + '<span class="mk-caf-day ' + level + '" style="--before:' + pct(before) + ';--after:' + pct(after) + '" aria-label="' + tip + '"><i></i>'
+            + '<span><b>' + after + '</b> / 400 mg' + (after > 400 ? ' ⚠' : '')
+            + '<span class="mk-caf-info" tabindex="0" role="button" aria-label="Par 400 mg">i<span class="mk-caf-tip" role="tooltip">'
+            + '<b>400 mg</b> ir droša kofeīna dienas deva pieaugušajam (EFSA), vienā reizē līdz 200 mg.'
+            + '<span class="mk-caf-key"><i class="is-before"></i>šodien jau <i class="is-add"></i>šis dzēriens</span></span></span></span></span>';
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {

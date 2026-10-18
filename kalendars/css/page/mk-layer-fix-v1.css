@@ -6323,13 +6323,13 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-caf-chip.is-add { color: #ffb77c !important; }
 .mk-caf-chip.is-add svg { fill: #ffb77c !important; }
 .mk-caf-day { grid-column: 1 / -1 !important; display: grid !important; gap: 5px !important; font-size: 13px !important; justify-items: end !important; }
-.mk-caf-day i {
+.mk-caf-day > i {
   display: block !important; justify-self: stretch !important; height: 6px !important; border-radius: 3px !important;
   background: linear-gradient(90deg, rgba(255,255,255,.62) var(--before), #ffb77c var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
 }
 .mk-caf-day b { font-weight: 800 !important; font-size: 15px !important; color: #6ee7a8 !important; }
 .mk-caf-day.is-high b { color: #fbbf24 !important; }
-.mk-caf-day.is-over i { background: #f87171 !important; }
+.mk-caf-day.is-over > i { background: #f87171 !important; }
 .mk-caf-day.is-over, .mk-caf-day.is-over b { color: #f87171 !important; }
 /* Saglabāt: M3 filled button — pilna kapsula, primary virsma. */
 .mk-coffee-save {
@@ -7355,3 +7355,20 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-coffee-flyer { position: fixed; z-index: 2147483000; width: 44px; height: 44px; pointer-events: none; will-change: transform, opacity; }
 .mk-coffee-flyer svg { width: 44px; height: 44px; display: block; filter: drop-shadow(0 4px 6px rgba(0,0,0,.45)); }
 .mk-coffee-ring { position: fixed; z-index: 2147482999; width: 48px; height: 48px; pointer-events: none; background-size: 100% 100%; image-rendering: pixelated; will-change: transform, opacity; }
+/* ⓘ pie 400 mg: īss paskaidrojums uz hover/fokusu */
+.mk-caf-info {
+  position: relative; display: inline-grid; place-items: center; width: 17px; height: 17px; margin-left: 6px; vertical-align: 1px;
+  border-radius: 50%; border: 1.5px solid currentColor; font: 700 11px/1 Inter, system-ui, sans-serif; cursor: help; opacity: .75; outline: none;
+}
+.mk-caf-info:is(:hover, :focus-visible) { opacity: 1; }
+.mk-caf-tip {
+  position: absolute; right: -6px; bottom: calc(100% + 10px); z-index: 5; width: 230px; padding: 10px 12px; border-radius: 12px;
+  background: #11161f; color: #e8edf3; box-shadow: 0 8px 24px rgba(0,0,0,.45); text-align: left;
+  font: 500 12.5px/1.4 Inter, system-ui, sans-serif; opacity: 0; translate: 0 4px; pointer-events: none; transition: opacity .15s ease, translate .15s ease;
+}
+.mk-caf-tip b { color: #fff !important; font-size: 12.5px !important; }
+.mk-caf-info:is(:hover, :focus-visible) .mk-caf-tip { opacity: 1; translate: 0 0; }
+.mk-caf-key { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: #b8c2d0; }
+.mk-caf-key i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; }
+.mk-caf-key i.is-before { background: rgba(255,255,255,.62); }
+.mk-caf-key i.is-add { background: #ffb77c; margin-left: 6px; }
