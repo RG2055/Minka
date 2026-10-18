@@ -43,6 +43,7 @@ let recordStations = [];
 let latvianStations = [];
 let worldStations = [];
 let extraLatvianStations = [];
+let ehrStationRows = [];   // data/ehr-stations.json (scripts/build-ehr-stations.mjs): the "EHR" tab
 // Expose stationsList globally so lazy-load caller can detect when ready
 Object.defineProperty(window, 'stationsList', { get(){ return stationsList; }, configurable:true });
 Object.defineProperty(window, 'recordStations', { get(){ return recordStations; }, configurable:true });
@@ -1055,14 +1056,28 @@ function buildLatvianStations() {
     [...LV_STATION_ADDITIONS, ...extraLatvianStations].forEach(station => {
         if (!known.has(normalizeStationText(station.title))) stations.push(station);
     });
-    return stations;
+    if (!ehrStationRows.length) return stations;
+    // EHR's own streams leave "Latvija" for the "EHR" tab; a favorite saved under
+    // the old Latvian name stays a favorite (its key moves to the EHR station).
+    const ehrMounts = new Set(ehrStationRows.map(row => row.mount)), legacyKeys = new Map();
+    const mountOf = station => (String(station.stream_128 || station.url || '').match(/livestream-redirect\/([A-Z0-9_]+?)(?:AAC)?\.(?:mp3|aac)\b/) || [])[1];
+    return stations.filter(station => {
+        const mount = mountOf(station);
+        if (!mount || !ehrMounts.has(mount)) return true;
+        if (!legacyKeys.has(mount)) legacyKeys.set(mount, radioStationKey(station));
+        return false;
+    }).concat(ehrStationRows.map(row => ({
+        title: row.title, group: 'latvija', ehr: row, tooltip: row.category, cover: row.logo,
+        catalogKey: legacyKeys.get(row.mount) || 'ehr:' + row.mount.toLowerCase(),
+        stream_128: row.url, stream_320: row.url, stream_64: row.url, stream_hls: '', prefix: '', id: ''
+    })));
 }
 
 async function initStations() {
     // Load local JSON asynchronously first (non-blocking startup for page)
     await Promise.all([loadLocalStationsJSON(), (async () => {
         try {
-            const response = await fetch('data/latvia-extra.json?v=20260910');
+            const response = await fetch('data/latvia-extra.json?v=20261018ehr1');
             if (!response.ok) return;
             const rows = await response.json();
             extraLatvianStations = rows.filter(s => s.title && /^https:\/\//.test(s.url)).map(s => ({
@@ -1071,6 +1086,11 @@ async function initStations() {
                 stream_hls: s.url.includes('.m3u8') ? s.url : '', prefix: '', id: ''
             }));
         } catch (_) { /* The embedded stations remain usable offline. */ }
+    })(), (async () => {
+        try {
+            const response = await fetch('data/ehr-stations.json?v=20261018ehr1');
+            if (response.ok) ehrStationRows = (await response.json()).filter(r => r && r.mount && /^https:\/\//.test(r.url));
+        } catch (_) { /* Without it the EHR streams stay in the Latvian list. */ }
     })()]);
     // 1) Instant fallback list (so play/menu works even if network is slow after radio opens)
     recordStations = (STATIONS_LOCAL || []).map(s => ({
@@ -1692,8 +1712,8 @@ function stationPickerItems() {
     // used to look like "nothing found").
     if (query && stationPickerSource !== 'world') return stationPickerIndex().filter(({ search }) => search.includes(query));
     return stationPickerIndex()
-        .filter(({ station }) => stationPickerSource === 'featured' ? featuredKeys.has(radioStationKey(station)) : stationPickerSource === 'world' ? worldPageKeys.has(radioStationKey(station)) : stationPickerSource === 'favorites' ? (window.__mkUnifiedMedia?.getRadio()?.favorites||[]).includes(radioStationKey(station)) : stationPickerSource === 'latvija'
-            ? station.group === 'latvija'
+        .filter(({ station }) => stationPickerSource === 'featured' ? featuredKeys.has(radioStationKey(station)) : stationPickerSource === 'world' ? worldPageKeys.has(radioStationKey(station)) : stationPickerSource === 'favorites' ? (window.__mkUnifiedMedia?.getRadio()?.favorites||[]).includes(radioStationKey(station)) : stationPickerSource === 'ehr' ? !!station.ehr : stationPickerSource === 'latvija'
+            ? station.group === 'latvija' && !station.ehr
             : station.group !== 'latvija' && station.group !== 'world')
         .filter(({ search }) => !query || search.includes(query));
 }
@@ -1743,10 +1763,12 @@ function renderStationPickerList() {
         return;
     }
     const discovery = stationPickerSource === 'featured' && !stationPickerQuery;
-    list.dataset.mode = discovery ? 'discovery' : 'grid';
+    const ehrView = stationPickerSource === 'ehr' && !stationPickerQuery;
+    list.dataset.mode = discovery ? 'discovery' : ehrView ? 'ehr' : 'grid';
     if (discovery) void checkDiscoveryStations();
     list.innerHTML = (discovery ? discoveryOverviewHTML() + '<div class="discovery-featured-row">' : '') + items.map(({ station, index }) => {
         const isCurrent = index === currentIndex;
+        if (ehrView && station.ehr) return ehrTileHTML(station, index, isCurrent);
         const title = escapeHtml(station.title || 'Radio');
         const description = escapeHtml(station.group === 'latvija' && (!station.tooltip || station.tooltip === 'Radio Record')
             ? 'Latvijas radio' : (station.tooltip || 'Radio Record'));
@@ -1763,18 +1785,56 @@ function renderStationPickerList() {
     placeWorldControls();
     updateStationFavorites();
     list.scrollTop = scrollTop;
+    if (ehrView) { paintEhrNow(); if (!ehrNowTimer) refreshEhrNow(); }
+}
+
+// EHR tab: tiles like ehr.fm (group, name, logo on its colour, photo) and the song
+// playing on each channel, from ehr.fm's public list (CORS *), every 30 s while shown.
+function ehrTileHTML(station, index, isCurrent) {
+    const row = station.ehr, title = escapeHtml(station.title), category = escapeHtml(row.category || 'EHR');
+    const [main = '#e8202a', second = '#111111'] = row.colors || [];
+    const img = (cls, src) => src ? `<img class="${cls}" src="${escapeHtml(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '';
+    return `<div class="station-entry station-entry-ehr"><button class="station-tile station-ehr${isCurrent ? ' is-current' : ''}" type="button"
+            style="--ehr-a:${main};--ehr-b:${second}${row.pattern ? `;--ehr-pattern:url('${escapeHtml(row.pattern)}')` : ''}" data-station-index="${index}"
+            title="${title}&#10;${escapeHtml(row.description || category)}" aria-label="Atskaņot ${title}" aria-current="${isCurrent ? 'true' : 'false'}">
+            <span class="ehr-card"><span class="ehr-head"><small>${category}</small><strong>${title}</strong></span>
+            <span class="ehr-art"><span class="ehr-logo">${img('', row.logo)}</span>${img('ehr-photo', row.photo)}</span></span>
+            <span class="ehr-now" data-ehr-now="${escapeHtml(row.mount)}"><b></b><i></i></span>
+            <span class="station-play-mark" aria-hidden="true">${isCurrent ? STATION_SELECTED_ICON : STATION_PLAY_ICON}</span>
+        </button><button type="button" class="station-favorite" data-favorite-index="${index}" aria-pressed="false" aria-label="Pievienot favorītiem ${title}">☆</button></div>`;
+}
+let ehrNowTimer = 0, ehrNowSongs = null;
+function paintEhrNow() {
+    if (!ehrNowSongs) return;
+    document.querySelectorAll('#stationPickerList [data-ehr-now]').forEach(el => {
+        const song = (ehrNowSongs[el.dataset.ehrNow] || [])[0];
+        el.querySelector('b').textContent = song?.name || '';
+        el.querySelector('i').textContent = song?.artist || '';
+    });
+}
+function refreshEhrNow() {
+    clearTimeout(ehrNowTimer); ehrNowTimer = 0;
+    if (stationPickerSource !== 'ehr' || document.getElementById('stationOverlay')?.style.display !== 'grid') return;
+    ehrNowTimer = setTimeout(refreshEhrNow, 30000);
+    if (document.hidden) return;
+    fetch('https://www.ehr.fm/api/channels/now_playing_all', { cache: 'no-store' })
+        .then(response => response.ok ? response.json() : null)
+        .then(songs => { if (songs && typeof songs === 'object') { ehrNowSongs = songs; paintEhrNow(); } })
+        .catch(() => {});
 }
 
 function renderStationOverlay() {
     const overlay = document.getElementById('stationOverlay');
     if (!overlay || overlay.style.display !== 'grid') return;
     const recordCount = stationsList.filter(s => s && s.group !== 'latvija' && s.group !== 'world' && s.group !== 'separator').length;
-    const latviaCount = stationsList.filter(s => s && s.group === 'latvija').length;
+    const latviaCount = stationsList.filter(s => s && s.group === 'latvija' && !s.ehr).length;
+    const ehrCount = stationsList.filter(s => s && s.ehr).length;
     overlay.setAttribute?.('data-station-view', stationPickerSource);
     syncWorldPicker();
     if (overlay.querySelector('#stationPickerList')) {
         overlay.querySelector('[data-station-source="record"] span').textContent = recordCount;
         overlay.querySelector('[data-station-source="latvija"] span').textContent = latviaCount;
+        overlay.querySelector('[data-station-source="ehr"] span').textContent = ehrCount;
         renderStationPickerList();
         return;
     }
@@ -1792,6 +1852,8 @@ function renderStationOverlay() {
             <button type="button" data-station-source="featured" role="tab" aria-selected="false">Atklāj</button>
             <button type="button" data-station-source="record" role="tab" aria-selected="${stationPickerSource === 'record'}"
                 class="${stationPickerSource === 'record' ? 'active' : ''}">Radio Record <span>${recordCount}</span></button>
+            <button type="button" data-station-source="ehr" role="tab" aria-selected="${stationPickerSource === 'ehr'}"
+                class="${stationPickerSource === 'ehr' ? 'active' : ''}">EHR <span>${ehrCount}</span></button>
             <button type="button" data-station-source="latvija" role="tab" aria-selected="${stationPickerSource === 'latvija'}"
                 class="${stationPickerSource === 'latvija' ? 'active' : ''}">Latvija <span>${latviaCount}</span></button>
             <button type="button" data-station-source="world" role="tab" aria-selected="false">Pasaule</button>
@@ -1803,7 +1865,7 @@ function renderStationOverlay() {
         button.addEventListener('click', () => {
             clearTimeout(stationPickerSearchTimer);
             if(button.dataset.stationSource==='favorites'&&!window.__mkUnifiedMedia?.getSession()){window.__mkUnifiedMedia?.open();return;}
-            stationPickerSource = ['latvija','favorites','featured','world'].includes(button.dataset.stationSource) ? button.dataset.stationSource : 'record';
+            stationPickerSource = ['latvija','ehr','favorites','featured','world'].includes(button.dataset.stationSource) ? button.dataset.stationSource : 'record';
             // A search that made sense for one catalogue often produces an
             // apparently broken empty state in the other one. Source switches
             // should start from the complete station list.

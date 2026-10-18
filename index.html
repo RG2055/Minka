@@ -1020,7 +1020,7 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <link rel="stylesheet" href="css/mk-sys.css?v=20260926sp1">
 <script src="js/mk-motion.js?v=20260928mx11"></script>
 <!-- Station picker in M3 on the system tokens above; must follow every older picker sheet. -->
-<link rel="stylesheet" href="css/radio-picker-m3.css?v=20261012pkg">
+<link rel="stylesheet" href="css/radio-picker-m3.css?v=20261018ehr2">
 <script src="js/image-palette.js?v=20260919palette2"></script>
 </head>
 <body class="radio-idle">
@@ -1363,7 +1363,7 @@ async function loadRadioScripts() {
     _fa.crossOrigin = 'anonymous'; _fa.referrerPolicy = 'no-referrer';
     document.head.appendChild(_fa);
   }
-  await loadAny(['js/radio-metadata.js?v=20260910metadata1']);
+  await loadAny(['js/radio-metadata.js?v=20261018ehr1']);
   await loadAny(['js/radio-pioneer-layout.js?v=20261013pf1']);
   await loadAny(['js/radio-amp-layout.js?v=20261013pf1']);
   await loadAny(['js/radio-dither-layout.js?v=20261013pf1']);
@@ -1371,7 +1371,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261012dot1']);
+  await loadAny(['js/radio.js?v=20261018ehr2']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;

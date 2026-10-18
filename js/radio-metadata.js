@@ -84,6 +84,11 @@
         try {
             let hit;
             if (/streamtheworld\.com\/RADIO_ZET\./i.test(url)) hit = parseZet(await zetHistory(signal));
+            else if (station?.ehr?.mount) {
+                // EHR streams carry no song titles; ehr.fm's own now-playing list does, with the cover (CORS *).
+                const song = (await json('https://www.ehr.fm/api/channels/now_playing?stream_id='+encodeURIComponent(station.ehr.mount),signal))?.[0];
+                hit = song ? track(song.artist,song.name,song.image_url) : null;
+            }
             else if (/somafm\.com\//.test(url)) {
                 const channel = new URL(url).pathname.split('/').pop().match(/^([a-z0-9]+)-\d+-(?:mp3|aac)/)?.[1];
                 if (!channel) return null;

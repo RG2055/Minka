@@ -120,14 +120,6 @@
     "checkedAt": "2026-09-10"
   },
   {
-    "title": "Nordic Chillout Indie",
-    "url": "https://listen.radioking.com/radio/768542/stream/835766",
-    "cover": "https://indie.nordichilloutradio.com/wp-content/themes/indie-chillout-main/media/apple-touch-icon.png",
-    "tooltip": "Latvijas radio",
-    "source": "Radio Browser",
-    "checkedAt": "2026-09-10"
-  },
-  {
     "title": "Radio Liepāja",
     "url": "https://stream.radioliepaja.lv/live/playlist.m3u8",
     "cover": "https://radioliepaja.lv/favicon.svg",

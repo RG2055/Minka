@@ -470,3 +470,45 @@
 }
 /* saturs sākas zem viļņa lentes, lai teksts nekrīt uz tās */
 #stationOverlay#stationOverlay .station-picker-list { padding-top: 30px !important; }
+
+/* ══ EHR cilne: flīzes kā ehr.fm — krāsaina kartīte (grupa, nosaukums, logo uz kanāla
+   otrās krāsas, foto), zem tās dziesma, kas tagad skan (js/radio.js ehrTileHTML) ══ */
+#stationOverlay#stationOverlay .station-picker-list[data-mode="ehr"] {
+  display: grid !important; align-content: start; gap: 18px 14px !important;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)) !important;
+}
+#stationOverlay#stationOverlay .station-entry.station-entry-ehr { aspect-ratio: auto; }
+#stationOverlay#stationOverlay .station-tile.station-ehr {
+  display: flex !important; flex-direction: column; justify-content: flex-start; gap: 9px;
+  height: auto !important; aspect-ratio: auto; padding: 0 !important; overflow: visible;
+  background: none !important; border-radius: 0 !important; box-shadow: none !important;
+  contain-intrinsic-size: auto 176px auto 250px;
+}
+#stationOverlay#stationOverlay .station-tile.station-ehr::before { content: none; }
+#stationOverlay#stationOverlay .station-ehr .ehr-card {
+  position: relative; display: flex; flex-direction: column; gap: 8px; padding: 12px 12px 0; border-radius: 12px; overflow: hidden;
+  align-self: stretch; width: 100%; box-sizing: border-box;
+  background: var(--ehr-pattern, none) center / cover, var(--ehr-a);
+}
+#stationOverlay#stationOverlay .station-ehr .ehr-head { display: grid; gap: 2px; text-align: center; color: #fff; min-width: 0; }
+#stationOverlay#stationOverlay .station-ehr .ehr-head small { font: 500 13px/1.15 var(--mk-font-plain, Inter, sans-serif); opacity: .92; }
+#stationOverlay#stationOverlay .station-ehr .ehr-head strong {
+  font: 800 19px/1.1 var(--mk-font-plain, Inter, sans-serif); letter-spacing: -.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#stationOverlay#stationOverlay .station-ehr .ehr-art { position: relative; display: block; height: 104px; margin: 0 4px; }
+#stationOverlay#stationOverlay .station-ehr .ehr-logo {
+  position: absolute; z-index: 1; left: 0; bottom: 0; width: 62%; height: 100%; display: grid; place-items: center;
+  border-radius: 6px 6px 0 0; background: var(--ehr-b); overflow: hidden;
+}
+#stationOverlay#stationOverlay .station-ehr .ehr-logo img { width: 82%; height: 70%; object-fit: contain; }
+#stationOverlay#stationOverlay .station-ehr .ehr-photo {
+  position: absolute; right: 0; bottom: 0; width: 46%; height: 86%; object-fit: cover; border-radius: 6px 6px 0 0;
+}
+#stationOverlay#stationOverlay .station-ehr .ehr-now { display: grid; gap: 2px; min-height: 36px; padding-right: 38px; text-align: left; align-self: stretch; }
+#stationOverlay#stationOverlay .station-ehr .ehr-now :is(b, i) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; }
+#stationOverlay#stationOverlay .station-ehr .ehr-now b { font: 700 14px/1.2 var(--mk-font-plain, Inter, sans-serif); color: var(--pk-on, #fff); }
+#stationOverlay#stationOverlay .station-ehr .ehr-now i { font: 500 13px/1.2 var(--mk-font-plain, Inter, sans-serif); color: var(--pk-on-dim, rgba(255, 255, 255, .62)); }
+#stationOverlay#stationOverlay .station-ehr .station-play-mark { top: 52px; right: 10px; }
+#stationOverlay#stationOverlay .station-ehr.is-current .ehr-card { box-shadow: 0 0 0 3px #fff inset; }
+#stationOverlay#stationOverlay .station-entry-ehr > .station-favorite { top: auto; bottom: 2px; left: auto; right: 0; }

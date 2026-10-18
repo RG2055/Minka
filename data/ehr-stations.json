@@ -1,0 +1,467 @@
+[
+ {
+  "mount": "EHR",
+  "title": "EHR",
+  "category": "FM radio",
+  "description": "EuropeanHitRadio - Europes nr. 1. Hit music station",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR.mp3",
+  "logo": "https://www.ehr.fm/storage/channels/45dbd83e-756a-4d78-ad7a-92fd83a23a94.svg",
+  "icon": "https://www.ehr.fm/storage/channels/efdc8b14-5b7c-4347-a623-fcb358a538c1.svg",
+  "photo": "",
+  "pattern": "https://www.ehr.fm/content/channels/7bae9f8e-b487-4838-9cb5-2c99a78b31f3.png?w=205&h=205&fm=webp&s=12138da86f69e808783a01ab01f2e111",
+  "colors": [
+   "#ff0000",
+   "#ff0022"
+  ]
+ },
+ {
+  "mount": "EHR_SUPERHITS",
+  "title": "SuperHits",
+  "category": "FM radio",
+  "description": "Dziesmas, kas liek justies labāk! No 1990. gada līdz mūsdienām.",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_SUPERHITS.mp3",
+  "logo": "https://www.ehr.fm/storage/channels/d2ea0407-8eff-4a12-bf11-4d23a0972c8c.svg",
+  "icon": "https://www.ehr.fm/storage/channels/efdc8b14-5b7c-4347-a623-fcb358a538c1.svg",
+  "photo": "https://www.ehr.fm/content/songs/046266_2020_01.jpg?h=135&fit=contain&fm=webp&s=c1742a369d31f52c1c47e96fe6740165",
+  "pattern": "https://www.ehr.fm/content/channels/033c8afd-cf93-447a-93e4-51d64cf85985.png?w=205&h=205&fm=webp&s=174e814247d328cb5c113c22c8582224",
+  "colors": [
+   "#ff8a0a",
+   "#ffd71a"
+  ]
+ },
+ {
+  "mount": "EHR_LATVIESU_HITI",
+  "title": "Latviešu hiti",
+  "category": "FM radio",
+  "description": "Klausies savējos! Latviešu dziesmas no 2000. gada līdz mūsdienām.",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_LATVIESU_HITI.mp3",
+  "logo": "https://www.ehr.fm/storage/channels/16f0015e-f6e4-440a-ab49-2d6d214edf48.svg",
+  "icon": "https://www.ehr.fm/storage/channels/efdc8b14-5b7c-4347-a623-fcb358a538c1.svg",
+  "photo": "",
+  "pattern": "https://www.ehr.fm/content/channels/1f21d639-00db-4b02-92fa-2902d0ccaa22.png?w=205&h=205&fm=webp&s=040d99cfb897aead11dd7cdf5ea024f4",
+  "colors": [
+   "#2e53e4",
+   "#00b5fc"
+  ]
+ },
+ {
+  "mount": "EHR_PLUS",
+  "title": "EHR+",
+  "category": "FM radio",
+  "description": "Eiropā spēlētākie hiti krievu un angļu valodās",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_PLUS.mp3",
+  "logo": "https://www.ehr.fm/storage/channels/0742e9f2-5974-4704-bdb6-c6369370ae9d.svg",
+  "icon": "https://www.ehr.fm/storage/channels/efdc8b14-5b7c-4347-a623-fcb358a538c1.svg",
+  "photo": "",
+  "pattern": "https://www.ehr.fm/content/channels/671bdbfa-99b2-4514-a54f-ae8db744d5e5.png?w=205&h=205&fm=webp&s=86db9087106a96b5cf9bd83ca2498949",
+  "colors": [
+   "#ff002b",
+   "#910505"
+  ]
+ },
+ {
+  "mount": "RETRO_FM",
+  "title": "Retro FM Latvija",
+  "category": "FM radio",
+  "description": "Labākie 70., 80. un 90. gadu hiti, dzīvais ēters ar DJ un labs noskaņojums tavai ikdienai!",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/RETRO_FM.mp3",
+  "logo": "https://www.ehr.fm/storage/channels/355b4b16-0207-4b08-b5c5-3af176cbd57c.svg",
+  "icon": "https://www.ehr.fm/storage/channels/efdc8b14-5b7c-4347-a623-fcb358a538c1.svg",
+  "photo": "",
+  "pattern": "https://www.ehr.fm/content/channels/2ada2366-b5e2-4e12-810f-4a70996edae2.png?w=205&h=205&fm=webp&s=8c283c376b5e530f5fa2cf84b7ce4a0b",
+  "colors": [
+   "#ff00d2",
+   "#ff06cc"
+  ]
+ },
+ {
+  "mount": "EHR_PIE_STURES",
+  "title": "Pie Stūres",
+  "category": "EHR",
+  "description": "Populārākie Eiropas un Latvijas braucamie hiti - kopā ar VIADA",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_PIE_STURES.mp3",
+  "logo": "https://www.ehr.fm/content/channels/e66b15fb-a1ab-44d5-af5f-14a2ad4ec8a5.png?w=300&fit=contain&fm=webp&s=63e6f027436b3c870d7008745848378e",
+  "icon": "https://www.ehr.fm/content/channels/46e63774-fa37-4f23-87cf-3e8f662811d2.png?w=84&h=84&fit=contain&fm=webp&s=42efd1e5db9e5f7b069df4a06517aeb7",
+  "photo": "https://www.ehr.fm/content/channels/1c07da1d-15b5-4b8b-a3db-50673ef16492.jpg?h=135&fit=contain&fm=webp&s=f05ab95c98d536f375f1f3c4fb3f2a95",
+  "pattern": "https://www.ehr.fm/content/channels/a1fd1cdc-a732-4187-b9e0-eab585b7c562.png?w=205&h=205&fm=webp&s=8490cdfc79dc16f60a3c7f141a9d9e38",
+  "colors": [
+   "#c41224",
+   "#000000"
+  ]
+ },
+ {
+  "mount": "EHR_LMT_STRAUME",
+  "title": "LMT Straume",
+  "category": "EHR",
+  "description": "Latviešu un ārzemju mūzika - kopā ar LMT",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_LMT_STRAUME.mp3",
+  "logo": "https://www.ehr.fm/content/channels/5a7c87db-f765-42b6-a11e-6ae98677d3ba.png?w=300&fit=contain&fm=webp&s=88bb6f5f4299e5bff5329273fbcabf86",
+  "icon": "https://www.ehr.fm/content/channels/f4e7fab5-60fb-4aa9-9874-bca2a418012a.png?w=84&h=84&fit=contain&fm=webp&s=2d99c3236034879b7fc3901760bd0498",
+  "photo": "https://www.ehr.fm/content/channels/389d6705-370d-4c20-8432-c855715e9aeb.jpg?h=135&fit=contain&fm=webp&s=3091036aeec88f5ab80e951ce92f5775",
+  "pattern": "https://www.ehr.fm/content/channels/a1fd1cdc-a732-4187-b9e0-eab585b7c562.png?w=205&h=205&fm=webp&s=8490cdfc79dc16f60a3c7f141a9d9e38",
+  "colors": [
+   "#ff0000",
+   "#000000"
+  ]
+ },
+ {
+  "mount": "EHR_LIDO_GARSU_HITI",
+  "title": "LIDO Garšu Hiti",
+  "category": "Latviešu hiti",
+  "description": "",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_LIDO_GARSU_HITI.mp3",
+  "logo": "https://www.ehr.fm/content/channels/cdbeb5e0-1551-43f9-a779-af9fa99aa520.png?w=300&fit=contain&fm=webp&s=e210dd410797ee01a80c967fad68dec9",
+  "icon": "https://www.ehr.fm/storage/channels/7874e9d0-3fbe-4d0f-957d-3ea2ea0b4277.svg",
+  "photo": "https://www.ehr.fm/content/channels/3afc5973-a61a-46bc-bbac-7a9072758310.jpeg?h=135&fit=contain&fm=webp&s=2305e0bf828cfae3acd097e516650b68",
+  "pattern": "https://www.ehr.fm/content/channels/b49264cf-5ae2-431e-91f4-94e4dacf0603.png?w=205&h=205&fm=webp&s=9799db62e0cc3906f4816bc74e07c23b",
+  "colors": [
+   "#3e7cfa",
+   "#1003a6"
+  ]
+ },
+ {
+  "mount": "EHR_TIKTOK_HITS",
+  "title": "TikTok Hits",
+  "category": "EHR",
+  "description": "Labākie TikTok Hiti - kopā ar Hesburger.",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_TIKTOK_HITS.mp3",
+  "logo": "https://www.ehr.fm/content/channels/7e08623b-c2df-4e36-bb20-dc10878c2367.png?w=300&fit=contain&fm=webp&s=05d20cb7afb429df9c91ff0023a78bda",
+  "icon": "https://www.ehr.fm/content/channels/1e028367-f2a6-47cd-ae27-eabd70b942cf.png?w=84&h=84&fit=contain&fm=webp&s=28cadf7d73c0f3a18955bf96702c14e3",
+  "photo": "https://www.ehr.fm/content/channels/04806668-bd6b-4501-8839-6731c74a9c05.jpg?h=135&fit=contain&fm=webp&s=5b2c4207754d1f8a9010268ec7048ee4",
+  "pattern": "https://www.ehr.fm/content/channels/a1fd1cdc-a732-4187-b9e0-eab585b7c562.png?w=205&h=205&fm=webp&s=8490cdfc79dc16f60a3c7f141a9d9e38",
+  "colors": [
+   "#fa0000",
+   "#000000"
+  ]
+ },
+ {
+  "mount": "LATVIESU_HITI_DEJU_HITI",
+  "title": "Deju Hiti",
+  "category": "Latviešu hiti",
+  "description": "Sagaidi Jāņus kopā ar EHR Latviešu hitiem un Ķekavu!",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/LATVIESU_HITI_DEJU_HITI.mp3",
+  "logo": "https://www.ehr.fm/content/channels/677dd335-193c-4db7-8ad0-111bf69144ee.png?w=300&fit=contain&fm=webp&s=b66ba0e4a4b428442cc6afec200ada80",
+  "icon": "https://www.ehr.fm/content/channels/677dd335-193c-4db7-8ad0-111bf69144ee.png?w=84&h=84&fit=contain&fm=webp&s=a134129ef9d41172b1faa9ade2bd6455",
+  "photo": "https://www.ehr.fm/content/channels/53610359-9eab-4356-a49b-ed9cfaacad10.png?h=135&fit=contain&fm=webp&s=c8edb433f4f57123c39e64be106680a5",
+  "pattern": "https://www.ehr.fm/content/channels/f76010ff-7efb-4108-b9d5-1c4645ef55cd.png?w=205&h=205&fm=webp&s=ac2f8118f59cf9ad4f1e24dc6f4e74bc",
+  "colors": [
+   "#3e7cfa",
+   "#1003a6"
+  ]
+ },
+ {
+  "mount": "EHR_SEZONAS_STRIMS_01",
+  "title": "Festivālu hiti",
+  "category": "EHR",
+  "description": "Mūzika labam garastāvoklim un festivālu enerģijai kopā ar Circle K!",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_SEZONAS_STRIMS_01.mp3",
+  "logo": "https://www.ehr.fm/content/channels/5f7e6a6c-0836-411b-a468-3781ab0277bb.jpeg?w=300&fit=contain&fm=webp&s=a0c1529254a9163a91409eed2a9fc209",
+  "icon": "https://www.ehr.fm/content/channels/b70cb1e6-560e-41b8-906c-692c22c88584.png?w=84&h=84&fit=contain&fm=webp&s=9442ae9aca8ddfd1391a85c0d0fd090d",
+  "photo": "https://www.ehr.fm/content/channels/96c14450-fafb-4918-a5e4-e13d46da4c88.jpg?h=135&fit=contain&fm=webp&s=67a7426a1debc4c1b16c7aafc1152462",
+  "pattern": "https://www.ehr.fm/content/channels/7bae9f8e-b487-4838-9cb5-2c99a78b31f3.png?w=205&h=205&fm=webp&s=12138da86f69e808783a01ab01f2e111",
+  "colors": [
+   "#f70705",
+   "#f7f7f7"
+  ]
+ },
+ {
+  "mount": "EHR_KOOL",
+  "title": "KOOL Hits",
+  "category": "EHR",
+  "description": "Foršākie hiti sadarbībā ar KOOL",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_KOOL.mp3",
+  "logo": "https://www.ehr.fm/content/channels/422baa3c-1107-4260-92e8-0a9f786b9a52.png?w=300&fit=contain&fm=webp&s=4cb789e459ce1905464ef6707aa10f8a",
+  "icon": "https://www.ehr.fm/content/channels/f2d75f8c-0eaa-4f61-8943-ce6d52d22968.png?w=84&h=84&fit=contain&fm=webp&s=4fcf67a45c860a6b33dac0cb864523c1",
+  "photo": "https://www.ehr.fm/content/channels/2d1c2d22-0346-4178-8cec-c06479606c21.jpg?h=135&fit=contain&fm=webp&s=fbf6cf23d710840559c72ae10cceef1b",
+  "pattern": "https://www.ehr.fm/content/channels/ca5679fa-ca90-4806-af07-b210365e12fe.png?w=205&h=205&fm=webp&s=c8c9e9f2d4323a5cfe5674823a827122",
+  "colors": [
+   "#312a3c",
+   "#000000"
+  ]
+ },
+ {
+  "mount": "EHR_IDEAL_MUSIC",
+  "title": "C&C Radio",
+  "category": "EHR",
+  "description": "Eiropas un Latviešu Hiti kopā ar C&C",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_IDEAL_MUSIC.mp3",
+  "logo": "https://www.ehr.fm/content/channels/b14a6c52-0b32-447f-98bc-dd068ad3a259.png?w=300&fit=contain&fm=webp&s=e3ed0299639d068f5e980ef6072c49f5",
+  "icon": "https://www.ehr.fm/content/channels/6b2b022a-5553-42ed-b4ea-babe13faf639.png?w=84&h=84&fit=contain&fm=webp&s=1125ebeebd2728918bc7fcec79a998cd",
+  "photo": "https://www.ehr.fm/content/channels/da2f8f8b-2460-43ae-a017-210d25519e77.jpg?h=135&fit=contain&fm=webp&s=390bc8394f47eabc59f9759add67b999",
+  "pattern": "https://www.ehr.fm/content/channels/7bae9f8e-b487-4838-9cb5-2c99a78b31f3.png?w=205&h=205&fm=webp&s=12138da86f69e808783a01ab01f2e111",
+  "colors": [
+   "#000000",
+   "#000000"
+  ]
+ },
+ {
+  "mount": "EHR_TOP_40",
+  "title": "TOP 40",
+  "category": "EHR",
+  "description": "LV populārākie EU hiti pēc klausītāju balsojuma - BEZ REKLĀMĀM",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_TOP_40.mp3",
+  "logo": "https://www.ehr.fm/content/channels/47bbcd5b-42f7-489c-a9f8-eae24bcaed69.png?w=300&fit=contain&fm=webp&s=ccbd0b70913cf34865bed64e15626c59",
+  "icon": "https://www.ehr.fm/content/channels/41b93949-b85d-4b9c-94ba-45c31eca2eee.png?w=84&h=84&fit=contain&fm=webp&s=60e7d9fb0c20aa43b1572e60d61d283a",
+  "photo": "https://www.ehr.fm/content/channels/398f983e-868f-487e-8f67-6bffcb4913d9.jpg?h=135&fit=contain&fm=webp&s=aad7812f7e08ac389e5961772ab9d609",
+  "pattern": "https://www.ehr.fm/content/channels/a1fd1cdc-a732-4187-b9e0-eab585b7c562.png?w=205&h=205&fm=webp&s=8490cdfc79dc16f60a3c7f141a9d9e38",
+  "colors": [
+   "#ff0000",
+   "#c41224"
+  ]
+ },
+ {
+  "mount": "EHR_PARTY_SERVICE",
+  "title": "Party Service",
+  "category": "EHR",
+  "description": "Eiropas klubu atmosfēra un pasaules jaudīgāko DJ remixi!",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_PARTY_SERVICE.mp3",
+  "logo": "https://www.ehr.fm/content/channels/f2463936-9108-40ac-89e5-09eb09932859.png?w=300&fit=contain&fm=webp&s=68360319a967480e3c4b9dd515bc8ac7",
+  "icon": "https://www.ehr.fm/content/channels/f2463936-9108-40ac-89e5-09eb09932859.png?w=84&h=84&fit=contain&fm=webp&s=3669b6a782d2865bcc921f1066452088",
+  "photo": "https://www.ehr.fm/content/channels/bb1ec1aa-2abc-4534-99c1-71dd7576701d.png?h=135&fit=contain&fm=webp&s=15776a206dfc6e2bb018ef5ca7c6a793",
+  "pattern": "https://www.ehr.fm/content/channels/ca5679fa-ca90-4806-af07-b210365e12fe.png?w=205&h=205&fm=webp&s=c8c9e9f2d4323a5cfe5674823a827122",
+  "colors": [
+   "#f70705",
+   "#c41224"
+  ]
+ },
+ {
+  "mount": "EHR_DANCE",
+  "title": "Dance",
+  "category": "EHR",
+  "description": "Labākie Eiropas deju hiti",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_DANCE.mp3",
+  "logo": "https://www.ehr.fm/content/channels/fc381300-08a1-4f46-aa2b-0f43e80e78b8.png?w=300&fit=contain&fm=webp&s=68f8be7dc42555029f2993f51618b095",
+  "icon": "https://www.ehr.fm/content/channels/fc381300-08a1-4f46-aa2b-0f43e80e78b8.png?w=84&h=84&fit=contain&fm=webp&s=3c528cce058ee74caf813481bb6603ea",
+  "photo": "https://www.ehr.fm/content/channels/b55953e1-eb57-47ff-8569-4e825f88362e.jpg?h=135&fit=contain&fm=webp&s=725924caf569dbdff4dceb9e7bf53e10",
+  "pattern": "https://www.ehr.fm/content/channels/ca5679fa-ca90-4806-af07-b210365e12fe.png?w=205&h=205&fm=webp&s=c8c9e9f2d4323a5cfe5674823a827122",
+  "colors": [
+   "#ff0000",
+   "#c41224"
+  ]
+ },
+ {
+  "mount": "EHR_DARBAM",
+  "title": "Darbam",
+  "category": "EHR",
+  "description": "Dziesmas produktīvam noskaņojumam",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_DARBAM.mp3",
+  "logo": "https://www.ehr.fm/content/channels/fb31d765-4cae-40c9-a07f-e3fe407045dc.png?w=300&fit=contain&fm=webp&s=7488bf75daeb4b57330750d7c241fa93",
+  "icon": "https://www.ehr.fm/content/channels/fb31d765-4cae-40c9-a07f-e3fe407045dc.png?w=84&h=84&fit=contain&fm=webp&s=36cafea1d55318a36338db65dbc51a91",
+  "photo": "https://www.ehr.fm/content/channels/617d3a82-2ee0-4285-8884-0a16e865ef62.webp?s=ec6414f132ba1da9a92228a313296d6a",
+  "pattern": "https://www.ehr.fm/content/channels/7bae9f8e-b487-4838-9cb5-2c99a78b31f3.png?w=205&h=205&fm=webp&s=12138da86f69e808783a01ab01f2e111",
+  "colors": [
+   "#f70705",
+   "#c41224"
+  ]
+ },
+ {
+  "mount": "EHR_FRESH",
+  "title": "Fresh",
+  "category": "EHR",
+  "description": "Topu jaunumi un dziesmas, kas varētu kļūt par hitiem",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_FRESH.mp3",
+  "logo": "https://www.ehr.fm/content/channels/e1575100-2824-491f-b4eb-e01bad24ac21.png?w=300&fit=contain&fm=webp&s=9d0bee50e81551bd90aa5d2a2af50804",
+  "icon": "https://www.ehr.fm/content/channels/e1575100-2824-491f-b4eb-e01bad24ac21.png?w=84&h=84&fit=contain&fm=webp&s=f92362486d2437f6b874612fd6326459",
+  "photo": "https://www.ehr.fm/content/channels/92022715-52bf-4df8-8993-5c222c43fa07.webp?h=135&fit=contain&fm=webp&s=a1f47e8cdb8ebcfeeb7f4a00230e5dbf",
+  "pattern": "https://www.ehr.fm/content/channels/d3bf2328-a528-42f4-8cfa-be9df4873692.png?w=205&h=205&fm=webp&s=997cc38957115f1ecefa29989e8a4704",
+  "colors": [
+   "#f70705",
+   "#c41224"
+  ]
+ },
+ {
+  "mount": "EHR_FESTIVALU_HITI",
+  "title": "Fitness",
+  "category": "EHR",
+  "description": "EHR Fitness",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_FESTIVALU_HITI.mp3",
+  "logo": "https://www.ehr.fm/content/channels/a649c7a3-06f8-4a94-a0e1-d505e400cda4.png?w=300&fit=contain&fm=webp&s=cbc6239391c6879abeffedd3c79f50fd",
+  "icon": "https://www.ehr.fm/content/channels/a649c7a3-06f8-4a94-a0e1-d505e400cda4.png?w=84&h=84&fit=contain&fm=webp&s=d91804167b4a3345b408893b6654584e",
+  "photo": "https://www.ehr.fm/content/channels/491a8599-7809-4d0e-a0e4-2329bc9d92db.png?h=135&fit=contain&fm=webp&s=ee975a5a5297ff2fbb54ea4d008a3abb",
+  "pattern": "https://www.ehr.fm/content/channels/a1fd1cdc-a732-4187-b9e0-eab585b7c562.png?w=205&h=205&fm=webp&s=8490cdfc79dc16f60a3c7f141a9d9e38",
+  "colors": [
+   "#f70000",
+   "#c41224"
+  ]
+ },
+ {
+  "mount": "EHR_SUPERHITS_GOLD",
+  "title": "Gold",
+  "category": "SuperHits",
+  "description": "90'to gadu zelta hiti",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_SUPERHITS_GOLD.mp3",
+  "logo": "https://www.ehr.fm/storage/channels/5a01fdc1-ebfe-405a-ba56-2d883dff7572.svg",
+  "icon": "https://www.ehr.fm/storage/channels/5a01fdc1-ebfe-405a-ba56-2d883dff7572.svg",
+  "photo": "https://www.ehr.fm/content/channels/sh-gold-mic.png?h=135&fit=contain&fm=webp&s=d4ac12889ea3a7207dbf5453d977d605",
+  "pattern": "https://www.ehr.fm/content/channels/e61d86a0-9d68-4465-8925-9185b4db409e.png?w=205&h=205&fm=webp&s=7d74fde05ad20fc632158095832c339c",
+  "colors": [
+   "#faaa05",
+   "#fa7d07"
+  ]
+ },
+ {
+  "mount": "SUPERHITS_SUPER_DANCE",
+  "title": "SH Dance",
+  "category": "SuperHits",
+  "description": "Labākie deju superhiti no 90. līdz mūsdienām",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SUPERHITS_SUPER_DANCE.mp3",
+  "logo": "https://www.ehr.fm/content/channels/677dd335-193c-4db7-8ad0-111bf69144ee.png?w=300&fit=contain&fm=webp&s=b66ba0e4a4b428442cc6afec200ada80",
+  "icon": "https://www.ehr.fm/content/channels/677dd335-193c-4db7-8ad0-111bf69144ee.png?w=84&h=84&fit=contain&fm=webp&s=a134129ef9d41172b1faa9ade2bd6455",
+  "photo": "https://www.ehr.fm/content/channels/9c03745a-0e30-4223-8a9f-5e9f6e11c96b.png?h=135&fit=contain&fm=webp&s=f063325da2cec2c417030a4daa1993d7",
+  "pattern": "https://www.ehr.fm/content/channels/e61d86a0-9d68-4465-8925-9185b4db409e.png?w=205&h=205&fm=webp&s=7d74fde05ad20fc632158095832c339c",
+  "colors": [
+   "#faaa07",
+   "#fa7d06"
+  ]
+ },
+ {
+  "mount": "EHR_SUPER_HITS_CHILLOUT",
+  "title": "Chillout Hits",
+  "category": "SuperHits",
+  "description": "Chillout Hits - dziesmas relaksētam noskaņojumam.",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_SUPER_HITS_CHILLOUT.mp3",
+  "logo": "https://www.ehr.fm/content/channels/f6091b25-c75b-4b81-8e2c-e6f78d2a345c.png?w=300&fit=contain&fm=webp&s=3424b47ebab5f5527114c1ff1c3943f8",
+  "icon": "https://www.ehr.fm/content/channels/a9f5ba39-8e4d-486f-bd67-dca39f2bf711.png?w=84&h=84&fit=contain&fm=webp&s=c118769cf3701075bc1cb98fa4510044",
+  "photo": "https://www.ehr.fm/content/channels/4b20df51-e966-468a-9809-b90f2cd32c0d.webp?s=3f8c678b3b55e8be46ede66ccb55884f",
+  "pattern": "https://www.ehr.fm/content/channels/033c8afd-cf93-447a-93e4-51d64cf85985.png?w=205&h=205&fm=webp&s=174e814247d328cb5c113c22c8582224",
+  "colors": [
+   "#faaa07",
+   "#fa7d07"
+  ]
+ },
+ {
+  "mount": "EHR_SUPERHITS_HIPHOP_RNB",
+  "title": "HipHop & RnB",
+  "category": "SuperHits",
+  "description": "Populārākie Hip-Hop un R'n'B hiti no 90-tajiem līdz mūsdienām.",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_SUPERHITS_HIPHOP_RNB.mp3",
+  "logo": "https://www.ehr.fm/content/channels/1a6e2f46-c37a-488d-a799-28e73c6b1d89.png?w=300&fit=contain&fm=webp&s=f7a2c409a45d6b9b1b6325f36dd847cf",
+  "icon": "https://www.ehr.fm/content/channels/f02c22d5-9967-4676-96da-ee6bad07575a.png?w=84&h=84&fit=contain&fm=webp&s=0a082fcd99b108719a24952326038fb9",
+  "photo": "https://www.ehr.fm/content/channels/077a5841-647a-4992-a2bb-d20e7de2e60f.webp?s=62f6c57bac57ffa479911167ddad0928",
+  "pattern": "https://www.ehr.fm/content/channels/08d8f318-740d-4182-9fc6-ef30078965ec.png?w=205&h=205&fm=webp&s=fb4e6a5555c26790c6f1d11c04f708a4",
+  "colors": [
+   "#fac008",
+   "#fa7d06"
+  ]
+ },
+ {
+  "mount": "EHR_SUPERHITS_ROCK",
+  "title": "Rock",
+  "category": "SuperHits",
+  "description": "Pop-Rock & Alternative hiti no 80-tajiem līdz mūsdienām.",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_SUPERHITS_ROCK.mp3",
+  "logo": "https://www.ehr.fm/content/channels/172a2943-f453-4993-ba74-33fd92f08a36.png?w=300&fit=contain&fm=webp&s=53068d95f1bdf8fc38ea679599038745",
+  "icon": "https://www.ehr.fm/content/channels/47762483-8080-4635-a53d-4f0afe49c27a.png?w=84&h=84&fit=contain&fm=webp&s=1177a1e90339e3cf840c5b0ad655ab3a",
+  "photo": "https://www.ehr.fm/content/channels/4ce8cf43-9c31-4b77-88c6-b254e1e83f9a.webp?s=77d1a4d3600bf3708be20cba7029d9af",
+  "pattern": "https://www.ehr.fm/content/channels/a467941d-3db7-47ef-9efe-37cf2f16d1b6.png?w=205&h=205&fm=webp&s=4d95d13545a9fc19d1518c2e84a6596f",
+  "colors": [
+   "#fac008",
+   "#fa7d06"
+  ]
+ },
+ {
+  "mount": "LATVIESU_HITI_LV_REPS",
+  "title": "LV Reps",
+  "category": "Latviešu hiti",
+  "description": "Repa klasika un jaunākie \"bengeri\" ar 18+ atzīmi",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/LATVIESU_HITI_LV_REPS.mp3",
+  "logo": "https://www.ehr.fm/content/channels/cac931cc-29bd-4a8c-80fb-2866d3de5de9.png?w=300&fit=contain&fm=webp&s=b06ed50206253acd6927e92f542a2bbb",
+  "icon": "https://www.ehr.fm/content/channels/cac931cc-29bd-4a8c-80fb-2866d3de5de9.png?w=84&h=84&fit=contain&fm=webp&s=3b5622a8cf1f6f91b925aff7c14c0a89",
+  "photo": "https://www.ehr.fm/content/channels/bbee239e-cc60-42ea-bdfa-92241b2669b1.jpg?h=135&fit=contain&fm=webp&s=7f3b78efc6cf9d354695e9def6ee676a",
+  "pattern": "https://www.ehr.fm/content/channels/f76010ff-7efb-4108-b9d5-1c4645ef55cd.png?w=205&h=205&fm=webp&s=ac2f8118f59cf9ad4f1e24dc6f4e74bc",
+  "colors": [
+   "#3e7cfa",
+   "#1003a6"
+  ]
+ },
+ {
+  "mount": "LATVIESU_HITI_ZELTA_HITI",
+  "title": "Prāta Vētra",
+  "category": "Latviešu hiti",
+  "description": "EHR Latviešu Hiti piedāvā oficiālo Prāta Vētras dziesmu kanālu.",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/LATVIESU_HITI_ZELTA_HITI.mp3",
+  "logo": "https://www.ehr.fm/content/channels/11e82e4c-2483-4c9a-a8f8-6c75552c4475.png?w=300&fit=contain&fm=webp&s=302f6f3ed87a082b0048c2b22c16e0bc",
+  "icon": "https://www.ehr.fm/content/channels/11e82e4c-2483-4c9a-a8f8-6c75552c4475.png?w=84&h=84&fit=contain&fm=webp&s=9040bc3a875f27490e4f2a01d00253e3",
+  "photo": "https://www.ehr.fm/content/channels/ee06a707-68d7-459a-ad44-a101aadaf457.webp?s=f864becb6293241f03e8dcb45efe1f3f",
+  "pattern": "https://www.ehr.fm/content/channels/f76010ff-7efb-4108-b9d5-1c4645ef55cd.png?w=205&h=205&fm=webp&s=ac2f8118f59cf9ad4f1e24dc6f4e74bc",
+  "colors": [
+   "#2caaff",
+   "#1003a6"
+  ]
+ },
+ {
+  "mount": "EHR_RU_TOP_40",
+  "title": "RU Топ 40",
+  "category": "EHR+",
+  "description": "Хиты \"Главного Русского Топа\"",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_RU_TOP_40.mp3",
+  "logo": "https://www.ehr.fm/content/channels/4ca38b3b-461d-4645-96df-6820b0dbec9d.png?w=300&fit=contain&fm=webp&s=344ce5482815496c70b138a632a71824",
+  "icon": "https://www.ehr.fm/content/channels/4ca38b3b-461d-4645-96df-6820b0dbec9d.png?w=84&h=84&fit=contain&fm=webp&s=a0eb372a12158d79d7916e2fd6d4a5d9",
+  "photo": "https://www.ehr.fm/content/channels/7c6b6b11-6290-4888-8355-8d9b13de1f1d.png?h=135&fit=contain&fm=webp&s=c4dee447270909fba88f610704325b66",
+  "pattern": "https://www.ehr.fm/content/channels/9a844be5-6873-41af-bbcb-e59c06365373.png?w=205&h=205&fm=webp&s=235b0a25a610e4f1d8d48120c8d8c631",
+  "colors": [
+   "#f20000",
+   "#990808"
+  ]
+ },
+ {
+  "mount": "EHR_RU_REMIXES",
+  "title": "RU Remixes",
+  "category": "EHR+",
+  "description": "Лучшие ремиксы русских хитов",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_RU_REMIXES.mp3",
+  "logo": "https://www.ehr.fm/content/channels/dac34580-ab9c-475f-9a33-2a38930d19c4.png?w=300&fit=contain&fm=webp&s=3d8c8435855d6a488272095851d1178c",
+  "icon": "https://www.ehr.fm/content/channels/4f963b83-90f9-4879-bae1-e3384122d44c.png?w=84&h=84&fit=contain&fm=webp&s=bd47e61f5a5227da3a2370c22fc62585",
+  "photo": "https://www.ehr.fm/content/channels/9261ad35-908b-4a4b-b1c6-695ff2f490bb.jpg?h=135&fit=contain&fm=webp&s=3c34557ca7de58f67b6caaf42d8b79b0",
+  "pattern": "https://www.ehr.fm/content/channels/671bdbfa-99b2-4514-a54f-ae8db744d5e5.png?w=205&h=205&fm=webp&s=86db9087106a96b5cf9bd83ca2498949",
+  "colors": [
+   "#f20000",
+   "#990808"
+  ]
+ },
+ {
+  "mount": "EHR_2000_X",
+  "title": "2000-x",
+  "category": "EHR+",
+  "description": "Hits of the 2000s",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/EHR_2000_X.mp3",
+  "logo": "https://www.ehr.fm/content/channels/c7b13091-8c6f-4b65-940c-e740e1cf3c45.png?w=300&fit=contain&fm=webp&s=a6217a1008d7436a3c5c17bd6bc457ed",
+  "icon": "https://www.ehr.fm/content/channels/c7b13091-8c6f-4b65-940c-e740e1cf3c45.png?w=84&h=84&fit=contain&fm=webp&s=d53555e6f1fc2a88e21761bc122d97e7",
+  "photo": "https://www.ehr.fm/content/channels/d458eeb3-c01e-4a42-b87e-8a8dac0f2745.png?h=135&fit=contain&fm=webp&s=0c42676946f1b80bbbd20c6dd16cc0fd",
+  "pattern": "https://www.ehr.fm/content/channels/671bdbfa-99b2-4514-a54f-ae8db744d5e5.png?w=205&h=205&fm=webp&s=86db9087106a96b5cf9bd83ca2498949",
+  "colors": [
+   "#f20000",
+   "#990808"
+  ]
+ },
+ {
+  "mount": "RETRO_FM_LATVIJA_DISCO",
+  "title": "Disco",
+  "category": "Retro FM Latvija",
+  "description": "Eiropas disko laika deju hiti",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/RETRO_FM_LATVIJA_DISCO.mp3",
+  "logo": "https://www.ehr.fm/content/channels/d660bcd2-1542-4d2f-9996-e0cf117eea01.png?w=300&fit=contain&fm=webp&s=cc145f748887ea46ec3b5419409cd03e",
+  "icon": "https://www.ehr.fm/content/channels/989ca3f4-5348-4979-a390-10cfd71f3338.png?w=84&h=84&fit=contain&fm=webp&s=f949ad76c11bd0e82b6cdb4975997521",
+  "photo": "https://www.ehr.fm/content/channels/a39acd50-86a3-4a4c-947d-ea605aa8db19.jpg?h=135&fit=contain&fm=webp&s=9fe2602e436cf1921086b8dbe8acdbe7",
+  "pattern": "https://www.ehr.fm/content/channels/f6b55764-e8ea-49ad-abf1-33653bbbd047.png?w=205&h=205&fm=webp&s=c53ef3845db5cfa35d67fcb0f826ffbe",
+  "colors": [
+   "#fa34cc",
+   "#e6049d"
+  ]
+ },
+ {
+  "mount": "RETRO_LATVIJA_FM_70_80_90S",
+  "title": "70, 80, 90's",
+  "category": "Retro FM Latvija",
+  "description": "",
+  "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/RETRO_LATVIJA_FM_70_80_90S.mp3",
+  "logo": "https://www.ehr.fm/content/channels/f96d38ec-dedc-408d-b371-5b82338ee156.png?w=300&fit=contain&fm=webp&s=91317207783115252606c75b33634583",
+  "icon": "https://www.ehr.fm/content/channels/f96d38ec-dedc-408d-b371-5b82338ee156.png?w=84&h=84&fit=contain&fm=webp&s=b00f17121ee337d31ef4d0cf01f3979d",
+  "photo": "https://www.ehr.fm/content/channels/25b6980f-73c6-4648-b502-a242404c60bd.jpg?h=135&fit=contain&fm=webp&s=7aac6b976691aefc282f5f958df4f422",
+  "pattern": "https://www.ehr.fm/content/channels/7eebeeb8-7a8e-4b9f-ab7a-7e6404adb117.png?w=205&h=205&fm=webp&s=06f76f5cea9d40aed7eff1c39204ee4e",
+  "colors": [
+   "#fa34cc",
+   "#e6049d"
+  ]
+ }
+]
