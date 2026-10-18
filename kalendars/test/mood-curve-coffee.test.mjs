@@ -12,7 +12,7 @@ test('unrated days run between rated neighbours with a small coffee swell; rated
  const v=c.curveLevels(rows);
  assert.equal(v[0],2);assert.equal(v[4],4);                       // ratings untouched, even with coffee
  assert.ok(Math.abs(v[1]-2.5)<1e-9);                               // no coffee: plain interpolation
- assert.ok(v[2]>3 && v[2]<=3+.3+1e-9);                             // more coffee than usual: swell up, capped
+ assert.ok(v[2]>3.4 && v[2]<=3+.75+1e-9);                             // more coffee than usual: swell up, capped
  assert.ok(Math.abs(v[3]-3.5)<1e-9);                               // usual coffee: on the line
  assert.equal(v[5],4);assert.equal(v[6],4);                        // after the last rating: level with it
  assert.deepEqual([...c.curveLevels([{day:'x',i:0,mood:null}])],[3]);   // nothing at all: neutral

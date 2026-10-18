@@ -634,14 +634,13 @@
     var pts = m.rows.map(function (r, i) { return { row: r, x: X(i), y: Y(levels[i]), own: owns[r.day] && owns[r.day].emoji ? owns[r.day] : null }; });
     scape.pts = pts;
     var dots = pts.filter(function (p) { return p.row.mood; });
-    // The rated day still waiting for its first vote has no point of its own:
-    // the line just runs on, level, from the last vote to it.
-    var waiting = pts.find(function (p) { return p.row.day === m.selected && !p.row.mood; });
-    var last = dots[dots.length - 1];
-    if (waiting && last && last.x < waiting.x) waiting.y = last.y;
-    if (dots.length > 1 || (waiting && last && last.x < waiting.x)) {
-      var line = dots.length > 1 ? monotone(dots.map(function (p) { return [p.x, p.y]; }), 12) : [[last.x, last.y]];
-      if (waiting && last && last.x < waiting.x) line = line.concat([[waiting.x, last.y]]);
+    // From the first vote on, the line passes every day: unrated ones at their
+    // curveLevels height (between the votes, with the coffee swell), so a gap or
+    // the days after the last vote are no longer one straight stroke.
+    var first = pts.findIndex(function (p) { return p.row.mood; });
+    var path = first < 0 ? [] : pts.slice(first);
+    if (path.length > 1) {
+      var line = monotone(path.map(function (p) { return [p.x, p.y]; }), 12);
       var trace = function () { ctx.beginPath(); line.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); };
       ctx.save();
       // one unbroken line: a dark edge so it reads on the bright clouds, a
@@ -700,7 +699,7 @@
       var base = prev !== null && next !== null
         ? rows[prev].mood.score + (rows[next].mood.score - rows[prev].mood.score) * (i - prev) / (next - prev)
         : prev !== null ? rows[prev].mood.score : next !== null ? rows[next].mood.score : 3;
-      var swell = cups[r.day] && usual ? Math.max(-.3, Math.min(.3, (cups[r.day] - usual) / Math.max(2, usual) * .3)) : 0;
+      var swell = cups[r.day] && usual ? Math.max(-.75, Math.min(.75, (cups[r.day] - usual) / Math.max(2, usual) * .9)) : 0;   // up to ~10 px: visible, still below a vote
       return Math.max(1, Math.min(5, base + swell));
     });
   }
