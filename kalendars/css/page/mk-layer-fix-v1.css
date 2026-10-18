@@ -6319,13 +6319,13 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 .mk-caf-chip b { font-weight: 700 !important; }
 .mk-caf-chip svg { width: 18px !important; height: 18px !important; flex: none !important; }
-/* "+N mg" chip in the same orange as already-drunk caffeine (and the stats); the new piece of the bar is blue */
+/* one orange for caffeine: this drink full orange like its "+N mg" chip, already drunk the same orange dimmer */
 .mk-caf-chip.is-add { color: #ffb77c !important; }
 .mk-caf-chip.is-add svg { fill: #ffb77c !important; }
 .mk-caf-day { grid-column: 1 / -1 !important; display: grid !important; gap: 5px !important; font-size: 13px !important; justify-items: end !important; }
 .mk-caf-day > i {
   display: block !important; justify-self: stretch !important; height: 6px !important; border-radius: 3px !important;
-  background: linear-gradient(90deg, #ffb77c var(--before), #7dd3fc var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
+  background: linear-gradient(90deg, rgba(255,183,124,.5) var(--before), #ffb77c var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
 }
 .mk-caf-day b { font-weight: 800 !important; font-size: 15px !important; color: #6ee7a8 !important; }
 .mk-caf-day.is-high b { color: #fbbf24 !important; }
@@ -7371,5 +7371,5 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-caf-key { display: grid; gap: 4px; margin-top: 8px; color: #b8c2d0; }
 .mk-caf-key > span { display: flex; align-items: center; gap: 8px; }
 .mk-caf-key i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; }
-.mk-caf-key i.is-before { background: #ffb77c; }
-.mk-caf-key i.is-add { background: #7dd3fc; }
+.mk-caf-key i.is-before { background: rgba(255,183,124,.5); }
+.mk-caf-key i.is-add { background: #ffb77c; }
