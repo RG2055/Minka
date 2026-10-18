@@ -6305,7 +6305,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   border-bottom-color: var(--m3-outline-variant) !important;
 }
 .mk-coffee-caf {
-  display: flex !important; flex-wrap: wrap !important; gap: 6px !important;
+  display: grid !important; grid-template-columns: auto auto 1fr !important; gap: 6px !important;
   margin: 0 0 12px !important;
   color: var(--m3-on-surface-variant) !important;
   font: 500 13px/1.3 Inter, system-ui, sans-serif !important;
@@ -6315,11 +6315,12 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-caf-chip {
   display: inline-flex !important; align-items: center !important; gap: 6px !important; height: 30px !important; padding: 0 11px 0 8px !important;
   border-radius: 15px !important; background: var(--m3-surface-container-highest, rgba(255,255,255,.08)) !important; color: var(--m3-on-surface) !important;
+  white-space: nowrap !important;
 }
 .mk-caf-chip b { font-weight: 700 !important; color: var(--m3-tertiary, #ffb77c) !important; }
 .mk-caf-chip svg { width: 18px !important; height: 18px !important; flex: none !important; }
 .mk-caf-chip:first-child svg { fill: var(--m3-tertiary, #ffb77c) !important; }
-.mk-caf-day { flex-basis: 100% !important; display: grid !important; gap: 4px !important; font-size: 12px !important; }
+.mk-caf-day { grid-column: 1 / -1 !important; display: grid !important; gap: 4px !important; font-size: 12px !important; }
 .mk-caf-day i {
   display: block !important; height: 4px !important; border-radius: 2px !important;
   --caf: #6ee7a8;

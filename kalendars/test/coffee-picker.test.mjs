@@ -7,7 +7,7 @@ const calendar = await readFile(new URL('../js/calendar.js', import.meta.url), '
 
 // placePicker and its anchor helper live inside showCoffeePicker; lift the pair
 // out and drive them the way a click does.
-function harness({ innerWidth = 1280, innerHeight = 900 } = {}) {
+function harness({ innerWidth = 1280, innerHeight = 900, contentHeight = 270 } = {}) {
   // Start at the anchor helper when it is there, at placePicker otherwise, so
   // this suite can be pointed at a build without the fix and show the corner.
   const helper = calendar.indexOf('      let anchorBox = null;');
@@ -15,20 +15,25 @@ function harness({ innerWidth = 1280, innerHeight = 900 } = {}) {
   const from = helper >= 0 && helper < placer ? helper : placer;
   const to = calendar.indexOf('      function defaultPriceFor(src) {');
   assert.ok(from > 0 && to > from, 'calendar.js no longer contains the picker placement block');
-  const picker = { style: {}, getBoundingClientRect: () => ({ height: 270 }) };
+  const classes = new Set(), moved = [];
+  const kid = cls => ({ cls, matches: sel => sel.split(', ').includes('.' + cls) });
+  const picker = { style: {}, getBoundingClientRect: () => ({ height: 270 }), scrollHeight: contentHeight, offsetWidth: 0,
+    classList: { contains: c => classes.has(c), add: c => classes.add(c) },
+    children: [kid('mk-coffee-picker-title'), kid('mk-coffee-source-row'), kid('mk-coffee-price-row'), kid('mk-coffee-save')],
+    append(...cols) { moved.push(...cols.map(c => c.items.map(i => i.cls))); } };
   const anchor = { rect: { top: 400, bottom: 424, right: 600, width: 17, height: 24 },
     getBoundingClientRect() { return this.rect; } };
   const context = vm.createContext({
     picker, anchor, window: { innerWidth, innerHeight },
-    document: { documentElement: { classList: { contains: () => false } } },
+    document: { documentElement: { classList: { contains: () => false } }, createElement: () => ({ items: [], appendChild(el) { this.items.push(el); } }) },
     Math
   });
   vm.runInContext(calendar.slice(from, to), context);
   // The dialog's width is a Material 3 shape decision that may change; read it
   // from the code so these cases keep testing the placement, not the number.
-  const width = Number(/const pw = (\d+)/.exec(calendar.slice(from, to))?.[1]);
+  const width = Number(/(?:const|let) pw = (\d+)/.exec(calendar.slice(from, to))?.[1]);
   assert.ok(width > 0, 'the placement block no longer declares the picker width');
-  return { context, picker, anchor, width, place: () => context.placePicker() };
+  return { context, picker, anchor, width, classes, moved, place: () => context.placePicker() };
 }
 
 test('the picker opens beside the button that asked for it', () => {
@@ -77,4 +82,14 @@ test('a short window flips the picker above the button rather than off-screen', 
   anchor.rect = { top: 420, bottom: 444, right: 600, width: 17, height: 24 };
   place();
   assert.equal(picker.style.top, '142px', 'above the + (420 - 270 - 8)');
+});
+
+test('a picker taller than the window turns into two columns instead of scrolling', () => {
+  const short = harness({ innerHeight: 500, contentHeight: 600 });
+  short.place();
+  assert.ok(short.classes.has('is-wide'));
+  assert.deepEqual(short.moved, [['mk-coffee-picker-title', 'mk-coffee-source-row'], ['mk-coffee-price-row', 'mk-coffee-save']]);
+  const tall = harness({ innerHeight: 900, contentHeight: 600 });
+  tall.place();
+  assert.equal(tall.classes.has('is-wide'), false);
 });

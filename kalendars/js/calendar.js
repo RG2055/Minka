@@ -6804,17 +6804,18 @@ function filterFullList(btn) {
         const caf = picker.querySelector('.mk-coffee-caf');
         if (caf) {
           const eq = (coffeeSourceMeta[cleanCoffeeSource(selected)] || {}).eq || 1;
-          const cups = eq === 1 ? '1 tasīte' : (Math.round(eq * 100) / 100) + ' tasītes';
+          const cups = eq === 1 ? '1 tasīte' : String(Math.round(eq * 100) / 100).replace('.', ',') + ' tasītes';
           // EFSA: up to 400 mg a day is safe for adults. This person's duty day so far,
           // then this drink on top: green to 300 mg, amber to 400, red past it.
           const mg = coffeeMg(selected), before = coffeeMgToday(name), after = before + mg;
           const level = after > 400 ? 'is-over' : after > 300 ? 'is-high' : '';
           const pct = v => Math.min(100, Math.round(v / 400 * 100)) + '%';
-          caf.innerHTML = '<span class="mk-caf-chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg><b>≈' + mg + ' mg</b> kofeīna</span>'
+          caf.innerHTML = '<span class="mk-caf-chip" title="Kofeīns"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg><b>≈' + mg + ' mg</b></span>'
             + '<span class="mk-caf-chip">' + buildCoffeeCup('filled') + escapeHtml(cups) + '</span>'
             + '<span class="mk-caf-day ' + level + '" style="--before:' + pct(before) + ';--after:' + pct(after) + '"><i></i><span>'
-            + (before ? 'Šodien ' + before + ' + ' + mg + ' = <b>' + after + ' mg</b> no 400' : '<b>' + mg + ' mg</b> no 400 mg dienas devas')
-            + (after > 400 ? ' (pāri dienas devai)' : '') + '</span></span>';
+            + (after > 400 ? (before ? 'Šodien ' + before + ' + ' + mg + ' = ' : '') + '<b>' + after + ' mg</b>. Pārsniegta dienas deva (400 mg)'
+              : before ? 'Šodien ' + before + ' + ' + mg + ' = <b>' + after + ' mg</b> kofeīna no 400'
+              : '<b>' + mg + ' mg</b> kofeīna no 400 mg dienas devas') + '</span></span>';
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {
