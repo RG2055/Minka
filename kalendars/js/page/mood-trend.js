@@ -614,37 +614,38 @@
     G.above = above; G.near = near;
     skyCheck(true);
   }
-  /* The line in the app's one-ink Bayer dither (MinkaDither.bayer8): a solid core
-     and a halo of dots thinning out. Drawn with the curve, once per data or size
-     change, over the line's own band only (~1 ms); no frames, files or requests. */
+  /* Under the line, a 1-bit Bayer fill (MinkaDither.bayer8) in the line's colour:
+     densest at the curve, fading out ~38 px below, in 2 px cells so the dots stay
+     crisp. The line itself stays a clean stroke above it. Drawn with the curve, once
+     per data or size change, over that band only; no frames, files or requests. */
   var ditherCv = null;
-  function ditherLine(ctx, line, trace, dpr) {
+  function ditherFill(ctx, line, dpr) {
     var bayer = window.MinkaDither && window.MinkaDither.bayer8;
-    if (!bayer || line.length < 2) return false;
-    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, pad = 9;
-    line.forEach(function (p) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
-    var bx = Math.max(0, Math.floor((x0 - pad) * dpr)), by = Math.max(0, Math.floor((y0 - pad) * dpr));
-    var bw = Math.min(ctx.canvas.width, Math.ceil((x1 + pad) * dpr)) - bx, bh = Math.min(ctx.canvas.height, Math.ceil((y1 + pad) * dpr)) - by;
-    if (bw < 1 || bh < 1) return false;
+    if (!bayer || line.length < 2) return;
+    var fade = 38, x0 = line[0][0], x1 = line[line.length - 1][0], y0 = Infinity, y1 = -Infinity;
+    line.forEach(function (p) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+    var bx = Math.max(0, Math.floor(x0 * dpr)), by = Math.max(0, Math.floor(y0 * dpr));
+    var bw = Math.min(ctx.canvas.width, Math.ceil(x1 * dpr)) - bx, bh = Math.min(ctx.canvas.height, Math.ceil((y1 + fade) * dpr)) - by;
+    if (bw < 1 || bh < 1) return;
     if (!ditherCv) ditherCv = document.createElement('canvas');
     ditherCv.width = bw; ditherCv.height = bh;
-    var c = ditherCv.getContext('2d', { willReadFrequently: true });
-    c.setTransform(dpr, 0, 0, dpr, -bx, -by);
-    c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#fff';
-    // widest and faintest first: the alpha left behind falls off with the distance
-    [[15, .07], [9, .15], [5, .3], [2.4, 1]].forEach(function (s) { c.globalAlpha = s[1]; c.lineWidth = s[0]; trace(c); c.stroke(); });
-    var img = c.getImageData(0, 0, bw, bh), d = img.data, cell = Math.max(1, Math.round(dpr));
-    for (var y = 0, i = 0; y < bh; y++) {
-      var row = (((y + by) / cell | 0) & 7) * 8;
-      for (var x = 0; x < bw; x++, i += 4) {
-        var a = d[i + 3] / 255;
-        if (a > .97 || a > bayer[row + (((x + bx) / cell | 0) & 7)]) { d[i] = 143; d[i + 1] = 220; d[i + 2] = 255; d[i + 3] = 255; }
-        else d[i + 3] = 0;
+    var c = ditherCv.getContext('2d'), img = c.createImageData(bw, bh), d = img.data, cell = 2 * dpr, seg = 0;
+    for (var x = 0; x < bw; x++) {
+      var cx = (bx + x + .5) / dpr;                       // the curve's height over this column
+      while (seg < line.length - 2 && line[seg + 1][0] < cx) seg++;
+      var p = line[seg], q = line[seg + 1], t = q[0] > p[0] ? (cx - p[0]) / (q[0] - p[0]) : 0;
+      var top = (p[1] + (q[1] - p[1]) * Math.max(0, Math.min(1, t))) * dpr + 2.5 * dpr;
+      var gx = ((bx + x) / cell | 0) & 7;
+      for (var y = Math.max(0, Math.ceil(top - by)); y < bh; y++) {
+        var density = .5 * (1 - (by + y - top) / (fade * dpr));
+        if (density <= 0) break;
+        if (density > bayer[(((by + y) / cell | 0) & 7) * 8 + gx]) {
+          var i = (y * bw + x) * 4; d[i] = 143; d[i + 1] = 220; d[i + 2] = 255; d[i + 3] = 150;
+        }
       }
     }
-    c.setTransform(1, 0, 0, 1, 0, 0); c.putImageData(img, 0, 0);
+    c.putImageData(img, 0, 0);
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(ditherCv, bx, by); ctx.restore();
-    return true;
   }
   // The curve, above the sky: drawn once per data or size change.
   function drawScape(card, plot, m, geo) {
@@ -675,14 +676,14 @@
       var line = monotone(path.map(function (p) { return [p.x, p.y]; }), 12);
       var trace = function (c) { c.beginPath(); line.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); };
       ctx.save();
-      // a dark edge so the line reads on the bright clouds
-      trace(ctx);
+      // the dither fill below, then the line: a dark edge so it reads on the
+      // bright clouds, a soft wide halo (a plain wider stroke) and the line itself
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ditherFill(ctx, line, dpr);
+      trace(ctx);
       ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = 4.2; ctx.stroke();
-      if (!ditherLine(ctx, line, trace, dpr)) {
-        ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke();
-        ctx.strokeStyle = '#8fdcff'; ctx.lineWidth = 2; ctx.stroke();
-      }
+      ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke();
+      ctx.strokeStyle = '#8fdcff'; ctx.lineWidth = 2; ctx.stroke();
       ctx.restore();
     }
     // The sky's characters fill down to this curve: move their border too.
