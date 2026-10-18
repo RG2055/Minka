@@ -630,7 +630,8 @@
     var X = function (i) { return geo.left + 6 + i / (n - 1) * (geo.right - geo.left - 12); };
     var Y = function (score) { return scapeY(geo, score); };
     var owns = readJson(OWN_KEY);
-    var pts = m.rows.map(function (r, i) { return { row: r, x: X(i), y: r.mood ? Y(r.mood.score) : Y(3), own: owns[r.day] && owns[r.day].emoji ? owns[r.day] : null }; });
+    var levels = curveLevels(m.rows);
+    var pts = m.rows.map(function (r, i) { return { row: r, x: X(i), y: Y(levels[i]), own: owns[r.day] && owns[r.day].emoji ? owns[r.day] : null }; });
     scape.pts = pts;
     var dots = pts.filter(function (p) { return p.row.mood; });
     // The rated day still waiting for its first vote has no point of its own:
@@ -682,6 +683,26 @@
       html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + 9).toFixed(1) + 'px">' + esc(p.own.emoji) + '</i>';
     });
     marks.innerHTML = html;
+  }
+  /* Days nobody rated run between the rated days around them instead of a flat
+     "ok", with a small swell where the team logged more coffee than its usual for
+     the fortnight: movement only, no verdict (coffee never moves a rated day).
+     Uses the coffee already stored for the cups; nothing extra is fetched. */
+  function curveLevels(rows) {
+    var cups = coffeeByDay(rows.map(function (r) { return r.day; }));
+    var vals = Object.keys(cups).map(function (d) { return cups[d]; }).sort(function (a, b) { return a - b; });
+    var usual = vals.length ? vals[vals.length >> 1] : 0;
+    return rows.map(function (r, i) {
+      if (r.mood) return r.mood.score;
+      var prev = null, next = null, j;
+      for (j = i - 1; j >= 0 && !prev; j--) if (rows[j].mood) prev = j;
+      for (j = i + 1; j < rows.length && next === null; j++) if (rows[j].mood) next = j;
+      var base = prev !== null && next !== null
+        ? rows[prev].mood.score + (rows[next].mood.score - rows[prev].mood.score) * (i - prev) / (next - prev)
+        : prev !== null ? rows[prev].mood.score : next !== null ? rows[next].mood.score : 3;
+      var swell = cups[r.day] && usual ? Math.max(-.3, Math.min(.3, (cups[r.day] - usual) / Math.max(2, usual) * .3)) : 0;
+      return Math.max(1, Math.min(5, base + swell));
+    });
   }
   /* Each day's coffee under the curve: the app's own cup and the team's
      number of cups for that day, nothing more. From the same coffee store as

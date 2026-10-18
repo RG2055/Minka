@@ -100,10 +100,19 @@
 
   /* ── data ─────────────────────────────────────────────────────────────── */
   function shiftsAll() { return M.schedule([window.__grafiksStore, window.__grafiksStoreRad]); }
+  // EHR channels got their own radio tab (2026-10-18) under ehr.fm's names; days
+  // listened under the old Latvian-list names count for the same channel.
+  var EHR_RENAMED = {
+    'eiropas hītu radio': 'EHR', 'ehr superhits': 'SuperHits', 'super fm': 'SuperHits', 'ehr latviešu hiti': 'Latviešu hiti',
+    'retro fm': 'Retro FM Latvija', 'ehr accoustic': 'SuperHits Chillout Hits', 'ehr gold': 'SuperHits Gold',
+    'ehr ice ice party': 'SuperHits SH Dance', 'latviešu deju hiti': 'Latviešu hiti Deju Hiti',
+    'latviešu repa hiti': 'Latviešu hiti LV Reps', 'retro disco': 'Retro FM Disco', 'retro fm 70s 80s 90s': "Retro FM 70, 80, 90's"
+  };
   function radioAll(range) {
     // This device's own records plus what the API knows, one row per day and station.
     var seen = {}, out = [];
     var add = function (day, name, firstAt) {
+      name = EHR_RENAMED[M.norm(name)] || name;
       var key = day + '|' + M.norm(name);
       if (!day || !name || seen[key]) return;
       seen[key] = true;

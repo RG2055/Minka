@@ -1036,6 +1036,11 @@ const LV_STATION_ADDITIONS = [
     { title:'RADIO TEV', group:'latvija', tooltip:'Latvijas radio', stream_128:'https://stream.radiotev.lv:8443/radiov', stream_320:'https://stream.radiotev.lv:8443/radiov', stream_hls:'', stream_64:'https://stream.radiotev.lv:8443/radiov', prefix:'', id:'lv-tev' }
 ];
 
+// The player and the listening history need the group in the name ("SuperHits Rock",
+// not a bare "Rock" that Radio Record also has); the tile shows the group above it.
+const EHR_GROUP_NAMES = { 'EHR': 'EHR', 'SuperHits': 'SuperHits', 'Latviešu hiti': 'Latviešu hiti', 'EHR+': 'EHR+', 'Retro FM Latvija': 'Retro FM' };
+const ehrFullName = row => row.category === 'FM radio' ? row.title : (EHR_GROUP_NAMES[row.category] || row.category) + ' ' + row.title;
+
 function buildLatvianStations() {
     const stations = (Array.isArray(LATVIAN_STATIONS) ? LATVIAN_STATIONS : [])
         .filter(station => !LV_DISABLED_STATIONS.has(normalizeStationText(station.title)))
@@ -1067,7 +1072,7 @@ function buildLatvianStations() {
         if (!legacyKeys.has(mount)) legacyKeys.set(mount, radioStationKey(station));
         return false;
     }).concat(ehrStationRows.map(row => ({
-        title: row.title, group: 'latvija', ehr: row, tooltip: row.category, cover: row.logo,
+        title: ehrFullName(row), group: 'latvija', ehr: row, tooltip: row.category, cover: row.logo,
         catalogKey: legacyKeys.get(row.mount) || 'ehr:' + row.mount.toLowerCase(),
         stream_128: row.url, stream_320: row.url, stream_64: row.url, stream_hls: '', prefix: '', id: ''
     })));
@@ -1791,7 +1796,7 @@ function renderStationPickerList() {
 // EHR tab: tiles like ehr.fm (group, name, logo on its colour, photo) and the song
 // playing on each channel, from ehr.fm's public list (CORS *), every 30 s while shown.
 function ehrTileHTML(station, index, isCurrent) {
-    const row = station.ehr, title = escapeHtml(station.title), category = escapeHtml(row.category || 'EHR');
+    const row = station.ehr, title = escapeHtml(row.title), category = escapeHtml(row.category || 'EHR');
     const [main = '#e8202a', second = '#111111'] = row.colors || [];
     const img = (cls, src) => src ? `<img class="${cls}" src="${escapeHtml(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : '';
     return `<div class="station-entry station-entry-ehr"><button class="station-tile station-ehr${isCurrent ? ' is-current' : ''}" type="button"
