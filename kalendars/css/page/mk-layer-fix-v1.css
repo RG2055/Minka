@@ -6319,9 +6319,9 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 }
 .mk-caf-chip b { font-weight: 700 !important; }
 .mk-caf-chip svg { width: 18px !important; height: 18px !important; flex: none !important; }
-/* this drink is blue everywhere (already drunk = orange, as in the stats): its chip and its piece of the bar */
-.mk-caf-chip.is-add { color: #7dd3fc !important; }
-.mk-caf-chip.is-add svg { fill: #7dd3fc !important; }
+/* "+N mg" chip in the same orange as already-drunk caffeine (and the stats); the new piece of the bar is blue */
+.mk-caf-chip.is-add { color: #ffb77c !important; }
+.mk-caf-chip.is-add svg { fill: #ffb77c !important; }
 .mk-caf-day { grid-column: 1 / -1 !important; display: grid !important; gap: 5px !important; font-size: 13px !important; justify-items: end !important; }
 .mk-caf-day > i {
   display: block !important; justify-self: stretch !important; height: 6px !important; border-radius: 3px !important;
