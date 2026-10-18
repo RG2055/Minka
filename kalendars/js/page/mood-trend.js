@@ -711,9 +711,11 @@
     }
     var html = '';
     pts.forEach(function (p) {
-      if (!p.own) return;
+      // the day's own emoji, else the face of the team's rating, so each rated point says what it was
+      var emoji = p.own ? p.own.emoji : p.row.mood ? FACES[moodFor(p.row.mood.score).key][0] : '';
+      if (!emoji) return;
       var below = p.row.mood ? 3.2 + Math.min(4, p.row.mood.total / 3) : 2;   // right under its point
-      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + 9).toFixed(1) + 'px">' + esc(p.own.emoji) + '</i>';
+      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + 9).toFixed(1) + 'px">' + esc(emoji) + '</i>';
     });
     marks.innerHTML = html;
   }
