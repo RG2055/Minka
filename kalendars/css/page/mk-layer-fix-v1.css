@@ -6325,7 +6325,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-caf-day { grid-column: 1 / -1 !important; display: grid !important; gap: 5px !important; font-size: 13px !important; justify-items: end !important; }
 .mk-caf-day > i {
   display: block !important; justify-self: stretch !important; height: 6px !important; border-radius: 3px !important;
-  background: linear-gradient(90deg, rgba(255,255,255,.62) var(--before), #ffb77c var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
+  background: linear-gradient(90deg, #7dd3fc var(--before), #ffb77c var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
 }
 .mk-caf-day b { font-weight: 800 !important; font-size: 15px !important; color: #6ee7a8 !important; }
 .mk-caf-day.is-high b { color: #fbbf24 !important; }
@@ -7371,5 +7371,5 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-caf-key { display: grid; gap: 4px; margin-top: 8px; color: #b8c2d0; }
 .mk-caf-key > span { display: flex; align-items: center; gap: 8px; }
 .mk-caf-key i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; }
-.mk-caf-key i.is-before { background: rgba(255,255,255,.62); }
+.mk-caf-key i.is-before { background: #7dd3fc; }
 .mk-caf-key i.is-add { background: #ffb77c; }

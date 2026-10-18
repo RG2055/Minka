@@ -574,8 +574,8 @@
         + '<span class="db-coffee-name"><b>' + esc(shortName(p.name)) + '</b></span>'
         + '<span class="db-coffee-srcs">' + sourceChips(p.sources) + '</span>'
         + '<span class="db-coffee-cups"><b>' + p.cups + '</b><small>' + (p.cups === 1 ? 'tase' : 'tases') + '</small></span>'
-        + '<span class="db-coffee-mg"' + (p.over ? ' title="Dienas virs 400 mg kofeīna: ' + p.over + '"' : '') + '><b>' + mgText(p.mg || 0) + '</b>'
-          + (p.over ? '<small class="db-coffee-over">⚠ ' + p.over + '</small>' : '<small>kofeīns</small>') + '</span>'
+        + '<span class="db-coffee-mg' + (p.over ? ' is-over" title="' + p.over + (p.over === 1 ? ' dienā' : ' dienās') + ' kofeīns pārsniedza drošo dienas devu 400 mg' : '') + '"><b>' + mgText(p.mg || 0) + '</b>'
+          + '<small>' + (p.over ? p.over + ' d. &gt; 400 mg' : 'kofeīns') + '</small></span>'
         + '<span class="db-coffee-eur"><b>' + eur(p.cents) + '</b><small>iztērēts</small></span></button>';
     }), '</div>', CAP);
   }

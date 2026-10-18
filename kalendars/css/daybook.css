@@ -150,7 +150,9 @@
 .db-coffee-cups b { font-size: 18px; font-weight: 800; color: #f5b73f; }
 .db-coffee-mg b { font-size: 15px; font-weight: 800; color: #ffb77c; }
 .db-coffee-mg small { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--stx-t3); }
-.db-coffee-mg small.db-coffee-over { color: #f87171; letter-spacing: 0; }
+.db-coffee-mg { min-width: 120px; }
+.db-coffee-mg.is-over { cursor: help; }
+.db-coffee-mg.is-over small { color: #f87171; }
 .db-coffee-cups small { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--stx-t3); }
 .db-coffee-sum { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 14px; margin-bottom: 16px; border-radius: 14px; background: var(--stx-card2); border: 1px solid var(--stx-border-soft); }
 
