@@ -7337,3 +7337,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 @media (prefers-reduced-motion: reduce) {
   .mk-coffee-mood-row button.is-picked, .rg-pulse-count.is-roll { animation: none !important; }
 }
+/* Saglabāt stays in view with the picker's own 14 px gap when a short window
+   makes the picker scroll (the mood row made it taller). */
+.mk-coffee-picker .mk-coffee-save { position: sticky !important; bottom: 0 !important; z-index: 3 !important; }
