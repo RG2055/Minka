@@ -997,7 +997,7 @@
   // Coffee logged here or in the shell: the bars follow (only a changed
   // total redraws, see the signature in paintScape).
   var coffeeRepaint = 0;
-  function repaintSoon() { clearTimeout(coffeeRepaint); coffeeRepaint = setTimeout(function () { paint(); }, 400); }
+  function repaintSoon() { clearTimeout(coffeeRepaint); coffeeRepaint = setTimeout(function () { paint(); }, 950); }   // a saved coffee's icon lands on the curve at ~0.9 s (calendar.js flyCoffeeToCurve)
   document.addEventListener('minka:coffee-changed', repaintSoon);
   window.addEventListener('storage', function (event) { if (event.key === 'minkaCoffeeCountsV1') repaintSoon(); });
   document.addEventListener('visibilitychange', function () {

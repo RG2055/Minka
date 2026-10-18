@@ -6597,7 +6597,56 @@ function filterFullList(btn) {
       setCoffeePickerBuddyFlag(false);
     }
 
-    function playCoffeeAddedEffect(card) {
+    /* Saved: the chosen drink's own icon flies in an arc from the card to its day on
+       the mood curve, and lands as a small 1-bit dither ring that spreads out. Two
+       elements, transform/opacity only (the compositor animates them), ~1 s, then gone;
+       the ring's picture is drawn once. Without the curve, the older cup flight. */
+    let coffeeRingUrl = '';
+    function coffeeRing() {
+      const bayer = window.MinkaDither && window.MinkaDither.bayer8;
+      if (coffeeRingUrl || !bayer) return coffeeRingUrl;
+      const n = 48, c = document.createElement('canvas'), x = c.getContext('2d'), img = x.createImageData(n, n);
+      for (let py = 0; py < n; py++) for (let px = 0; px < n; px++) {
+        const r = Math.hypot(px + .5 - n / 2, py + .5 - n / 2) / (n / 2), density = 1 - Math.abs(r - .78) / .2;
+        if (density > bayer[(py & 7) * 8 + (px & 7)]) { const i = (py * n + px) * 4; img.data[i] = 255; img.data[i + 1] = 190; img.data[i + 2] = 120; img.data[i + 3] = 255; }
+      }
+      x.putImageData(img, 0, 0);
+      return (coffeeRingUrl = c.toDataURL());
+    }
+    function flyCoffeeToCurve(card, source) {
+      const trend = window.MinkaMoodTrend, plot = document.querySelector('.rg-feedback-card .rg-trend-plot');
+      const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(getCoffeeDayKey());
+      const point = trend && plot && m && trend.point(m[3] + '-' + m[2] + '-' + m[1]);
+      const from = (card && card.querySelector('.mk-coffee-mid')) || card;
+      if (!point || !from || !from.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+      const a = from.getBoundingClientRect(), box = plot.getBoundingClientRect();
+      const sx = a.left + a.width / 2, sy = a.top + a.height / 2, dx = box.left + point.x - sx, dy = box.top + point.y - sy;
+      const lift = Math.min(150, Math.abs(dx) * .3 + 70), frames = [];
+      for (let i = 0; i <= 12; i++) {
+        const t = i / 12, arc = Math.sin(Math.PI * t);
+        frames.push({ transform: `translate(${(dx * t).toFixed(1)}px,${(dy * t - lift * arc).toFixed(1)}px) rotate(${(-16 * arc + 8 * t).toFixed(1)}deg) scale(${(1 + .45 * arc - .55 * t).toFixed(3)})`, opacity: t > .9 ? (1 - t) * 10 : 1 });
+      }
+      const icon = document.createElement('div');
+      icon.className = 'mk-coffee-flyer';
+      icon.innerHTML = coffeeIcon(source);
+      icon.style.left = (sx - 22) + 'px'; icon.style.top = (sy - 22) + 'px';
+      document.body.appendChild(icon);
+      icon.animate(frames, { duration: 900, easing: 'cubic-bezier(.45,.05,.3,1)' }).onfinish = () => {
+        icon.remove();
+        const url = coffeeRing();
+        if (url) [0, 140].forEach(delay => {
+          const ring = document.createElement('div');
+          ring.className = 'mk-coffee-ring';
+          ring.style.left = (sx + dx - 24) + 'px'; ring.style.top = (sy + dy - 24) + 'px'; ring.style.backgroundImage = `url(${url})`;
+          document.body.appendChild(ring);
+          ring.animate([{ transform: 'scale(.35)', opacity: 1 }, { transform: 'scale(2.4)', opacity: 0 }], { duration: 640, delay, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'backwards' }).onfinish = () => ring.remove();
+        });
+      };
+      window.MinkaEmojiParticles?.haptic('light');
+      return true;
+    }
+    function playCoffeeAddedEffect(card, drink) {
+      if (drink && flyCoffeeToCurve(card, drink)) return;
       if (!window.MinkaEmojiParticles) return;
       // The coffee was added to this worker, so the visual must originate from
       // that worker's card (not from the temporary picker UI).
@@ -6849,7 +6898,7 @@ function filterFullList(btn) {
           // (skips the free Philips machine and per-size Narvesen).
           if (selected !== 'philips' && selected !== 'narvesen') saveCoffeePriceOverride(selected, priceCents);
           addCoffeeEntry(name, card, { source: selected, size: selected === 'narvesen' ? size : '', priceCents });
-          playCoffeeAddedEffect(card);
+          playCoffeeAddedEffect(card, selected);
           closeCoffeePicker();
           anchor?.focus({ preventScroll: true });
         });
