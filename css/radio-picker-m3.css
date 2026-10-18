@@ -505,4 +505,3 @@
 #stationOverlay#stationOverlay .station-ehr .ehr-now b { font: 700 12px/1.2 var(--mk-font-plain, Inter, sans-serif); }
 #stationOverlay#stationOverlay .station-ehr .ehr-now i { font: 500 11px/1.2 var(--mk-font-plain, Inter, sans-serif); opacity: .78; }
 #stationOverlay#stationOverlay .station-ehr .station-play-mark { z-index: 3; }
-#stationOverlay#stationOverlay .station-ehr.is-current .ehr-card { box-shadow: 0 0 0 3px #fff inset; }
