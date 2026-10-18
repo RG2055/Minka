@@ -6322,8 +6322,13 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-caf-day { flex-basis: 100% !important; display: grid !important; gap: 4px !important; font-size: 12px !important; }
 .mk-caf-day i {
   display: block !important; height: 4px !important; border-radius: 2px !important;
-  background: linear-gradient(90deg, var(--m3-tertiary, #ffb77c) var(--share), rgba(255,255,255,.1) var(--share)) !important;
+  --caf: #6ee7a8;
+  background: linear-gradient(90deg, var(--caf) var(--before), color-mix(in srgb, var(--caf) 55%, transparent) var(--before) var(--after), rgba(255,255,255,.1) var(--after)) !important;
 }
+.mk-caf-day b { font-weight: 700 !important; color: var(--m3-on-surface) !important; }
+.mk-caf-day.is-high i { --caf: #fbbf24; }
+.mk-caf-day.is-over i { --caf: #f87171; }
+.mk-caf-day.is-over { color: #fca5a5 !important; }
 /* Saglabāt: M3 filled button — pilna kapsula, primary virsma. */
 .mk-coffee-save {
   width: 100% !important;
@@ -7340,3 +7345,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 /* Saglabāt stays in view with the picker's own 14 px gap when a short window
    makes the picker scroll (the mood row made it taller). */
 .mk-coffee-picker .mk-coffee-save { position: sticky !important; bottom: 0 !important; z-index: 3 !important; }
+/* Kafijas izvēlne nekad neritinās: zemā logā tā kļūst plata divās kolonnās
+   (avoti pa kreisi tādā pašā izmērā, pārējais pa labi; calendar.js placePickerNow). */
+.mk-coffee-picker.is-wide { width: 576px !important; display: flex !important; gap: 18px !important; align-items: flex-start !important; }
+.mk-coffee-picker.is-wide > .mk-coffee-col { flex: 1 1 0 !important; min-width: 0 !important; }

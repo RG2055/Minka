@@ -6066,6 +6066,11 @@ function filterFullList(btn) {
     // drink worth 1.25 cups still counts as one cup; only the caffeine readout and the
     // picker's "1.25 tasītes" show the finer figure.
     function coffeeEq(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.max(1, Math.round((m && m.eq) || 1)); }
+    // Caffeine this person has logged in the current duty day, per drink (a Monster is 160 mg).
+    function coffeeMgToday(name) {
+      const sources = getCoffeeDetail(name).sources || {};
+      return Math.round(Object.keys(sources).reduce((sum, k) => sum + (Number(sources[k]) || 0) * ((coffeeSourceMeta[k] || {}).eq || 1) * COFFEE_MG_PER_CUP, 0));
+    }
     function coffeeMg(source) { const m = coffeeSourceMeta[cleanCoffeeSource(source)]; return Math.round(((m && m.eq) || 1) * COFFEE_MG_PER_CUP); }
     // Fixed-price machines (Löfbergs, Cita kafija, energy drinks) can vary between
     // vending machines/stores, so remember the last price the user typed per source
@@ -6672,7 +6677,7 @@ function filterFullList(btn) {
         <div class="mk-coffee-picker-title">Kafija</div>
         <div class="mk-coffee-source-row">
           ${COFFEE_SOURCES.map(source => `
-            <button class="mk-coffee-source ${source === selected ? 'is-on' : ''}" type="button" data-source="${source}">
+            <button class="mk-coffee-source ${source === selected ? 'is-on' : ''}" type="button" data-source="${source}" title="${coffeeSourceMeta[source].label}" aria-label="${coffeeSourceMeta[source].label}">
               <span class="mk-coffee-source-icon">${coffeeIcon(source)}</span>
               <span>${coffeeSourceMeta[source].label}</span>
             </button>`).join('')}
@@ -6738,14 +6743,25 @@ function filterFullList(btn) {
       }
       function placePickerNow() {
         const rect = anchorRect();
-        const pw = 288;   // must match .mk-coffee-picker width
+        let pw = 288;   // .mk-coffee-picker width; the two-column picker measures its own
 
         const mobileShell = document.documentElement.classList.contains('mk-mobile-shell') || window.innerWidth <= 760;
         // Both shells have a bottom nav bar overlaying this (iframed) calendar, so
         // reserve room for it — otherwise the Saglabāt button can land behind the
         // nav and be untappable.
         const bottomGuard = mobileShell ? 126 : 96;
-        picker.style.maxHeight = Math.max(96,window.innerHeight - bottomGuard - 16) + 'px';
+        // Never a scrolling picker, never smaller icons: when it does not fit the
+        // window's height it turns into two columns (sources | the rest), same sizes.
+        const room = Math.max(96, window.innerHeight - bottomGuard - 16);
+        if (!picker.classList.contains('is-wide') && picker.scrollHeight > room && window.innerWidth >= 620) {
+          const left = document.createElement('div'), right = document.createElement('div');
+          left.className = right.className = 'mk-coffee-col';
+          [...picker.children].forEach(el => (el.matches('.mk-coffee-picker-title, .mk-coffee-source-row, .mk-coffee-size-row') ? left : right).appendChild(el));
+          picker.append(left, right);
+          picker.classList.add('is-wide');
+        }
+        pw = picker.offsetWidth || pw;
+        picker.style.maxHeight = room + 'px';
         picker.style.overflowY = 'auto';
         const ph = Math.ceil(picker.getBoundingClientRect().height || 270);
         const left = rect ? Math.max(8, Math.min(window.innerWidth - pw - 8, rect.right - pw)) : 20;
@@ -6789,10 +6805,16 @@ function filterFullList(btn) {
         if (caf) {
           const eq = (coffeeSourceMeta[cleanCoffeeSource(selected)] || {}).eq || 1;
           const cups = eq === 1 ? '1 tasīte' : (Math.round(eq * 100) / 100) + ' tasītes';
-          const mg = coffeeMg(selected), share = Math.min(100, Math.round(mg / 400 * 100));   // EFSA: up to 400 mg a day is safe for adults
+          // EFSA: up to 400 mg a day is safe for adults. This person's duty day so far,
+          // then this drink on top: green to 300 mg, amber to 400, red past it.
+          const mg = coffeeMg(selected), before = coffeeMgToday(name), after = before + mg;
+          const level = after > 400 ? 'is-over' : after > 300 ? 'is-high' : '';
+          const pct = v => Math.min(100, Math.round(v / 400 * 100)) + '%';
           caf.innerHTML = '<span class="mk-caf-chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg><b>≈' + mg + ' mg</b> kofeīna</span>'
-            + '<span class="mk-caf-chip">' + coffeeIcon(selected) + escapeHtml(cups) + '</span>'
-            + '<span class="mk-caf-day" style="--share:' + share + '%"><i></i>' + share + ' % no 400 mg dienas devas</span>';
+            + '<span class="mk-caf-chip">' + buildCoffeeCup('filled') + escapeHtml(cups) + '</span>'
+            + '<span class="mk-caf-day ' + level + '" style="--before:' + pct(before) + ';--after:' + pct(after) + '"><i></i><span>'
+            + (before ? 'Šodien ' + before + ' + ' + mg + ' = <b>' + after + ' mg</b> no 400' : '<b>' + mg + ' mg</b> no 400 mg dienas devas')
+            + (after > 400 ? ' (pāri dienas devai)' : '') + '</span></span>';
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {
