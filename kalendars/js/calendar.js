@@ -6620,14 +6620,16 @@ function filterFullList(btn) {
       x.putImageData(img, 0, 0);
       return (coffeeRingUrl = c.toDataURL());
     }
-    function flyCoffeeToCurve(card, source) {
+    // Without the day on the curve the same drink flies to dest (the coffee counter) instead, without the ring.
+    function flyCoffeeToCurve(card, source, dest) {
       const trend = window.MinkaMoodTrend, plot = document.querySelector('.rg-feedback-card .rg-trend-plot');
       const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(getCoffeeDayKey());
       const point = trend && plot && m && trend.point(m[3] + '-' + m[2] + '-' + m[1]);
       const from = (card && card.querySelector('.mk-coffee-mid')) || card;
-      if (!point || !from || !from.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-      const a = from.getBoundingClientRect(), box = plot.getBoundingClientRect();
-      const sx = a.left + a.width / 2, sy = a.top + a.height / 2, dx = box.left + point.x - sx, dy = box.top + point.y - sy;
+      if (!(point || dest) || !from || !from.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+      const a = from.getBoundingClientRect(), box = point ? plot.getBoundingClientRect() : dest.getBoundingClientRect();
+      const tx = point ? box.left + point.x : box.left + box.width / 2, ty = point ? box.top + point.y : box.top + box.height / 2;
+      const sx = a.left + a.width / 2, sy = a.top + a.height / 2, dx = tx - sx, dy = ty - sy;
       const lift = Math.min(150, Math.abs(dx) * .3 + 70), frames = [];
       for (let i = 0; i <= 12; i++) {
         const t = i / 12, arc = Math.sin(Math.PI * t);
@@ -6640,6 +6642,7 @@ function filterFullList(btn) {
       document.body.appendChild(icon);
       icon.animate(frames, { duration: 900, easing: 'cubic-bezier(.45,.05,.3,1)' }).onfinish = () => {
         icon.remove();
+        if (!point) return;
         const url = coffeeRing();
         if (url) [0, 140].forEach(delay => {
           const ring = document.createElement('div');
@@ -6653,8 +6656,6 @@ function filterFullList(btn) {
       return true;
     }
     function playCoffeeAddedEffect(card, drink) {
-      if (drink && flyCoffeeToCurve(card, drink)) return;
-      if (!window.MinkaEmojiParticles) return;
       // The coffee was added to this worker, so the visual must originate from
       // that worker's card (not from the temporary picker UI).
       const source = (card && card.querySelector('.mk-coffee-mid')) || card;
@@ -6663,6 +6664,8 @@ function filterFullList(btn) {
         || moodCoffeeNumber
         || (card && card.querySelector('.mk-coffee-num'))
         || (card && card.querySelector('.mk-coffee-mid'));
+      if (drink && flyCoffeeToCurve(card, drink, target)) return;
+      if (!window.MinkaEmojiParticles) return;
       window.MinkaEmojiParticles.flyTo(source, target, '☕', {
         count: 1,
         size: 44,
