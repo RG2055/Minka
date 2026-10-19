@@ -1,0 +1,47 @@
+/* Corridor (trial; js/page/corridor.js sets each card's place). The mood card in the middle, the
+   radiographers on the left wall and the radiologists on the right, gently turned toward it.
+   One transform per card, compositor only; no filters. The card under the pointer (found from
+   its resting place by corridor.js, so it never shakes as it moves) turns to face you and
+   springs forward. Loaded after mk-mood-x.css. */
+
+html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view {
+  position: relative !important; display: block !important; padding: 0 !important; overflow: hidden !important;
+  perspective: 1300px; perspective-origin: 50% var(--cor-cy, 50%);
+}
+html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view > .cards-section,
+html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view > .cards-section > .cards-subgrid { display: contents !important; }
+html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view .cards-divider { display: none !important; }
+/* each wall's small heading right above it (corridor.js places it) */
+html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view .cards-section-label {
+  position: absolute !important; top: var(--ly, 0px) !important; left: calc(50% + var(--lx, 0px)) !important; right: auto !important;
+  width: max-content !important; min-height: 0 !important; height: 26px !important; margin: 0 !important; padding: 0 !important;
+  transform: translateX(-50%); z-index: 30;
+}
+
+html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
+  position: absolute !important; top: var(--cor-cy, 50%) !important; left: 50% !important;
+  width: var(--cs, 180px) !important; height: var(--cs, 180px) !important;
+  min-width: 0 !important; max-width: none !important; min-height: 0 !important; max-height: none !important; aspect-ratio: 1 / 1 !important;
+  margin: calc(var(--cs, 180px) / -2) 0 0 calc(var(--cs, 180px) / -2) !important;
+  translate: none !important; rotate: none !important; scale: none !important;
+  transform-origin: 50% 50%;
+  transform: translate3d(var(--cx, 0px), var(--cyo, 0px), var(--cz, 0px)) rotateY(var(--cry, 0deg)) !important;
+  transition: transform 520ms cubic-bezier(.34, 1.4, .5, 1) !important;
+}
+html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):is(.mk-cor-hot, :focus-within) {
+  z-index: 60 !important;
+  transform: translate3d(calc(var(--cx, 0px) + var(--cin, 0px)), var(--cyo, 0px), calc(var(--cz, 0px) + 80px)) rotateY(0deg) !important;
+}
+html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view .card.mk-mid-card.mk-cor-fresh { transition: none !important; }
+@layer mk-mx {
+  html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view .card.rg-feedback-card {
+    position: absolute !important; top: var(--cor-mcy, 50%) !important; left: 50% !important; margin: 0 !important;
+    width: 326px !important; grid-row: auto !important; grid-column: auto !important; z-index: 20 !important;
+    transform: translate(-50%, -50%) translateZ(0) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) { transition: none !important; }
+}
+/* things drawn from a card's screen box would be left behind by the turned cards */
+html.mk-corridor body > .mk-card-addon-portal { display: none !important; }
