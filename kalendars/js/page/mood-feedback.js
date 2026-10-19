@@ -2214,7 +2214,7 @@
     // block). The old cross-section pull-up was designed for two tall desktop
     // rows; in the shortened radio viewport it moved RADIOGRĀFERI over the
     // RADIOLOGI cards and left most of the centre panel empty.
-    if (document.documentElement.classList.contains('host-radio-open') || document.documentElement.classList.contains('mk-hand')) {
+    if (document.documentElement.classList.contains('host-radio-open')) {
       setMoodLift(mood, 0);
       clearMoodSectionLayout(rdSection, rdGrid);
       clearMoodSectionLayout(rgSection, rgGrid);
