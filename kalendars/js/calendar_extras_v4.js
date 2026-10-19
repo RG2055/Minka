@@ -81,11 +81,24 @@
       return { grid, cards, cols, cardH, shiftFontSize, occupiedSlots };
     }).filter(Boolean);
 
+    // Large monitors pin 7 columns (index.html mk-large-monitor-layout-v1). A busy day
+    // (6+ workers + the two-track mood card) then dropped the mood card a row and left a
+    // blank band beside it: give every section the columns that section needs instead, so
+    // the mood card stays beside the workers and both sections keep one card size.
+    const moodPlan = plans.find(p => p.grid.querySelector('.rg-feedback-card'));
+    const wide = moodPlan && moodPlan.occupiedSlots > 7 && window.matchMedia('(min-width: 1800px) and (min-height: 880px)').matches
+      ? Math.min(moodPlan.occupiedSlots, Math.floor((sharedWidth + 9) / 145)) : 0;
+
     plans.forEach(({ grid, cards, cols, cardH, shiftFontSize, occupiedSlots }) => {
-      const signature = [cols, cardH, shiftFontSize, occupiedSlots].join('|');
+      if (wide > 7) {
+        cardH = Math.max(136, Math.min(182, Math.round((sharedWidth - 9 * (wide - 1)) / wide * 0.82)));
+        shiftFontSize = Math.max(24, Math.min(56, Math.round(cardH * 0.34)));
+      }
+      const signature = [cols, cardH, shiftFontSize, occupiedSlots, wide].join('|');
       if (grid.dataset.mkSizeSignature === signature) return;
       grid.dataset.mkSizeSignature = signature;
       grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+      if (wide > 7) grid.style.setProperty('grid-template-columns', `repeat(${wide}, minmax(0, 1fr))`, 'important');
       cards.forEach(card => {
         card.style.aspectRatio = '1 / 0.82';
         card.style.minHeight = cardH + 'px';
