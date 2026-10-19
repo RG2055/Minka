@@ -2188,6 +2188,7 @@
       [].slice.call(grid.children).forEach(function (card) {
         card.style.removeProperty('grid-row');
         card.style.removeProperty('grid-column');
+        card.style.removeProperty('margin-bottom');
       });
     }
   }
@@ -2227,10 +2228,24 @@
       .trim().split(/\s+/).filter(Boolean).length;
     var employees = [].slice.call(rdGrid.querySelectorAll('.card:not(.rg-feedback-card)'));
     var employee = employees[0] || rgGrid.querySelector('.card');
+    clearMoodSectionLayout(null, rdGrid);
     if (mobile || columns < 3 || !employee) {
       setMoodLift(mood, 0);
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
+    }
+    var besideSlots = Math.max(1, columns - 2);
+    // A busy day: more workers than fit beside the mood card. They keep every column; the
+    // mood card starts after them (beside their last row when it has room, else level with
+    // the RADIOGRĀFERI heading) and hangs down beside RADIOGRĀFERI, so no blank band
+    // opens between the two sections and nothing is drawn over a card.
+    var stacked = employees.length > besideSlots;
+    var moodBesideLast = false;
+    if (stacked) {
+      setMoodLift(mood, 0);
+      var rdRows = Math.ceil(employees.length / columns);
+      moodBesideLast = employees.length - (rdRows - 1) * columns <= besideSlots;
+      mood.style.setProperty('grid-row', String(moodBesideLast ? rdRows : rdRows + 1));
     }
     var currentLift = parseFloat(mood.style.getPropertyValue('--rg-mood-lift')) || 0;
     var moodRect = mood.getBoundingClientRect();
@@ -2238,7 +2253,7 @@
     // Pull the next profession into the free tracks only when the feedback
     // module really shares the employee row. On narrow layouts it wraps below
     // the workers; pulling there would create an overlap.
-    if (Math.abs(moodRect.top + currentLift - employeeRect.top) > 4) {
+    if (!stacked && Math.abs(moodRect.top + currentLift - employeeRect.top) > 4) {
       setMoodLift(mood, 0);
       clearMoodSectionLayout(rgSection, rgGrid);
       return;
@@ -2246,9 +2261,16 @@
     // Beside the workers the RADIOLOGI heading row is empty above the mood
     // column, so the card starts there. That strip holds the team curve and
     // everything under it moves up by the same amount.
-    var lift = Math.max(0, Math.round(moodRect.top + currentLift - rdLabel.getBoundingClientRect().top));
-    if (lift !== currentLift) {
+    var lift = stacked ? 0 : Math.max(0, Math.round(moodRect.top + currentLift - rdLabel.getBoundingClientRect().top));
+    if (!stacked && lift !== currentLift) {
       setMoodLift(mood, lift);
+      moodRect = mood.getBoundingClientRect();
+    }
+    if (stacked) {
+      // its row keeps the workers' height (or none of its own): the taller mood card hangs
+      // below the grid (negative bottom margin) rather than stretching the rows apart
+      var hang = moodRect.height - (moodBesideLast ? employeeRect.height : 0);
+      if (hang > 0) mood.style.setProperty('margin-bottom', (-hang).toFixed(1) + 'px', 'important');
       moodRect = mood.getBoundingClientRect();
     }
     var employeeBottom = Math.max.apply(null, employees.map(function(card) {
@@ -2265,10 +2287,18 @@
     var headingSafePullup = Math.max(0, naturalLabelTop - employeeBottom - 12);
     var pullup = Math.min(moodOverhang, headingSafePullup);
     if (pullup < 12) {
-      clearMoodSectionLayout(rgSection, rgGrid);
-      return;
+      if (!stacked || moodOverhang <= 0) {
+        clearMoodSectionLayout(rgSection, rgGrid);
+        return;
+      }
+      pullup = 0;   // stacked: the mood card already hangs into RADIOGRĀFERI, which go beside it
     }
-    var besideSlots = Math.max(1, columns - 2);
+    if (stacked) {
+      // only a sliver of the mood card reaches their first row: move that row just below it
+      // instead, so it keeps every column rather than splitting 4 + 2 for a few pixels
+      var intrude = moodRect.bottom + (parseFloat(getComputedStyle(rgGrid).rowGap) || 0) - (rgGrid.getBoundingClientRect().top - currentPullup - pullup);
+      if (intrude > 0 && intrude < employeeRect.height / 2) pullup -= intrude;
+    }
     var cards = [].slice.call(rgGrid.children).filter(function (card) {
       return card.classList.contains('card');
     });
