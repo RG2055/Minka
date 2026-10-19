@@ -1,4 +1,4 @@
-/* Corridor (trial; js/page/corridor.js sets each card's place). The mood card in the middle, the
+/* Corridor (the desktop view; js/page/corridor.js sets each card's place). The mood card in the middle, the
    radiographers on the left wall and the radiologists on the right, gently turned toward it.
    One transform per card, compositor only; no filters. The card under the pointer (found from
    its resting place by corridor.js, so it never shakes as it moves) turns to face you and

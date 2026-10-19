@@ -1,22 +1,16 @@
-/* Corridor (trial, desktop; css/page/corridor.css). The mood card stands in the middle, close and
+/* Corridor (the desktop calendar's view; css/page/corridor.css). The mood card stands in the middle, close and
    full size; the radiographers line the left wall and the radiologists the right one, as in the
    header, gently turned toward it (22°), the far end going back. Each card gets one transform
    (compositor only), as in radio-coverflow.js. Pointing at a card turns it to face you and
-   springs it forward. Not while the radio's Cover Flow is open.
-   On with ?skats=koridors (remembered), off with ?skats=0. */
+   springs it forward. Not while the radio's Cover Flow is open; a screen too small for the walls
+   (cards under the usual size, more than three rows) keeps the usual grid. */
 (function () {
   'use strict';
   var root = document.documentElement;
-  if (root.classList.contains('mk-mobile-shell')) return;
+  if (root.classList.contains('mk-mobile-shell') || window.MINKA_APP === 'rad') return;   // RG only: /rad keeps its own layout
   var list = document.getElementById('grafiks-list');
   if (!list) return;
-  var q = '';
-  try { q = window.top.location.search + location.search; } catch (_e) { q = location.search; }
-  try {
-    if (/[?&]skats=koridors\b/.test(q)) localStorage.setItem('mkCorridor', '1');
-    if (/[?&]skats=0\b/.test(q)) localStorage.removeItem('mkCorridor');
-    if (localStorage.getItem('mkCorridor') !== '1') return;
-  } catch (_e) { return; }
+  try { localStorage.removeItem('mkCorridor'); } catch (_e) {}   // the old trial's switch: the corridor is simply the view now
 
   var ANGLE = 22, GAP = 14, P = 1300, frame = 0;   // P: the list's perspective (corridor.css)
   var cos = Math.cos(ANGLE * Math.PI / 180), sin = Math.sin(ANGLE * Math.PI / 180);
