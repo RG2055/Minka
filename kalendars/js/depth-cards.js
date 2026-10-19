@@ -20,7 +20,8 @@
   function enabled() {
     return (!finePointer || finePointer.matches)
       && (!reducedMotion || !reducedMotion.matches)
-      && !document.documentElement.classList.contains('mk-mobile-shell');
+      && !document.documentElement.classList.contains('mk-mobile-shell')
+      && !document.documentElement.classList.contains('mk-corridor');   // the corridor has its own lift (corridor.js)
   }
 
   function clamp(value) {
@@ -158,15 +159,24 @@
       activate(card, event);
     }, { passive: true });
 
+    // Whether the pointer is on the card is read from the card's resting box (cached on entering):
+    // the tilting card's own edge moved out from under a still pointer, the tilt dropped, the edge
+    // came back, and the card shook. It is left only when the pointer leaves that box.
+    function inRest(entry, event) {
+      var r = entry.rect;
+      return event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom;
+    }
     host.addEventListener('pointermove', function (event) {
       if (!active || (event.pointerType && event.pointerType !== 'mouse')) return;
-      if (!active.card.contains(event.target)) return;
+      if (!inRest(active, event)) { leave(active.card); return; }
+      active.inside = true;
       pointTarget(active, event.clientX, event.clientY);
     }, { passive: true });
 
     host.addEventListener('pointerout', function (event) {
       var card = closestCard(event.target);
       if (!card || (event.relatedTarget && card.contains(event.relatedTarget))) return;
+      if (active && active.card === card && inRest(active, event)) return;
       leave(card);
     }, { passive: true });
 
