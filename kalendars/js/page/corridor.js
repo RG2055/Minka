@@ -46,7 +46,10 @@
     // shortcut: the dock's height is a fixed guess (100 px), measure it if it ever moves
     var L = list.getBoundingClientRect(), top = L.top, bottom = Math.min(L.bottom, window.innerHeight - 100);
     if (header) { var H = header.getBoundingClientRect(); if (H.bottom > top) top = H.bottom; }
-    var vis = Math.max(240, bottom - top), w = list.clientWidth || 1000;
+    // nothing to measure (a dialog over the calendar, the list hidden): leave the cards as they are,
+    // else they shrink to the smallest size and the look editor copies a squashed card
+    if (!L.width || bottom - top < 240 || list.clientWidth < 600) return;
+    var vis = bottom - top, w = list.clientWidth;
     var cy = top - L.top + vis / 2;
     list.style.setProperty('--cor-cy', cy.toFixed(1) + 'px');
     // The mood card keeps its own size (scaling it upsets its own layout of the pills and the
@@ -62,7 +65,7 @@
       var along = cols * (size + GAP) - GAP, k = P / (P - (along * sin - 60));
       return (inner + along * cos) * k <= edge && (rows * (size + GAP) - GAP) * k + LABEL <= vis - 8;
     }
-    var fresh = [];
+    var fresh = [], tooSmall = false;
     [['rg', -1], ['rd', 1]].forEach(function (side) {
       var cards = cardsOf(side[0]), s = side[1], n = cards.length;
       var label = list.querySelector('.cards-section-label-' + side[0]);
@@ -74,6 +77,7 @@
         for (var it = 0; it < 18; it++) { var mid = (lo + hi) / 2; if (fits(r, c, mid)) lo = mid; else hi = mid; }
         if (lo > size + 0.5) { size = lo; rows = r; cols = c; }
       }
+      if (size < 90) { tooSmall = true; return; }
       var shift = LABEL / 2;   // the wall sits a little lower, its heading above it
       // a short wall (few cards, held back by the height) is centred in its room, not left by the mood card
       var span = cols * (size + GAP) - GAP, k = P / (P - (span * sin - 60));
@@ -99,6 +103,8 @@
         label.style.setProperty('--ly', (cy + shift - rows * (size + GAP) / 2 - LABEL).toFixed(1) + 'px');
       }
     });
+    // walls that would hold only tiny cards (a small window): the usual grid instead
+    if (tooSmall) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); return; }
     if (fresh.length) requestAnimationFrame(function () { requestAnimationFrame(function () {
       fresh.forEach(function (card) { card.classList.remove('mk-cor-fresh'); });
     }); });
