@@ -55,8 +55,23 @@
     // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
     // takes on screen: cards as large as the usual grid's fit beside the mood card.
-    // (a turned card's near edge comes forward and is drawn a little wider: 4 % of its size)
-    var inner = moodHalf + 18, edge = w / 2 - 6, BULGE = 0.04;
+    // Measured as drawn (perspective P, origin at the list's centre): the far cards go back into
+    // the screen and are drawn nearer the middle, the nearest card's outer edge comes forward and is
+    // drawn further out. A wall of cols cards of this size fits when, on screen, its inner edge stays
+    // clear of the mood card and its outer edge inside the list; startFor gives the room it can take.
+    var gapIn = moodHalf + 16, edge = w / 2 - 6;
+    function startFor(cols, size) {
+      var span = cols * (size + GAP) - GAP;
+      var zIn = (size / 2 - span) * sin, zOut = size / 2 * sin;           // depth of the inner and outer edges
+      var lo = gapIn * (P - zIn) / P;                                      // nearest the mood it may start
+      var hi = edge * (P - zOut) / P - span * cos;                         // furthest it may start
+      return hi >= lo ? { lo: lo, hi: hi, span: span } : null;
+    }
+    function largest(cols) {                                               // the largest size whose wall fits across
+      var lo = 0, hi = 400;
+      for (var it = 0; it < 20; it++) { var mid = (lo + hi) / 2; if (startFor(cols, mid)) lo = mid; else hi = mid; }
+      return lo;
+    }
     // room for the wall's heading: its real height (icon included) and a gap, so neither the heading
     // nor a card lifted under the pointer covers the other
     var LABEL = [].slice.call(list.querySelectorAll('.cards-section-label')).reduce(function (m, l) { return Math.max(m, l.offsetHeight); }, 30) + 14;
@@ -68,18 +83,20 @@
       if (!n) return;
       // The largest cards whose wall fits the strip's height; when none at the usual size does (a
       // short window), the usual size in the fewest rows — the corridor then scrolls a little.
-      var rows = 0, cols = 0, size = 0, fullFit = false;
+      var rows = 0, cols = 0, size = 0, fits = [];
       for (var r = 1; r <= n; r++) {
-        var c = Math.ceil(n / r), byW = (edge - inner - (c - 1) * GAP * cos) / (c * cos + BULGE), byH = (vis - LABEL - (r - 1) * GAP) / r;
+        var c = Math.ceil(n / r), byW = largest(c), byH = (vis - LABEL - (r - 1) * GAP) / r;
         if (byW < MIN || r > MAXROWS) continue;
-        if (byH >= MIN) {
-          var sz = Math.min(byW, byH, MAX);
-          if (!fullFit || sz > size) { size = sz; rows = r; cols = c; fullFit = true; }
-        } else if (!fullFit && !rows) { size = Math.min(byW, MAX, Math.max(MIN, byH)); rows = r; cols = c; }
+        if (byH >= MIN) fits.push({ r: r, c: c, size: Math.min(byW, byH, MAX) });
+        else if (!fits.length && !rows) { size = Math.min(byW, MAX, Math.max(MIN, byH)); rows = r; cols = c; }
+      }
+      if (fits.length) {   // the largest cards that fit; between equal sizes (both at MAX), two to a row
+        var best = fits.reduce(function (m, f) { return f.size > m.size + 0.5 || (Math.abs(f.size - m.size) <= 0.5 && f.c === 2 && m.c !== 2) ? f : m; });
+        size = best.size; rows = best.r; cols = best.c;
       }
       if (!rows) { tooSmall = true; return; }
-      var span = cols * (size + GAP) - GAP;
-      var start = inner + Math.max(0, (edge - inner) - span * cos - size * BULGE) / 2;   // a short wall is centred in its room
+      var room = startFor(cols, size), span = room.span;
+      var start = (room.lo + room.hi) / 2;   // a short wall is centred in the room it may take
       walls.push({ cards: cards, s: s, label: label, rows: rows, cols: cols, size: size, span: span, start: start, h: LABEL + rows * (size + GAP) - GAP });
     });
     // walls that would hold only tiny cards (a small window): the usual grid instead

@@ -162,6 +162,11 @@
     canvas.className = 'mk-initials-dither';
     canvas.setAttribute('aria-hidden', 'true');
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    // Clipped to the card's rounded outline by clip-path: a drawn canvas gets a layer of its own
+    // and its border-radius was not honoured, so on a card that lets its decorations stick out
+    // (overflow visible) the letters showed past the rounded corners.
+    var radius = getComputedStyle(card).borderRadius;
+    canvas.style.clipPath = radius && radius !== '0px' ? 'inset(0 round ' + radius + ')' : '';
     if (!canvas.isConnected) {
       var under = kind.after && card.querySelector(kind.after);
       if (under) under.after(canvas); else card.prepend(canvas);
