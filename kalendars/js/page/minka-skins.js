@@ -1492,8 +1492,11 @@
     if (!window.MinkaApi || !window.MinkaApi.apiFetch) { warnLocalOnly(); return; }
     var revision = ++cloudRevision;
     cloudWrites++;
-    var packed = packSkin(sk, name) || null;
-    function post(value) { return window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: cloudWorkerName(name), skin: value } }); }
+    var packed = packSkin(sk, name) || null, sent = packed;
+    function post(value, worker) { sent = value; return window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: worker || cloudWorkerName(name), skin: value } }); }
+    // The same person saved under an older spelling of the name (one identity, normName):
+    // that copy gets the same look, else its old decoration comes back on the next pull.
+    var aliases = (cloudKeys[normName(name)] || []).filter(function(k) { return k !== cloudWorkerName(name); });
     return post(packed)
       // An API that does not know the lens position yet (fp:) refuses the whole
       // look: send it again without that part, so everything else still syncs.
@@ -1506,6 +1509,11 @@
         return (lean.length < packed.split(';').length ? post(lean.join(';')) : Promise.resolve(r)).then(function(r2) {
           return r2.ok || r2.status !== 400 || single.length === lean.length ? r2 : post(single.join(';'));
         });
+      })
+      .then(function(r) {
+        if (!r.ok) return r;
+        var value = sent;
+        return aliases.reduce(function(chain, k) { return chain.then(function() { return post(value, k); }); }, Promise.resolve()).then(function() { return r; });
       })
       .then(function(r) { if (!r.ok) throw 0; if (!silent && revision===cloudRevision && typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
       .catch(warnLocalOnly)
@@ -1560,6 +1568,7 @@
     return skin;
   }
   var cloudPullTimer = 0;
+  var cloudKeys = {};   // identity -> the cloud's own keys for it (from the last pull)
   var cloudPullInFlight = false;
   function sameAppearanceMap(a, b) {
     var keys = Object.keys(a);
@@ -1594,8 +1603,10 @@
         ? window.MinkaCardAddons.getAll() : {};
       var cloudAddons = {};
       var addonAuthority = {};
+      cloudKeys = {};
       Object.keys(map).forEach(function(k) {
         var key = normName(k);
+        (cloudKeys[key] = cloudKeys[key] || []).push(k);
         var appearance = unpackAppearance(map[k]);
         if (appearance.skin) all[key] = appearance.skin;
         if (appearance.addonVersion) {

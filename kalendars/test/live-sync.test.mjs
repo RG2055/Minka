@@ -327,3 +327,14 @@ test('only the latest explicit appearance save reports success', async () => {
   first.resolve({ok:true});await tick();
   assert.equal(notices.length,1);assert.equal(notices[0].type,'ok');
 });
+
+test('a save also rewrites the same person kept under another spelling, so a removed decoration cannot come back', async () => {
+  const client=skinClient(),posts=[];
+  client.reply({ ANNA: 'img:1;av:1', anna: 'img:1;av:1' });
+  await client.context.skinTest.cloudPull(0);
+  client.context.MinkaApi.apiFetch=(path,options)=>{posts.push(options.json);return Promise.resolve({ok:true});};
+  client.context.skinTest.setSkin('ANNA',{t:'img',id:'2'});
+  await tick();await tick();
+  assert.deepEqual(posts.map(p=>p.worker),['ANNA','anna']);
+  assert.equal(posts[0].skin,posts[1].skin);
+});
