@@ -62,7 +62,10 @@
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
     // takes on screen: cards as large as the usual grid's fit beside the mood card.
     var inner = moodHalf + 18, edge = w / 2 - 10, room = (edge - inner) / cos;
-    var LABEL = 30, MIN = 150, MAX = 260;   // MIN: the usual grid's card; the wall's small heading above it
+    // room for the wall's heading: its real height (icon included) and a gap, so neither the heading
+    // nor a card lifted under the pointer covers the other
+    var LABEL = [].slice.call(list.querySelectorAll('.cards-section-label')).reduce(function (m, l) { return Math.max(m, l.offsetHeight); }, 30) + 14;
+    var MIN = 150, MAX = 260;   // MIN: the usual grid's card
     var fresh = [], tooSmall = false, walls = [];
     [['rg', -1], ['rd', 1]].forEach(function (side) {
       var cards = cardsOf(side[0]), s = side[1], n = cards.length;
@@ -90,6 +93,10 @@
     // strip (or starts at its top when it does not fit) and the shorter one hangs from the same top.
     var tallest = walls.reduce(function (m, wall) { return Math.max(m, wall.h); }, 0);
     var wallTop = tallest <= vis ? base + (vis - tallest) / 2 : base + 4;
+    // the corridor's end lies a dock's height (and the lift of a card under the pointer) below the
+    // lowest card, so the last row scrolls fully above the dock instead of staying cut under it
+    var end = Math.max(wallTop + tallest, moodH > vis ? base + moodH + 8 : 0) + (L.bottom - bottom) + 24;
+    list.style.setProperty('--cor-end', end.toFixed(0) + 'px');
     walls.forEach(function (wall) {
       var cards = wall.cards, s = wall.s, label = wall.label, rows = wall.rows, cols = wall.cols, size = wall.size, span = wall.span, start = wall.start;
       cards.forEach(function (card, i) {
@@ -140,6 +147,8 @@
     setHot(found);
   }, { passive: true });
   list.addEventListener('pointerleave', function () { setHot(null); });
+  // scrolling moves the cards under a still pointer: their resting places are read again
+  list.addEventListener('scroll', function () { rests = null; setHot(null); }, { passive: true });
   // the roster is rebuilt on a day switch: placed before that frame is painted (no flying in);
   // the root's class only matters when the radio opens or closes
   new MutationObserver(function () { if (frame) { cancelAnimationFrame(frame); frame = 0; } place(); }).observe(list, { childList: true });
