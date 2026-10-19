@@ -61,11 +61,12 @@
     // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
     // takes on screen: cards as large as the usual grid's fit beside the mood card.
-    var inner = moodHalf + 18, edge = w / 2 - 10, room = (edge - inner) / cos;
+    // (a turned card's near edge comes forward and is drawn a little wider: 4 % of its size)
+    var inner = moodHalf + 18, edge = w / 2 - 6, BULGE = 0.04;
     // room for the wall's heading: its real height (icon included) and a gap, so neither the heading
     // nor a card lifted under the pointer covers the other
     var LABEL = [].slice.call(list.querySelectorAll('.cards-section-label')).reduce(function (m, l) { return Math.max(m, l.offsetHeight); }, 30) + 14;
-    var MIN = 150, MAX = 260;   // MIN: the usual grid's card
+    var MIN = 140, MAX = 240, MAXROWS = 3;   // MIN: about the usual grid's card; more rows than 3: the usual grid
     var fresh = [], tooSmall = false, walls = [];
     [['rg', -1], ['rd', 1]].forEach(function (side) {
       var cards = cardsOf(side[0]), s = side[1], n = cards.length;
@@ -75,8 +76,8 @@
       // short window), the usual size in the fewest rows — the corridor then scrolls a little.
       var rows = 0, cols = 0, size = 0, fullFit = false;
       for (var r = 1; r <= n; r++) {
-        var c = Math.ceil(n / r), byW = (room - (c - 1) * GAP) / c, byH = (vis - LABEL - (r - 1) * GAP) / r;
-        if (byW < MIN) continue;
+        var c = Math.ceil(n / r), byW = (edge - inner - (c - 1) * GAP * cos) / (c * cos + BULGE), byH = (vis - LABEL - (r - 1) * GAP) / r;
+        if (byW < MIN || r > MAXROWS) continue;
         if (byH >= MIN) {
           var sz = Math.min(byW, byH, MAX);
           if (!fullFit || sz > size) { size = sz; rows = r; cols = c; fullFit = true; }
@@ -84,7 +85,7 @@
       }
       if (!rows) { tooSmall = true; return; }
       var span = cols * (size + GAP) - GAP;
-      var start = inner + Math.max(0, (edge - inner) - span * cos) / 2;   // a short wall is centred in its room
+      var start = inner + Math.max(0, (edge - inner) - span * cos - size * BULGE) / 2;   // a short wall is centred in its room
       walls.push({ cards: cards, s: s, label: label, rows: rows, cols: cols, size: size, span: span, start: start, h: LABEL + rows * (size + GAP) - GAP });
     });
     // walls that would hold only tiny cards (a small window): the usual grid instead
