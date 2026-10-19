@@ -5,7 +5,7 @@
    springs forward. Loaded after mk-mood-x.css. */
 
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view {
-  position: relative !important; display: block !important; padding: 0 !important; overflow: hidden !important;
+  position: relative !important; display: block !important; padding: 0 !important; overflow: hidden auto !important;
   perspective: 1300px; perspective-origin: 50% var(--cor-cy, 50%);
 }
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view > .cards-section,

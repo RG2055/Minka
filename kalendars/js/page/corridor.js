@@ -1,6 +1,6 @@
 /* Corridor (trial, desktop; css/page/corridor.css). The mood card stands in the middle, close and
    full size; the radiographers line the left wall and the radiologists the right one, as in the
-   header, gently turned toward it (22°), the nearer end larger. Each card gets one transform
+   header, gently turned toward it (22°), the far end going back. Each card gets one transform
    (compositor only), as in radio-coverflow.js. Pointing at a card turns it to face you and
    springs it forward. Not while the radio's Cover Flow is open.
    On with ?skats=koridors (remembered), off with ?skats=0. */
@@ -50,38 +50,48 @@
     // else they shrink to the smallest size and the look editor copies a squashed card
     if (!L.width || bottom - top < 240 || list.clientWidth < 600) return;
     var vis = bottom - top, w = list.clientWidth;
-    var cy = top - L.top + vis / 2;
+    var base = top - L.top;   // the seen strip's top in the list's own box (the corridor's place does not follow its scrolling)
+    var cy = base + vis / 2;
     list.style.setProperty('--cor-cy', cy.toFixed(1) + 'px');
     // The mood card keeps its own size (scaling it upsets its own layout of the pills and the
     // orbit); a card taller than the strip starts at the strip's top instead of being centred.
     var mood = list.querySelector('.rg-feedback-card');
     var moodH = mood ? mood.offsetHeight : 0, moodHalf = mood ? mood.offsetWidth / 2 : 0;
-    list.style.setProperty('--cor-mcy', (moodH > vis ? top - L.top + moodH / 2 + 4 : cy).toFixed(1) + 'px');
-    var inner = moodHalf + 30, edge = w / 2 - 10;   // the wall runs from beside the mood card to the list's edge
-    var LABEL = 30;                                    // the wall's small heading above it
-    // Does a wall of rows × cols cards of this size fit? Measured as seen: the outer (nearest)
-    // column comes forward, so it is drawn larger (perspective P) — it must still end at the edge.
-    function fits(rows, cols, size) {
-      var along = cols * (size + GAP) - GAP, k = P / (P - (along * sin - 60));
-      return (inner + along * cos) * k <= edge && (rows * (size + GAP) - GAP) * k + LABEL <= vis - 8;
-    }
-    var fresh = [], tooSmall = false;
+    list.style.setProperty('--cor-mcy', (moodH > vis ? base + moodH / 2 + 4 : cy).toFixed(1) + 'px');
+    // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
+    // at the screen's depth and the others go back into it, so the wall's width is exactly what it
+    // takes on screen: cards as large as the usual grid's fit beside the mood card.
+    var inner = moodHalf + 18, edge = w / 2 - 10, room = (edge - inner) / cos;
+    var LABEL = 30, MIN = 150, MAX = 260;   // MIN: the usual grid's card; the wall's small heading above it
+    var fresh = [], tooSmall = false, walls = [];
     [['rg', -1], ['rd', 1]].forEach(function (side) {
       var cards = cardsOf(side[0]), s = side[1], n = cards.length;
       var label = list.querySelector('.cards-section-label-' + side[0]);
       if (!n) return;
-      // the rows × columns that give the largest cards in this wall (a narrow wall stacks them higher)
-      var rows = 1, cols = n, size = 0;
+      // The largest cards whose wall fits the strip's height; when none at the usual size does (a
+      // short window), the usual size in the fewest rows — the corridor then scrolls a little.
+      var rows = 0, cols = 0, size = 0, fullFit = false;
       for (var r = 1; r <= n; r++) {
-        var c = Math.ceil(n / r), lo = 40, hi = 260;
-        for (var it = 0; it < 18; it++) { var mid = (lo + hi) / 2; if (fits(r, c, mid)) lo = mid; else hi = mid; }
-        if (lo > size + 0.5) { size = lo; rows = r; cols = c; }
+        var c = Math.ceil(n / r), byW = (room - (c - 1) * GAP) / c, byH = (vis - LABEL - (r - 1) * GAP) / r;
+        if (byW < MIN) continue;
+        if (byH >= MIN) {
+          var sz = Math.min(byW, byH, MAX);
+          if (!fullFit || sz > size) { size = sz; rows = r; cols = c; fullFit = true; }
+        } else if (!fullFit && !rows) { size = Math.min(byW, MAX, Math.max(MIN, byH)); rows = r; cols = c; }
       }
-      if (size < 90) { tooSmall = true; return; }
-      var shift = LABEL / 2;   // the wall sits a little lower, its heading above it
-      // a short wall (few cards, held back by the height) is centred in its room, not left by the mood card
-      var span = cols * (size + GAP) - GAP, k = P / (P - (span * sin - 60));
-      var start = inner + Math.max(0, edge / k - inner - span * cos) / 2;
+      if (!rows) { tooSmall = true; return; }
+      var span = cols * (size + GAP) - GAP;
+      var start = inner + Math.max(0, (edge - inner) - span * cos) / 2;   // a short wall is centred in its room
+      walls.push({ cards: cards, s: s, label: label, rows: rows, cols: cols, size: size, span: span, start: start, h: LABEL + rows * (size + GAP) - GAP });
+    });
+    // walls that would hold only tiny cards (a small window): the usual grid instead
+    if (tooSmall) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); return; }
+    // Both walls start at one height, their headings on one line: the taller wall is centred in the
+    // strip (or starts at its top when it does not fit) and the shorter one hangs from the same top.
+    var tallest = walls.reduce(function (m, wall) { return Math.max(m, wall.h); }, 0);
+    var wallTop = tallest <= vis ? base + (vis - tallest) / 2 : base + 4;
+    walls.forEach(function (wall) {
+      var cards = wall.cards, s = wall.s, label = wall.label, rows = wall.rows, cols = wall.cols, size = wall.size, span = wall.span, start = wall.start;
       cards.forEach(function (card, i) {
         // a new day's cards stand in place at once: switching days has no motion
         if (!card.style.getPropertyValue('--cs')) { card.classList.add('mk-cor-fresh'); fresh.push(card); }
@@ -89,8 +99,8 @@
         var along = col * (size + GAP) + size / 2;
         card.style.setProperty('--cs', size.toFixed(1) + 'px');
         card.style.setProperty('--cx', (s * (start + along * cos)).toFixed(1) + 'px');
-        card.style.setProperty('--cyo', ((row - (rows - 1) / 2) * (size + GAP) + shift).toFixed(1) + 'px');
-        card.style.setProperty('--cz', (along * sin - 60).toFixed(1) + 'px');
+        card.style.setProperty('--cyo', (wallTop + LABEL + row * (size + GAP) + size / 2 - cy).toFixed(1) + 'px');
+        card.style.setProperty('--cz', ((along - span + size / 2) * sin).toFixed(1) + 'px');
         card.style.setProperty('--cry', (-s * ANGLE) + 'deg');
         // pointed at it comes forward and grows: it also moves that much toward the middle, so its
         // outer edge never passes the list's edge (which clips it)
@@ -98,13 +108,10 @@
         card.style.setProperty('z-index', String(10 + col), 'important');
       });
       if (label) {
-        var mid = start + span / 2 * cos;
-        label.style.setProperty('--lx', (s * mid).toFixed(1) + 'px');
-        label.style.setProperty('--ly', (cy + shift - rows * (size + GAP) / 2 - LABEL).toFixed(1) + 'px');
+        label.style.setProperty('--lx', (s * (start + span / 2 * cos)).toFixed(1) + 'px');
+        label.style.setProperty('--ly', wallTop.toFixed(1) + 'px');
       }
     });
-    // walls that would hold only tiny cards (a small window): the usual grid instead
-    if (tooSmall) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); return; }
     if (fresh.length) requestAnimationFrame(function () { requestAnimationFrame(function () {
       fresh.forEach(function (card) { card.classList.remove('mk-cor-fresh'); });
     }); });
