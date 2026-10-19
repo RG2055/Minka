@@ -145,7 +145,7 @@
       +     '<div class="hx-row hx-row-tools">'
       +       '<div class="hx-searchbox">'
       +         '<button type="button" class="hx-search" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="Control+K Meta+K /">'
-      +           icon('search') + '<span class="hx-search-ph">Meklēt datumu, numuru vai funkciju</span>'
+      +           icon('search') + '<span class="hx-search-ph">Meklēt datumu vai numuru</span>'
       +           '<kbd class="hx-kbd">' + (isMac ? '⌘' : 'Ctrl') + ' K</kbd></button>'
       +         '<span class="hx-searchbox-sep" aria-hidden="true"></span>'
       +         '<button type="button" class="hx-tools" data-menu="tools" aria-haspopup="menu" aria-expanded="false" title="Tālruņi, maiņu joslas, nakts sadalījums, izskats">'

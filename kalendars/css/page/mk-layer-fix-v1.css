@@ -7383,3 +7383,9 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 .mk-caf-key i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; }
 .mk-caf-key i.is-before { background: rgba(255,183,124,.5); }
 .mk-caf-key i.is-add { background: #ffb77c; }
+
+/* Galvene: sīkākais teksts lasāms no attāluma (ui-ux-pro-max: nekas zem ~11–12 px) — laika
+   lineāla stundas un "atlicis" (nedēļas dienas: mk-header-x.css, @layer mk-hx); augstums nemainās */
+html:not(.mk-mobile-shell) #grafiks-app #minkaBarWrap #shift-progress-wrap .sl-rtick.sl-rtick.sl-rtick.sl-rtick { font-size: clamp(12px, .7vw, 13.5px) !important; }
+html:not(.mk-mobile-shell) #grafiks-app #minkaBarWrap #shift-progress-wrap .sl-rn-word.sl-rn-word.sl-rn-word.sl-rn-word { font-size: clamp(11px, .633vw, 12.5px) !important; }
+html:not(.mk-mobile-shell) #grafiks-app #minkaBarWrap #shift-progress-wrap .sl-ruler-now strong.sl-rn-remaining.sl-rn-remaining { font-size: clamp(12.5px, .7vw, 13.5px) !important; }
