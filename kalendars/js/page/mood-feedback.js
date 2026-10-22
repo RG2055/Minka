@@ -1826,6 +1826,136 @@
       if (refs && refs.ring && refs.ring.firstChild) placeMoodStaff(refs.ring);
     }, 180);
   }, { passive: true });
+  /* Noskaņa X "burka": the shift's drinks (its own icon for each: Monster, Philips…) and its
+     ratings (their faces) gather as marbles at the bottom of the glass. A new one drops in and
+     rolls to rest; then nothing runs. A day switch, a first paint or reduced motion: everything
+     stands at rest at once. One small canvas inside the lens, a few dozen circles at most. */
+  var JAR_MAX = 28;
+  var jar = { day: '', bodies: [], cv: null, ctx: null, D: 0, dpr: 1, raf: 0, still: 0, steps: 0, sprites: {} };
+  function jarHash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; }
+  function jarItems(stats) {
+    var out = [], counts = pulseCounts();
+    reactions.forEach(function (r) {
+      for (var i = 0, n = Math.max(0, Number(counts[r.key]) || 0); i < n && out.length < JAR_MAX; i++) out.push({ id: 'r:' + r.key + ':' + i, kind: 'r', key: r.key, emoji: r.emoji });
+    });
+    (stats.sources || []).forEach(function (src) {
+      for (var i = 0, n = Math.max(0, Number(src.count) || 0); i < n && out.length < JAR_MAX; i++) out.push({ id: 'c:' + src.key + ':' + i, kind: 'c', key: src.key });
+    });
+    return out;
+  }
+  // A picture per kind, made once: a drink's own icon (its PNG where the icon is one), a face drawn in the emoji font.
+  function jarSprite(item) {
+    var k = item.kind + ':' + item.key;
+    if (jar.sprites[k]) return jar.sprites[k];
+    var sp = jar.sprites[k] = { ready: false, img: null };
+    if (item.kind === 'r') {
+      var c = document.createElement('canvas'); c.width = c.height = 96;
+      var x = c.getContext('2d');
+      x.font = '80px "Fluent Emoji Gaps","Fluent Emoji Color","Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      x.textAlign = 'center'; x.textBaseline = 'middle';
+      var draw = function () { x.clearRect(0, 0, 96, 96); x.fillText(item.emoji, 48, 52); sp.img = c; sp.ready = true; jarDraw(); };
+      if (document.fonts && document.fonts.load) document.fonts.load(x.font, item.emoji).then(draw, draw); else draw();
+      return sp;
+    }
+    var svg = moodSourceIcon(item.key), png = /<image[^>]+href="([^"]+)"/.exec(svg);
+    if (!svg) return sp;
+    var img = new Image();
+    img.onload = function () { sp.img = img; sp.ready = true; jarDraw(); };
+    img.src = png ? png[1] : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg.indexOf('xmlns') < 0 ? svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"') : svg);
+    return sp;
+  }
+  function jarCanvas(refs) {
+    if (jar.cv && jar.cv.isConnected && jar.cv.parentNode === refs.wrap) return true;
+    var lens = refs.wrap && refs.wrap.querySelector('.rg-mood-glass-lens');
+    var w = (lens && lens.offsetWidth) || 124;
+    if (!refs.wrap) return false;
+    jar.cv = document.createElement('canvas');
+    jar.cv.className = 'mx-jar';
+    jar.cv.setAttribute('aria-hidden', 'true');
+    jar.D = Math.round(w * .84);
+    jar.dpr = Math.min(2, window.devicePixelRatio || 1);
+    jar.cv.width = jar.cv.height = Math.round(jar.D * jar.dpr);
+    jar.cv.style.width = jar.cv.style.height = jar.D + 'px';
+    if (lens) refs.wrap.insertBefore(jar.cv, lens); else refs.wrap.appendChild(jar.cv);
+    jar.ctx = jar.cv.getContext('2d');
+    jar.bodies = []; jar.day = '';
+    return true;
+  }
+  function jarRadius(n) { return jar.D * (n <= 6 ? .15 : n <= 12 ? .11 : n <= 20 ? .09 : .078); }
+  function jarStep() {   // one 1/60 s step: gravity, the round glass, the marbles against each other
+    var B = jar.bodies, R = jar.D / 2, n = B.length, i, j, a, b;
+    for (i = 0; i < n; i++) { a = B[i]; a.vy += .32; a.vx *= .992; a.vy *= .992; a.x += a.vx; a.y += a.vy; a.rot += a.vx / a.r; }
+    for (var pass = 0; pass < 3; pass++) {
+      for (i = 0; i < n; i++) for (j = i + 1; j < n; j++) {
+        a = B[i]; b = B[j];
+        var dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || .001, min = a.r + b.r;
+        if (d >= min) continue;
+        var nx = dx / d, ny = dy / d, push = (min - d) / 2;
+        a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
+        var rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+        if (rv < 0) { var imp = -rv * .62; a.vx -= nx * imp; a.vy -= ny * imp; b.vx += nx * imp; b.vy += ny * imp; }
+      }
+      for (i = 0; i < n; i++) {
+        a = B[i];
+        var ox = a.x - R, oy = a.y - R, od = Math.sqrt(ox * ox + oy * oy) || .001, lim = R - a.r - 1;
+        if (od <= lim) continue;
+        var ux = ox / od, uy = oy / od;
+        a.x = R + ux * lim; a.y = R + uy * lim;
+        var vn = a.vx * ux + a.vy * uy;
+        if (vn > 0) { a.vx -= vn * ux * 1.3; a.vy -= vn * uy * 1.3; a.vx *= .9; a.vy *= .9; }
+      }
+    }
+  }
+  function jarDraw() {
+    var ctx = jar.ctx; if (!ctx) return;
+    var s = jar.dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, jar.cv.width, jar.cv.height);
+    jar.bodies.forEach(function (b) {
+      var sp = b.sprite; if (!sp || !sp.ready) return;
+      ctx.setTransform(s, 0, 0, s, b.x * s, b.y * s);
+      ctx.rotate(b.rot);
+      ctx.drawImage(sp.img, -b.r * 1.08, -b.r * 1.08, b.r * 2.16, b.r * 2.16);
+    });
+  }
+  function jarRun() {
+    jar.raf = 0;
+    if (!jar.cv || !jar.cv.isConnected) return;
+    jarStep();
+    jarDraw();
+    var moving = jar.bodies.some(function (b) { return Math.abs(b.vx) + Math.abs(b.vy) > .08; });
+    jar.still = moving ? 0 : jar.still + 1;
+    if (++jar.steps < 360 && jar.still < 12) jar.raf = requestAnimationFrame(jarRun);
+  }
+  function jarSettle() { for (var k = 0; k < 420; k++) jarStep(); jar.bodies.forEach(function (b) { b.vx = b.vy = 0; }); }
+  function mxJarSync(refs, stats) {
+    if (!jarCanvas(refs)) return;
+    var day = shiftDayKey(), items = jarItems(stats), r = jarRadius(items.length);
+    var instant = day !== jar.day || document.documentElement.dataset.motion === 'reduced' || document.hidden;
+    var have = {}, fresh = [];
+    jar.bodies.forEach(function (b) { have[b.id] = b; });
+    var next = items.map(function (it) {
+      var b = have[it.id];
+      if (b) { b.r = r; return b; }
+      var h = jarHash(it.id);
+      b = { id: it.id, sprite: jarSprite(it), r: r, x: jar.D / 2 + (h - .5) * jar.D * .5, y: r + 2, vx: (h - .5) * 1.4, vy: 0, rot: (h - .5) * 1.2 };
+      fresh.push(b);
+      return b;
+    });
+    if (next.length === jar.bodies.length && !fresh.length && day === jar.day) return;   // nothing changed
+    jar.day = day;
+    jar.bodies = next;
+    if (instant) {
+      // at rest at once, the same for the same day: dropped one by one, in their order
+      jar.bodies.forEach(function (b, i) { b.y = jar.D / 2 - jar.D * .38 - i * r * .6; });
+      jarSettle();
+      if (jar.raf) { cancelAnimationFrame(jar.raf); jar.raf = 0; }
+      jarDraw();
+      return;
+    }
+    jar.steps = 0; jar.still = 0;
+    if (!jar.raf) jar.raf = requestAnimationFrame(jarRun);
+  }
   function paintMoodCoffee(force) {
     var refs = moodRefs();
     if (!refs) return;
@@ -1857,6 +1987,7 @@
         }, 760);
       });
     }
+    if (MX) mxJarSync(refs, stats);
     // Mount the fixed side furniture before measuring the scatter field. If it
     // is revealed afterwards, a perfectly valid coffee position can suddenly
     // sit under the counter.
