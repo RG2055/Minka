@@ -29,28 +29,55 @@
     });
     list.querySelectorAll('.cards-section-label').forEach(function (l) { l.style.removeProperty('--lx'); l.style.removeProperty('--ly'); });
   }
-  function place() {
-    frame = 0;
-    rests = null; hot = null;
-    var was = root.classList.contains('mk-corridor');
-    if (!active()) { if (was) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); } return; }
-    root.classList.add('mk-corridor');
-    if (!was && window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout();
+  // The strip, headings and mood card as last measured. Measuring forces the whole page's layout
+  // in the middle of a day switch (the cards are still being dressed): the switch itself reuses
+  // these, and the frame after it measures again (nothing moves unless a size really changed).
+  var geo = null;
+  // its height settles after the switch (the note, the counts): placed again, measured afresh
+  var moodSeen = null, moodRO = window.ResizeObserver ? new ResizeObserver(function () { geo = null; schedule(); }) : null;
+  function measure() {
     // the strip of the list really seen: under the header, above the dock
     // shortcut: the dock's height is a fixed guess (100 px), measure it if it ever moves
     var L = list.getBoundingClientRect(), top = L.top, bottom = Math.min(L.bottom, window.innerHeight - 100);
     if (header) { var H = header.getBoundingClientRect(); if (H.bottom > top) top = H.bottom; }
     // nothing to measure (a dialog over the calendar, the list hidden): leave the cards as they are,
     // else they shrink to the smallest size and the look editor copies a squashed card
-    if (!L.width || bottom - top < 240 || list.clientWidth < 600) return;
-    var vis = bottom - top, w = list.clientWidth;
-    var base = top - L.top;   // the seen strip's top in the list's own box (the corridor's place does not follow its scrolling)
+    if (!L.width || bottom - top < 240 || list.clientWidth < 600) return null;
+    var mood = list.querySelector('.rg-feedback-card');
+    return {
+      iw: window.innerWidth, ih: window.innerHeight,
+      vis: bottom - top, w: list.clientWidth, below: L.bottom - bottom,
+      base: top - L.top,   // the seen strip's top in the list's own box (the corridor's place does not follow its scrolling)
+      moods: {}, moodHalf: mood ? mood.offsetWidth / 2 : 0,
+      // room for the wall's heading: its real height (icon included) and a gap, so neither the heading
+      // nor a card lifted under the pointer covers the other
+      LABEL: [].slice.call(list.querySelectorAll('.cards-section-label')).reduce(function (m, l) { return Math.max(m, l.offsetHeight); }, 30) + 14
+    };
+  }
+  function place(fast) {
+    frame = 0;
+    rests = null; hot = null;
+    var was = root.classList.contains('mk-corridor');
+    if (!active()) { if (was) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); } return; }
+    root.classList.add('mk-corridor');
+    if (!was && window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout();
+    var g = fast === true && geo && geo.iw === window.innerWidth && geo.ih === window.innerHeight ? geo : (geo = measure());
+    if (!g) return;
+    var vis = g.vis, w = g.w, base = g.base, LABEL = g.LABEL;
     var cy = base + vis / 2;
     list.style.setProperty('--cor-cy', cy.toFixed(1) + 'px');
     // The mood card keeps its own size (scaling it upsets its own layout of the pills and the
     // orbit); a card taller than the strip starts at the strip's top instead of being centred.
-    var mood = list.querySelector('.rg-feedback-card');
-    var moodH = mood ? mood.offsetHeight : 0, moodHalf = mood ? mood.offsetWidth / 2 : 0;
+    // the mood card is taller on a day still to come (its "rate it later" note): its height as last
+    // measured for that kind of day
+    // (mood-feedback.js futureDay; its class is set only after this)
+    var mood = list.querySelector('.rg-feedback-card'), day = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(String(window.__activeDateStr || '')), now = new Date();
+    if (now.getHours() < 8) now.setDate(now.getDate() - 1);
+    var live = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    var kind = day && day[3] + '-' + day[2] + '-' + day[1] > live ? 'note' : 'plain';
+    if (g.moods[kind] == null) g.moods[kind] = mood ? mood.offsetHeight : 0;
+    if (moodRO && mood && mood !== moodSeen) { if (moodSeen) moodRO.unobserve(moodSeen); moodRO.observe(mood); moodSeen = mood; }
+    var moodH = g.moods[kind], moodHalf = g.moodHalf;
     list.style.setProperty('--cor-mcy', (moodH > vis ? base + moodH / 2 + 4 : cy).toFixed(1) + 'px');
     // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
@@ -72,9 +99,6 @@
       for (var it = 0; it < 20; it++) { var mid = (lo + hi) / 2; if (startFor(cols, mid)) lo = mid; else hi = mid; }
       return lo;
     }
-    // room for the wall's heading: its real height (icon included) and a gap, so neither the heading
-    // nor a card lifted under the pointer covers the other
-    var LABEL = [].slice.call(list.querySelectorAll('.cards-section-label')).reduce(function (m, l) { return Math.max(m, l.offsetHeight); }, 30) + 14;
     var MIN = 140, MAX = 240, MAXROWS = 3;   // MIN: about the usual grid's card; more rows than 3: the usual grid
     var fresh = [], tooSmall = false, walls = [];
     [['rg', -1], ['rd', 1]].forEach(function (side) {
@@ -107,7 +131,7 @@
     var wallTop = tallest <= vis ? base + (vis - tallest) / 2 : base + 4;
     // the corridor's end lies a dock's height (and the lift of a card under the pointer) below the
     // lowest card, so the last row scrolls fully above the dock instead of staying cut under it
-    var end = Math.max(wallTop + tallest, moodH > vis ? base + moodH + 8 : 0) + (L.bottom - bottom) + 24;
+    var end = Math.max(wallTop + tallest, moodH > vis ? base + moodH + 8 : 0) + g.below + 24;
     list.style.setProperty('--cor-end', end.toFixed(0) + 'px');
     walls.forEach(function (wall) {
       var cards = wall.cards, s = wall.s, label = wall.label, rows = wall.rows, cols = wall.cols, size = wall.size, span = wall.span, start = wall.start;
@@ -165,7 +189,7 @@
   list.addEventListener('scroll', function () { rests = null; setHot(null); }, { passive: true });
   // the roster is rebuilt on a day switch: placed before that frame is painted (no flying in);
   // the root's class only matters when the radio opens or closes
-  new MutationObserver(function () { if (frame) { cancelAnimationFrame(frame); frame = 0; } place(); }).observe(list, { childList: true });
+  new MutationObserver(function () { if (frame) { cancelAnimationFrame(frame); frame = 0; } place(true); schedule(); }).observe(list, { childList: true });
   var radio = root.classList.contains('host-radio-open');
   new MutationObserver(function () {
     var now = root.classList.contains('host-radio-open');
