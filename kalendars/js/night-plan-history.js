@@ -2,11 +2,11 @@
 (function (root) {
   'use strict';
   const MAX_REVISIONS = 64;
-  // Start (hours, 23.5 = 23:30): whole 5 minutes from 22:00 to 01:55. End: a preset
+  // Start (hours, 23.5 = 23:30): whole 5 minutes from 22:00 to 02:00. End: a preset
   // (0 07:20, 1 07:30, 2 08:00) or the person's own time as minutes after midnight, 06:00–09:00.
   function validTimes(sh,ei) {
     const m=sh*60;
-    return Number.isFinite(m) && Math.abs(m-Math.round(m))<1e-6 && Math.round(m)%5===0 && (sh>=22&&sh<24 || sh>=0&&sh<2)
+    return Number.isFinite(m) && Math.abs(m-Math.round(m))<1e-6 && Math.round(m)%5===0 && (sh>=22&&sh<24 || sh>=0&&sh<=2)
       && ([0,1,2].includes(ei) || Number.isInteger(ei) && ei>=360 && ei<=540 && ei%5===0);
   }
   function endMinute(ei) {return ei<3?[440,450,480][ei]:ei;}

@@ -2367,36 +2367,83 @@
     }
   }
 
-  /* "Cits laiks": a slider in 5 minutes under the start or end selector, 22:00–01:55 or
-     06:00–09:00. The label follows the thumb; letting go applies it (the panel redraws). */
+  /* "Cits laiks": a clock face under the start or end selector, like a phone's time picker.
+     First the hour (only the night's own hours are on the dial: 22–02 to start, 06–09 to end,
+     each where it stands on a clock), then the minutes in fives. "Labi" applies it. */
   function ownTime(kind){
     var sel=document.querySelector('#nsPanel select.nss[onchange*="__ns.'+(kind==='s'?'ss':'se')+'"]'), shell=sel&&sel.closest('.nss-shell'), panel=document.getElementById('nsPanel');
     var old=document.getElementById('nsOwnTime'); if(old) old.remove();
     if(!shell||!panel||!st) return;
-    var start=kind==='s', cur=start?Math.round(st.sh*60):endMin(st.ei||0);
-    if(start&&cur>=720) cur-=1440;                       // 23:30 -> -30: the slider runs across midnight
+    var start=kind==='s', hours=start?[22,23,0,1,2]:[6,7,8,9], last=start?2:9;   // the last hour has only :00
+    var cur=start?Math.round(st.sh*60):endMin(st.ei||0), h=Math.floor(cur/60)%24, m=cur%60, mode='h';
+    var R=88, C=110, NS='http://www.w3.org/2000/svg';
+    function pos(i,r){var t=i/12*2*Math.PI;return[C+r*Math.sin(t),C-r*Math.cos(t)];}   // i: 0..11 clock positions
     var box=document.createElement('div');
-    box.id='nsOwnTime'; box.className='ns-own-time';
-    box.innerHTML='<output class="ns-own-val"></output><input type="range" min="'+(start?-120:360)+'" max="'+(start?115:540)+'" step="5" value="'+cur+'" aria-label="'+(start?'Nakts sākuma laiks':'Nakts beigu laiks')+'">';
-    var input=box.querySelector('input'), out=box.querySelector('output');
-    function show(){out.textContent=mt(+input.value);}
-    function close(){box.remove();document.removeEventListener('pointerdown',outside,true);document.removeEventListener('keydown',esc,true);}
-    function outside(e){if(!box.contains(e.target))close();}
-    function esc(e){if(e.key==='Escape'){e.stopPropagation();close();}}
-    input.addEventListener('input',show);
-    input.addEventListener('change',function(){
-      var m=+input.value; close();
-      if(start) st.sh=(m<0?m+1440:m)/60;
-      else{var preset=END.findIndex(function(o){return o.h*60+o.m===m;});st.ei=preset>=0?preset:m;}
+    box.id='nsOwnTime'; box.className='ns-own-time'; box.tabIndex=-1;
+    box.setAttribute('role','dialog'); box.setAttribute('aria-label',start?'Nakts sākuma laiks':'Nakts beigu laiks');
+    box.innerHTML='<div class="ns-own-title">'+(start?'Nakts sākums':'Nakts beigas')+'</div><div class="ns-own-head"><button type="button" class="ns-own-seg" data-m="h"></button><span>:</span><button type="button" class="ns-own-seg" data-m="m"></button></div>'
+      +'<svg class="ns-own-dial" viewBox="0 0 220 220" aria-hidden="true"><circle class="ns-own-face" cx="110" cy="110" r="108"/><line class="ns-own-hand" x1="110" y1="110"/><circle class="ns-own-dot" cx="110" cy="110" r="4"/><circle class="ns-own-knob" r="20"/><g class="ns-own-nums"></g></svg>'
+      +'<div class="ns-own-actions"><button type="button" class="ns-own-btn" data-a="x">Atcelt</button><button type="button" class="ns-own-btn is-ok" data-a="ok">Labi</button></div>';
+    var svg=box.querySelector('svg'), nums=box.querySelector('.ns-own-nums'), hand=box.querySelector('.ns-own-hand'), knob=box.querySelector('.ns-own-knob');
+    var segH=box.querySelector('[data-m="h"]'), segM=box.querySelector('[data-m="m"]');
+    function two(n){return String(n).padStart(2,'0');}
+    function draw(){
+      if(h===last) m=0;
+      segH.textContent=two(h); segM.textContent=two(m);
+      segH.classList.toggle('is-on',mode==='h'); segM.classList.toggle('is-on',mode==='m');
+      var items=mode==='h'?hours.map(function(x){return{i:x%12,v:x,l:two(x)};})
+        :[0,1,2,3,4,5,6,7,8,9,10,11].map(function(i){return{i:i,v:i*5,l:two(i*5),off:h===last&&i>0};});
+      var sel=mode==='h'?h%12:m/5;
+      var k=pos(sel,R); hand.setAttribute('x2',k[0]); hand.setAttribute('y2',k[1]); knob.setAttribute('cx',k[0]); knob.setAttribute('cy',k[1]);
+      nums.innerHTML='';
+      items.forEach(function(it){
+        var q=pos(it.i,R), t=document.createElementNS(NS,'text');
+        t.setAttribute('x',q[0]); t.setAttribute('y',q[1]); t.textContent=it.l;
+        t.setAttribute('class','ns-own-num'+(it.i===sel?' is-on':'')+(it.off?' is-off':''));
+        nums.appendChild(t);
+      });
+    }
+    function pick(e){   // the value nearest the pointer's angle
+      var r=svg.getBoundingClientRect(), x=e.clientX-r.left-r.width/2, y=e.clientY-r.top-r.height/2;
+      var i=Math.round(((Math.atan2(x,-y)/(2*Math.PI))*12+12))%12;
+      if(mode==='h'){var best=hours.reduce(function(b,v){var d=Math.min(Math.abs(v%12-i),12-Math.abs(v%12-i));return d<b.d?{v:v,d:d}:b;},{v:h,d:99});h=best.v;}
+      else if(h!==last) m=i*5;
+      draw();
+    }
+    var dragging=false;
+    svg.addEventListener('pointerdown',function(e){dragging=true;svg.setPointerCapture(e.pointerId);pick(e);});
+    svg.addEventListener('pointermove',function(e){if(dragging)pick(e);});
+    svg.addEventListener('pointerup',function(){if(!dragging)return;dragging=false;if(mode==='h'){mode='m';draw();}});
+    segH.addEventListener('click',function(){mode='h';draw();});
+    segM.addEventListener('click',function(){mode='m';draw();});
+    function close(){box.remove();document.removeEventListener('pointerdown',outside,true);document.removeEventListener('keydown',key,true);}
+    function apply(){
+      var mins=h*60+m; close();
+      if(start) st.sh=mins/60;
+      else{var preset=END.findIndex(function(o){return o.h*60+o.m===mins;});st.ei=preset>=0?preset:mins;}
       st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);saveCurrentDayState();render();
-    });
-    show();
+    }
+    function outside(e){if(!box.contains(e.target))close();}
+    function key(e){
+      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}
+      else if(e.key==='Enter'){e.preventDefault();apply();}
+      else if(/^Arrow/.test(e.key)){   // five minutes (or an hour) at a time, within the night's hours
+        e.preventDefault();
+        var up=e.key==='ArrowUp'||e.key==='ArrowRight', hi=hours.indexOf(h);
+        if(mode==='h') h=hours[Math.max(0,Math.min(hours.length-1,hi+(up?1:-1)))];
+        else if(h!==last) m=(m+(up?5:55))%60;
+        draw();
+      }
+    }
+    box.querySelector('[data-a="x"]').addEventListener('click',close);
+    box.querySelector('[data-a="ok"]').addEventListener('click',apply);
+    draw();
     var a=shell.getBoundingClientRect(), p=panel.getBoundingClientRect();
     box.style.left=(a.left-p.left+panel.scrollLeft)+'px'; box.style.top=(a.bottom-p.top+panel.scrollTop+8)+'px';
     panel.appendChild(box);
     sel.value=String(start?st.sh:(st.ei||0));             // the selector keeps showing the time in use
-    setTimeout(function(){document.addEventListener('pointerdown',outside,true);document.addEventListener('keydown',esc,true);},0);
-    setTimeout(function(){if(box.isConnected)input.focus({preventScroll:true});},60);   // after the time wheel hands focus back to its select
+    setTimeout(function(){document.addEventListener('pointerdown',outside,true);document.addEventListener('keydown',key,true);},0);
+    setTimeout(function(){if(box.isConnected)box.focus({preventScroll:true});},60);   // after the time wheel hands focus back to its select
   }
 
   function getPublicPlan(){

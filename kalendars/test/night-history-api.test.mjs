@@ -18,7 +18,7 @@ test('server keeps recorded revisions and rejects older writes',async()=>{
  const saved=JSON.parse(e.values.get('ns::07.09.2026'));assert.equal(saved.revisions.length,2);assert.deepEqual(saved.revisions[0],old.revisions[0]);assert.equal(saved.revisions[1].from,base+5000);
 });
 test('invalid or duplicate members do not persist night plans',async()=>{
- for(const body of [{order:[names[0],names[0]],sh:0,ei:0},{order:names,sh:2,ei:0},{order:names,sh:0,ei:4}]){const e=env();assert.equal((await post(e,body)).status,400);assert.equal(e.writes.length,0);}
+ for(const body of [{order:[names[0],names[0]],sh:0,ei:0},{order:names,sh:3,ei:0},{order:names,sh:0,ei:4}]){const e=env();assert.equal((await post(e,body)).status,400);assert.equal(e.writes.length,0);}
 });
 
 test('legacy plans without revisions remain readable and gain history on next save',async()=>{

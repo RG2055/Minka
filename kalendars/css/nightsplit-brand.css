@@ -2428,18 +2428,34 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
   pointer-events: none;
 }
 
-/* "Cits laiks": slīdnis zem laika izvēles (nightsplit.js ownTime) */
+/* "Cits laiks": pulksteņa ciparnīca zem laika izvēles (nightsplit.js ownTime) */
 #nsPanel .ns-own-time {
   position: absolute; z-index: 50;
-  display: flex; align-items: center; gap: 14px;
-  width: 300px; padding: 12px 18px;
-  border-radius: 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  width: 268px; padding: 18px 20px 14px;
+  border-radius: 28px;
   background: var(--m3-surface-highest, #1f2b36);
   border: 1px solid var(--m3-outline, rgba(176, 203, 216, .2));
   box-shadow: 0 12px 32px rgba(0, 0, 0, .5);
   color: var(--m3-on-surface, #e6eef5);
+  outline: none;
 }
-#nsPanel .ns-own-val { min-width: 52px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
-#nsPanel .ns-own-time input { flex: 1; accent-color: var(--m3-primary, #7fdcea); cursor: pointer; }
-#nsPanel .ns-own-time input:focus { outline: none; }
-#nsPanel .ns-own-time:focus-within { border-color: var(--m3-primary, #7fdcea); }
+#nsPanel .ns-own-head { display: flex; align-items: center; gap: 6px; font-size: 40px; font-weight: 500; }
+#nsPanel .ns-own-seg {
+  min-width: 84px; height: 64px; border: 0; border-radius: 12px; cursor: pointer;
+  background: var(--m3-surface-high, #18222b); color: inherit;
+  font: inherit; font-variant-numeric: tabular-nums;
+}
+#nsPanel .ns-own-seg.is-on { background: var(--m3-primary, #7fdcea); color: #00363d; }
+#nsPanel .ns-own-dial { width: 220px; height: 220px; touch-action: none; cursor: pointer; user-select: none; }
+#nsPanel .ns-own-face { fill: var(--m3-surface-high, #18222b); }
+#nsPanel .ns-own-hand { stroke: var(--m3-primary, #7fdcea); stroke-width: 2; }
+#nsPanel .ns-own-dot, #nsPanel .ns-own-knob { fill: var(--m3-primary, #7fdcea); }
+#nsPanel .ns-own-num { fill: currentColor; font-size: 16px; font-weight: 500; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+#nsPanel .ns-own-num.is-on { fill: #00363d; }
+#nsPanel .ns-own-num.is-off { opacity: .3; }
+#nsPanel .ns-own-actions { align-self: stretch; display: flex; justify-content: flex-end; gap: 8px; }
+#nsPanel .ns-own-btn { height: 40px; padding: 0 16px; border: 0; border-radius: 20px; background: none; color: var(--m3-primary, #7fdcea); font: inherit; font-weight: 600; cursor: pointer; }
+#nsPanel .ns-own-btn:hover { background: rgba(127, 220, 234, .1); }
+#nsPanel .ns-own-time :focus-visible { outline: 2px solid var(--m3-primary, #7fdcea); outline-offset: 2px; }
+#nsPanel .ns-own-title { align-self: flex-start; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--m3-on-variant, #b7c4cf); }

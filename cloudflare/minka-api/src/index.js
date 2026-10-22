@@ -44,9 +44,9 @@ function cleanNightRevision(value, now) {
   const order = cleanNsOrder(value.order);
   if (order.length < 2 || order.length > 8 || order.length !== value.order?.length) return null;
   const sh = Number(value.sh), ei = Number(value.ei), from = Number(value.from);
-  // start: whole 5 minutes 22:00–01:55 (hours); end: preset 0–2 or own time in minutes after midnight 06:00–09:00 (night-plan-history.js)
+  // start: whole 5 minutes 22:00–02:00 (hours); end: preset 0–2 or own time in minutes after midnight 06:00–09:00 (night-plan-history.js)
   const sm = sh * 60;
-  if (!Number.isFinite(sm) || Math.abs(sm - Math.round(sm)) > 1e-6 || Math.round(sm) % 5 || !(sh >= 22 && sh < 24 || sh >= 0 && sh < 2)) return null;
+  if (!Number.isFinite(sm) || Math.abs(sm - Math.round(sm)) > 1e-6 || Math.round(sm) % 5 || !(sh >= 22 && sh < 24 || sh >= 0 && sh <= 2)) return null;
   if (![0, 1, 2].includes(ei) && !(Number.isInteger(ei) && ei >= 360 && ei <= 540 && ei % 5 === 0)) return null;
   if (!Number.isFinite(from) || from <= 0) return null;
   return { order, sh, ei, from: Math.min(from, now) };
