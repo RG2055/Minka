@@ -31,3 +31,8 @@ test('legacy plans without revisions remain readable and gain history on next sa
  assert.deepEqual(stored.order,names);assert.equal(stored.revisions.length,1);
  assert.equal(stored.revisions[0].from,savedAt);
 });
+
+test('own night times in whole 5 minutes persist; off-grid ones do not',async()=>{
+ for(const body of [{order:names,sh:0.25,ei:455},{order:names,sh:23+50/60,ei:2}]){const e=env();assert.equal((await post(e,body)).status,200);}
+ for(const body of [{order:names,sh:0.1,ei:0},{order:names,sh:0,ei:457},{order:names,sh:0,ei:600}]){const e=env();assert.equal((await post(e,body)).status,400);}
+});

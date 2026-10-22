@@ -1538,9 +1538,11 @@
   // â”€â”€ Utils â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function mt(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
   function fm(m){return mt(m);}
+  // end: a preset index (END) or the person's own time in minutes after midnight (night-plan-history.js)
+  function endMin(ei){var o=END[ei];return o?o.h*60+o.m:(ei>=360&&ei<=540?ei:END[0].h*60+END[0].m);}
   function calc(wk,sh,ei){
     if(!wk||!wk.length)return[];
-    var n=wk.length,eo=END[ei]||END[0],sm=Math.round(sh*60),em=eo.h*60+eo.m;
+    var n=wk.length,sm=Math.round(sh*60),em=endMin(ei);
     if(sh>=20)em+=1440;
     // True equal split in minutes (no 5â€‘minute snapping). If total minutes do not divide
     // evenly, distribute the remainder from the beginning so the difference is <= 1 minute.
@@ -2365,6 +2367,38 @@
     }
   }
 
+  /* "Cits laiks": a slider in 5 minutes under the start or end selector, 22:00–01:55 or
+     06:00–09:00. The label follows the thumb; letting go applies it (the panel redraws). */
+  function ownTime(kind){
+    var sel=document.querySelector('#nsPanel select.nss[onchange*="__ns.'+(kind==='s'?'ss':'se')+'"]'), shell=sel&&sel.closest('.nss-shell'), panel=document.getElementById('nsPanel');
+    var old=document.getElementById('nsOwnTime'); if(old) old.remove();
+    if(!shell||!panel||!st) return;
+    var start=kind==='s', cur=start?Math.round(st.sh*60):endMin(st.ei||0);
+    if(start&&cur>=720) cur-=1440;                       // 23:30 -> -30: the slider runs across midnight
+    var box=document.createElement('div');
+    box.id='nsOwnTime'; box.className='ns-own-time';
+    box.innerHTML='<output class="ns-own-val"></output><input type="range" min="'+(start?-120:360)+'" max="'+(start?115:540)+'" step="5" value="'+cur+'" aria-label="'+(start?'Nakts sākuma laiks':'Nakts beigu laiks')+'">';
+    var input=box.querySelector('input'), out=box.querySelector('output');
+    function show(){out.textContent=mt(+input.value);}
+    function close(){box.remove();document.removeEventListener('pointerdown',outside,true);document.removeEventListener('keydown',esc,true);}
+    function outside(e){if(!box.contains(e.target))close();}
+    function esc(e){if(e.key==='Escape'){e.stopPropagation();close();}}
+    input.addEventListener('input',show);
+    input.addEventListener('change',function(){
+      var m=+input.value; close();
+      if(start) st.sh=(m<0?m+1440:m)/60;
+      else{var preset=END.findIndex(function(o){return o.h*60+o.m===m;});st.ei=preset>=0?preset:m;}
+      st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);saveCurrentDayState();render();
+    });
+    show();
+    var a=shell.getBoundingClientRect(), p=panel.getBoundingClientRect();
+    box.style.left=(a.left-p.left+panel.scrollLeft)+'px'; box.style.top=(a.bottom-p.top+panel.scrollTop+8)+'px';
+    panel.appendChild(box);
+    sel.value=String(start?st.sh:(st.ei||0));             // the selector keeps showing the time in use
+    setTimeout(function(){document.addEventListener('pointerdown',outside,true);document.addEventListener('keydown',esc,true);},0);
+    setTimeout(function(){if(box.isConnected)input.focus({preventScroll:true});},60);   // after the time wheel hands focus back to its select
+  }
+
   function getPublicPlan(){
     if(!st || !st.sl || !st.sl.length) return null;
     return {
@@ -3126,10 +3160,13 @@
     }
     resetColours();
 
-    var so=START.map(function(o){return'<option value="'+o.v+'"'+(o.v===st.sh?' selected':'')+'>'+o.l+'</option>';}).join('');
-    var eo=END.map(function(o,i){return'<option value="'+i+'"'+(i===(st.ei||0)?' selected':'')+'>'+o.l+'</option>';}).join('');
-    var startLabel=(START.filter(function(o){return o.v===st.sh;})[0]||START[0]).l;
-    var endLabel=(END[st.ei||0]||END[0]).l;
+    // the presets, the person's own time when one is set, and "Cits laiks" (a slider)
+    var startLabel=mt(Math.round(st.sh*60)), endLabel=mt(endMin(st.ei||0));
+    var ownStart=!START.some(function(o){return o.v===st.sh;}), ownEnd=!END[st.ei||0];
+    var so=START.map(function(o){return'<option value="'+o.v+'"'+(o.v===st.sh?' selected':'')+'>'+o.l+'</option>';}).join('')
+      +(ownStart?'<option value="'+st.sh+'" selected>'+startLabel+'</option>':'')+'<option value="own">Cits laiks…</option>';
+    var eo=END.map(function(o,i){return'<option value="'+i+'"'+(i===(st.ei||0)?' selected':'')+'>'+o.l+'</option>';}).join('')
+      +(ownEnd?'<option value="'+st.ei+'" selected>'+endLabel+'</option>':'')+'<option value="own">Cits laiks…</option>';
 
     // Night theme helper — maps the slot's place in this split, not just clock time.
     function _nightTheme(slotIndex, slotCount, startMin, firstStart, lastEnd){
@@ -4164,8 +4201,8 @@
     rafflePerson:selectRafflePerson,
     rafflePart:selectRafflePart,
     applyRaffle:applyRaffle,
-    ss:function(v){if(!st)return;st.sh=parseFloat(v);st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);saveCurrentDayState();render();},
-    se:function(v){if(!st)return;st.ei=parseInt(v); st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei); saveCurrentDayState(); render();},
+    ss:function(v){if(!st)return;if(v==='own'){ownTime('s');return;}st.sh=parseFloat(v);st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);saveCurrentDayState();render();},
+    se:function(v){if(!st)return;if(v==='own'){ownTime('e');return;}st.ei=parseInt(v); st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei); saveCurrentDayState(); render();},
     eq:function(){
       if(!st)return;
       st.sl=calc(st.sl.map(function(s){return s.w;}),st.sh,st.ei);

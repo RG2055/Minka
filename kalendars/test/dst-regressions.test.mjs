@@ -64,7 +64,7 @@ function nightCtx(date,sh=0,ei=2){
   const {c,box}=clockCtx();
   const src=read('nightsplit.js');
   vm.runInContext('var END=[{h:7,m:20,l:"07:20"},{h:7,m:30,l:"07:30"},{h:8,m:0,l:"08:00"}];var st=null;\n'
-    +fns(src,['mt','fm','calc','activeDateKey','nsNightCursor','nsMinMs','nsClockBase','nsLeftText','nsSlotState','ledProgress','ledProgressAt','ledSlotMinutes','slotRealtime']),c);
+    +fns(src,['mt','fm','endMin','calc','activeDateKey','nsNightCursor','nsMinMs','nsClockBase','nsLeftText','nsSlotState','ledProgress','ledProgressAt','ledSlotMinutes','slotRealtime']),c);
   vm.runInContext('st={sh:'+sh+',ei:'+ei+',sl:calc([{name:"A"},{name:"B"},{name:"C"},{name:"D"}],'+sh+','+ei+')}',c);
   Object.assign(c.window,{__activeDateStr:date,__todayDateStr:date,__g_todayStr:date});
   return {c,box,state:iso=>{box.t=at(iso);const cur=c.nsNightCursor();return [...vm.runInContext('st.sl',c)].map((s,i)=>{const x=c.nsSlotState(vm.runInContext('st.sl',c),i,cur);return x?x.text:'-';});}};

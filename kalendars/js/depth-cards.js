@@ -168,7 +168,7 @@
     }
     host.addEventListener('pointermove', function (event) {
       if (!active || (event.pointerType && event.pointerType !== 'mouse')) return;
-      if (!inRest(active, event)) { leave(active.card); return; }
+      if (!inRest(active, event) && !active.card.contains(event.target)) { leave(active.card); return; }
       active.inside = true;
       pointTarget(active, event.clientX, event.clientY);
     }, { passive: true });

@@ -2427,3 +2427,19 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
   border-radius: inherit;
   pointer-events: none;
 }
+
+/* "Cits laiks": slīdnis zem laika izvēles (nightsplit.js ownTime) */
+#nsPanel .ns-own-time {
+  position: absolute; z-index: 50;
+  display: flex; align-items: center; gap: 14px;
+  width: 300px; padding: 12px 18px;
+  border-radius: 20px;
+  background: var(--m3-surface-highest, #1f2b36);
+  border: 1px solid var(--m3-outline, rgba(176, 203, 216, .2));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .5);
+  color: var(--m3-on-surface, #e6eef5);
+}
+#nsPanel .ns-own-val { min-width: 52px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+#nsPanel .ns-own-time input { flex: 1; accent-color: var(--m3-primary, #7fdcea); cursor: pointer; }
+#nsPanel .ns-own-time input:focus { outline: none; }
+#nsPanel .ns-own-time:focus-within { border-color: var(--m3-primary, #7fdcea); }

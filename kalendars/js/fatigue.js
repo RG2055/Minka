@@ -422,7 +422,8 @@
   function savedNightWindowOf(entry, workerName, saved) {
     const order = saved.order;
     if (new Set(order).size !== order.length || !order.includes(workerName)) return null;
-    if (![23,23.5,0,0.5,1].includes(saved.sh) || ![0,1,2].includes(saved.ei)) return null;
+    const NH = window.MinkaNightHistory;
+    if (!NH || !NH.validTimes(saved.sh, saved.ei)) return null;
     // Match the persisted team against this roster, never infer rest from a
     // dynamically fatigue-sorted default or a stale three/four-person plan.
     const team = new Map();
@@ -436,7 +437,7 @@
     const start = new Date(entry.date);
     if (saved.sh < 8) start.setDate(start.getDate()+1);
     start.setHours(Math.floor(saved.sh), Math.round(saved.sh%1*60), 0, 0);
-    const end = new Date(start); end.setHours(7, [20,30,60][saved.ei], 0, 0);
+    const endAt = NH.endMinute(saved.ei), end = new Date(start); end.setHours(Math.floor(endAt/60), endAt%60, 0, 0);
     if (end <= start) end.setDate(end.getDate()+1);
     // Every member must actually cover the shared night window.
     for (const w of team.values()) {
@@ -444,7 +445,7 @@
       if (iv.start > start || iv.end < end) return null;
     }
     // Match the night panel's wall-clock minute split, including DST nights.
-    const startMinute=Math.round(saved.sh*60),endMinute=[440,450,480][saved.ei]+(saved.sh>=20?1440:0);
+    const startMinute=Math.round(saved.sh*60),endMinute=endAt+(saved.sh>=20?1440:0);
     const minutes = endMinute-startMinute, count = order.length, index = order.indexOf(workerName);
     const base = Math.floor(minutes/count), rem = minutes%count;
     const boundary=offset=>{const d=new Date(start);d.setMinutes(d.getMinutes()+offset);return +d;};

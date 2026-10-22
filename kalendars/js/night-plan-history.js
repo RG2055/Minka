@@ -2,12 +2,20 @@
 (function (root) {
   'use strict';
   const MAX_REVISIONS = 64;
+  // Start (hours, 23.5 = 23:30): whole 5 minutes from 22:00 to 01:55. End: a preset
+  // (0 07:20, 1 07:30, 2 08:00) or the person's own time as minutes after midnight, 06:00–09:00.
+  function validTimes(sh,ei) {
+    const m=sh*60;
+    return Number.isFinite(m) && Math.abs(m-Math.round(m))<1e-6 && Math.round(m)%5===0 && (sh>=22&&sh<24 || sh>=0&&sh<2)
+      && ([0,1,2].includes(ei) || Number.isInteger(ei) && ei>=360 && ei<=540 && ei%5===0);
+  }
+  function endMinute(ei) {return ei<3?[440,450,480][ei]:ei;}
   function shape(value) {
     if (!value || !Array.isArray(value.order) || value.order.length < 2 || value.order.length > 8) return null;
     const order=value.order.map(n=>String(n||'').trim());
     if (order.some(n=>!n || n.length>64 || /[<>&"'`\\\u0000-\u001f]/.test(n)) || new Set(order).size!==order.length) return null;
     const sh=Number(value.sh),ei=Number(value.ei);
-    if (![23,23.5,0,0.5,1].includes(sh) || ![0,1,2].includes(ei)) return null;
+    if (!validTimes(sh,ei)) return null;
     return {order,sh,ei};
   }
   function same(a,b) {return !!a && !!b && a.sh===b.sh && a.ei===b.ei && JSON.stringify(a.order)===JSON.stringify(b.order);}
@@ -36,5 +44,5 @@
     if(Array.isArray(remote.revisions) && remote.revisions.length) return {...remote,revisions:revisions(remote)};
     return save(previous,remote,Number(remote.savedAt)||Date.now());
   }
-  root.MinkaNightHistory={shape,revisions,save,receive};
+  root.MinkaNightHistory={shape,revisions,save,receive,validTimes,endMinute};
 })(globalThis);

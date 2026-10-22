@@ -148,6 +148,8 @@
   }
   list.addEventListener('pointermove', function (e) {
     if (!root.classList.contains('mk-corridor')) return;
+    // still on the lifted card itself (its coffee buttons stick out past its resting place): it stays
+    if (hot && hot.contains(e.target)) return;
     if (!rests) rests = [].slice.call(list.querySelectorAll('.card.mk-mid-card:not(.rg-feedback-card)')).map(function (c) {
       return [c, c === hot ? c.__corRest || c.getBoundingClientRect() : (c.__corRest = c.getBoundingClientRect())];
     });

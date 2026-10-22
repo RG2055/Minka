@@ -2708,7 +2708,8 @@ function filterFullList(btn) {
     const saved = getNightSplitSavedMap()[dateStr];
     const order = Array.isArray(saved && saved.order) ? saved.order.map(function(v){ return String(v || '').trim(); }).filter(Boolean) : [];
     const startHour = typeof (saved && saved.sh) === 'number' && isFinite(saved.sh) ? saved.sh : 0;
-    const endOpt = NIGHT_SPLIT_ENDS[(typeof (saved && saved.ei) === 'number' && NIGHT_SPLIT_ENDS[saved.ei]) ? saved.ei : 0];
+    const savedEi = saved && typeof saved.ei === 'number' && (NIGHT_SPLIT_ENDS[saved.ei] || saved.ei >= 360 && saved.ei <= 540) ? saved.ei : 0;
+    const endOpt = NIGHT_SPLIT_ENDS[savedEi] || { h: Math.floor(savedEi / 60), m: savedEi % 60 };   // the person's own end time: minutes after midnight
 
     let ordered = workers.slice();
     if (order.length) {
