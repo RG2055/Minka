@@ -221,7 +221,10 @@
   var SKY_ASPECT = 1918 / 820, SKY_BAND = .62;      // the picture's width / height; its lit band, from the top
   var SKY_ZOOM = 2.2;                               // picture width / stage width
   var SKY_LO = .16, SKY_HI = .9;
-  var CELL_W = 3.9, CELL_H = 6.6, CELL_FONT = 6;    // the character grid, css px (fine)
+  // A plain screen (one device pixel per css px, the work PCs' monitors): 6 px characters there blur
+  // into grey fog, so the grid is coarser and the inks brighter; a sharp screen keeps the fine grid.
+  var PLAIN = (window.devicePixelRatio || 1) < 1.5;
+  var CELL_W = PLAIN ? 5 : 3.9, CELL_H = PLAIN ? 8 : 6.6, CELL_FONT = PLAIN ? 7.5 : 6;    // the character grid, css px (fine)
   var FIELD = 2;                                    // the light is sampled every 2 css px
   var SKY_BACK = .72;                               // the soft picture behind the characters
   var SKY_PX_PER_S = 2;                             // the drift, css px a second, always leftward (the orbit's own pace)
@@ -233,7 +236,7 @@
   // The fill's colours (the curve's ice blue, the clouds' cream, the moods).
   var TONES = [[125, 211, 252], [150, 196, 222], [214, 205, 186], [251, 113, 133], [251, 146, 60], [203, 213, 225], [94, 234, 212], [134, 239, 172]];
   var MOOD_TONE = { terrible: 3, bad: 4, ok: 5, good: 6, excellent: 7 };
-  var LEVELS = [.34, .56, .8];
+  var LEVELS = PLAIN ? [.5, .74, 1] : [.34, .56, .8];
   var sky = { state: '', img: null, key: '', wrap: null, W: 0, H: 0, dpr: 1, run: false, offTick: null, offCells: null, t0: null, anims: [], grid: null };
   var scape = { sig: '', geo: null, pts: null, line: null, ro: null, roT: 0, plot: null, m: null, hold: false };
   function dayDate(day) { return new Date(day + 'T12:00:00'); }
@@ -358,7 +361,7 @@
     var n = SKY_CHARS.length, rows = (tones ? tones.length : 1) * LEVELS.length;
     var atlas = blankCanvas(cw * n, ch * rows), ac = atlas.__ctx;
     ac.textAlign = 'center'; ac.textBaseline = 'middle';
-    ac.font = '500 ' + (CELL_FONT * dpr).toFixed(2) + 'px ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
+    ac.font = (PLAIN ? '700 ' : '500 ') + (CELL_FONT * dpr).toFixed(2) + 'px ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
     (tones || [[255, 255, 255]]).forEach(function (tone, ti) {
       LEVELS.forEach(function (alpha, li) {
         ac.fillStyle = 'rgba(' + tone[0] + ',' + tone[1] + ',' + tone[2] + ',' + alpha + ')';

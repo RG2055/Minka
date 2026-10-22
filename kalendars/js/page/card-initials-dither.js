@@ -18,9 +18,12 @@
    motion, touch, or in a hidden tab. */
 (function () {
   'use strict';
-  var CELL_W = 3.9, CELL_H = 6.6, CELL_FONT = 6;    // Noskaņa's grid, css px
+  // A plain screen (one device pixel per css px, the work PCs' monitors): 6 px characters there blur
+  // into grey fog, so the grid is coarser and the inks brighter; a sharp screen keeps the fine grid.
+  var PLAIN = (window.devicePixelRatio || 1) < 1.5;
+  var CELL_W = PLAIN ? 5 : 3.9, CELL_H = PLAIN ? 8 : 6.6, CELL_FONT = PLAIN ? 7.5 : 6;    // Noskaņa's grid, css px
   var LO = .16, HI = .9;                            // the light's useful range, as Noskaņa
-  var LEVELS = [.34, .56, .8];                      // three inks, as Noskaņa
+  var LEVELS = PLAIN ? [.5, .74, 1] : [.34, .56, .8];                      // three inks, as Noskaņa
   var RADIUS = 92;                                  // the circle round the pointer, css px (less on a small card)
   var FLOOR = .34;                                  // the darkest photo still shows this much
   var FADE = .9;                                    // trail: what is left of it each frame
@@ -141,7 +144,7 @@
     var cw = Math.max(3, Math.round(CELL_W * dpr)), ch = Math.max(5, Math.round(CELL_H * dpr));
     var c = document.createElement('canvas'); c.width = cw * letters.length; c.height = ch * LEVELS.length;
     var x = c.getContext('2d');
-    x.font = '500 ' + (CELL_FONT * dpr).toFixed(2) + 'px ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
+    x.font = (PLAIN ? '700 ' : '500 ') + (CELL_FONT * dpr).toFixed(2) + 'px ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
     x.textAlign = 'center'; x.textBaseline = 'middle';
     LEVELS.forEach(function (alpha, row) {
       x.fillStyle = 'rgba(255,255,255,' + alpha + ')';
