@@ -34,6 +34,7 @@
   var pendingFlight = null;
   var fetching = false;
   var fetchQueued = false;
+  var fetchRetryAt = 0;   // after a failed day, the next try waits (else every paint asked again at once, thousands a second)
 
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
   function readJson(key) {
@@ -937,7 +938,7 @@
   function scheduleFetch() {
     if (fetching || fetchQueued) return;
     var base = String(window.MINKA_FEEDBACK_API_BASE || '').replace(/\/$/, '');
-    if (!base || navigator.onLine === false || document.hidden) return;
+    if (!base || navigator.onLine === false || document.hidden || Date.now() < fetchRetryAt) return;
     if (!staleDays().length) return;
     fetchQueued = true;
     var run = function () { fetchQueued = false; fetchMissing(base); };
@@ -967,12 +968,14 @@
             writeJson(PULSE_KEY, all);
             var fetched = readJson(FETCHED_KEY);
             fetched[day] = Date.now();
-            // Keep the bookkeeping bounded to the visible window and a margin.
-            var oldest = addDays(liveDay(), -60);
+            // Keep the bookkeeping bounded to the visible window and a margin: never a day being
+            // shown (a date browsed months back), else it is forgotten as soon as it loads and asked
+            // for again at once, thousands of times a second.
+            var oldest = todo.reduce(function (a, b) { return b < a ? b : a; }, addDays(liveDay(), -60));
             Object.keys(fetched).forEach(function (k) { if (k < oldest) delete fetched[k]; });
             writeJson(FETCHED_KEY, fetched);
             changed = true;
-          } catch (_e) { /* next paint retries after the TTL logic */ }
+          } catch (_e) { fetchRetryAt = Date.now() + 5 * 60000; }
         }
       })();
     }
