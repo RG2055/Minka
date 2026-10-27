@@ -1493,7 +1493,7 @@
     var revision = ++cloudRevision;
     cloudWrites++;
     var packed = packSkin(sk, name) || null, sent = packed;
-    function post(value, worker) { sent = value; return window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: worker || cloudWorkerName(name), skin: value } }); }
+    function post(value, worker) { sent = value; return window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: worker || cloudWorkerName(name), skin: value, mediaSession: window.MinkaCardLock ? window.MinkaCardLock.token() : undefined } }); }
     // The same person saved under an older spelling of the name (one identity, normName):
     // that copy gets the same look, else its old decoration comes back on the next pull.
     var aliases = (cloudKeys[normName(name)] || []).filter(function(k) { return k !== cloudWorkerName(name); });
@@ -1515,7 +1515,10 @@
         var value = sent;
         return aliases.reduce(function(chain, k) { return chain.then(function() { return post(value, k); }); }, Promise.resolve()).then(function() { return r; });
       })
-      .then(function(r) { if (!r.ok) throw 0; if (!silent && revision===cloudRevision && typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
+      .then(function(r) {
+        // PIN-protected card (card-lock.js): the next pull brings the saved look back.
+        if (r.status === 423) { if (window.MinkaCardLock) window.MinkaCardLock.refused(name); scheduleCloudPull(800, 0); return; }
+        if (!r.ok) throw 0; if (!silent && revision===cloudRevision && typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
       .catch(warnLocalOnly)
       .finally(function(){ cloudWrites--; });
   }

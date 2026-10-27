@@ -393,7 +393,7 @@
       timer = setTimeout(function() { controller.abort(); reject(new Error('Emoji request timed out')); }, 20000);
     });
     var request = Promise.resolve().then(function() { return send(controller.signal); }).then(function(r) {
-      if (!r.ok) throw new Error('Emoji request failed');
+      if (!r.ok) throw Object.assign(new Error('Emoji request failed'), { status: r.status });
       return parseJson ? r.json() : r;
     });
     try { return await Promise.race([request, deadline]); }
@@ -446,14 +446,22 @@
       try {
         var apiRes = await emojiRequest(function(signal) { return window.MinkaApi.apiFetch('/api/emoji', {
           method: 'POST', signal: signal,
-          json: { worker: workerName, emoji: _data[workerName] || null }
+          json: { worker: workerName, emoji: _data[workerName] || null, mediaSession: window.MinkaCardLock ? window.MinkaCardLock.token() : undefined }
         }); }, false);
         if (apiRes.ok) {
           setTimeout(loadFromGist, 150);
           return 'github';
         }
         return 'error';
-      } catch(e) { return 'error'; }
+      } catch(e) {
+        // PIN-protected card (card-lock.js): the saved emoji comes back.
+        if (e && e.status === 423) {
+          if (window.MinkaCardLock) window.MinkaCardLock.refused(workerName);
+          setTimeout(loadFromGist, 150);
+          return 'error';
+        }
+        return 'error';
+      }
     }
     if (!GIST_ID) return 'local';
     if (!GIST_TOKEN) return 'github-read';

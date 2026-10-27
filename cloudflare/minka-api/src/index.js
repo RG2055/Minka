@@ -168,6 +168,47 @@ function cleanEmojiWorker(value) {
   return worker;
 }
 
+// PIN-protected cards: the owner can lock their card's emoji and look so that
+// only they change it, signed in with the same PIN profile as the radio
+// (lacitis-api sessions, which end at the next 08:00 handover).
+const LACITIS_SESSION_URL = "https://lacitis-api.gamernr1elite.workers.dev/dezura/v2/session";
+const cardLockKey = (name) => String(name || "").normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("lv-LV");
+let cardLocksTable = null;
+function ensureCardLocks(env) {
+  cardLocksTable ||= env.DB.prepare("CREATE TABLE IF NOT EXISTS card_locks (worker TEXT PRIMARY KEY, updated_at INTEGER NOT NULL)").run()
+    .catch((error) => { cardLocksTable = null; throw error; });
+  return cardLocksTable;
+}
+async function isCardLocked(env, worker) {
+  if (!env.DB) return false; // no lock store, no locks
+  await ensureCardLocks(env);
+  return !!(await env.DB.prepare("SELECT 1 AS hit FROM card_locks WHERE worker = ?1").bind(cardLockKey(worker)).first());
+}
+// The signed-in person's name, or "" (bad, expired or unknown session).
+async function mediaSessionName(env, token) {
+  if (!/^[a-f0-9]{64}$/.test(String(token || ""))) return "";
+  try {
+    const req = new Request(LACITIS_SESSION_URL, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessionToken: token })
+    });
+    // Service binding: a workers.dev Worker cannot fetch another one of the same account.
+    const res = await (env.LACITIS ? env.LACITIS.fetch(req) : fetch(req, { signal: AbortSignal.timeout(8000) }));
+    if (!res.ok) return "";
+    const data = await res.json();
+    return data && data.ok && data.session && typeof data.session.name === "string" ? data.session.name : "";
+  } catch (_error) {
+    return "";
+  }
+}
+async function ownsCard(env, token, worker) {
+  const name = await mediaSessionName(env, token);
+  return !!name && cardLockKey(name) === cardLockKey(worker);
+}
+async function cardLockDenied(request, env, worker, token) {
+  if (!(await isCardLocked(env, worker)) || await ownsCard(env, token, worker)) return null;
+  return json(request, { ok: false, error: "locked" }, 423);
+}
+
 function cleanEmojiValue(value) {
   if (value == null || value === "") return null;
   if (typeof value !== "string") return undefined;
@@ -968,6 +1009,31 @@ async function route(request, env, ctx) {
     // Emoji live in D1 (one query, read-your-write) instead of one KV read per
     // person plus a list() on every poll. KV keeps a mirror of each write so a
     // rollback to the old worker still finds every emoji.
+    if (url.pathname === "/api/card-locks" && method === "GET") {
+      await ensureCardLocks(env);
+      const rows = await env.DB.prepare("SELECT worker FROM card_locks").all();
+      return json(request, { locked: (rows.results || []).map((row) => row.worker) });
+    }
+
+    if (url.pathname === "/api/card-lock" && method === "POST") {
+      const body = await readJson(request);
+      const worker = cleanEmojiWorker(body?.worker);
+      if (!worker || typeof body?.locked !== "boolean") {
+        return json(request, { ok: false, error: "worker and locked required" }, 400);
+      }
+      if (!(await ownsCard(env, body.mediaSession, worker))) {
+        return json(request, { ok: false, error: "sign in as this person" }, 403);
+      }
+      await ensureCardLocks(env);
+      if (body.locked) {
+        await env.DB.prepare("INSERT INTO card_locks (worker, updated_at) VALUES (?1, ?2) ON CONFLICT(worker) DO UPDATE SET updated_at = excluded.updated_at")
+          .bind(cardLockKey(worker), Date.now()).run();
+      } else {
+        await env.DB.prepare("DELETE FROM card_locks WHERE worker = ?1").bind(cardLockKey(worker)).run();
+      }
+      return json(request, { ok: true, locked: body.locked });
+    }
+
     if (url.pathname === "/api/emoji" && method === "GET") {
       const worker = cleanEmojiWorker(url.searchParams.get("worker"));
       if (worker) {
@@ -994,6 +1060,8 @@ async function route(request, env, ctx) {
       if (emoji === undefined) {
         return json(request, { ok: false, error: "invalid emoji" }, 400);
       }
+      const emojiLocked = await cardLockDenied(request, env, worker, body?.mediaSession);
+      if (emojiLocked) return emojiLocked;
       if (!emoji) {
         await env.DB.prepare("DELETE FROM emoji_store WHERE worker = ?1").bind(worker).run();
         ctx.waitUntil(env.MINKA_EMOJI.delete(worker));
@@ -1176,6 +1244,8 @@ async function route(request, env, ctx) {
       if (body.skin !== null && !skin) {
         return json(request, { ok: false, error: "invalid skin" }, 400);
       }
+      const skinLocked = await cardLockDenied(request, env, worker, body?.mediaSession);
+      if (skinLocked) return skinLocked;
 
       const skins = await readSkins(env, true);
       const previousArtId = skinArtId(skins[worker]);

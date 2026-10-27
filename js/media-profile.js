@@ -385,7 +385,8 @@
   if(selectionChanged&&!session){generation++;busy=false;selected=null;}rosterDate=r.date;
   if(!session&&dialog.open&&!busy&&!selected)void renderWorkers();
  });
- window.__mkUnifiedMedia={open,logout,change,getSession:()=>session,isLoaded:()=>loaded,getRadio:()=>radio,api,roster,refresh:()=>session&&adopt(session)};
+ // signIn: the card window's PIN prompt (kalendars card-lock.js) signs in without starting the radio.
+ window.__mkUnifiedMedia={open,logout,change,signIn:next=>adopt(next),getSession:()=>session,isLoaded:()=>loaded,getRadio:()=>radio,api,roster,refresh:()=>session&&adopt(session)};
  window.addEventListener('rg-theme-ready',()=>{if(session&&loaded){if(!guestLook)guestLook=window.rgTheme.captureGuest?.()||window.rgTheme.snapshot();applyLook();}});
  let saved;try{saved=JSON.parse(sessionStorage.getItem(KEY)||'null');}catch(_){}
  if(saved?.sessionToken&&Math.min(saved.expiresAt,saved.dutyEndsAt||Infinity)>Date.now()){

@@ -735,7 +735,10 @@ body.stars-active #stars-overlay{display:block;}
           </div>
           <div id="wm-norm-row" class="wm-norm-row" aria-live="polite"></div>
         </div>
-        <div class="wm-shiftdays" id="modal-calendar-days"></div>
+        <div class="wm-cal-body">
+          <aside class="wm-cal-side" id="modal-calendar-side" aria-live="polite"></aside>
+          <div class="wm-shiftdays" id="modal-calendar-days"></div>
+        </div>
       </div>
     </div>
     <div id="modal-fatigue-view" class="fatigue-view-wrapper">
@@ -930,9 +933,10 @@ function _mkToast(msg, type) {
 <script src="js/card-faces.js?v=20261012dst1"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/card-contrast.js?v=20260928izs122" defer></script>
-<script src="js/page/minka-skins.js?v=20261021al1"></script>
+<script src="js/page/minka-skins.js?v=20261027pl1"></script>
+<script src="js/page/card-lock.js?v=20261027pl5"></script>
 <script src="js/night-plan-history.js?v=20261022ot1"></script>
-<script src="js/calendar.js?v=20261022ot1"></script>
+<script src="js/calendar.js?v=20261027pl1"></script>
 <script src="js/depth-cards.js?v=20261022hv1" defer></script>
 <script src="js/daily-cat.js?v=20261012dst1" defer></script>
 <script src="js/header-weather.js?v=20261012ld3" defer></script>
@@ -948,7 +952,7 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
 <script src="js/theme.js?v=20261006mb2" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20261010no5" defer></script>
+<script src="js/emoji.js?v=20261027pl1" defer></script>
 <script src="js/page/card-pictures-warm.js?v=20261001pw5" defer></script>
 <style>
 /* Day switch (calendar.js g_selectDay): the old day is held until the new one
@@ -2000,7 +2004,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <script src="js/header-appearance.js?v=20261011pf1"></script>
 <link rel="stylesheet" href="css/header-duty-summary.css?v=20260923wm10">
 <link rel="stylesheet" href="css/page/mood-comms-m3.css?v=20261005ov1">
-<link rel="stylesheet" id="mk-worker-modal-m3" href="css/page/mk-worker-modal-m3.css?v=20261010no5">
+<link rel="stylesheet" id="mk-worker-modal-m3" href="css/page/mk-worker-modal-m3.css?v=20261027pl5">
 <link rel="stylesheet" href="css/skin-organize.css?v=20261010hd1">
 <link rel="stylesheet" href="css/card-faces-x.css?v=20261010hue2">
 <link rel="stylesheet" href="assets/fonts/name-styles/name-styles-fonts.css?v=20261010bd1">

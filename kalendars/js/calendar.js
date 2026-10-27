@@ -8036,6 +8036,7 @@ function showWorkerSchedule(workerName, currentShift, opts) {
   clearTimeout(workerModalCloseTimer);
   clearTimeout(workerModalOutsideTimer);
   window.__wmWorkerName = String(workerName || '').trim();
+  if (window.MinkaCardLock) { window.MinkaCardLock.sync(); window.MinkaCardLock.load(); }
   const stores = [window.__grafiksStore || {}, window.__grafiksStoreRad || {}];
   let allDates = [];
   const seenKeys = new Set();
@@ -8335,6 +8336,35 @@ function wmPeopleRows(list) {
       }).join(', ') + '</span></li>').join('');
 }
 
+// One day as a card: date, shift (or a free day) and everyone on duty, per role.
+function wmDayCard(year, month, dd, item, me, todayMid) {
+  const pad2 = n => String(n).padStart(2, '0');
+  const at = new Date(year, month, dd);
+  const when = at.getTime() === todayMid ? ' is-today' : at.getTime() < todayMid ? ' is-past' : '';
+  const key = `${pad2(dd)}.${pad2(month + 1)}.${year}`;
+  const kind = item ? wmShiftKind(item) : 'off';
+  const hrs = item ? parseFloat(String(item.shift || '').replace(',', '.')) || 0 : 0;
+  const time = item && item.startTime && item.endTime ? item.startTime + '–' + item.endTime : '';
+  const rg = wmCoworkers(key, window.__grafiksStore, me);
+  const rd = wmCoworkers(key, window.__grafiksStoreRad, me);
+  const team = (rg.length ? '<ul class="wm-sd-grp is-rg" aria-label="' + (window.__mkLeftRole || { many: 'Radiogrāferi' }).many + '">' + wmPeopleRows(rg) + '</ul>' : '')
+    + (rd.length ? '<ul class="wm-sd-grp is-rd" aria-label="Radiologi">' + wmPeopleRows(rd) + '</ul>' : '');
+  return '<article class="wm-sd is-' + kind + when + '" data-day="' + dd + '">'
+    + '<header class="wm-sd-head">'
+    + '<span class="wm-sd-num">' + dd + '</span>'
+    + '<span class="wm-sd-meta"><span class="wm-sd-wd">' + (when === ' is-today' ? 'Šodien' : WM_WEEKDAYS[at.getDay()]) + '</span>'
+    + '<span class="wm-sd-kind">' + (item ? WM_KIND_LABEL[kind] + (time ? ' <span class="wm-sd-time">' + wmEsc(time) + '</span>' : '') : 'Brīva diena') + '</span></span>'
+    + (hrs ? '<span class="wm-sd-hrs">' + hrs + 'h</span>' : '')
+    + '</header>'
+    + (team || '<p class="wm-sd-none">Nav datu par šo dienu.</p>')
+    + '</article>';
+}
+
+// Month calendar like a wall calendar: the whole month on the right (big
+// dates, the shift in small text under them, fitted to the window, no
+// scrolling) and the chosen day's team on the left. Any day can be chosen;
+// it starts on today or the next shift. Phones (CSS) get the card list.
+let wmCalDay = 0;
 function renderModalCalendar() {
   const year = modalCurrentYear;
   const month = modalCurrentMonth;
@@ -8344,45 +8374,61 @@ function renderModalCalendar() {
 
   const box = document.getElementById('modal-calendar-days');
   const me = String(window.__wmWorkerName || '').trim().toLowerCase();
-  const pad2 = n => String(n).padStart(2, '0');
   const byDate = new Map();
   modalWorkerDates.forEach(d => {
     const [dd, mm, yy] = String(d.date || '').split('.').map(Number);
     if (mm - 1 !== month || yy !== year || byDate.has(dd)) return;
     byDate.set(dd, d);
   });
-  const shifts = [...byDate.keys()].sort((a, b) => a - b);
-  if (!shifts.length) {
-    box.innerHTML = '<p class="wm-sd-empty">Šajā mēnesī maiņu nav.</p>';
-    updateModalTotalHours();
-    return;
-  }
 
   const now = new Date();
   const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  box.innerHTML = shifts.map(dd => {
+  const thisMonth = now.getFullYear() === year && now.getMonth() === month;
+  const lead = (new Date(year, month, 1).getDay() + 6) % 7;
+  const total = new Date(year, month + 1, 0).getDate();
+  const shifts = [...byDate.keys()].sort((a, b) => a - b);
+  wmCalDay = thisMonth ? now.getDate() : (shifts[0] || 1);
+  let html = ['P', 'O', 'T', 'C', 'Pk', 'S', 'Sv'].map((w, i) => '<span class="wm-cal-wd' + (i > 4 ? ' is-we' : '') + '" aria-hidden="true">' + w + '</span>').join('');
+  for (let i = 0; i < lead; i++) html += '<span class="wm-cal-pad"></span>';
+  for (let dd = 1; dd <= total; dd++) {
     const item = byDate.get(dd);
-    const at = new Date(year, month, dd);
-    const key = `${pad2(dd)}.${pad2(month + 1)}.${year}`;
-    const kind = wmShiftKind(item);
-    const hrs = parseFloat(String(item.shift || '').replace(',', '.')) || 0;
-    const time = item.startTime && item.endTime ? item.startTime + '–' + item.endTime : '';
-    const when = at.getTime() === todayMid ? ' is-today' : at.getTime() < todayMid ? ' is-past' : '';
-    const rg = wmCoworkers(key, window.__grafiksStore, me);
-    const rd = wmCoworkers(key, window.__grafiksStoreRad, me);
-    const team = (rg.length ? '<ul class="wm-sd-grp is-rg" aria-label="' + (window.__mkLeftRole || { many: 'Radiogrāferi' }).many + '">' + wmPeopleRows(rg) + '</ul>' : '')
-      + (rd.length ? '<ul class="wm-sd-grp is-rd" aria-label="Radiologi">' + wmPeopleRows(rd) + '</ul>' : '');
-    return '<article class="wm-sd is-' + kind + when + '">'
-      + '<header class="wm-sd-head">'
-      + '<span class="wm-sd-num">' + dd + '</span>'
-      + '<span class="wm-sd-meta"><span class="wm-sd-wd">' + (when === ' is-today' ? 'Šodien' : WM_WEEKDAYS[at.getDay()]) + '</span>'
-      + '<span class="wm-sd-kind">' + WM_KIND_LABEL[kind] + (time ? ' ' + wmEsc(time) : '') + '</span></span>'
-      + (hrs ? '<span class="wm-sd-hrs">' + hrs + 'h</span>' : '')
-      + '</header>'
-      + team
-      + '</article>';
-  }).join('');
+    const t = new Date(year, month, dd).getTime();
+    const when = t === todayMid ? ' is-today' : t < todayMid ? ' is-past' : '';
+    const kind = item ? wmShiftKind(item) : '';
+    const hrs = item ? parseFloat(String(item.shift || '').replace(',', '.')) || 0 : 0;
+    const time = item && item.startTime && item.endTime ? item.startTime + '–' + item.endTime : '';
+    html += '<button type="button" class="wm-cd' + (item ? ' is-shift is-' + kind : ' is-off') + when + '" data-day="' + dd + '">'
+      + '<span class="wm-cd-num">' + dd + '</span>'
+      + (item ? '<span class="wm-cd-shift">' + (hrs ? '<b>' + hrs + 'h</b>' : '') + '<span>' + wmEsc(time || WM_KIND_LABEL[kind]) + '</span></span>' : '')
+      + '</button>';
+    if (item) html += wmDayCard(year, month, dd, item, me, todayMid);
+  }
+  if (!byDate.size) html += '<p class="wm-sd-empty">Šajā mēnesī maiņu nav.</p>';
+  box.innerHTML = html;
+  wmCalPick(wmCalDay);
+  if (!box.dataset.pickBound) {
+    box.dataset.pickBound = '1';
+    box.addEventListener('click', e => {
+      const cell = e.target.closest('.wm-cd[data-day]');
+      if (cell) wmCalPick(Number(cell.dataset.day));
+    });
+  }
   updateModalTotalHours();
+}
+
+function wmCalPick(dd) {
+  const side = document.getElementById('modal-calendar-side');
+  const box = document.getElementById('modal-calendar-days');
+  if (!side || !box) return;
+  wmCalDay = dd;
+  box.querySelectorAll('.wm-cd').forEach(c => c.setAttribute('aria-pressed', String(Number(c.dataset.day) === dd)));
+  const now = new Date();
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const item = modalWorkerDates.find(d => {
+    const [d0, m0, y0] = String(d.date || '').split('.').map(Number);
+    return d0 === dd && m0 - 1 === modalCurrentMonth && y0 === modalCurrentYear;
+  });
+  side.innerHTML = wmDayCard(modalCurrentYear, modalCurrentMonth, dd, item, String(window.__wmWorkerName || '').trim().toLowerCase(), todayMid);
 }
 
 function modalCalendarMonth(delta) {

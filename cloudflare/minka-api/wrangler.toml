@@ -28,6 +28,11 @@ binding = "DB"
 database_name = "minka-db"
 database_id = "643ee348-1085-47f1-a2fb-46bc149f94bb"
 
+# PIN-protected cards check the radio profile session here (worker-to-worker).
+[[services]]
+binding = "LACITIS"
+service = "lacitis-api"
+
 [[kv_namespaces]]
 binding = "MINKA_EMOJI"
 id = "72f5893dcfc44771bd2ab40913ae99b4"
