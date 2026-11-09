@@ -183,7 +183,14 @@
     for (var i = 0; i < value.length; i++) seed = (seed * 31 + value.charCodeAt(i)) % 9973;
     return seed;
   }
+  // Home: the comments' bubble. With a picture or game in the mood's place (card-layout.js) that is
+  // the bubble of its own rating row; a layout without the mood card has none (the pet then lives
+  // on the cards).
+  function moodCovered() { return document.documentElement.classList.contains('mk-cl-center-on'); }
+  function moodGone() { return document.documentElement.classList.contains('mk-cl-nomood'); }
   function commentAnchorNode() {
+    if (moodGone()) return null;
+    if (moodCovered()) return document.querySelector('.mk-cl-center .mk-cl-moodrow .rg-comment-icon') || document.querySelector('.mk-cl-center .mk-cl-moodrow .rg-pulse-write--comment');
     return document.querySelector('.rg-feedback-card .rg-comment-icon');
   }
   function workerCardNodes() {
@@ -206,6 +213,8 @@
     return document.querySelector('.rg-feedback-card .rg-mood-glass-lens');
   }
   function resolveAnchorElement(choice) {
+    // the mood card's own spots (its glass, a rating, the curve) are not on screen then
+    if (choice && choice.kind !== 'card' && (moodCovered() || moodGone())) return commentAnchorNode();
     if (choice && choice.kind === 'mood') return moodAnchorNode() || commentAnchorNode();
     if (choice && choice.kind === 'tap') return document.querySelectorAll('.rg-feedback-card .rg-pulse-taps > button')[choice.index] || null;
     if (choice && choice.kind === 'curve') return document.querySelector('.rg-feedback-card .rg-trend-plot');
@@ -626,7 +635,7 @@
     // Noskaņa X keeps the comments in a small bubble in the rating row. The
     // pet (small on the mood card) waits right under the card below it, or,
     // when the card reaches the bottom of the window, sits on that bubble.
-    var compact = home.closest && home.closest('.rg-feedback-card.mx-compact');
+    var compact = home.closest && (home.closest('.rg-feedback-card.mx-compact') || home.closest('.mk-cl-center'));
     if (compact) {
       positionedAtBubble = true;
       var btn = home.closest('.rg-pulse-write--comment') || home, b = btn.getBoundingClientRect();
@@ -652,6 +661,11 @@
     // resolve a new card explicitly.
     if (anchorChoice.kind !== 'comment') anchorChoice = { kind: 'comment', worker: '' };
     var target = commentAnchorNode();
+    // no bubble at all (a layout without the mood card): the first card is home
+    if (!target) {
+      var first = visibleWorkerCards()[0];
+      if (first) { anchorChoice = { kind: 'card', worker: first.dataset.worker }; target = first; }
+    }
     observeAnchor(target);
     return target;
   }
@@ -1354,6 +1368,13 @@
       restorePosition();
       if (pickerOpen) requestAnimationFrame(positionPicker);
     }, { passive: true });
+    // another layout, or a picture in or out of the mood's place: home is elsewhere now
+    var rehome = function () {
+      if (!petButton || positionMode !== 'auto') return;
+      setTimeout(function () { setAnchorChoice({ kind: 'comment', worker: '' }); scheduleAutoPosition(); }, 260);
+    };
+    addEventListener('mk-card-layout', rehome);
+    document.addEventListener('mk-mood-covered', rehome);
     addEventListener('daySelected', function () {
       if (pickerOpen) requestAnimationFrame(positionPicker);
       if (petButton && positionMode === 'auto') {

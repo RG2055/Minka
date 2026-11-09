@@ -231,8 +231,7 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .pc98-embed .pc98-mend button:active { scale: .96; }
 @keyframes mk-cl-mend { from { opacity: 0; scale: .96; } }
 @media (prefers-reduced-motion: reduce) { .pc98-embed .pc98-mend { animation: none; } }
-/* the daily cat waits by the mood card, which a centre covers: not over the centre's row */
-html:is(.mk-cl-center-on, .mk-cl-nomood) .mk-daily-cat-pet, html:is(.mk-cl-center-on, .mk-cl-nomood) .mk-cat-say { visibility: hidden !important; }
+
 .pc98-embed .pc98-mstat, .pc98-embed .pc98-tb, .pc98-embed .pc98-stars, .pc98-embed .pc98-cfoot, .pc98-embed .pc98-mlevels, .pc98-embed .pc98-crule, .pc98-embed .pc98-cstat, .pc98-embed .pc98-week { display: none !important; }
 /* the mood's own face on the picture, in a small glass */
 .mk-cl-bigface {

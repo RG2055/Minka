@@ -908,7 +908,13 @@
      Measures only. */
   function headingAroundToppers(section) {
     var label = section.querySelector(':scope > .cards-section-label');
-    if (!label || !label.offsetHeight) return null;
+    if (!label) return null;
+    // No topper in this section: the heading keeps its place, and nothing is measured (measuring
+    // here, right after a day's cards are built, makes the browser lay the whole page out at once).
+    if (!section.querySelector(':scope > .cards-subgrid > .card > .mk-card-addon[data-addon-group="topper"]')) {
+      return label.dataset.mkRoleShift ? { label: label, shift: 0 } : null;
+    }
+    if (!label.offsetHeight) return null;
     var name = label.querySelector(':scope > .cards-role-name');
     var mark = label.querySelector(':scope > .cards-role-mark') || name;
     if (!name || name.offsetParent !== label) return null;
@@ -956,8 +962,9 @@
     /* Read every rectangle first, then update styles. Keeping these phases
        separate avoids a forced page layout for each decorated section. */
     var plans = sections.map(function(section, sectionIndex) {
-      var style = getComputedStyle(section);
-      var current = parseFloat(style.getPropertyValue('--mk-addon-section-top-clearance')) || 0;
+      // the clearance is only ever written here, inline: read there (a computed style would need the
+      // page's layout first, with the cards' container queries)
+      var current = parseFloat(section.style.getPropertyValue('--mk-addon-section-top-clearance')) || 0;
       // Cards never move for a topper (see TOPPER_ROOM): no room is made above them.
       var desired = 0;
       var heading = headingAroundToppers(section);

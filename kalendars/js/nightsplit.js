@@ -1945,8 +1945,10 @@
   }
   // Lit like an LED: the colour more saturated and a little brighter, dark stays dark.
   function ledLight(v,m){ return Math.max(0,Math.min(255,Math.round((m+(v-m)*1.45)*1.12))); }
-  function ledSetup(card,slot,index){
-    var w=card.clientWidth, h=card.clientHeight; if(w<40||h<40) return;
+  function ledSetup(card,slot,index,size){
+    // size: measured by the caller for all cards at once (measuring here, between the canvases
+    // being put in, made the browser re-style the panel once per card)
+    var w=size?size[0]:card.clientWidth, h=size?size[1]:card.clientHeight; if(w<40||h<40) return;
     var cols=Math.ceil(w/LED_CELL), rows=Math.ceil(h/LED_CELL);
     var key=(card.getAttribute('data-worker')||'')+'|'+(card.style.getPropertyValue('--mk-skin-img')||card.className)+'|'+cols+'x'+rows;
     var cv=card.querySelector('canvas.nsc-led');
@@ -2013,11 +2015,14 @@
     if(!window.__nsOverlayOpen) return;
     if(!_led.timer) _led.openedAt=performance.now();   // the panel has just opened: sweep in
     nsClockTick();
-    (scope||document).querySelectorAll('#nsPanel .nsc-full-card[data-i]').forEach(function(card){
+    // all the cards are measured first, then lit (reads before writes)
+    var ledCards=[].slice.call((scope||document).querySelectorAll('#nsPanel .nsc-full-card[data-i]'));
+    var ledSizes=ledCards.map(function(card){ return [card.clientWidth,card.clientHeight]; });
+    ledCards.forEach(function(card,n){
       var i=+card.getAttribute('data-i'), slot=st.sl[i];
       if(!slot) return;
       if(ledProgress(slot)<=0){ var old=card.querySelector('canvas.nsc-led'); if(old) old.remove(); return; }
-      ledSetup(card,slot,i);
+      ledSetup(card,slot,i,ledSizes[n]);
     });
     if(!_led.timer) _led.timer=setInterval(function(){
       if(!window.__nsOverlayOpen){ clearInterval(_led.timer); _led.timer=0; return; }

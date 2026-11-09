@@ -375,13 +375,18 @@
      light). Rain, snow, hail and lightning move fast and run as they are. */
   var SLOW_DRIFTS = { mkWeatherLight: 1, mkWeatherCloudDrift: 1, mkWeatherCloudDriftBack: 1, mkWeatherFog: 1, mkWeatherFogBack: 1 };
   var DRIFT_STEP_MS = 100;
-  var driftTimer = 0, driftClock = 0, driftLast = 0;
+  var driftTimer = 0, driftClock = 0, driftLast = 0, driftAnims = null, driftAge = 0;
   function driftTick() {
     var now = performance.now();
     if (!document.hidden) driftClock += now - driftLast;   // the CSS pauses them while hidden too
     driftLast = now;
     var any = false;
-    layer.getAnimations({ subtree: true }).forEach(function (a) {
+    // The list of the layer's animations is kept: asking for it makes the browser finish the whole
+    // page's style and layout first, and on a day switch that fell between the roster's rebuild and
+    // its paint (an extra full layout each time). It is asked again when the layer or the motion
+    // settings changed, and every couple of seconds in case something else started one.
+    if (!driftAnims || ++driftAge > 15) { driftAnims = layer.getAnimations({ subtree: true }); driftAge = 0; }
+    driftAnims.forEach(function (a) {
       if (!SLOW_DRIFTS[a.animationName]) return;
       var timing = a.effect && a.effect.getTiming ? a.effect.getTiming() : null;
       var slow = !!timing && timing.duration > 5000;             // lite / reduced motion cut them to nothing
@@ -397,19 +402,32 @@
     if (!any && driftTimer) { if (typeof driftTimer === 'function') driftTimer(); else clearInterval(driftTimer); driftTimer = 0; }
   }
   function startDrifts() {
+    driftAnims = null;   // the layer or the settings changed: listed afresh on the next step
     if (driftTimer || typeof layer.getAnimations !== 'function') return;
     driftLast = performance.now();
     // The shared clock (js/mk-motion.js): the mood card's slow motion steps
     // on the same tick, so together they still cost ten frames a second.
     var M = window.MinkaMotion;
+    // the first step comes with the clock (a tenth of a second), not here in the middle of
+    // whatever just changed the page
     driftTimer = M && M.onSlowTick ? M.onSlowTick(driftTick) : setInterval(driftTick, DRIFT_STEP_MS);
-    driftTick();
   }
   visibilityChanged();
   document.addEventListener('visibilitychange', visibilityChanged, { passive: true });
   // Motion settings switch the drifts on and off (data-motion, mk-no-anim, mk-low-spec).
+  // Only those: <html>'s class changes for many other reasons (a day switch, a layout, the radio),
+  // and each of them used to list the animations again at once.
   if (typeof MutationObserver === 'function') {
-    new MutationObserver(startDrifts).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-motion'] });
+    var motionSig = '';
+    var motionChanged = function () {
+      var r = document.documentElement, c = r.classList;
+      var sig = [c.contains('mk-low-spec'), c.contains('mk-no-anim'), c.contains('mk-weather-paused'), c.contains('mk-lite'), r.getAttribute('data-motion')].join('|');
+      if (sig === motionSig) return;
+      motionSig = sig;
+      startDrifts();
+    };
+    motionChanged();
+    new MutationObserver(motionChanged).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-motion'] });
   }
 
   window.MinkaHeaderWeather = {

@@ -231,6 +231,24 @@
     }); });
   }
   function schedule() { if (!frame) frame = requestAnimationFrame(place); }
+  // After a day switch the cards were placed from the last measurements. Measuring again in that
+  // same frame forced a whole extra layout before the new day could be painted; right after the
+  // frame the layout is clean and measuring costs nothing. Only a size that really changed places
+  // the cards again.
+  var verifyT = 0;
+  function verifySoon() {
+    if (verifyT) return;
+    verifyT = requestAnimationFrame(function () {
+      verifyT = setTimeout(function () {
+        verifyT = 0;
+        if (frame || !root.classList.contains('mk-corridor')) return;
+        var was = geo, now = measure();
+        if (!was || !now) { geo = null; schedule(); return; }
+        var same = ['iw', 'ih', 'vis', 'w', 'below', 'base', 'moodHalf', 'LABEL'].every(function (k) { return Math.abs(now[k] - was[k]) < 0.5; });
+        if (!same) { geo = null; schedule(); }
+      }, 0);
+    });
+  }
 
   // The card under the pointer, found from where the cards stand at rest: with :hover the card
   // that turns and comes forward slid out from under the pointer and back, shaking.
@@ -260,7 +278,7 @@
   list.addEventListener('scroll', function () { rests = null; setHot(null); }, { passive: true });
   // the roster is rebuilt on a day switch: placed before that frame is painted (no flying in);
   // the root's class only matters when the radio opens or closes
-  new MutationObserver(function () { if (frame) { cancelAnimationFrame(frame); frame = 0; } place(true); schedule(); }).observe(list, { childList: true });
+  new MutationObserver(function () { if (frame) { cancelAnimationFrame(frame); frame = 0; } place(true); verifySoon(); }).observe(list, { childList: true });
   var radio = root.classList.contains('host-radio-open');
   new MutationObserver(function () {
     var now = root.classList.contains('host-radio-open');

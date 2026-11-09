@@ -135,7 +135,7 @@
     var s = l.mood === false ? 1 : (l.moodScale || 1);
     if (s === 1) list.style.removeProperty('--mk-mood-s'); else list.style.setProperty('--mk-mood-s', String(s));
     window.dispatchEvent(new Event('mk-card-layout'));
-    paint();
+    if (isOpen) paint();   // the menu's own state and pictures: only while it is shown (open() paints it)
     paintBtn(l);
   }
   window.MkCardLayout = { current: current, list: LAYOUTS };
@@ -307,7 +307,16 @@
   var moodRO = typeof ResizeObserver === 'function' ? new ResizeObserver(schedulePlace) : null, moodSeen = null;
   function watchMood() { var m = list.querySelector('.rg-feedback-card'); if (moodRO && m && m !== moodSeen) { if (moodSeen) moodRO.unobserve(moodSeen); moodRO.observe(m); moodSeen = m; } schedulePlace(); }
   new MutationObserver(watchMood).observe(list, { childList: true });
-  new MutationObserver(schedulePlace).observe(root, { attributes: true, attributeFilter: ['class'] });
+  // <html>'s class changes for many reasons (the night panel, a dialog, the weather); only these
+  // move the mood card. Placing reads a dozen boxes, which costs a whole layout when the page has
+  // just changed, so it is not done for the others.
+  var rootSig = '';
+  new MutationObserver(function () {
+    var c = root.classList, sig = ['host-radio-open', 'mk-corridor', 'mk-cf', 'mk-cf-solo', 'mk-cl-nomood', 'mk-mobile-shell'].map(function (k) { return c.contains(k) ? 1 : 0; }).join('');
+    if (sig === rootSig) return;
+    rootSig = sig;
+    schedulePlace();
+  }).observe(root, { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', schedulePlace);
   window.addEventListener('mk-card-layout', function () { schedulePlace(); setTimeout(schedulePlace, 600); });
   list.addEventListener('scroll', schedulePlace, { passive: true });
@@ -699,20 +708,32 @@
     if (on !== root.classList.contains('mk-cl-center-on')) document.dispatchEvent(new CustomEvent('mk-mood-covered', { detail: on }));
     root.classList.toggle('mk-cl-center-on', on);
     centerEl.hidden = !on;
-    if (!on) { if (centerSig) { centerSig = ''; unmountGame(); stopLive(); centerEl.innerHTML = ''; } return; }
-    var sig = id + '|' + (window.__activeDateStr || '');
-    if (sig !== centerSig) {
-      centerSig = sig; unmountGame(); stopLive();
+    if (!on) { if (centerSig) { centerSig = ''; centerMood = null; centerBox = ''; unmountGame(); stopLive(); centerEl.innerHTML = ''; } return; }
+    // The picture (its worker and WebGL program) or the game lives on through day switches: only a
+    // new choice builds it again. The mood's face, word and rating row follow the day's own mood
+    // card when that card is a new one; later changes to it come through watchMoodState.
+    var fresh = id !== centerSig;
+    if (fresh) {
+      centerSig = id; unmountGame(); stopLive();
       centerEl.dataset.center = id; centerEl.innerHTML = centerHtml(id, mood);
       var cc = byCenter(id);
       if (cc.game) mountGame(cc.game); else startFx(cc);
     }
-    watchMoodState(mood);
-    paintMood();
-    paintRate();
-    centerEl.style.left = Math.round(M.left) + 'px'; centerEl.style.top = Math.round(M.top) + 'px';
-    centerEl.style.width = Math.round(M.width) + 'px'; centerEl.style.height = Math.round(M.height) + 'px';
+    if (fresh) { centerMood = mood; watchMoodState(mood); paintMood(); paintRate(); }
+    else if (mood !== centerMood) {
+      // a new day's mood card: its face and row are copied right after this frame is painted (the
+      // copy reads the card's styles; before the paint that would hold the new day back)
+      centerMood = mood;
+      setTimeout(function () { if (centerMood !== mood || centerEl.hidden) return; watchMoodState(mood); paintMood(); paintRate(); }, 0);
+    }
+    var box = Math.round(M.left) + ',' + Math.round(M.top) + ',' + Math.round(M.width) + ',' + Math.round(M.height);
+    if (box !== centerBox) {
+      centerBox = box;
+      centerEl.style.left = Math.round(M.left) + 'px'; centerEl.style.top = Math.round(M.top) + 'px';
+      centerEl.style.width = Math.round(M.width) + 'px'; centerEl.style.height = Math.round(M.height) + 'px';
+    }
   }
+  var centerMood = null, centerBox = '';
   // the games: the gallery's own Windows 98 (js/page/mood-gallery-pc.js), one game mounted in the box
   var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261109cl68', pcLoad = null, game = null;
   function mountGame(app) {
@@ -852,7 +873,7 @@
     if (isOpen) paint();
     quickKey = ''; shownKey = '';
     apply();
-    centerSig = ''; schedulePlace();
+    centerMood = null; schedulePlace();   // the same picture stays; its face, row and chips are painted again
     if (acc && !acc.hidden) { if (person()) paintAccount(); else closeAccount(); }
   }
   try { (window.parent !== window ? window.parent.document : document).addEventListener('media-profile-change', onProfile); }

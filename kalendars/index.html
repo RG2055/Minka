@@ -231,7 +231,7 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
 <link rel="stylesheet" href="css/skin-draw.css?v=20261002mx43">
 <link rel="stylesheet" href="css/card-addons.css?v=20261001tp2">
 <script src="js/emoji3d.js?v=20261010pic1"></script>
-<script src="js/card-addons.js?v=20261012mob1" defer></script>
+<script src="js/card-addons.js?v=20261110ds1" defer></script>
 <script src="js/skin-organize.js?v=20261010hd1" defer></script>
 <script src="js/skin-builder.js?v=20261010ec1" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20261001fit2">
@@ -938,15 +938,15 @@ function _mkToast(msg, type) {
 <script src="js/night-plan-history.js?v=20261022ot1"></script>
 <script src="js/calendar.js?v=20261109cl69"></script>
 <script src="js/depth-cards.js?v=20261022hv1" defer></script>
-<script src="js/daily-cat.js?v=20261109cl68" defer></script>
-<script src="js/header-weather.js?v=20261012ld3" defer></script>
+<script src="js/daily-cat.js?v=20261110ds1" defer></script>
+<script src="js/header-weather.js?v=20261110ds1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20261021wd1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20261022ot1"></script>
-<script src="js/nakts-pets.js?v=20260928perf1" defer></script>
-<script src="js/nightsplit.js?v=20261022ck1" defer></script>
+<script src="js/nakts-pets.js?v=20261110ds1" defer></script>
+<script src="js/nightsplit.js?v=20261110ds1" defer></script>
 <script src="js/page/card-initials-dither.js?v=20261022px1" defer></script>
 <script src="js/monthcal.js?v=20261008hol1" defer></script>
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
@@ -1312,9 +1312,16 @@ window.addEventListener('message', function(e) {
     // lot instead of one per panel.
     function syncSidePanels(){
       var items = [];
+      // A panel whose list and window are as they were when it was last fitted keeps its classes:
+      // taking them off and measuring re-styles the whole page, and this runs several times on
+      // every day switch (the list changes once).
+      var around = window.innerWidth + 'x' + window.innerHeight + (root.classList.contains('host-radio-open') ? 'r' : '');
       document.querySelectorAll('.side-panel').forEach(function(panel){
         var duty = panel.querySelector('.duty-vertical');
         if (!duty) return;
+        var sig = around + '|' + duty.innerHTML;
+        if (panel.__mkDutySig === sig) return;
+        panel.__mkDutySig = sig;
         panel.classList.remove('compact-duty', 'mini-duty');
         items.push([panel, duty]);
       });
@@ -1419,7 +1426,7 @@ window.addEventListener('message', function(e) {
   document.addEventListener('click', function(){ requestAnimationFrame(syncSearchOverlay); }, true);
 })();
 </script>
-<link rel="stylesheet" id="mk-layer-fix-v1" href="css/page/mk-layer-fix-v1.css?v=20261021cl1">
+<link rel="stylesheet" id="mk-layer-fix-v1" href="css/page/mk-layer-fix-v1.css?v=20261110ds1">
 <script src="js/page/header-groups.js?v=20260928hx2"></script>
 <script>
 /* Mobile: make the statistics launcher resilient to transformed bottom nav taps. */
@@ -1960,7 +1967,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
-<link rel="stylesheet" href="css/nightsplit-brand.css?v=20261022ck1">
+<link rel="stylesheet" href="css/nightsplit-brand.css?v=20261110ds1">
 <link rel="stylesheet" href="css/role-headings.css?v=20261010hop2">
 
 <link rel="stylesheet" href="css/fatigue-health.css?v=20260924perf1">
@@ -2020,8 +2027,8 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <!-- Noskaņa X: jaunais noskaņas bloks RG datorā (izslēdzams ar ?mood=0, sk. <head>). -->
 <link rel="stylesheet" id="mk-mood-x" href="css/page/mk-mood-x.css?v=20261022jr1">
 <link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261109cl68">
-<link rel="stylesheet" href="css/page/card-layout.css?v=20261109cl69">
-<script src="js/page/card-layout.js?v=20261109cl69" defer></script>
-<script src="js/page/corridor.js?v=20261109cl68" defer></script>
+<link rel="stylesheet" href="css/page/card-layout.css?v=20261110ds1">
+<script src="js/page/card-layout.js?v=20261110ds1" defer></script>
+<script src="js/page/corridor.js?v=20261110ds1" defer></script>
 </body>
 </html>

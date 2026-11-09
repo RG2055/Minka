@@ -2376,7 +2376,9 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   text-shadow: 0 0 10px rgba(255,255,255,0.32), 0 0 18px rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.42) !important;
   -webkit-text-stroke: 0.35px rgba(22,18,34,0.65) !important;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.32)) !important;
-  animation: nsZzzFloat 3.2s ease-in-out infinite !important;
+  /* stepped: these letters are not drawn on the compositor, so a smooth run re-painted all of them
+     on every screen frame while the night panel was open (half of what the open panel cost) */
+  animation: nsZzzFloat 3.2s steps(5, end) infinite !important;
 }
 
 .ns-room-bed-zzz span:nth-child(2) {

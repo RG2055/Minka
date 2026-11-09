@@ -306,7 +306,7 @@
     this.leap(to, 24, function () { self.bed = null; if (then) then(); else self.play('sit', 'side', rnd(1, 3)); });
   };
   Cat.prototype.leap = function (to, height, then) {
-    this.jump = { x0: this.x, y0: this.y, x1: to.x, y1: to.y, h: height, t0: now(), dur: 0.55 };
+    this.jump = { x0: this.x, y0: this.y, x1: to.x, y1: to.y, h: height, t0: now(), dur: 0.55 }; beat = 0;   // every frame from now
     this.flip = to.x < this.x; this.anim = 'jump'; this.dir = 'side'; this.t = 0; this.path = [];
     this.next = then; this.until = Infinity;
   };
@@ -530,6 +530,7 @@
       var cloud = Sprite(room, 'fight', 'fight'); cloud.el.style.pointerEvents = 'none';
       var t0 = now();
       bed.el.classList.add('ns-bed-rumble');
+      beat = 0;
       room.fx = { step: function (T) {
         show(cloud, 'fight', Math.floor((T - t0) * 12) % cloud.d.rows.fight.frames);
         put(cloud, g, spot.x, spot.y + 6, 0, false, bed.z + 3, 0.85);
@@ -661,7 +662,7 @@
       cat.play('tug', 'side', 0.8, function () {
         if (gone()) return;
         var drag = piece(room, 'ns-pet-drag', D.parts.drag, DRAG.w, DRAG.h);
-        room.carry = { el: drag, cat: cat }; carry(room);
+        room.carry = { el: drag, cat: cat }; beat = 0; carry(room);
         fade(D.heap, 0, 0.2); fade(drag, 1, 0.2);
         cat.goTo(at, false, function () {
           if (gone()) { drag.remove(); if (room.carry && room.carry.el === drag) room.carry = null; return; }
@@ -747,6 +748,19 @@
   function eachPet(fn) {
     Object.keys(rooms).forEach(function (k) { rooms[k].cats.forEach(fn); rooms[k].mice.forEach(fn); });
   }
+  var beat = 0;   // steps a second; 0 = every frame
+  function stepRate() {
+    for (var k in rooms) {
+      var room = rooms[k], pets = room.cats.concat(room.mice);
+      if (room.fx || room.carry) return 0;
+      for (var i = 0; i < pets.length; i++) {
+        var p = pets[i];
+        if (p.jump) return 0;
+        if (p.path && p.path.length && !p.hidden && !(GLIDE && p.s.anim)) return 0;   // moved frame by frame
+      }
+    }
+    return 12;
+  }
   function tick() {
     if (window.__nsOverlayOpen !== true) { running = false; eachPet(function (p) { p.settle(); }); return; }
     raf = requestAnimationFrame(tick);
@@ -757,6 +771,13 @@
     // (no running, no rattling beds). A step is a transform and a sprite frame: cheap.
     var lv = level();
     if (lv !== 'full' && dt < 1 / 30) return;
+    // No more steps than the sprites have frames. Each pet changes its drawing 4 to 16 times a
+    // second in its own rhythm; stepped on every screen frame, some pet changed on almost each one
+    // and the whole page was drawn again ~57 times a second. On one shared beat of 12 a second they
+    // change together (a walk's own motion runs on the compositor and stays smooth). Every frame
+    // only for a jump, a carried duvet, a corner cut step by step or an effect: `beat` is worked
+    // out after each step, not on every frame.
+    if (beat && dt < 1 / beat - 0.004) return;
     lastT = T;
     var q = T - quietAt > 0.25; if (q) quietAt = T;
     Object.keys(rooms).forEach(function (k) {
@@ -769,6 +790,7 @@
       room.mice.forEach(function (m) { m.step(dt, T); });
       if (q) quietDreams(room);
     });
+    beat = stepRate();
   }
 
   window.NaktsPets = {
