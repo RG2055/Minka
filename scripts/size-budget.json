@@ -1,13 +1,13 @@
 {
-  "note": "Startup JS/CSS (KB, uncompressed) each page links directly. Set from the 2026-10-13 measurement with ~3 % headroom; lower it when something gets lighter, raise it only on purpose.",
+  "note": "Startup JS/CSS (KB, uncompressed) each page links directly. Set from the 2026-10-13 measurement with ~3 % headroom; lower it when something gets lighter, raise it only on purpose. 2026-11-09: kalendars raised for the card layout editor and centres (card-layout.js 59 KB, card-layout.css 28 KB; the dither pictures load only when chosen).",
   "pages": {
     "index.html": {
       "jsKB": 352,
       "cssKB": 490
     },
     "kalendars/index.html": {
-      "jsKB": 2890,
-      "cssKB": 2015
+      "jsKB": 2960,
+      "cssKB": 2050
     },
     "mobile.html": {
       "jsKB": 289,
