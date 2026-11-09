@@ -1,7 +1,9 @@
 /* One authenticated account for radio and Lācītis. No PINs stored in the browser. */
 (function(){
  'use strict';
- const local=/^(127\.0\.0\.1|localhost)$/.test(location.hostname);
+ // the local test servers (this computer, or it by its home-network address from a phone or another
+ // computer) forward the profile API themselves: the real API's CORS allows only the real sites
+ const local=/^(127\.0\.0\.1|localhost|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.test(location.hostname);
  const API=local?'/dezura/v2':'https://lacitis-api.gamernr1elite.workers.dev/dezura/v2';
  const KEY='minka:media-session:v2';
  // Keep the persisted handover deadline independent of the selected calendar date.
@@ -245,7 +247,7 @@
   if(!session)return;setHeading(session.name);const host=$('mediaContent'),scroll=host.querySelector('.media-favorite-list')?.scrollTop||0,focusLabel=document.activeElement?.getAttribute('aria-label');host.replaceChildren();
   const actions=document.createElement('div');actions.className='media-shortcuts';
   function shortcut(kind,title,subtitle,action){const b=button('',action),copy=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=title;small.textContent=subtitle;copy.append(strong,small);b.append(icon(kind),copy);return b;}
-  actions.append(shortcut('look','Radio izskats','Fons un krāsas',()=>{dialog.close();$('radioSourceBroadcast')?.click();$('themeBtn')?.click();}),shortcut('help','Pamācība','Parādi pie pogām',()=>{dialog.close();void startTour();}));host.append(actions);
+  actions.append(shortcut('look','Radio izskats','Fons un krāsas',()=>{dialog.close();$('radioSourceBroadcast')?.click();$('themeBtn')?.click();}),shortcut('help','Pamācība','Parādi pie pogām',()=>{dialog.close();if(!radioVisible()&&typeof window.toggleRadio==='function'){window.toggleRadio();setTimeout(()=>void startTour(),700);}else void startTour();}));host.append(actions);
   if(!loaded)host.append(button('Mēģināt ielādēt vēlreiz',()=>adopt(session)));
   const section=document.createElement('section');section.className='media-favorites';const head=document.createElement('div');head.className='media-section-head';
   const heading=document.createElement('h3');heading.textContent='Favorīti';if(radio.favorites.length){const count=document.createElement('span');count.className='media-favorite-count';count.textContent=String(radio.favorites.length);heading.append(count);}head.append(heading);

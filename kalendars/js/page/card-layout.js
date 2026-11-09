@@ -853,8 +853,118 @@
     quickKey = ''; shownKey = '';
     apply();
     centerSig = ''; schedulePlace();
+    if (acc && !acc.hidden) { if (person()) paintAccount(); else closeAccount(); }
   }
   try { (window.parent !== window ? window.parent.document : document).addEventListener('media-profile-change', onProfile); }
   catch (_e) { document.addEventListener('media-profile-change', onProfile); }
+
+  /* ── Tavs konts: what the account keeps, at a glance (the header's name opens it) ─────────────
+     The person's own card as it looks, with its editors; the layout, the centre and the chips as
+     kept in the account; the radio in one line (its stations and look stay in the shell's
+     profile window). Logged out, the header opens the login instead (mk-header-x.js). */
+  var acc = null;
+  function rosterName(p) {
+    var key = String(p.name || '').trim().toLocaleUpperCase('lv-LV'), hit = null;
+    Array.prototype.some.call(document.querySelectorAll('#grafiks-list .card.mk-mid-card[data-worker]'), function (c) {
+      if (c.closest('.mk-skin-preview-list') || c.getAttribute('data-worker').trim().toLocaleUpperCase('lv-LV') !== key) return false;
+      hit = c; return true;
+    });
+    return { key: key, card: hit };
+  }
+  // a still copy of the person's card, at its own shape, scaled into the stage
+  function cardCopy(p, stage) {
+    var r = rosterName(p), src = r.card || (typeof window.__minkaBuildPreviewCard === 'function' ? window.__minkaBuildPreviewCard(r.key) : null);
+    if (!src) { stage.innerHTML = '<p class="mk-acc-nocard">Tava kartīte parādīsies, kad būsi grafikā.</p>'; return; }
+    var w = src.offsetWidth || 180, h = src.offsetHeight || 180;
+    var c = src.cloneNode(true);
+    ['--cs', '--cx', '--cyo', '--cz', '--cry', '--crx', '--crz', '--cin', '--chz', '--chry', 'z-index'].forEach(function (k) { c.style.removeProperty(k); });
+    c.classList.remove('mk-cor-hot', 'mk-cor-fresh');
+    c.removeAttribute('data-worker'); c.removeAttribute('id');
+    c.querySelectorAll('[id],[data-worker]').forEach(function (el) { el.removeAttribute('id'); el.removeAttribute('data-worker'); });
+    c.querySelectorAll('button,input,select,textarea,a').forEach(function (el) { el.setAttribute('tabindex', '-1'); el.setAttribute('aria-hidden', 'true'); });
+    ['position:absolute', 'left:0', 'top:0', 'margin:0', 'transform-origin:0 0', 'pointer-events:none', 'min-height:0', 'max-height:none', 'aspect-ratio:auto', 'width:' + w + 'px', 'height:' + h + 'px'].forEach(function (d) {
+      var i = d.indexOf(':'); c.style.setProperty(d.slice(0, i), d.slice(i + 1), 'important');
+    });
+    var wrap = document.createElement('div'); wrap.id = 'grafiks-list'; wrap.className = 'grid-view mk-skin-preview-list mk-acc-wrap';
+    wrap.appendChild(c); stage.replaceChildren(wrap);
+    var side = Math.min(stage.clientWidth || 200, 220), k = side / Math.max(w, h);
+    stage.style.height = Math.round(h * k) + 'px';
+    c.style.setProperty('transform', 'scale(' + k.toFixed(4) + ')', 'important');
+  }
+  function accRow(icon, title, value, note, act, actLabel) {
+    return '<div class="mk-acc-row"><i class="mk-acc-ic" aria-hidden="true">' + icon + '</i><div class="mk-acc-txt"><b>' + title + '</b><span>' + value + '</span>' + (note ? '<small>' + note + '</small>' : '') + '</div>' +
+      (act ? '<button type="button" class="mk-acc-go" data-acc="' + act + '">' + actLabel + '</button>' : '') + '</div>';
+  }
+  function esc(t) { return String(t || '').replace(/[<>&"]/g, ''); }
+  function paintAccount() {
+    var p = person(), st = profile() || {}, m = media();
+    if (!acc || !p) return;
+    var a = accountSaved(), saved = !!st.cardLayout, lay = a || current(), cid = st.cardCenter || centerNow(), cen = byCenter(cid) || byCenter('mood');
+    var ch = st.cardChips || chipsOn(), r = m && m.getRadio && m.getRadio(), fav = r && r.favorites ? r.favorites.length : 0;
+    var LAYI = '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="7" height="6" rx="1.6"/><rect x="14" y="5" width="7" height="6" rx="1.6"/><rect x="3" y="14" width="7" height="6" rx="1.6"/><rect x="14" y="14" width="7" height="6" rx="1.6"/></svg>';
+    var CENI = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>';
+    var RADI = '<svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="12" rx="2.6"/><path d="M7 8 16 4"/><circle cx="15.5" cy="14" r="2.6"/></svg>';
+    var where = saved ? CHECK + 'Kontā: seko tev uz jebkura datora' : 'Vēl nav kontā: saglabā ar "Manam kontam"';
+    acc.querySelector('.mk-acc-name').textContent = p.name || '';
+    acc.querySelector('.mk-acc-rows').innerHTML =
+      accRow(LAYI, 'Izkārtojums', esc(lay.name), where, 'layout', 'Mainīt') +
+      accRow(CENI, 'Centrā', esc(cen.name), cen.id === 'mood' ? 'Noskaņas kartīte' : esc(cen.note), 'layout', 'Mainīt') +
+      '<div class="mk-acc-row mk-acc-chips"><i class="mk-acc-ic" aria-hidden="true">' + BOLT + '</i><div class="mk-acc-txt"><b>Centrā rāda arī</b><span>' +
+        '<label class="mk-cl-switch"><input type="checkbox" role="switch" data-acc-chip="fatigue"' + (ch.fatigue !== false ? ' checked' : '') + '><span>' + BOLT + 'Nogurums</span></label>' +
+        '<label class="mk-cl-switch"><input type="checkbox" role="switch" data-acc-chip="coffee"' + (ch.coffee !== false ? ' checked' : '') + '><span>' + CUP + 'Kafija</span></label></span></div></div>' +
+      accRow(RADI, 'Radio', fav ? fav + (fav === 1 ? ' favorīts' : ' favorīti') : 'Vēl nav favorītu', 'Stacijas, radio izskats un pamācība', 'radio', 'Atvērt');
+    cardCopy(p, acc.querySelector('.mk-acc-stage'));
+  }
+  function closeAccount() {
+    if (!acc || acc.hidden) return;
+    document.removeEventListener('keydown', accKey, true);
+    var el = acc, done = function () { el.hidden = true; };
+    if (MM && MM.animate) { var an = MM.animate(el.firstElementChild, [{ opacity: 1, scale: '1' }, { opacity: 0, scale: '.97' }], 'effects-fast', { fill: 'forwards' }); if (an && an.finished) an.finished.then(function () { done(); an.cancel(); }, done); else done(); }
+    else done();
+  }
+  function accKey(e) { if (e.key === 'Escape') { e.preventDefault(); closeAccount(); } }
+  function openAccount() {
+    var p = person(), m = media();
+    if (!p) { if (m && m.open) m.open({ center: true }); return; }
+    if (!acc) {
+      acc = document.createElement('div');
+      acc.className = 'mk-acc';
+      acc.innerHTML = '<section class="mk-acc-box" role="dialog" aria-modal="true" aria-labelledby="mkAccName">' +
+        '<div class="mk-acc-cardcol"><div class="mk-acc-stage"></div>' +
+          '<button type="button" class="mk-acc-btn" data-acc="look">Mainīt izskatu</button><button type="button" class="mk-acc-btn mk-acc-btn2" data-acc="emoji">Mainīt emoji</button></div>' +
+        '<div class="mk-acc-main"><header><div><small>Tavs konts</small><h2 class="mk-acc-name" id="mkAccName"></h2></div>' +
+          '<button type="button" class="mk-acc-x" data-acc="close" aria-label="Aizvērt"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>' +
+          '<div class="mk-acc-rows"></div>' +
+          '<footer><button type="button" class="mk-acc-link" data-acc="switch">Mainīt profilu</button><button type="button" class="mk-acc-link" data-acc="logout">Iziet</button></footer></div></section>';
+      document.body.appendChild(acc);
+      acc.addEventListener('click', function (e) {
+        if (e.target === acc) { closeAccount(); return; }
+        var b = e.target.closest('[data-acc]'), mm = media(), pp = person();
+        if (!b) return;
+        var what = b.dataset.acc, rn = pp && rosterName(pp).key;
+        if (what === 'close') closeAccount();
+        else if (what === 'layout') { closeAccount(); open(); }
+        else if (what === 'look' || what === 'emoji') { closeAccount(); if (typeof window.showWorkerSchedule === 'function' && rn) window.showWorkerSchedule(rn, null, { view: what === 'look' ? 'skin' : 'emoji' }); }
+        else if (what === 'radio') { closeAccount(); if (mm && mm.open) mm.open({ center: true }); }
+        else if (what === 'switch') { closeAccount(); if (mm && mm.logout) Promise.resolve(mm.logout()).then(function () { if (mm.open) mm.open({ center: true }); }); }
+        else if (what === 'logout') { closeAccount(); if (mm && mm.logout) mm.logout(); }
+      });
+      // the chips: kept on this computer at once and in the account
+      acc.addEventListener('input', function (e) {
+        var k = e.target.dataset && e.target.dataset.accChip, mm = media();
+        if (!k) return;
+        var ch = chipsOn(); ch[k] = e.target.checked;
+        try { localStorage.setItem(CHIPS, JSON.stringify(ch)); } catch (_e) {}
+        if (mm && mm.change && profile()) mm.change({ type: 'settings', settings: { cardChips: ch } });
+        paintChips(list.querySelector('.rg-feedback-card'));
+      });
+    }
+    acc.hidden = false;
+    paintAccount();
+    document.addEventListener('keydown', accKey, true);
+    if (MM && MM.animate) MM.animate(acc.firstElementChild, [{ opacity: 0, scale: '.96' }, { opacity: 1, scale: '1' }], 'spring-default');
+    var x = acc.querySelector('.mk-acc-x'); if (x) x.focus({ preventScroll: true });
+  }
+  window.MkAccount = { open: openAccount, close: closeAccount };
   apply();
 })();

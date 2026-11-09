@@ -311,3 +311,50 @@ html:is(.mk-cl-center-on, .mk-cl-nomood) .mk-daily-cat-pet, html:is(.mk-cl-cente
 .mk-cl-cmines i { display: grid; place-items: center; height: 9px; border-radius: 4px; font: 700 7px/1 Inter, system-ui, sans-serif; font-style: normal; color: var(--mk-cl-accent);
   background: radial-gradient(circle, var(--mk-cl-accent) 0 .5px, transparent .8px) 0 0 / 3px 3px, color-mix(in srgb, var(--mk-cl-accent) 28%, #0b0e12); }
 .mk-cl-cmines i:not(:empty) { background: color-mix(in srgb, var(--mk-cl-accent) 8%, transparent); }
+
+/* ── Tavs konts (card-layout.js openAccount): the person's card on the left, the account's rows
+   on the right; centred over the page, M3 surfaces in the theme's colours ─────────────────── */
+.mk-acc { position: fixed; inset: 0; z-index: 10004; display: grid; place-items: center; padding: 16px; background: rgba(4, 6, 9, .55);
+  color: #eef2f6; font: 500 13px/1.35 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.mk-acc[hidden] { display: none; }
+.mk-acc-box { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 20px; width: min(760px, 100%); max-height: calc(100% - 32px); overflow: auto; box-sizing: border-box; padding: 20px;
+  border-radius: 28px; background: color-mix(in srgb, var(--mk-cl-surface) 92%, #0b0e13);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .55), inset 0 0 0 1px color-mix(in srgb, var(--mk-cl-accent) 18%, transparent); }
+.mk-acc-cardcol { display: grid; align-content: start; gap: 8px; }
+.mk-acc-stage { position: relative; width: 100%; min-height: 160px; border-radius: 20px; overflow: visible; }
+.mk-acc-wrap { position: absolute !important; inset: 0 !important; display: block !important; padding: 0 !important; margin: 0 !important; width: auto !important; height: auto !important; }
+.mk-acc-nocard { margin: 0; padding: 24px 12px; border-radius: 20px; background: oklch(1 0 0 / .05); text-align: center; opacity: .7; }
+.mk-acc-btn { min-height: 40px; border: 0; border-radius: 20px; cursor: pointer; font: 600 13px/1 Inter, system-ui, sans-serif; background: var(--mk-cl-accent); color: var(--mk-cl-on-accent);
+  transition: scale 160ms cubic-bezier(.2, 0, 0, 1), background-color 160ms cubic-bezier(.2, 0, 0, 1); }
+.mk-acc-btn2 { background: color-mix(in srgb, var(--mk-cl-accent) 16%, transparent); color: inherit; }
+.mk-acc-btn:active, .mk-acc-go:active, .mk-acc-link:active, .mk-acc-x:active { scale: .96; }
+.mk-acc-main { display: grid; align-content: start; gap: 12px; min-width: 0; }
+.mk-acc-main header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mk-acc-main header small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .6; }
+.mk-acc-main h2 { margin: 2px 0 0; font: 700 22px/1.15 Inter, system-ui, sans-serif; letter-spacing: -.01em; text-wrap: balance; }
+.mk-acc-x { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 0; border-radius: 50%; cursor: pointer; color: inherit; background: oklch(1 0 0 / .08); }
+.mk-acc-x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.mk-acc-rows { display: grid; gap: 8px; }
+.mk-acc-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 10px 10px 12px; border-radius: 18px; background: oklch(1 0 0 / .05); }
+.mk-acc-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; font-style: normal; color: var(--mk-cl-accent); background: color-mix(in srgb, var(--mk-cl-accent) 14%, transparent); }
+.mk-acc-ic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.mk-acc-ic svg path[fill="currentColor"] { stroke: none; }
+.mk-acc-txt { display: grid; gap: 2px; min-width: 0; }
+.mk-acc-txt b { font-size: 11.5px; font-weight: 600; opacity: .65; }
+.mk-acc-txt > span { font-size: 15px; font-weight: 700; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.mk-acc-txt small { display: flex; align-items: center; gap: 5px; font-size: 11.5px; opacity: .7; }
+.mk-acc-txt small svg { width: 13px; height: 13px; color: var(--mk-cl-accent); }
+.mk-acc-go { min-height: 36px; padding: 0 16px; border: 0; border-radius: 18px; cursor: pointer; font: 600 13px/1 Inter, system-ui, sans-serif; color: inherit;
+  background: color-mix(in srgb, var(--mk-cl-accent) 18%, transparent); transition: scale 160ms cubic-bezier(.2, 0, 0, 1), background-color 160ms cubic-bezier(.2, 0, 0, 1); }
+.mk-acc-go:hover { background: color-mix(in srgb, var(--mk-cl-accent) 28%, transparent); }
+.mk-acc-chips .mk-acc-txt > span { font-size: 13px; }
+.mk-acc-chips .mk-cl-switch { position: relative; }
+.mk-acc-chips .mk-cl-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.mk-acc-chips .mk-cl-switch span { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: 8px; font: 600 12.5px/1 Inter, system-ui, sans-serif; box-shadow: inset 0 0 0 1px oklch(1 0 0 / .2); }
+.mk-acc-chips .mk-cl-switch span svg { width: 14px; height: 14px; }
+.mk-acc-chips .mk-cl-switch input:checked + span { background: color-mix(in srgb, var(--mk-cl-accent) 22%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mk-cl-accent) 60%, transparent); }
+.mk-acc-chips .mk-cl-switch input:focus-visible + span { outline: 2px solid var(--mk-cl-accent); outline-offset: 2px; }
+.mk-acc-main footer { display: flex; justify-content: space-between; gap: 8px; padding-top: 6px; border-top: 1px solid oklch(1 0 0 / .08); }
+.mk-acc-link { min-height: 36px; padding: 0 12px; border: 0; border-radius: 18px; cursor: pointer; background: transparent; color: inherit; font: 600 13px/1 Inter, system-ui, sans-serif; opacity: .8; }
+.mk-acc-link:hover { opacity: 1; background: oklch(1 0 0 / .06); }
+@media (max-width: 640px) { .mk-acc-box { grid-template-columns: 1fr; } .mk-acc-cardcol { max-width: 260px; justify-self: center; width: 100%; } }

@@ -218,7 +218,12 @@
   var accountWired = false;
   function wireAccount() {
     if (!els.account) return;
-    els.account.addEventListener('click', function () { var m = mediaApi(); if (m && m.open) m.open({ center: true }); });
+    // logged in: the account at a glance (card-layout.js); logged out: the login
+    els.account.addEventListener('click', function () {
+      var m = mediaApi(), s = m && m.getSession && m.getSession();
+      if (s && s.workerId && window.MkAccount) { window.MkAccount.open(); return; }
+      if (m && m.open) m.open({ center: true });
+    });
     paintAccount();
     if (accountWired) return;
     accountWired = true;

@@ -8146,7 +8146,7 @@ function showWorkerSchedule(workerName, currentShift, opts) {
   // Position once; fade without scaling the entire text-heavy sheet.
   wmPin('transform', 'none');
   wmTabIndex = -1;
-  showModalView(opts && (opts.view === 'calendar' || opts.view === 'emoji') ? opts.view : 'fatigue');
+  showModalView(opts && (opts.view === 'calendar' || opts.view === 'emoji' || opts.view === 'skin') ? opts.view : 'fatigue');
 
   modal.classList.remove('wm-closing');
   modal.classList.add('open');
