@@ -428,7 +428,16 @@
     try { var raw = JSON.stringify(o); localStorage.setItem(KEY, raw); loadCache = { raw: raw, value: o }; }
     catch (e) { loadCache = { raw: null, value: null }; }
   }
-  function normName(n) {
+  // A copy of a roster card for the editor: without its place in the corridor or a layout (corridor.js
+// --cs/--cx… and its hover state), else the copy is drawn at the corridor's size and spot.
+function unplace(card) {
+  ['--cs', '--cx', '--cyo', '--cz', '--cry', '--crx', '--crz', '--cin', '--chz', '--chry', 'z-index'].forEach(function (p) { card.style.removeProperty(p); });
+  card.classList.remove('mk-cor-hot', 'mk-cor-fresh');
+  // the grid's minimum height (bundle.css .card) would stretch a card a layout drew smaller
+  card.style.setProperty('min-height', '0', 'important');
+  return card;
+}
+function normName(n) {
     var name = String(n || '').trim().toUpperCase();
     var raw = name.toLowerCase();
     if (raw.normalize) raw = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -2084,6 +2093,7 @@
     var prev;
     if (previewSource && previewList) {
       prev = previewSource.cloneNode(true);
+      unplace(prev);
       prev.removeAttribute('data-worker');
       prev.setAttribute('data-emo-owner', name);   // "Mans emoji" backgrounds follow this person
       prev.removeAttribute('id');
@@ -2625,7 +2635,7 @@
     function buildBundle(button){
       if(button.hidden||button.dataset.built||!button.isConnected)return;
       button.dataset.built='1';
-      var card=previewSource.cloneNode(true),stage=button.querySelector('.mk-preset-stage');
+      var card=unplace(previewSource.cloneNode(true)),stage=button.querySelector('.mk-preset-stage');
       card.removeAttribute('style');card.removeAttribute('id');card.removeAttribute('data-worker');
       card.querySelectorAll('[id],[data-worker]').forEach(function(el){el.removeAttribute('id');el.removeAttribute('data-worker');});
       card.querySelectorAll('.mk-card-addon,.mk-card-addon-surface,.mk-wf-art,.mk-wf-depth,.mk-wf-effects,.mk-focus,.mk-poster,.mk-wf-dial').forEach(function(el){el.remove();});

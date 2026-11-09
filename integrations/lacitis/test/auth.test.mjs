@@ -165,3 +165,14 @@ test('Pixel skin, album colors and wave survive reauthentication and remain acco
   assert.deepEqual((await h.call('radio/load',{sessionToken:again.session.sessionToken})).data.settings,palette);
  }finally{h.close();}
 });
+test('card layout settings: views, own layout, centre and chips kept; anything else dropped',()=>{
+ const set=settings=>radioOperation({},{type:'settings',settings}).settings;
+ assert.equal(set({cardLayout:'fokuss'}).cardLayout,'fokuss');
+ assert.equal(set({cardLayout:'{"own":{"angle":12,"max":220,"moodScale":1,"mood":true}}'}).cardLayout,'{"own":{"angle":12,"max":220,"moodScale":1,"mood":true}}');
+ assert.equal(set({cardLayout:'<script>'}).cardLayout,undefined);
+ assert.equal(set({cardLayout:'{"own":{"x":{"y":1}}}'}).cardLayout,undefined);
+ assert.equal(set({cardCenter:'galaxy'}).cardCenter,'galaxy');
+ assert.equal(set({cardCenter:'Galaxy 1'}).cardCenter,undefined);
+ assert.deepEqual(set({cardChips:{fatigue:false,coffee:'x'}}).cardChips,{fatigue:false,coffee:true});
+ assert.equal(set({cardChips:[1]}).cardChips,undefined);
+});

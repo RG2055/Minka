@@ -508,7 +508,7 @@
     }
     skyRegion();
     wrap.classList.add('is-on');
-    skyRun(!scape.hold && !document.hidden);
+    skyRun(!scape.hold && !scape.covered && !document.hidden);
   }
   // How far the light has drifted now (0..P), from the animation's own clock.
   function skyOffset() {
@@ -833,7 +833,7 @@
     if (typeof IntersectionObserver === 'function') {
       new IntersectionObserver(function (entries) {
         scape.hold = !entries[entries.length - 1].isIntersecting;
-        skyRun(!scape.hold && !document.hidden);
+        skyRun(!scape.hold && !scape.covered && !document.hidden);
       }).observe(plot);
     }
     if (typeof ResizeObserver === 'function') {
@@ -1008,8 +1008,10 @@
   function repaintSoon() { clearTimeout(coffeeRepaint); coffeeRepaint = setTimeout(function () { paint(); }, 950); }   // a saved coffee's icon lands on the curve at ~0.9 s (calendar.js flyCoffeeToCurve)
   document.addEventListener('minka:coffee-changed', repaintSoon);
   window.addEventListener('storage', function (event) { if (event.key === 'minkaCoffeeCountsV1') repaintSoon(); });
+  // A centre (card-layout.js) stands over the mood card: nobody sees the sky, so it rests
+  document.addEventListener('mk-mood-covered', function (e) { scape.covered = !!e.detail; skyRun(!document.hidden && !scape.hold && !scape.covered); });
   document.addEventListener('visibilitychange', function () {
-    skyRun(!document.hidden && !scape.hold);
+    skyRun(!document.hidden && !scape.hold && !scape.covered);
     if (!document.hidden) paint();
   });
 

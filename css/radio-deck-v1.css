@@ -541,7 +541,6 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout
   transition: transform .2s cubic-bezier(.2, 0, 0, 1);
 }
 html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn:hover::before { transform: translate(2px, -50%); }
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn:active { transform: scale(.97) !important; }
 /* Amp: apaļa poga ar to pašu attēlu, baltu malu un bultiņu */
 html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eject[data-act="stations"] {
   position: relative !important; overflow: hidden !important; border: 0 !important; outline: 2px solid #fff !important; outline-offset: -2px; border-radius: 50% !important;

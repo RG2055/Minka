@@ -930,15 +930,15 @@ function _mkToast(msg, type) {
 <script src="js/card-materials.js?v=20260912faces21"></script>
 <!-- Before the first card render: cards painted from the cached schedule get their picture effect at once. -->
 <script src="../js/dither-core.js?v=20261001fx7"></script>
-<script src="js/card-faces.js?v=20261012dst1"></script>
+<script src="js/card-faces.js?v=20261109cl68"></script>
 <!-- Saved worker skins must be ready before the cached roster is rendered. -->
 <script src="js/card-contrast.js?v=20260928izs122" defer></script>
-<script src="js/page/minka-skins.js?v=20261027pl1"></script>
+<script src="js/page/minka-skins.js?v=20261109cl68"></script>
 <script src="js/page/card-lock.js?v=20261027pl5"></script>
 <script src="js/night-plan-history.js?v=20261022ot1"></script>
 <script src="js/calendar.js?v=20261027pl1"></script>
 <script src="js/depth-cards.js?v=20261022hv1" defer></script>
-<script src="js/daily-cat.js?v=20261012dst1" defer></script>
+<script src="js/daily-cat.js?v=20261109cl68" defer></script>
 <script src="js/header-weather.js?v=20261012ld3" defer></script>
 <script src="js/calendar_extras_v4.js?v=20261021wd1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
@@ -952,7 +952,7 @@ function _mkToast(msg, type) {
 <script src="js/design_v1.js?v=20260924perf3" defer></script>
 <script src="js/theme.js?v=20261006mb2" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20261027pl1" defer></script>
+<script src="js/emoji.js?v=20261109cl68" defer></script>
 <script src="js/page/card-pictures-warm.js?v=20261001pw5" defer></script>
 <style>
 /* Day switch (calendar.js g_selectDay): the old day is held until the new one
@@ -1702,8 +1702,8 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260926mg1">
 
-<script src="js/page/mood-feedback.js?v=20261022jr1"></script>
-<script src="js/page/mood-trend.js?v=20261023rt1" defer></script>
+<script src="js/page/mood-feedback.js?v=20261109cl68"></script>
+<script src="js/page/mood-trend.js?v=20261109cl68" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20261010cd1">
 
@@ -1955,8 +1955,8 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 
 <script id="mk-integrated-duty-header-js-v1" src="js/page/mk-integrated-duty-header.js?v=20260926rad3"></script>
 <!-- Cover Flow: the roster as one turning row of square cards while the radio is open (desktop). -->
-<link rel="stylesheet" id="mk-radio-coverflow" href="css/page/radio-coverflow.css?v=20261012szh">
-<script src="js/page/radio-coverflow.js?v=20261012sz9" defer></script>
+<link rel="stylesheet" id="mk-radio-coverflow" href="css/page/radio-coverflow.css?v=20261109cl68">
+<script src="js/page/radio-coverflow.js?v=20261109cl68" defer></script>
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
@@ -2014,12 +2014,14 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <link rel="stylesheet" id="mk-m3-surfaces" href="css/page/m3-surfaces.css?v=20260926mo1">
 <link rel="stylesheet" href="../css/mk-spring.css?v=20260926sp1">
 <!-- Galvene X: jaunā RG datora galvene (izslēdzama ar ?hx=0, sk. <head>). -->
-<link rel="stylesheet" id="mk-header-x" href="css/page/mk-header-x.css?v=20261021hd1">
+<link rel="stylesheet" id="mk-header-x" href="css/page/mk-header-x.css?v=20261109cl68">
 <script src="js/page/mk-search-core.js?v=20260928hx2" defer></script>
-<script src="js/page/mk-header-x.js?v=20261021hd1" defer></script>
+<script src="js/page/mk-header-x.js?v=20261109cl68" defer></script>
 <!-- Noskaņa X: jaunais noskaņas bloks RG datorā (izslēdzams ar ?mood=0, sk. <head>). -->
 <link rel="stylesheet" id="mk-mood-x" href="css/page/mk-mood-x.css?v=20261022jr1">
-<link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261021df1">
-<script src="js/page/corridor.js?v=20261022pf1" defer></script>
+<link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261109cl68">
+<link rel="stylesheet" href="css/page/card-layout.css?v=20261109cl68">
+<script src="js/page/card-layout.js?v=20261109cl68" defer></script>
+<script src="js/page/corridor.js?v=20261109cl68" defer></script>
 </body>
 </html>

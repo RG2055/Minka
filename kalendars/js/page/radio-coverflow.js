@@ -18,6 +18,11 @@
   var placeFrame = 0, collectFrame = 0, autoTimer = 0, ro = null, prev = null, next = null;
   var reduced = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   var AUTO_MS = 5000, VISIBLE = 4;
+  // RG: the row can also stand flat, every card facing you in rows (the button over the row's
+  // right end switches, the choice is kept). /rad keeps Cover Flow only.
+  var VIEW_KEY = 'mkCfView', canFlat = window.MINKA_APP !== 'rad', flat = false, viewBtn = null;
+  if (canFlat) { try { flat = localStorage.getItem(VIEW_KEY) === 'grid'; } catch (_e) {} }
+  var stripTop = 0, stripH = 0, cy = 0;
 
   function collect() {
     return Array.prototype.slice.call(list.querySelectorAll('.cards-subgrid > .card.mk-mid-card:not(.rg-feedback-card)'));
@@ -30,12 +35,14 @@
   var header = document.getElementById('minkaBarWrap');
   function measure() {
     var L = list.getBoundingClientRect();
-    var top = L.top, bottom = Math.min(L.bottom, window.innerHeight);
+    // without the radio ("Lielās", card-layout.js) the layout switch stays under the cards: room for it
+    var top = L.top, bottom = Math.min(L.bottom, window.innerHeight) - (root.classList.contains('mk-cf-solo') ? 56 : 0);
     if (header) {
       var H = header.getBoundingClientRect();
       if (H.height && H.right > L.left && H.left < L.right && H.bottom > top) top = Math.min(H.bottom, bottom);
     }
     var vis = Math.max(0, bottom - top), w = list.clientWidth || 800;
+    stripTop = top - L.top; stripH = vis;
     // Room above the card for what sits on its top edge (a topper rises up to
     // 0.35 of the card's width, card-addons.js TOPPER_ROOM): card and that band
     // together are centred in the visible strip, so a cat on the middle card is
@@ -43,10 +50,11 @@
     var ROOM = 0.35;
     size = Math.round(Math.max(72, Math.min(vis * 0.96 / (1 + ROOM), w * 0.25, 280)));
     var block = size * (1 + ROOM);
-    var cy = Math.round(top - L.top + Math.max(0, (vis - block) / 2) + size * ROOM + size / 2);
+    cy = Math.round(top - L.top + Math.max(0, (vis - block) / 2) + size * ROOM + size / 2);
     // Written only when changed: the list's style is watched (radio height).
     if (list.style.getPropertyValue('--cf-size') !== size + 'px') list.style.setProperty('--cf-size', size + 'px');
     if (list.style.getPropertyValue('--cf-cy') !== cy + 'px') list.style.setProperty('--cf-cy', cy + 'px');
+    if (list.style.getPropertyValue('--cf-top') !== stripTop + 'px') list.style.setProperty('--cf-top', stripTop + 'px');
   }
   function offsetOf(i) {
     var n = cards.length, o = i - active;
@@ -57,9 +65,30 @@
   // empty band between the row and the buttons (a turned card shows ~0.3 of
   // its width on each side of its centre).
   var spread = 60;
+  // Flat: the cards in up to three centred rows, as large as the strip allows (never larger than
+  // the Cover Flow's middle card), each still one transform, so the switch itself glides.
+  function placeFlat() {
+    var n = cards.length, gap = 12, w = (list.clientWidth || 800) - 128, best = null;   // clear of the view button
+    for (var r = 1; r <= Math.min(3, n); r++) {
+      var c = Math.ceil(n / r), cell = Math.min((w - (c - 1) * gap) / c, (stripH - 16 - (r - 1) * gap) / r);
+      if (!best || cell > best.cell + 0.5) best = { r: r, c: c, cell: cell };
+    }
+    if (!best) return;
+    var k = Math.max(0.2, Math.min(1, best.cell / size)), step = size * k + gap, mid = stripTop + stripH / 2;
+    cards.forEach(function (card, i) {
+      var row = Math.floor(i / best.c), col = i % best.c, inRow = Math.min(best.c, n - row * best.c);
+      var x = (col - (inRow - 1) / 2) * step, y = mid - cy + (row - (best.r - 1) / 2) * step;
+      card.__cfO = null;
+      card.style.setProperty('transform', 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) scale(' + k.toFixed(3) + ')', 'important');
+      card.style.setProperty('z-index', '100', 'important');
+      card.classList.add('mk-cf-center');
+      card.classList.remove('mk-cf-side', 'mk-cf-far');
+    });
+  }
   function place() {
     placeFrame = 0;
     if (!on) return;
+    if (flat) { placeFlat(); return; }
     // The same number of cards on both sides: with an even count the card
     // opposite the middle one waits unseen instead of making one side longer.
     var side = Math.min(VISIBLE, Math.floor((cards.length - 1) / 2));
@@ -126,14 +155,38 @@
     b.className = 'mk-cf-nav ' + cls;
     b.setAttribute('aria-label', label);
     b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + path + '" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    b.addEventListener('click', function (e) { e.stopPropagation(); step(d); });
+    b.addEventListener('click', function (e) { e.stopPropagation(); if (d) step(d); });
     return b;
+  }
+  var ICON_GRID = 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z';
+  var ICON_FLOW = 'M8 5h8v14H8zM5 7l-2 1v8l2 1M19 7l2 1v8l-2 1';
+  function paintView() {
+    var label = flat ? 'Kartītes karuselī' : 'Kartītes režģī';
+    viewBtn.setAttribute('aria-label', label);
+    viewBtn.title = label;
+    viewBtn.setAttribute('aria-pressed', String(flat));
+    viewBtn.querySelector('path').setAttribute('d', flat ? ICON_FLOW : ICON_GRID);
+  }
+  function setFlat(next) {
+    flat = !!next;
+    try { localStorage.setItem(VIEW_KEY, flat ? 'grid' : 'flow'); } catch (_e) {}
+    root.classList.toggle('mk-cf-flat', flat);
+    paintView();
+    if (!flat) pauseUntil = Date.now() + 12000;   // back to the row: it does not turn away at once
+    schedulePlace();
   }
   function ensureNav() {
     if (!prev) prev = navButton('mk-cf-prev', 'Iepriekšējā kartīte', 'M15 6l-6 6 6 6', -1);
     if (!next) next = navButton('mk-cf-next', 'Nākamā kartīte', 'M9 6l6 6-6 6', 1);
     if (prev.parentNode !== list) list.appendChild(prev);
     if (next.parentNode !== list) list.appendChild(next);
+    if (!canFlat) return;
+    if (!viewBtn) {
+      viewBtn = navButton('mk-cf-view', '', ICON_GRID, 0);
+      viewBtn.addEventListener('click', function () { setFlat(!flat); });
+      paintView();
+    }
+    if (viewBtn.parentNode !== list) list.appendChild(viewBtn);
   }
 
   function enable() {
@@ -142,6 +195,7 @@
     cards = collect();
     active = Math.min(active, Math.max(0, cards.length - 1));
     root.classList.add('mk-cf');
+    root.classList.toggle('mk-cf-flat', flat);
     measure();
     ensureNav();
     if (!ro && typeof ResizeObserver === 'function') {
@@ -150,24 +204,38 @@
     if (ro) ro.observe(list);
     place();
     if (!autoTimer) autoTimer = setInterval(function () {
-      if (!on || hover || document.hidden || reduced.matches || Date.now() < pauseUntil || cards.length < 2) return;
+      if (!on || flat || hover || document.hidden || reduced.matches || Date.now() < pauseUntil || cards.length < 2) return;
       go(active + 1, false);
     }, AUTO_MS);
   }
   function disable() {
     if (!on) return;
     on = false;
-    root.classList.remove('mk-cf');
+    root.classList.remove('mk-cf', 'mk-cf-flat');
     if (ro) ro.disconnect();
     clearInterval(autoTimer); autoTimer = 0;
     if (placeFrame) { cancelAnimationFrame(placeFrame); placeFrame = 0; }
     collect().forEach(clearCard);
     list.style.removeProperty('--cf-size');
     list.style.removeProperty('--cf-cy');
+    list.style.removeProperty('--cf-top');
+    if (viewBtn && viewBtn.parentNode) viewBtn.remove();
     if (prev && prev.parentNode) prev.remove();
     if (next && next.parentNode) next.remove();
   }
-  function sync() { if (root.classList.contains('host-radio-open')) enable(); else disable(); }
+  // the radio open, or (RG) the "Karuselis" card layout chosen without it (card-layout.js)
+  function solo() { var l = window.MkCardLayout && window.MkCardLayout.current(); return canFlat && !!l && !!l.carousel; }
+  // Without the radio the layout decides between turning and flat ("Karuselis", "Lielās") and the
+  // view button is not shown; with the radio its own button and remembered choice count again.
+  function sync() {
+    var radio = root.classList.contains('host-radio-open'), alone = !radio && solo();
+    var want = radio ? (function () { try { return localStorage.getItem(VIEW_KEY) === 'grid'; } catch (_e) { return false; } })()
+      : alone ? !!window.MkCardLayout.current().flat : flat;
+    if (want !== flat) { flat = want; root.classList.toggle('mk-cf-flat', flat && on); if (viewBtn) paintView(); schedulePlace(); }
+    root.classList.toggle('mk-cf-solo', alone);
+    if (radio || alone) enable(); else disable();
+  }
+  window.addEventListener('mk-card-layout', function () { sync(); });
 
   new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['class'] });
   // Roster rebuilt (day switch, refresh): the nav buttons are thrown out with it.
@@ -182,7 +250,7 @@
   // the middle card keeps its own click.
   var dragged = false;
   list.addEventListener('click', function (e) {
-    if (!on) return;
+    if (!on || flat) return;
     var card = e.target.closest && e.target.closest('.card.mk-mid-card');
     if (dragged) { dragged = false; e.preventDefault(); e.stopPropagation(); return; }
     if (!card || card.classList.contains('mk-cf-center')) return;
@@ -194,7 +262,7 @@
 
   var wheelAcc = 0, wheelAt = 0;
   list.addEventListener('wheel', function (e) {
-    if (!on) return;
+    if (!on || flat) return;
     e.preventDefault();
     var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     var now = Date.now();
@@ -206,7 +274,7 @@
 
   var dragX = null, dragId = null;
   list.addEventListener('pointerdown', function (e) {
-    if (!on || e.button !== 0 || (e.target.closest && e.target.closest('.mk-cf-nav, button, input, a'))) return;
+    if (!on || flat || e.button !== 0 || (e.target.closest && e.target.closest('.mk-cf-nav, button, input, a'))) return;
     dragX = e.clientX; dragId = e.pointerId; dragged = false;
   });
   list.addEventListener('pointermove', function (e) {

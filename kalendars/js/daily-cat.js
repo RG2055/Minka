@@ -444,10 +444,14 @@
     var y = innerHeight - PET_SIZE - renderedPosition.bottom;
     var w = speechSize.w, h = speechSize.h, s = petScale;
     var head = y + FEET - 80 * s;                         // about the top of its head
-    var left = x + PET_SIZE / 2 - 20 * s - 16 - w, side = 'left';         // the tail's tip a few px from its head
-    if (left < 8) { left = x + PET_SIZE / 2 + 20 * s + 16; side = 'right'; }
-    left = Math.max(8, Math.min(innerWidth - w - 8, left));
     var top = Math.max(8, Math.min(innerHeight - h - 8, head - 6));
+    // the card layout tile under the mood card (page/card-layout.js) stays readable: the bubble
+    // goes to the pet's other side rather than over it
+    var tile = document.querySelector('.mk-cl-bar:not([hidden])'), T = tile && tile.getBoundingClientRect();
+    var covers = function (l) { return !!(T && T.width) && l < T.right && l + w > T.left && top < T.bottom && top + h > T.top; };
+    var left = x + PET_SIZE / 2 - 20 * s - 16 - w, side = 'left';         // the tail's tip a few px from its head
+    if (left < 8 || covers(left)) { left = x + PET_SIZE / 2 + 20 * s + 16; side = 'right'; }
+    left = Math.max(8, Math.min(innerWidth - w - 8, left));
     speech.dataset.side = side;
     // left/top, not a transform: the bubble grows by scale from its tail, and a
     // scale over a transform-placed box would grow from the window's corner

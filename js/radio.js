@@ -2254,6 +2254,7 @@ function selectStation(index) {
     
     play(url, s.title);
     updateStationPickerSelection();
+    window.rgRadioMotion?.swap();
     startNowPlaying(s);
     if(window.__mkUnifiedMedia?.getSession())window.__mkUnifiedMedia.change({type:'station',id:radioStationKey(s)});
 

@@ -61,6 +61,10 @@ export function cleanRadio(data={}){
   out.settings.imageCrops=Object.fromEntries(Object.entries(s.imageCrops).filter(([key,crop])=>key.startsWith('kalendars/')&&key.length<=500&&crop&&[crop.x,crop.y,crop.zoom].every(Number.isFinite)).slice(-32).map(([key,crop])=>[key,{x:Math.max(-.75,Math.min(.75,crop.x)),y:Math.max(-2,Math.min(2,crop.y)),zoom:Math.max(.6,Math.min(2,crop.zoom))}]));
  }
  for(const k of ['theme','accentMode','accent','text','background','position','viz','eq','cardName','cardAccent'])if(typeof s[k]==='string'&&s[k].length<=1600)out.settings[k]=s[k];
+ // the calendar's card layout (kalendars/js/page/card-layout.js): a view id or {"own":{...}}, the centre's id, the centre's chips
+ if(typeof s.cardLayout==='string'&&s.cardLayout.length<=400&&(/^[a-z]{2,20}$/.test(s.cardLayout)||/^\{"own":\{[^{}]*\}\}$/.test(s.cardLayout)))out.settings.cardLayout=s.cardLayout;
+ if(typeof s.cardCenter==='string'&&/^[a-z]{2,20}$/.test(s.cardCenter))out.settings.cardCenter=s.cardCenter;
+ if(s.cardChips&&typeof s.cardChips==='object'&&!Array.isArray(s.cardChips))out.settings.cardChips={fatigue:s.cardChips.fatigue!==false,coffee:s.cardChips.coffee!==false};
  for(const k of ['darkness','tint','glass','glow'])if(Number.isFinite(s[k]))out.settings[k]=Math.max(0,Math.min(100,s[k]));
  return out;
 }

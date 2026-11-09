@@ -151,9 +151,6 @@ html #radioWindow #eqRow #ceqTriggerBtn.active {
   background: transparent !important;
   box-shadow: none !important;
 }
-#radioWindow .nav-btn:active,
-#radioWindow .station-btn:active,
-#radioWindow .viz-icon-btn:active { transform: scale(0.94); }
 
 #radioWindow .play-trigger {
   width: 52px !important;
@@ -168,7 +165,6 @@ html #radioWindow #eqRow #ceqTriggerBtn.active {
   transform: scale(1.05);
   box-shadow: 0 8px 26px -8px var(--radio-accent, #00ff88) !important;
 }
-#radioWindow .play-trigger:active { transform: scale(0.95); }
 
 /* ── 6. Volume — slim Spotify slider: hairline track, small round thumb */
 #radioWindow .fader {

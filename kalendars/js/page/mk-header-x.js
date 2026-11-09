@@ -66,6 +66,7 @@
     radio: '<rect x="3.5" y="8" width="17" height="12" rx="2.6"/><path d="M7 8 16 4"/><circle cx="15.5" cy="14" r="2.6"/><path d="M7 12.5h3M7 15.5h3"/>',
     music: '<path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/>',
     drop: '<path d="M12 3.5c3 3.6 5.5 6.7 5.5 10a5.5 5.5 0 0 1-11 0c0-3.3 2.5-6.4 5.5-10Z"/>',
+    person: '<circle cx="12" cy="8" r="3.7"/><path d="M4.6 20.2c.7-3.7 3.7-6 7.4-6s6.7 2.3 7.4 6"/>',
     mobile: '<rect x="5.8" y="1.8" width="12.4" height="20.4" rx="2.9"/><path d="M10.4 19.2h3.2"/>'
       + '<path fill="currentColor" stroke="none" fill-rule="evenodd" d="M8 6h3v3H8zM9 7v1h1V7zM13 6h3v3h-3zM14 7v1h1V7zM8 11h3v3H8zM9 12v1h1v-1z'
       + 'M11 6h1v1h-1zM12 7h1v1h-1zM11 8h1v1h-1zM8 9h1v1H8zM10 9h1v1h-1zM12 9h2v1h-2zM15 9h1v1h-1zM9 10h1v1H9zM11 10h1v1h-1zM14 10h1v1h-1z'
@@ -161,6 +162,10 @@
       +         '<button type="button" class="hx-chip hx-mobile" data-pop="mobile" aria-haspopup="dialog" aria-expanded="false" aria-label="' + APP_NAME + ' telefonā: QR kods un instrukcija">'
       +           icon('mobile')
       +         '</button>'
+      // one account for everything (radio, look, the cards' layout): optional, js/media-profile.js
+      +         '<button type="button" class="hx-chip hx-account" aria-haspopup="dialog" aria-label="Ielogoties: radio, izskats un izkārtojums tiek saglabāti tavā kontā" title="Ielogoties: radio, izskats un izkārtojums tiek saglabāti tavā kontā">'
+      +           icon('person') + '<span class="hx-account-name">Ielogoties</span>'
+      +         '</button>'
       +       '</div>'
       +     '</div>'
       +     '<div class="hx-row hx-row-feed"><div class="hx-feed"></div></div>'
@@ -184,12 +189,41 @@
       feed: top.querySelector('.hx-feed'),
       bdaySlot: top.querySelector('.hx-bday-slot'),
       namedaySlot: top.querySelector('.hx-nameday-slot'),
-      dayfactSlot: top.querySelector('.hx-dayfact-slot')
+      dayfactSlot: top.querySelector('.hx-dayfact-slot'),
+      account: top.querySelector('.hx-account')
     };
+    wireAccount();
     wire();
     buildAxis();
     ledWatch();
     return true;
+  }
+
+  /* ── Konts: the shell's shared login (js/media-profile.js), here at hand. Logged out: "Ielogoties";
+     logged in: the first name, and a press opens the profile. Logging in is never required. ─── */
+  function mediaApi() {
+    try { if (window.parent !== window && window.parent.__mkUnifiedMedia) return window.parent.__mkUnifiedMedia; } catch (_e) {}
+    return window.__mkUnifiedMedia || null;
+  }
+  function paintAccount() {
+    var b = els.account, m = mediaApi(), sess = m && m.getSession && m.getSession();
+    if (!b) return;
+    var full = sess && sess.name ? String(sess.name) : '', first = full.split(/\s+/)[0] || '';
+    first = first ? first.charAt(0).toLocaleUpperCase('lv-LV') + first.slice(1).toLocaleLowerCase('lv-LV') : '';
+    b.querySelector('.hx-account-name').textContent = first || 'Ielogoties';
+    b.classList.toggle('is-in', !!first);
+    var label = first ? 'Tavs profils: ' + full : 'Ielogoties: radio, izskats un izkārtojums tiek saglabāti tavā kontā';
+    b.setAttribute('aria-label', label); b.title = label;
+  }
+  var accountWired = false;
+  function wireAccount() {
+    if (!els.account) return;
+    els.account.addEventListener('click', function () { var m = mediaApi(); if (m && m.open) m.open({ center: true }); });
+    paintAccount();
+    if (accountWired) return;
+    accountWired = true;
+    try { (window.parent !== window ? window.parent.document : document).addEventListener('media-profile-change', paintAccount); }
+    catch (_e) { document.addEventListener('media-profile-change', paintAccount); }
   }
 
   // The live chips keep their own scripts; they only change their place.

@@ -25,18 +25,18 @@
  let rosterDate='',session=null,radio={favorites:[],settings:{},lastStation:''},generation=0,busy=false,queue=[],flushing=false,expiryTimer=0,selected=null,recovering=false,guestLook=null,loaded=false,editingFavorites=false,favoriteUndo=null;
  const $=id=>document.getElementById(id);
  const dialog=document.createElement('dialog');dialog.id='mediaProfile';dialog.setAttribute('aria-labelledby','mediaProfileTitle');
- dialog.innerHTML=`<header><div class="media-identity"><span id="mediaProfileAvatar" hidden></span><div><small>RADIO PROFILS</small><h2 id="mediaProfileTitle">Ielogoties</h2></div></div><button type="button" data-close aria-label="Aizvērt profilu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></header>
+ dialog.innerHTML=`<header><div class="media-identity"><span id="mediaProfileAvatar" hidden></span><div><small>TAVS KONTS</small><h2 id="mediaProfileTitle">Ielogoties</h2></div></div><button type="button" data-close aria-label="Aizvērt profilu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></header>
  <p id="mediaDate"></p><p id="mediaStatus" role="status" aria-live="polite"></p><div id="mediaContent"></div>
  <section id="mediaRecoveryNotice" hidden><h3>Saglabā atkopšanas kodu</h3><p>Ar to varēsi nomainīt aizmirstu PIN, saglabājot favorītus. Šis kods tiek parādīts tikai vienu reizi.</p><code id="mediaRecoveryCode"></code><button type="button" id="mediaRecoveryCopy">Kopēt kodu</button><button type="button" id="mediaRecoveryDone">Esmu saglabājis</button></section>`;
  document.body.append(dialog);
- const trigger=document.createElement('button');trigger.type='button';trigger.id='mediaProfileButton';trigger.textContent='Ielogoties';trigger.title='Ielogoties radio profilā';trigger.addEventListener('click',open);
+ const trigger=document.createElement('button');trigger.type='button';trigger.id='mediaProfileButton';trigger.textContent='Ielogoties';trigger.title='Ielogoties savā kontā: radio, izskats un kartīšu izkārtojums';trigger.addEventListener('click',open);
  const exitTrigger=button('Iziet',()=>{void logout();dialog.close();trigger.focus();});exitTrigger.id='mediaLogoutButton';exitTrigger.hidden=true;
  exitTrigger.prepend(icon('exit'));exitTrigger.title='Iziet no sava profila';exitTrigger.setAttribute('aria-label','Iziet no profila');
  /* Logged-out: a segmented "Ielogoties | Reģistrēties" pill with a quiet hint
     below it in the tour popover's look (no driver.js, no overlay). Both open
     the same dialog: pick your name, then enter or create a PIN. */
- const seg=document.createElement('span');seg.id='mediaAuthSeg';seg.setAttribute('role','group');seg.setAttribute('aria-label','Radio profils');
- const registerTrigger=document.createElement('button');registerTrigger.type='button';registerTrigger.id='mediaRegisterButton';registerTrigger.textContent='Reģistrēties';registerTrigger.title='Izveidot radio profilu';
+ const seg=document.createElement('span');seg.id='mediaAuthSeg';seg.setAttribute('role','group');seg.setAttribute('aria-label','Tavs konts');
+ const registerTrigger=document.createElement('button');registerTrigger.type='button';registerTrigger.id='mediaRegisterButton';registerTrigger.textContent='Reģistrēties';registerTrigger.title='Izveidot savu kontu';
  registerTrigger.addEventListener('click',()=>{open();status('Izvēlies savu vārdu un izveido PIN. Favorīti un izskats paliks tavi.');});
  seg.append(trigger,registerTrigger);
  $('radioSourceBar')?.prepend(seg,exitTrigger);
@@ -69,7 +69,7 @@
    hint=document.createElement('div');hint.className='media-login-tip';hint.setAttribute('role','note');
    // The player's own colour (radio.js writes it inline on the window); <body> only has the old default.
    const acc=($('radioWindow')?.style.getPropertyValue('--radio-accent')||'').trim();if(acc)hint.style.setProperty('--radio-accent',acc);
-   hint.innerHTML='<svg class="media-login-tip-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.6-7.5 10-7.5 10Z" fill="currentColor"/></svg><span><b>Radio profils</b> saglabā favorītus un izskatu</span>';
+   hint.innerHTML='<svg class="media-login-tip-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.6-7.5 10-7.5 10Z" fill="currentColor"/></svg><span><b>Tavs konts</b> saglabā radio, izskatu un kartīšu izkārtojumu</span>';
    const close=document.createElement('button');close.type='button';close.className='media-login-tip-x';close.setAttribute('aria-label','Aizvērt');
    close.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
    close.addEventListener('click',()=>{hintDismissed=true;try{localStorage.setItem(TIP_OFF,String(Date.now()));}catch(_){}hideLoginHint();});
@@ -93,7 +93,7 @@
  if(typeof MutationObserver==='function')new MutationObserver(syncLoginHint).observe(document.body,{attributes:true,attributeFilter:['class']});
  window.addEventListener('resize',positionHint,{passive:true});
  {const win=$('radioWindow');if(win){win.addEventListener('transitionend',positionHint);if(typeof ResizeObserver==='function')new ResizeObserver(positionHint).observe(win);}}
- trigger.title='Saglabā savas iecienītās stacijas un radio izskatu.';
+ trigger.title='Saglabā radio, izskatu un kartīšu izkārtojumu savā kontā.';
  trigger.setAttribute('aria-description',trigger.title);
  function avatar(name){
   const el=document.createElement('span');el.className='media-worker-avatar';let emoji='';
@@ -156,8 +156,8 @@
   seg.classList.toggle('is-logged',!!session);registerTrigger.hidden=!!session;syncLoginHint();
 
   const brand=document.querySelector('#radioWindow .brand-text');if(brand){brand.textContent=session?'RADIO '+pretty(session.name).split(' ')[0].toLocaleUpperCase('lv-LV'):'RG RADIO';brand.hidden=!!session;}
-  trigger.setAttribute('aria-description',session?'Tavs radio profils':'Saglabā savas iecienītās stacijas un radio izskatu.');
-  trigger.title=session?'Atvērt profilu':'Saglabā savas iecienītās stacijas un radio izskatu.';
+  trigger.setAttribute('aria-description',session?'Tavs konts':'Saglabā radio, izskatu un kartīšu izkārtojumu savā kontā.');
+  trigger.title=session?'Atvērt kontu':'Saglabā radio, izskatu un kartīšu izkārtojumu savā kontā.';
   document.dispatchEvent(new CustomEvent('media-profile-change',{detail:{session:session?{name:session.name,workerId:session.workerId}:null,radio}}));
  }
  function applyOperation(data,op){
@@ -268,7 +268,7 @@
  }
  async function renderWorkers(){
   setHeading(null);const gen=generation;selected=null;recovering=false;const {date,workers}=roster();rosterDate=date;$('mediaDate').textContent=date?'Izvēlētā diena '+date:'Izvēlētās dienas darbinieki';
-  const host=$('mediaContent');host.replaceChildren();status('Izvēlies savu vārdu. Radio var klausīties arī bez profila.');
+  const host=$('mediaContent');host.replaceChildren();status('Izvēlies savu vārdu. Kontā saglabājas radio, izskats un kartīšu izkārtojums. Viss strādā arī bez ielogošanās.');
   if(!workers.length){status('Izvēlies kalendārā dienu ar darbiniekiem.');return;}
   const grid=document.createElement('div');grid.className='media-workers';host.append(grid);
   for(const worker of workers){
@@ -353,18 +353,20 @@
    },{animationFrame:false,layoutShift:false});
   }catch(_){positionDialog();}
  }
+ let centered=false;   // opened from elsewhere (the calendar's layout editor): in the middle of the window, not at the radio's button
  function positionDialog(){
   if(!dialog.open||floatingCleanup)return;
+  if(centered){const r=dialog.getBoundingClientRect();dialog.style.left=Math.max(12,Math.round((innerWidth-r.width)/2))+'px';dialog.style.top=Math.max(12,Math.round((innerHeight-r.height)/2))+'px';return;}
   const anchor=trigger.getBoundingClientRect(),rect=dialog.getBoundingClientRect();
   const left=Math.max(12,Math.min(innerWidth-rect.width-12,anchor.right-rect.width));
   const top=Math.max(12,Math.min(innerHeight-rect.height-12,anchor.top-rect.height-10));
   dialog.style.left=left+'px';dialog.style.top=top+'px';
  }
- function open(){checkSessionDeadline();endTour();if(session){renderLogged();void flush();}else void renderWorkers();if(!dialog.open){dialog.showModal();trigger.setAttribute('aria-expanded','true');fallbackObserver=new ResizeObserver(positionDialog);fallbackObserver.observe(dialog);positionDialog();void attachPositioning();}}
+ function open(opts){checkSessionDeadline();endTour();if(session){renderLogged();void flush();}else void renderWorkers();if(!dialog.open){centered=!!(opts&&opts.center);dialog.showModal();trigger.setAttribute('aria-expanded','true');fallbackObserver=new ResizeObserver(positionDialog);fallbackObserver.observe(dialog);positionDialog();if(!centered)void attachPositioning();}}
  window.addEventListener('resize',positionDialog,{passive:true});
  dialog.querySelector('[data-close]').onclick=()=>dialog.close();
  dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
- dialog.addEventListener('close',()=>{positionGeneration++;floatingCleanup?.();floatingCleanup=null;fallbackObserver?.disconnect();fallbackObserver=null;trigger.setAttribute('aria-expanded','false');const p=$('mediaPin');if(p)p.value='';const c=$('mediaConfirm');if(c)c.value='';});
+ dialog.addEventListener('close',()=>{centered=false;positionGeneration++;floatingCleanup?.();floatingCleanup=null;fallbackObserver?.disconnect();fallbackObserver=null;trigger.setAttribute('aria-expanded','false');const p=$('mediaPin');if(p)p.value='';const c=$('mediaConfirm');if(c)c.value='';});
  $('mediaRecoveryCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('mediaRecoveryCode').textContent);status('Atkopšanas kods nokopēts.');}catch(_){status('Iezīmē un nokopē redzamo kodu.');}};
  $('mediaRecoveryDone').onclick=()=>{$('mediaRecoveryCode').textContent='';$('mediaRecoveryNotice').hidden=true;if(session){dialog.close();startTour();}};
  const resumeSession=()=>{if(checkSessionDeadline()){armSessionDeadline();void flush();}};

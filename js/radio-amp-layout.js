@@ -118,7 +118,7 @@
  // ---------- build ----------
  function build(rw){
   if(built)return;built=true;
-  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-amp-layout.css"]')?.href||'css/radio-amp-layout.css?v=20260920amp24';css.onload=()=>window.syncShellLayout?.();document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-amp-layout.css"]')?.href||'css/radio-amp-layout.css?v=20261109rm1';css.onload=()=>window.syncShellLayout?.();document.head.append(css);
   shell=document.createElement('div');shell.className='amp-shell';
   shell.innerHTML=`
    <section class="amp-pane amp-main" aria-label="Atskaņotājs">
@@ -262,7 +262,7 @@
  // ---------- render ----------
  function applyPanes(){
   const v=loadPanes();
-  for(const k of ['eq','pl']){panes[k].hidden=!v[k];shell.querySelector(`[data-tog="${k}"]`).setAttribute('aria-pressed',String(v[k]));}
+  for(const k of ['eq','pl']){const opening=panes[k].hidden&&v[k];panes[k].hidden=!v[k];if(opening&&active)window.rgRadioMotion?.enter(panes[k]);shell.querySelector(`[data-tog="${k}"]`).setAttribute('aria-pressed',String(v[k]));}
   shell.dataset.panes=(v.eq?'eq ':'')+(v.pl?'pl':'');
   window.syncShellLayout?.();
  }
@@ -331,8 +331,10 @@
  function escape(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
  function renderEq(){
   const snap=ampEq.snapshot();
-  shell.querySelectorAll('[data-band]').forEach(input=>{setRange(input,snap.gains[Number(input.dataset.band)]);input.disabled=!snap.enabled;});
-  const pre=shell.querySelector('[data-preamp]');setRange(pre,snap.preamp);pre.disabled=!snap.enabled;
+  const bands=[...shell.querySelectorAll('[data-band]')],pre=shell.querySelector('[data-preamp]');
+  bands.forEach(input=>{input.disabled=!snap.enabled;});pre.disabled=!snap.enabled;
+  const values=bands.map(input=>snap.gains[Number(input.dataset.band)]).concat(snap.preamp);
+  if(window.rgRadioMotion&&active)window.rgRadioMotion.ranges(bands.concat(pre),values,paintRange);else bands.concat(pre).forEach((input,i)=>setRange(input,values[i]));
   els.eqOn.setAttribute('aria-pressed',String(snap.enabled));
   els.autoBtn.setAttribute('aria-pressed',String(snap.auto));
   const match=Object.entries(PRESETS).find(([,p])=>p.g.every((v,i)=>v===snap.gains[i]));
@@ -349,7 +351,7 @@
   presetMenu=document.createElement('div');presetMenu.className='amp-presets';
   presetMenu.innerHTML=Object.entries(PRESETS).map(([id,p])=>`<button type="button" data-preset="${id}">${escape(p.label)}</button>`).join('');
   presetMenu.addEventListener('click',e=>{const b=e.target.closest('[data-preset]');if(!b)return;ensureEq();ampEq.preset(b.dataset.preset);ampEq.setAuto(false);renderEq();closePresets();});
-  els.presetBtn.after(presetMenu);els.presetBtn.setAttribute('aria-expanded','true');
+  els.presetBtn.after(presetMenu);els.presetBtn.setAttribute('aria-expanded','true');window.rgRadioMotion?.enter(presetMenu);
  }
  function closePresets(){presetMenu?.remove();presetMenu=null;els.presetBtn.setAttribute('aria-expanded','false');}
 

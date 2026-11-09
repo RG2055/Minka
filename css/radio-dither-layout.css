@@ -117,7 +117,7 @@ html body #radioWindow[data-radio-layout="dither"] .dth-tools #themeBtn.dth-look
 .dth-transport{display:flex;gap:6px}
 .dth-btn{appearance:none;width:42px;height:38px;border:2px solid transparent;border-radius:3px;background:linear-gradient(var(--dth-raise),var(--dth-raise)) padding-box,var(--dth-frame);color:var(--dth-text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent}
 .dth-btn:hover{background:var(--dth-dots) padding-box,linear-gradient(var(--dth-raise),var(--dth-raise)) padding-box,var(--dth-frame-ink)}
-.dth-btn:active{transform:translateY(1px)}
+
 .dth-btn:focus-visible{outline:2px solid var(--dth-ink);outline-offset:2px}
 /* play: solid ink on top, dithered darker lower third (shaded like the art) */
 .dth-play{width:56px;color:#050505;background:linear-gradient(var(--dth-ink) 0 62%,transparent 0) padding-box,conic-gradient(at 1px 1px,rgba(var(--dth-ink-rgb),.55) 75%,var(--dth-ink) 0) 0 0/2px 2px padding-box,var(--dth-frame-ink)}

@@ -1078,9 +1078,10 @@
           if (previewObserver) previewObserver.observe(replacement);
         }
       }
-      var measured = options.source.getBoundingClientRect();
+      // the card's own size, not as drawn (a layout's wall turns it and sets it back: corridor.js)
+      var src = options.source, measured = src.offsetWidth && src.offsetHeight ? {width: src.offsetWidth, height: src.offsetHeight} : src.getBoundingClientRect();
       if (measured.width && measured.height) {
-        sourceSize = {width: measured.width, height: measured.height, padding: getComputedStyle(options.source).padding};
+        sourceSize = {width: measured.width, height: measured.height, padding: getComputedStyle(src).padding};
       }
       if (!sourceSize) return;
       var r = sourceSize;

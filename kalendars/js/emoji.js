@@ -781,14 +781,20 @@
     _live = null;
     var holder = container.querySelector('.mkp-modal-preview'); if (!holder) return null;
     var src = Array.prototype.filter.call(document.querySelectorAll('.card.mk-mid-card[data-worker]'), function (c) { return c.getAttribute('data-worker') === name && !c.closest('.mk-skin-preview-list'); })[0];
-    var r = src && src.getBoundingClientRect(); if (!r || !r.width || !r.height) return null;
+    // its own size, not as drawn: in a layout's wall (corridor.js) the card is turned and set back,
+    // and its drawn box would give the copy the wrong shape
+    var r = src && (src.offsetWidth && src.offsetHeight ? { width: src.offsetWidth, height: src.offsetHeight } : src.getBoundingClientRect()); if (!r || !r.width || !r.height) return null;
     var wrap = document.createElement('div'); wrap.id = 'grafiks-list'; wrap.className = 'grid-view mk-skin-preview-list mkp-live';
     var c = src.cloneNode(true);
     c.removeAttribute('data-worker'); c.removeAttribute('id');
+    ['--cs', '--cx', '--cyo', '--cz', '--cry', '--crx', '--crz', '--cin', '--chz', '--chry', 'z-index'].forEach(function (p) { c.style.removeProperty(p); });
+    c.classList.remove('mk-cor-hot', 'mk-cor-fresh');
     c.querySelectorAll('[id],[data-worker]').forEach(function (el) { el.removeAttribute('id'); el.removeAttribute('data-worker'); });
     c.querySelectorAll('.mk-card-addon-portaled').forEach(function (el) { el.classList.remove('mk-card-addon-portaled'); });
     c.querySelectorAll('button,input,select,textarea,a').forEach(function (el) { var sp = document.createElement('span'); sp.className = el.className; sp.innerHTML = el.innerHTML; el.replaceWith(sp); });
-    ['position:absolute', 'left:0', 'top:0', 'margin:0', 'transform-origin:0 0', 'pointer-events:none'].forEach(function (d) { var i = d.indexOf(':'); c.style.setProperty(d.slice(0, i), d.slice(i + 1), 'important'); });
+    // exactly its own size: the grid's minimum height (bundle.css .card min-height) would stretch a
+    // card smaller than it (a layout's wall draws them smaller)
+    ['position:absolute', 'left:0', 'top:0', 'margin:0', 'transform-origin:0 0', 'pointer-events:none', 'min-height:0', 'max-height:none', 'aspect-ratio:auto'].forEach(function (d) { var i = d.indexOf(':'); c.style.setProperty(d.slice(0, i), d.slice(i + 1), 'important'); });
     c.style.setProperty('width', r.width + 'px', 'important'); c.style.setProperty('height', r.height + 'px', 'important');
     var stage = document.createElement('div'); stage.className = 'mkp-live-stage'; stage.style.aspectRatio = r.width + ' / ' + r.height;
     wrap.appendChild(c); stage.appendChild(wrap);

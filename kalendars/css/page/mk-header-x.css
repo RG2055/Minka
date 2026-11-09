@@ -344,6 +344,11 @@
 .hx-coffee-count { display: inline-flex; align-items: center; gap: 3px; font-size: 14px; font-weight: 750; color: var(--hx-text); font-variant-numeric: tabular-nums; }
 /* Telefons ar mazu QR ekrānā: apaļa poga kā pārējās, bez uzraksta. */
 .hx-mobile { justify-content: center; width: 34px; padding: 0; }
+/* Konts: "Ielogoties" or the first name; logged in, the person icon sits in a filled circle */
+.hx-account { padding: 0 12px 0 7px; }
+.hx-account .hx-ic { width: 20px; height: 20px; stroke-width: 1.8; }
+.hx-account.is-in .hx-ic { padding: 3px; border-radius: 50%; box-sizing: border-box; width: 24px; height: 24px; color: var(--hs-surface, #1a2026); background: var(--hs-accent, #c8d3e2); }
+.hx-account-name { font-weight: 650; white-space: nowrap; }
 .hx-mobile .hx-ic { width: 24px; height: 24px; stroke-width: 1.6; }
 .hx-coffee-count[hidden] { display: none; }
 .hx-coffee-count .hx-ic { width: 16px; height: 16px; }
@@ -437,6 +442,11 @@
 @container hxs (max-width: 300px) { .hx-kbd { display: none; } }
 @container hxs (max-width: 210px) { .hx-tools span { display: none; } .hx-tools { padding: 0 11px 0 9px; } }
 @container hxs (max-width: 150px) { .hx-search-ph { display: none; } }
+/* the account's word stays longer than the others (it says what the button does); only a narrow middle hides it */
+@container hxc (max-width: 720px) {
+  .hx-account-name { display: none; }
+  .hx-account { padding: 0; width: 34px; justify-content: center; }
+}
 @container hxc (max-width: 860px) {
   .hx-tools span { display: none; }
   .hx-tools { padding: 0 11px 0 9px; }

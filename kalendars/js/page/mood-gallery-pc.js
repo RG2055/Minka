@@ -161,6 +161,18 @@
   function open(opts) {
     opts = opts || {};
     if (openNow) return openNow;
+    // opts.mount: one game inside that box (the calendar's middle, card-layout.js): no desktop, no
+    // window frame, no music, no keys taken from the page, bigger pieces; opts.endless: Konfektes
+    // without a move limit
+    var embed = !!opts.mount, fitObs = null;
+    // scale (not zoom): zoom also scales the window's 50% offsets, which pushed it out of the box
+    function embedFit(el) {
+      el.style.zoom = ''; el.style.scale = '';
+      var rb = root.getBoundingClientRect(), z = Math.min(3, rb.width / el.offsetWidth, rb.height / el.offsetHeight);
+      if (z > 0) el.style.scale = z.toFixed(3);
+    }
+    if (embed) opts.solo = true;
+    N = embed ? 7 : 8;
     makePieces();
     var today = rigaDay(), me = opts.me || {};
     var root = el('div', 'pc98-root');
@@ -177,11 +189,12 @@
       + '<button type="button" data-act="off">' + img('pc', 24) + '<span>Izslēgt datoru…</span></button></div></div>'
       + '<div class="pc98-boot"><b>Windows 98</b><span>Startē…</span></div>';
     if (opts.solo) root.classList.add('pc98-solo');
-    document.body.appendChild(root);
+    if (embed) root.classList.add('pc98-embed');
+    (embed ? opts.mount : document.body).appendChild(root);
     var $ = function (s) { return root.querySelector(s); };
     var WALL_KEY = 'minkaPC98Wall';
     try { root.dataset.wall = localStorage.getItem(WALL_KEY) || 'teal'; } catch (_e) { root.dataset.wall = 'teal'; }   // the classic 98 teal first
-    if (window.MinkaGallery3D && window.MinkaGallery3D.pause) window.MinkaGallery3D.pause(true);
+    if (!embed && window.MinkaGallery3D && window.MinkaGallery3D.pause) window.MinkaGallery3D.pause(true);
     // a clicked button gives its focus back: otherwise Space (the pinball's plunger, or just a key)
     // pressed it again and "Jauna spēle" or the cat's face restarted the game
     var inDialog = function (el) { var wnd = el.closest('.pc98-win'); return !!(wnd && wnd.querySelector('.pc98-dlg')); };
@@ -270,7 +283,8 @@
     function candy() {
       if (wins.candy) { front('candy'); return; }
       var rr0 = root.getBoundingClientRect();
-      CELL = Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 236) / N)));
+      CELL = embed ? Math.max(24, Math.floor(Math.min(rr0.width - 14, rr0.height - 52) / N))
+        : Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 236) / N)));
       var size = N * CELL;
       var w = win('candy', 'Konfektes 98', 'candy',
         '<div class="pc98-candy"><div class="pc98-cbar"><span>Punkti <b class="pc98-score">0</b></span><span>Gājieni <b class="pc98-moves">' + MOVES + '</b></span>'
@@ -313,7 +327,7 @@
       }
       function paintBar() {
         w.el.querySelector('.pc98-score').textContent = G.score;
-        var mv = w.el.querySelector('.pc98-moves'); mv.textContent = G.moves; mv.classList.toggle('is-low', G.moves <= 5);
+        var mv = w.el.querySelector('.pc98-moves'); mv.textContent = opts.endless ? '∞' : G.moves; mv.classList.toggle('is-low', !opts.endless && G.moves <= 5);
         w.el.querySelector('.pc98-gnum').textContent = Math.min(G.goal.got, G.goal.need) + '/' + G.goal.need;
         w.el.querySelector('.pc98-goal').classList.toggle('is-done', G.goal.done);
         w.el.querySelector('.pc98-jnum').textContent = G.jellyLeft;
@@ -531,7 +545,7 @@
       }
       function afterMove() {
         if (!hasMove()) { shuffle(); fx.flash = 0.4; kick(); }
-        if (G.moves <= 0) finale();
+        if (G.moves <= 0 && !opts.endless) finale();
       }
       // "Saldais finālis": the moves are spent; every special still on the board goes off for a bonus
       function finale() {
@@ -824,7 +838,7 @@
       w.el.querySelector('[data-c="new"]').addEventListener('click', function () { if (!busy) newGame(); });
       w.el.querySelector('[data-c="table"]').addEventListener('click', function () { table(); });
       w.el.querySelector('[data-c="help"]').addEventListener('click', help);
-      var tune = null, tuneGain = null, tuneOn = !!opts.solo;
+      var tune = null, tuneGain = null, tuneOn = !!opts.solo && !embed;
       function tuneStart() {
         if (tune) return;
         actx = actx || new (window.AudioContext || window.webkitAudioContext)();
@@ -925,8 +939,17 @@
       if (wins.mines) { front('mines'); return; }
       var lv = DAILY, M, timer = 0, tStart = 0, waves = [];
       try { var saved = localStorage.getItem(MINE_LV_KEY); if (saved !== null && MINE_LEVELS[+saved]) lv = +saved; } catch (_e) {}
+      if (embed) lv = 0;
       var w = win('mines', 'Mīnas 98', 'mine', '<nav class="pc98-menu pc98-mlevels">' + MINE_LEVELS.map(function (l, i) { return '<button type="button" data-lv="' + i + '">' + l[0] + '</button>'; }).join('') + '</nav>'
-        + '<div class="pc98-mines"><div class="pc98-mtop"><span class="pc98-led pc98-mleft">010</span><button type="button" class="pc98-face">' + img('face', 26) + '</button><span class="pc98-led pc98-mtime">000</span></div><div class="pc98-mgrid"></div><div class="pc98-mstat"><span class="pc98-mst1"></span><span class="pc98-mst2"></span></div></div>', 260, 160, 30);
+        + '<div class="pc98-mines"><div class="pc98-mtop"><span class="pc98-led pc98-mleft">010</span><button type="button" class="pc98-face">' + img('face', 26) + '</button><span class="pc98-led pc98-mtime">000</span></div><div class="pc98-mgrid"></div>' + (embed ? '<div class="pc98-mend" role="status" hidden><b></b><button type="button">Vēlreiz</button></div>' : '') + '<div class="pc98-mstat"><span class="pc98-mst1"></span><span class="pc98-mst2"></span></div></div>', 260, 160, 30);
+      // in the centre the face shows the mood, not the game: the end is said in words, with a way on
+      var endEl = w.el.querySelector('.pc98-mend'), endT = 0;
+      function showEnd(text) {
+        if (!endEl) return;
+        clearTimeout(endT);
+        endT = setTimeout(function () { endEl.firstChild.textContent = text; endEl.hidden = false; endEl.querySelector('button').focus({ preventScroll: true }); }, 700);   // after the mines have shown
+      }
+      if (endEl) endEl.querySelector('button').addEventListener('click', function () { start(lv); });
       var grid = w.el.querySelector('.pc98-mgrid'), face = w.el.querySelector('.pc98-face'), timeEl = w.el.querySelector('.pc98-mtime'), leftEl = w.el.querySelector('.pc98-mleft');
       var led = function (n) { n = Math.max(-99, Math.min(999, n | 0)); return (n < 0 ? '-' + String(-n).padStart(2, '0') : String(n).padStart(3, '0')); };
       var setFace = function (k) { face.innerHTML = img(k, 26); };
@@ -945,13 +968,15 @@
       function fit() {
         if (!opts.solo) return;
         w.el.style.zoom = ''; var rr = root.getBoundingClientRect(), z = Math.max(1, Math.min(3, Math.floor(Math.min((rr.height - 40) / w.el.offsetHeight, (rr.width - 40) / w.el.offsetWidth))));
+        if (embed) { embedFit(w.el); return; }
         w.el.style.zoom = z > 1 ? String(z) : '';
-        if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(root, { box: w.el });
+        if (!embed && window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(root, { box: w.el });
       }
       function start(i) {
         lv = i; try { localStorage.setItem(MINE_LV_KEY, String(i)); } catch (_e) {}
         var L = MINE_LEVELS[lv];
         waves.forEach(clearTimeout); waves = [];
+        if (endEl) { clearTimeout(endT); endEl.hidden = true; }
         M = { w: L[1], h: L[2], n: L[3], cells: [], placed: false, over: false, open: 0, flags: 0, start: -1, practice: false };
         for (var k = 0; k < M.w * M.h; k++) M.cells.push({ mine: false, open: false, flag: false, near: 0 });
         if (lv === DAILY) {
@@ -1010,6 +1035,7 @@
         var gap = Math.min(25, 600 / Math.max(1, rest.length));
         rest.forEach(function (i, n) { waves.push(setTimeout(function () { M.cells[i].open = true; paintCell(i); }, (n + 1) * gap)); });
         recordDaily(false);
+        showEnd('Mīna! Šoreiz zaudēji.');
       }
       function recordDaily(won, secs) {
         if (lv !== DAILY || M.practice) { stat(); return; }
@@ -1030,6 +1056,7 @@
         leftEl.classList.add('is-blink'); timeEl.classList.add(record ? 'is-best' : 'is-blink');
         blip(660, 0.15, 'triangle', 0.06); setTimeout(function () { blip(990, 0.2, 'triangle', 0.06); }, 140);
         recordDaily(true, secs);
+        showEnd('Uzvara! ' + secs + ' s');
       }
       function open1(k) {
         var c = M.cells[k]; if (M.over || c.flag) return;
@@ -1612,7 +1639,7 @@
     });
     root.addEventListener('pointerdown', function (e) { if (!e.target.closest('.pc98-startmenu, .pc98-start')) { sm.hidden = true; $('.pc98-start').classList.remove('is-on'); } }, true);
     function tickClock() { var d = new Date(); $('.pc98-clock').textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
-    tickClock(); var clock = setInterval(tickClock, 15000);
+    tickClock(); var clock = embed ? 0 : setInterval(tickClock, 15000);
     // the keys stay here; Esc closes the window in front, then the computer
     function onKey(e) {
       e.stopPropagation();
@@ -1622,17 +1649,17 @@
       else if (e.key === 'Enter') { var d = root.querySelector('.pc98-win:last-child .pc98-btn.is-default'); if (d) { e.preventDefault(); d.click(); } }
     }
     function swallow(e) { e.stopPropagation(); }
-    window.addEventListener('keydown', onKey, true);
-    window.addEventListener('keyup', swallow, true);
+    if (!embed) { window.addEventListener('keydown', onKey, true); window.addEventListener('keyup', swallow, true); }
     function close() {
       if (!openNow) return;
+      if (fitObs) { fitObs.disconnect(); fitObs = null; }
       Object.keys(wins).forEach(closeWin);
       clearInterval(clock);
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('keyup', swallow, true);
       if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.detach(root);
       root.remove(); openNow = null;
-      if (window.MinkaGallery3D && window.MinkaGallery3D.pause) window.MinkaGallery3D.pause(false);
+      if (!embed && window.MinkaGallery3D && window.MinkaGallery3D.pause) window.MinkaGallery3D.pause(false);
       if (opts.onClose) opts.onClose();
     }
     // the boot screen, then the day's error and (the first time today) the new chapter
@@ -1640,7 +1667,13 @@
       $('.pc98-boot').remove();
       (OPEN[opts.app] || candy)();
       var game = wins[opts.app] || wins.candy;
-      if (window.MinkaDitherBackdrop && game) window.MinkaDitherBackdrop.attach(root, { box: game.el });
+      if (!embed && window.MinkaDitherBackdrop && game) window.MinkaDitherBackdrop.attach(root, { box: game.el });
+      // in a box the window never sticks out of it: a little smaller when it would
+      // in a box the game fills it and never sticks out, also when the box changes size
+      if (embed && game) {
+        embedFit(game.el);
+        if (window.ResizeObserver) { fitObs = new ResizeObserver(function () { embedFit(game.el); }); fitObs.observe(root); }
+      }
       openNow = { close: close };
       return openNow;
     }

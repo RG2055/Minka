@@ -4,7 +4,7 @@
    single transform (compositor only: no layout, no filters, no reflections),
    so it stays light on old work PCs. Without the script the roster keeps the
    square grid from kalendars/index.html. */
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view {
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) {
   position: relative !important;
   display: block !important;
   min-height: 0 !important;
@@ -16,16 +16,16 @@ html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view {
   user-select: none;
   -webkit-user-select: none;
 }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .cards-section,
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .cards-section > .cards-subgrid {
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .cards-section,
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .cards-section > .cards-subgrid {
   display: contents !important;
 }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .cards-section-label,
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .cards-divider,
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .rg-feedback-card {
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .cards-section-label,
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .cards-divider,
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .rg-feedback-card {
   display: none !important;
 }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) {
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card:not(.rg-feedback-card) {
   position: absolute !important;
   top: var(--cf-cy, 50%) !important;
   left: 50% !important;
@@ -44,24 +44,24 @@ html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mi
   transition: transform 420ms cubic-bezier(.2, 0, 0, 1) !important;
   cursor: pointer;
 }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card.mk-cf-center { cursor: default; }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card.mk-cf-center { cursor: default; }
 /* Beyond four on each side: not drawn at all. */
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card.mk-cf-far {
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card.mk-cf-far {
   visibility: hidden !important;
 }
 /* A card jumping round the ring (from one end to the other) moves unseen. */
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card.mk-cf-jump { transition: none !important; }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card.mk-cf-jump { transition: none !important; }
 @media (prefers-reduced-motion: reduce) {
-  html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card) { transition: none !important; }
+  html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card:not(.rg-feedback-card) { transition: none !important; }
 }
 /* Things drawn from a card's screen box (charms carried outside the list, the
    daily cat on a card) would be left behind by the turning cards. */
-html.host-radio-open.mk-cf body > .mk-card-addon-portal { display: none !important; }
-html.host-radio-open.mk-cf .mk-daily-cat-pet { visibility: hidden !important; }
+html.mk-cf body > .mk-card-addon-portal { display: none !important; }
+html.mk-cf .mk-daily-cat-pet { visibility: hidden !important; }
 
 /* Previous / next: small M3 tonal buttons at the row's ends. */
 .mk-cf-nav { display: none; }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav {
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-nav {
   position: absolute;
   top: var(--cf-cy, 50%);
   z-index: 200;
@@ -80,11 +80,24 @@ html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-na
   opacity: .78;
   transition: opacity 160ms cubic-bezier(.2, 0, 0, 1), background-color 160ms cubic-bezier(.2, 0, 0, 1);
 }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav:hover { opacity: 1; background: color-mix(in srgb, var(--hxr-surface, #1a2026) 55%, #1d232b); }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav:focus-visible { outline: 2px solid var(--hxr-accent, #c8d3e2); outline-offset: 2px; }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-nav svg { width: 22px; height: 22px; }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-prev { left: 12px; }
-html.host-radio-open.mk-cf body #grafiks-list#grafiks-list.grid-view > .mk-cf-next { right: 12px; }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-nav:hover { opacity: 1; background: color-mix(in srgb, var(--hxr-surface, #1a2026) 55%, #1d232b); }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-nav:focus-visible { outline: 2px solid var(--hxr-accent, #c8d3e2); outline-offset: 2px; }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-nav svg { width: 22px; height: 22px; }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-prev { left: 12px; }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-next { right: 12px; }
+/* Card view (RG): over the row's right end, above the › button; carousel ↔ flat rows. */
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-view {
+  top: calc(var(--cf-top, 0px) + 12px);
+  right: 12px;
+  margin: 0;
+  transition: opacity 160ms cubic-bezier(.2, 0, 0, 1), background-color 160ms cubic-bezier(.2, 0, 0, 1), scale 420ms var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1));
+}
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-view:active { scale: .96; transition-duration: 160ms, 160ms, 120ms; }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-view svg { width: 20px; height: 20px; }
+html.mk-cf body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-view[aria-pressed="true"] { opacity: 1; }
+/* Flat rows: nothing to turn. */
+html.mk-cf.mk-cf-flat body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > :is(.mk-cf-prev, .mk-cf-next) { display: none; }
+html.mk-cf.mk-cf-flat body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card:not(.rg-feedback-card) { cursor: pointer; }
 
 /* Side columns with the radio open: everyone visible at once. The full side
    card (212 px, scaled to at most 45 % by its own fit) does not fit five
@@ -195,3 +208,6 @@ html.host-radio-open body #grafiks-app .side-panel.side-panel.side-panel.side-pa
 html.host-radio-open:not(.mk-mobile-shell) body #grafiks-app .side-panel.side-panel.side-panel {
   width: clamp(230px, 16vw, 300px) !important;
 }
+
+/* "Karuselis" / "Lielās" without the radio (card-layout.js): the layout menu chooses, no own button */
+html.mk-cf-solo body #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) > .mk-cf-view { display: none; }

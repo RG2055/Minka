@@ -14,18 +14,21 @@
 
   var ANGLE = 22, GAP = 14, P = 1300, frame = 0;   // P: the list's perspective (corridor.css)
   var cos = Math.cos(ANGLE * Math.PI / 180), sin = Math.sin(ANGLE * Math.PI / 180);
+  // The chosen card layout (card-layout.js): the walls' angle, or none for the usual grid.
+  function layout() { return window.MkCardLayout ? window.MkCardLayout.current() : null; }
   var header = document.getElementById('minkaBarWrap');
 
-  function active() { return !root.classList.contains('host-radio-open') && list.classList.contains('grid-view'); }
+  function active() { var l = layout(); return !root.classList.contains('host-radio-open') && list.classList.contains('grid-view') && !(l && l.angle == null); }
   function cardsOf(kind) {
     var label = list.querySelector('.cards-section-label-' + kind);
     var section = label && label.closest('.cards-section');
     return section ? [].slice.call(section.querySelectorAll('.card.mk-mid-card:not(.rg-feedback-card)')) : [];
   }
+  var tooSmallAt = '';
   function clear() {
     root.classList.remove('mk-corridor');
     list.querySelectorAll('.card.mk-mid-card').forEach(function (c) {
-      ['--cs', '--cx', '--cyo', '--cz', '--cry', '--cin', 'z-index'].forEach(function (p) { c.style.removeProperty(p); });
+      ['--cs', '--cx', '--cyo', '--cz', '--cry', '--crx', '--crz', '--cin', '--chz', '--chry', 'z-index'].forEach(function (p) { c.style.removeProperty(p); });
     });
     list.querySelectorAll('.cards-section-label').forEach(function (l) { l.style.removeProperty('--lx'); l.style.removeProperty('--ly'); });
   }
@@ -58,11 +61,24 @@
     frame = 0;
     rests = null; hot = null;
     var was = root.classList.contains('mk-corridor');
-    if (!active()) { if (was) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); } return; }
+    var size = window.innerWidth + 'x' + window.innerHeight;
+    // a window found too short or narrow for the walls keeps the usual grid until its size changes
+    // (trying again at once would flip the page between the two on every call)
+    if (!active() || tooSmallAt === size) { if (was) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); } return; }
+    var l = layout();
+    if (l && l.angle !== ANGLE) { ANGLE = l.angle; cos = Math.cos(ANGLE * Math.PI / 180); sin = Math.sin(ANGLE * Math.PI / 180); }
     root.classList.add('mk-corridor');
     if (!was && window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout();
     var g = fast === true && geo && geo.iw === window.innerWidth && geo.ih === window.innerHeight ? geo : (geo = measure());
-    if (!g) return;
+    // no room for the walls: the usual grid, not the corridor's class with nothing placed (every
+    // card then stood in one spot, on top of each other)
+    // (a hidden list, under a dialog: the cards stay as they are, measure() says why)
+    if (!g) {
+      if (!list.getBoundingClientRect().width) return;
+      tooSmallAt = size;
+      clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout();
+      return;
+    }
     var vis = g.vis, w = g.w, base = g.base, LABEL = g.LABEL;
     var cy = base + vis / 2;
     list.style.setProperty('--cor-cy', cy.toFixed(1) + 'px');
@@ -77,7 +93,10 @@
     var kind = day && day[3] + '-' + day[2] + '-' + day[1] > live ? 'note' : 'plain';
     if (g.moods[kind] == null) g.moods[kind] = mood ? mood.offsetHeight : 0;
     if (moodRO && mood && mood !== moodSeen) { if (moodSeen) moodRO.unobserve(moodSeen); moodRO.observe(mood); moodSeen = mood; }
-    var moodH = g.moods[kind], moodHalf = g.moodHalf;
+    // a chosen layout may draw the mood card larger or smaller (one scale), or not at all: the walls
+    // then come closer to the middle (card-layout.js)
+    var ms = l && l.mood === false ? 0 : (l && l.moodScale || 1);
+    var moodH = g.moods[kind] * ms, moodHalf = g.moodHalf * ms;
     list.style.setProperty('--cor-mcy', (moodH > vis ? base + moodH / 2 + 4 : cy).toFixed(1) + 'px');
     // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
@@ -87,42 +106,74 @@
     // drawn further out. A wall of cols cards of this size fits when, on screen, its inner edge stays
     // clear of the mood card and its outer edge inside the list; startFor gives the room it can take.
     var gapIn = moodHalf + 16, edge = w / 2 - 6;
-    function startFor(cols, size) {
+    function startFor(cols, size, inner) {
       var span = cols * (size + GAP) - GAP;
       var zIn = (size / 2 - span) * sin, zOut = size / 2 * sin;           // depth of the inner and outer edges
-      var lo = gapIn * (P - zIn) / P;                                      // nearest the mood it may start
+      var lo = (inner == null ? gapIn : inner) * (P - zIn) / P;            // nearest the mood it may start
       var hi = edge * (P - zOut) / P - span * cos;                         // furthest it may start
       return hi >= lo ? { lo: lo, hi: hi, span: span } : null;
     }
-    function largest(cols) {                                               // the largest size whose wall fits across
+    function largest(cols, inner) {                                        // the largest size whose wall fits across
       var lo = 0, hi = 400;
-      for (var it = 0; it < 20; it++) { var mid = (lo + hi) / 2; if (startFor(cols, mid)) lo = mid; else hi = mid; }
+      for (var it = 0; it < 20; it++) { var mid = (lo + hi) / 2; if (startFor(cols, mid, inner)) lo = mid; else hi = mid; }
       return lo;
     }
-    var MIN = 140, MAX = 240, MAXROWS = 3;   // MIN: about the usual grid's card; more rows than 3: the usual grid
+    // MIN: about the usual grid's card; more rows than 3: the usual grid. A chosen layout may ask
+    // for other sizes, an exact number of rows and a tilt back (card-layout.js).
+    var MIN = l && l.min || 140, MAX = l && l.max || 240, MAXROWS = 3, ROWS = l && l.rows || 0, TILT = l && l.tilt || 0;
     var fresh = [], tooSmall = false, walls = [];
-    [['rg', -1], ['rd', 1]].forEach(function (side) {
-      var cards = cardsOf(side[0]), s = side[1], n = cards.length;
-      var label = list.querySelector('.cards-section-label-' + side[0]);
-      if (!n) return;
-      // The largest cards whose wall fits the strip's height; when none at the usual size does (a
-      // short window), the usual size in the fewest rows — the corridor then scrolls a little.
+    // The largest cards whose wall fits the strip's height; when none at the usual size does (a
+    // short window), the usual size in the fewest rows — the corridor then scrolls a little.
+    // inner: how near the middle the wall may start (by default beside the mood card)
+    function fitWall(n, inner) {
       var rows = 0, cols = 0, size = 0, fits = [];
       for (var r = 1; r <= n; r++) {
-        var c = Math.ceil(n / r), byW = largest(c), byH = (vis - LABEL - (r - 1) * GAP) / r;
-        if (byW < MIN || r > MAXROWS) continue;
+        var c = Math.ceil(n / r), byW = largest(c, inner), byH = (vis - LABEL - (r - 1) * GAP) / r;
+        // one's own layout (card-layout.js "Savs") keeps its walls with smaller cards rather than
+        // turning into the grid while a slider is moved
+        if (byW < (l && l.own ? 96 : MIN) || r > MAXROWS || (ROWS && r !== Math.min(ROWS, n))) continue;
         if (byH >= MIN) fits.push({ r: r, c: c, size: Math.min(byW, byH, MAX) });
-        else if (!fits.length && !rows) { size = Math.min(byW, MAX, Math.max(MIN, byH)); rows = r; cols = c; }
+        // nothing fits at the usual size (a short window, many people): smaller cards, down to
+        // 104 px, rather than a bottom row cut off under the dock
+        else if (!fits.length && !rows) { size = Math.min(byW, MAX, Math.max(Math.min(MIN, 104), byH)); rows = r; cols = c; }
       }
       if (fits.length) {   // the largest cards that fit; between equal sizes (both at MAX), two to a row
         var best = fits.reduce(function (m, f) { return f.size > m.size + 0.5 || (Math.abs(f.size - m.size) <= 0.5 && f.c === 2 && m.c !== 2) ? f : m; });
         size = best.size; rows = best.r; cols = best.c;
       }
-      if (!rows) { tooSmall = true; return; }
-      var room = startFor(cols, size), span = room.span;
-      var start = (room.lo + room.hi) / 2;   // a short wall is centred in the room it may take
-      walls.push({ cards: cards, s: s, label: label, rows: rows, cols: cols, size: size, span: span, start: start, h: LABEL + rows * (size + GAP) - GAP });
+      if (!rows) return null;
+      var room = startFor(cols, size, inner);
+      return { rows: rows, cols: cols, size: size, room: room, span: room.span };
+    }
+    var noMood = !!(l && l.mood === false);
+    [['rg', -1], ['rd', 1]].forEach(function (side) {
+      var cards = cardsOf(side[0]), s = side[1], n = cards.length;
+      var label = list.querySelector('.cards-section-label-' + side[0]);
+      if (!n) return;
+      var f = fitWall(n);
+      if (!f) { tooSmall = true; return; }
+      // a short wall is centred in the room it may take; with no mood card both walls close in on
+      // the middle instead of leaving it empty
+      walls.push({ cards: cards, s: s, n: n, label: label, rows: f.rows, cols: f.cols, size: f.size, span: f.span, room: f.room,
+        start: noMood ? f.room.lo : (f.room.lo + f.room.hi) / 2, h: LABEL + f.rows * (f.size + GAP) - GAP });
     });
+    // No mood card: the two walls share the whole width. A wall held back by the height (its cards
+    // as tall as the strip allows) moves out to its edge and the other one takes the room it leaves,
+    // with larger cards: no empty band at either side (or in the middle).
+    if (noMood && walls.length === 2 && !tooSmall) {
+      var slack = function (wl) { return wl.room.hi - wl.room.lo; };
+      var a = slack(walls[0]) >= slack(walls[1]) ? walls[0] : walls[1], b = a === walls[0] ? walls[1] : walls[0];
+      if (slack(a) > 24) {
+        a.start = a.room.hi;
+        // a's inner edge as drawn: it lies back in the screen, so it is drawn nearer the middle than
+        // its start; b may come up to 24 px short of it (past the middle when a moved far enough)
+        var aIn = a.start * P / (P - (a.size / 2 - a.span) * sin);
+        var g2 = fitWall(b.n, 24 - aIn);
+        if (g2 && g2.size > b.size) { b.rows = g2.rows; b.cols = g2.cols; b.size = g2.size; b.span = g2.span; b.room = g2.room; b.h = LABEL + g2.rows * (g2.size + GAP) - GAP; }
+        // what is still left over goes between the two, evenly spread with the sides
+        b.start = b.room.lo + Math.max(0, b.room.hi - b.room.lo) / 2;
+      }
+    }
     // walls that would hold only tiny cards (a small window): the usual grid instead
     if (tooSmall) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); return; }
     // Both walls start at one height, their headings on one line: the taller wall is centred in the
@@ -145,9 +196,29 @@
         card.style.setProperty('--cyo', (wallTop + LABEL + row * (size + GAP) + size / 2 - cy).toFixed(1) + 'px');
         card.style.setProperty('--cz', ((along - span + size / 2) * sin).toFixed(1) + 'px');
         card.style.setProperty('--cry', (-s * ANGLE) + 'deg');
-        // pointed at it comes forward and grows: it also moves that much toward the middle, so its
-        // outer edge never passes the list's edge (which clips it)
-        card.style.setProperty('--cin', (-s * size * 0.18).toFixed(1) + 'px');
+        if (TILT) card.style.setProperty('--crx', TILT + 'deg'); else card.style.removeProperty('--crx');
+        // photos on a table: each one a little turned and off its place, the same every time
+        // (never past the wall's own box: a turned card's corners reach ~5 % further, so it also
+        // moves that much toward the middle)
+        if (l && l.scatter) {
+          var h = (i * 7 + (s > 0 ? 3 : 0) + row * 5) % 11;
+          card.style.setProperty('--crz', (h - 5) * 1.2 + 'deg');
+          card.style.setProperty('--cx', (s * (start + along * cos - size * 0.05 - (h * 13) % 9)).toFixed(1) + 'px');
+        } else card.style.removeProperty('--crz');
+        // Pointed at it turns to face you and comes forward a little: no more than the gap between
+        // cards (it never covers a neighbour), and it stays within its own wall's band, between the
+        // wall's inner edge (the mood card or the other wall lies beyond) and the list's edge.
+        var czr = (along - span + size / 2) * sin, k = Math.min(P / (P - czr - 80), 1 + GAP * 0.6 / size), zHot = P - P / k;
+        // it turns toward you only as far as its column's width (and half the gaps) allows
+        var restW = size * cos * P / (P - czr), fit = (restW + GAP * 0.6) / (size * k), turn = fit >= 1 ? 0 : Math.acos(fit) * 180 / Math.PI;
+        var zIn = (size / 2 - span) * sin, innerB = start * P / (P - zIn), outerB = w / 2 - 6, half = size / 2 * k * Math.cos(turn * Math.PI / 180);
+        var lo = innerB + half, hi = outerB - half, d = s * parseFloat(card.style.getPropertyValue('--cx')) * P / (P - czr);   // from where it stands (Kolāža moves it)
+        d = lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, d));
+        card.style.setProperty('--cin', (s * (d * (P - zHot) / P) - parseFloat(card.style.getPropertyValue('--cx'))).toFixed(1) + 'px');
+        card.style.setProperty('--chz', (zHot - czr).toFixed(1) + 'px');
+        card.style.setProperty('--chry', (-s * turn).toFixed(1) + 'deg');
+        // Kolāža: the photos lie close and turned; pointed at, one only straightens on its own place
+        if (l && l.scatter) { card.style.setProperty('--cin', '0px'); card.style.setProperty('--chz', '0px'); card.style.setProperty('--chry', (-s * ANGLE) + 'deg'); }
         card.style.setProperty('z-index', String(10 + col), 'important');
       });
       if (label) {
@@ -196,5 +267,6 @@
     if (now !== radio) { radio = now; schedule(); }
   }).observe(root, { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', schedule);
+  window.addEventListener('mk-card-layout', schedule);
   schedule();
 })();

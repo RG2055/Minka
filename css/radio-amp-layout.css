@@ -80,7 +80,6 @@ html body #radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-shell{
 .amp-pill{width:52px;height:42px;border-radius:12px;background-color:#f1f3f9;box-shadow:0 3px 6px rgba(6,8,18,.5),inset 0 1px 0 #fff,inset 0 -1px 0 rgba(0,0,0,.08);color:#2b3048;appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background-color .15s ease}
 .amp-pill svg{width:20px;height:20px;fill:currentColor}
 .amp-pill:hover{background-color:#ffffff}
-.amp-pill:active{transform:translateY(1px);transition:none}
 .amp-pill.is-on{background-color:color-mix(in srgb,#f1f3f9 72%,rgb(var(--amp-accent-rgb)) 28%);color:#1e2536;box-shadow:0 3px 6px rgba(6,8,18,.5),inset 0 0 0 1px rgba(var(--amp-accent-rgb),.6)}
 .amp-pill.is-on:hover{background-color:color-mix(in srgb,#ffffff 70%,rgb(var(--amp-accent-rgb)) 30%)}
 .amp-vol{--amp-fill:rgb(var(--amp-accent-rgb));height:10px;flex:1 1 auto}
@@ -90,7 +89,6 @@ html body #radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-shell{
 
 /* ---- buttons ---- */
 .amp-tog,.amp-sq{appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative;transition:background-color .15s ease,color .15s ease;font-family:inherit;-webkit-tap-highlight-color:transparent}
-.amp-tog:active,.amp-sq:active{transform:translateY(1px);transition:none}
 .amp-tog,.amp-sq{width:40px;height:38px;border-radius:12px;background:var(--amp-screen);box-shadow:0 2px 4px rgba(6,8,18,.5),inset 0 1px 0 rgba(255,255,255,.05);color:#dfe4f4}
 .amp-tog svg,.amp-sq svg{width:19px;height:19px;fill:currentColor}
 .amp-tog b{font-size:14px;font-weight:700}
