@@ -1972,6 +1972,25 @@
       scroller.scrollLeft += e.deltaY;
       e.preventDefault();
     }, { passive: false });
+    // Where more days continue, the strip's edge fades (CSS) instead of cutting a day in
+    // half. The browser reports the first and last day's visibility after its own layout
+    // (IntersectionObserver): nothing is measured here and nothing runs while scrolling.
+    if (scroller && window.IntersectionObserver) {
+      var ends = [], more = { l: false, r: false };
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { more[en.target === ends[0] ? 'l' : 'r'] = en.intersectionRatio < .98; });
+        var v = (more.l ? 'l' : '') + (more.r ? 'r' : '');
+        if (scroller.dataset.hxMore !== v) scroller.dataset.hxMore = v;
+      }, { root: scroller, threshold: [.98] });
+      var watchEnds = function () {
+        var pills = scroller.querySelectorAll('.pill'), next = pills.length > 1 ? [pills[0], pills[pills.length - 1]] : [];
+        if (next[0] === ends[0] && next[1] === ends[1]) return;
+        io.disconnect(); ends = next; more = { l: false, r: false };
+        ends.forEach(function (el) { io.observe(el); });
+      };
+      new MutationObserver(watchEnds).observe(scroller, { childList: true });
+      watchEnds();
+    }
     // The day strip's calendar button opens the date picker below (M3), not
     // the old mini calendar, and toggles it.
     var cal = $('miniCalBtn');

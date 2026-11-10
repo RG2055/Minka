@@ -126,13 +126,13 @@
     // short window), the usual size in the fewest rows — the corridor then scrolls a little.
     // inner: how near the middle the wall may start (by default beside the mood card)
     function fitWall(n, inner) {
-      var rows = 0, cols = 0, size = 0, fits = [];
+      var rows = 0, cols = 0, size = 0, fits = [], free = 0;   // free: the largest size that fits, whatever MAX says
       for (var r = 1; r <= n; r++) {
         var c = Math.ceil(n / r), byW = largest(c, inner), byH = (vis - LABEL - (r - 1) * GAP) / r;
         // one's own layout (card-layout.js "Savs") keeps its walls with smaller cards rather than
         // turning into the grid while a slider is moved
         if (byW < (l && l.own ? 96 : MIN) || r > MAXROWS || (ROWS && r !== Math.min(ROWS, n))) continue;
-        if (byH >= MIN) fits.push({ r: r, c: c, size: Math.min(byW, byH, MAX) });
+        if (byH >= MIN) { fits.push({ r: r, c: c, size: Math.min(byW, byH, MAX) }); free = Math.max(free, Math.min(byW, byH)); }
         // nothing fits at the usual size (a short window, many people): smaller cards, down to
         // 104 px, rather than a bottom row cut off under the dock
         else if (!fits.length && !rows) { size = Math.min(byW, MAX, Math.max(Math.min(MIN, 104), byH)); rows = r; cols = c; }
@@ -143,7 +143,7 @@
       }
       if (!rows) return null;
       var room = startFor(cols, size, inner);
-      return { rows: rows, cols: cols, size: size, room: room, span: room.span };
+      return { rows: rows, cols: cols, size: size, room: room, span: room.span, free: Math.max(free, size) };
     }
     var noMood = !!(l && l.mood === false);
     [['rg', -1], ['rd', 1]].forEach(function (side) {
@@ -155,7 +155,7 @@
       // a short wall is centred in the room it may take; with no mood card both walls close in on
       // the middle instead of leaving it empty
       walls.push({ cards: cards, s: s, n: n, label: label, rows: f.rows, cols: f.cols, size: f.size, span: f.span, room: f.room,
-        start: noMood ? f.room.lo : (f.room.lo + f.room.hi) / 2, h: LABEL + f.rows * (f.size + GAP) - GAP });
+        start: noMood ? f.room.lo : (f.room.lo + f.room.hi) / 2, h: LABEL + f.rows * (f.size + GAP) - GAP, free: f.free });
     });
     // No mood card: the two walls share the whole width. A wall held back by the height (its cards
     // as tall as the strip allows) moves out to its edge and the other one takes the room it leaves,
@@ -169,10 +169,16 @@
         // its start; b may come up to 24 px short of it (past the middle when a moved far enough)
         var aIn = a.start * P / (P - (a.size / 2 - a.span) * sin);
         var g2 = fitWall(b.n, 24 - aIn);
+        if (g2) b.free = Math.max(b.free, g2.free);
         if (g2 && g2.size > b.size) { b.rows = g2.rows; b.cols = g2.cols; b.size = g2.size; b.span = g2.span; b.room = g2.room; b.h = LABEL + g2.rows * (g2.size + GAP) - GAP; }
         // what is still left over goes between the two, evenly spread with the sides
         b.start = b.room.lo + Math.max(0, b.room.hi - b.room.lo) / 2;
       }
+    }
+    // The layout editor's card size slider ends where the cards stop growing in this window.
+    if (window.MkCardLayout) {
+      var freeNow = tooSmall ? 0 : Math.round(walls.reduce(function (m, wl) { return Math.max(m, wl.free); }, 0));
+      if (window.MkCardLayout.free !== freeNow) { window.MkCardLayout.free = freeNow; window.dispatchEvent(new Event('mk-corridor-fit')); }
     }
     // walls that would hold only tiny cards (a small window): the usual grid instead
     if (tooSmall) { clear(); if (window.__minkaScheduleMoodSectionLayout) window.__minkaScheduleMoodSectionLayout(); return; }

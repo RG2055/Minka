@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261110ds1';
+  var CALENDAR_BUILD = '20261110cl82';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -3089,6 +3089,8 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{color:#ff
 html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){color:color-mix(in srgb,var(--hxr-accent,#a7b1c0) 80%,#fff)!important;transition:background-color 200ms cubic-bezier(.2,0,0,1),color 200ms cubic-bezier(.2,0,0,1)!important}
 html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover{background:color-mix(in srgb,var(--hxr-accent,#fff) 8%,transparent)!important;color:#fff!important}
 html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active{background:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent)!important;transition-duration:50ms!important}
+/* Pressed feel: the button gives a little under the click (scale only, composited; nothing runs at rest) */
+@media (prefers-reduced-motion:no-preference){html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)){transition-property:background-color,color,scale!important}html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)):active{scale:.96!important}}
 html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#12151b)!important;color:#fff!important}
 html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on:hover{background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#1a1e26)!important}
 html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}

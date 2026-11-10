@@ -6264,6 +6264,63 @@ function filterFullList(btn) {
       } catch (_e) {}
     }
 
+    // When each drink was logged on this device, for the caffeine curve in the menu:
+    // [[source, ms], …] per day and person, pruned like the add order above.
+    // shortcut: the cloud keeps only counts per day, so a drink logged on another device
+    // has no time here and is left out of the curve (the menu says so); upgrade: return
+    // created_at from /api/coffee.
+    const coffeeTimesKey = 'minkaCoffeeTimesV1';
+    function getCoffeeTimes(name) {
+      try {
+        const day = (JSON.parse(localStorage.getItem(coffeeTimesKey) || '{}') || {})[getCoffeeDayKey()];
+        const list = day && day[getCoffeePersonKey(name)];
+        return Array.isArray(list) ? list.filter(e => Array.isArray(e) && COFFEE_SOURCES.indexOf(e[0]) >= 0 && e[1] > 0) : [];
+      } catch (_e) { return []; }
+    }
+    function setCoffeeTimes(name, list) {
+      const day = getCoffeeDayKey(), key = getCoffeePersonKey(name);
+      if (!day || !key) return;
+      try {
+        const data = JSON.parse(localStorage.getItem(coffeeTimesKey) || '{}') || {};
+        const ymd = k => k.split('.').reverse().join('');
+        Object.keys(data).sort((a, b) => ymd(a) < ymd(b) ? -1 : ymd(a) > ymd(b) ? 1 : 0).slice(0, -14).forEach(k => { if (k !== day) delete data[k]; });
+        if (!data[day]) data[day] = {};
+        data[day][key] = (list || []).slice(-64);
+        localStorage.setItem(coffeeTimesKey, JSON.stringify(data));
+      } catch (_e) {}
+    }
+
+    // Caffeine still in the body: one compartment with first-order absorption, summed
+    // over the drinks. The model of github.com/charles-postiaux/caffeine-day (MIT,
+    // Charles Postiaux): absorbed with a 15-minute half-life (peaks about an hour after
+    // the drink), eliminated with a 5-hour one. drinks: [{mg, at}] (at and t in ms).
+    const CAF_KA = Math.LN2 / 0.25, CAF_KE = Math.LN2 / 5;
+    function caffeineAt(drinks, t) {
+      let sum = 0;
+      for (const d of drinks) {
+        const h = (t - d.at) / 3600000;
+        if (h > 0) sum += d.mg * CAF_KA / (CAF_KA - CAF_KE) * (Math.exp(-CAF_KE * h) - Math.exp(-CAF_KA * h));
+      }
+      return sum;
+    }
+    // This person's drinks of the shown duty day that have a known time, and how many do not.
+    function coffeeTimedDrinks(name) {
+      const sources = getCoffeeDetail(name).sources || {}, left = {}, drinks = [];
+      let total = 0;
+      Object.keys(sources).forEach(k => { if (coffeeSourceMeta[k]) { left[k] = Math.round((Number(sources[k]) || 0) / coffeeEq(k)); total += left[k]; } });
+      const times = getCoffeeTimes(name);
+      for (let i = times.length - 1; i >= 0; i--) {   // newest first: a removed drink is the oldest unknown
+        const k = times[i][0];
+        if (left[k] > 0) { left[k]--; drinks.push({ mg: coffeeMg(k), at: times[i][1] }); }
+      }
+      return { drinks, unknown: total - drinks.length };
+    }
+    // The duty day of the shown date: 08:00 to 08:00.
+    function coffeeDayStart() {
+      const p = String(getCoffeeDayKey()).split('.').map(Number);
+      return p.length === 3 && p[2] ? new Date(p[2], p[1] - 1, p[0], 8).getTime() : 0;
+    }
+
     function addCoffeeDetail(name, entry) {
       const d = getCoffeeDetail(name);
       const source = cleanCoffeeSource(entry && entry.source);
@@ -6272,6 +6329,7 @@ function filterFullList(btn) {
       d.spendCents += Math.max(0, Number(entry && entry.priceCents) || 0);
       setCoffeeDetail(name, d);
       setCoffeeAddOrder(name, getCoffeeAddOrder(name).concat(source));
+      setCoffeeTimes(name, getCoffeeTimes(name).concat([[source, Date.now()]]));
       return d;
     }
 
@@ -6294,6 +6352,10 @@ function filterFullList(btn) {
       }
       let removed = '';
       if (pick) { d.sources[pick] = Math.max(0, (d.sources[pick] || 0) - coffeeEq(pick)); removed = pick; }
+      if (pick) {
+        const times = getCoffeeTimes(name);
+        for (let i = times.length - 1; i >= 0; i--) if (times[i][0] === pick) { times.splice(i, 1); setCoffeeTimes(name, times); break; }
+      }
       setCoffeeDetail(name, d);
       // Return the source that was decremented so the cloud delta can net it.
       return removed;
@@ -6331,6 +6393,21 @@ function filterFullList(btn) {
         data[day][key] = normalizeCoffeeDetail(details[name], count);
       });
       saveCoffeeDetailStore(data);
+    }
+
+    // The cloud's times of the day's drinks ({name: [[source, ms], …]}) replace this device's
+    // list, unless this device knows of more drinks (one just added, not yet in the reply).
+    function applyCoffeeTimes(day, times) {
+      if (!day || !times || typeof times !== 'object') return;
+      try {
+        const data = JSON.parse(localStorage.getItem(coffeeTimesKey) || '{}') || {};
+        if (!data[day]) data[day] = {};
+        Object.keys(times).forEach(name => {
+          const key = getCoffeePersonKey(name), list = Array.isArray(times[name]) ? times[name].filter(e => Array.isArray(e) && e[1] > 0).slice(-64) : [];
+          if (key && list.length >= (data[day][key] || []).length) data[day][key] = list;
+        });
+        localStorage.setItem(coffeeTimesKey, JSON.stringify(data));
+      } catch (_e) {}
     }
 
     function notifyCoffeeChanged(day) {
@@ -6377,6 +6454,7 @@ function filterFullList(btn) {
           state.fingerprints[day] = coffeeResponseFingerprint(data);
           applyCoffeeCounts(day, data.counts || {});
           applyCoffeeDetails(day, data.details || {});
+          applyCoffeeTimes(day, data.times);
           state.loadedDays[day] = true;
           refreshVisibleCoffeeRows(day);
         })
@@ -6403,6 +6481,7 @@ function filterFullList(btn) {
           state.fingerprints[day] = fingerprint;
           applyCoffeeCounts(day, data.counts || {});
           applyCoffeeDetails(day, data.details || {});
+          applyCoffeeTimes(day, data.times);
           state.loadedDays[day] = true;
           refreshVisibleCoffeeRows(day);
         })
@@ -6745,6 +6824,7 @@ function filterFullList(btn) {
         <div class="mk-coffee-size-row" hidden>
           ${['M', 'L', 'XL'].map(s => `<button type="button" class="${s === size ? 'is-on' : ''}" data-size="${s}">${s}</button>`).join('')}
         </div>
+        <div class="mk-caf-curve" hidden></div>
         <label class="mk-coffee-price-row">
           <span>Cena</span>
           <input class="mk-coffee-price" type="number" min="0" max="50" step="0.01" inputmode="decimal" value="0.00">
@@ -6817,13 +6897,18 @@ function filterFullList(btn) {
         if (!picker.classList.contains('is-wide') && window.innerWidth >= 620) {
           const left = document.createElement('div'), right = document.createElement('div');
           left.className = right.className = 'mk-coffee-col';
-          [...picker.children].forEach(el => (el.matches('.mk-coffee-picker-title, .mk-coffee-source-row, .mk-coffee-size-row') ? left : right).appendChild(el));
+          const curve = picker.querySelector(':scope > .mk-caf-curve');
+          [...picker.children].forEach(el => { if (el !== curve) (el.matches('.mk-coffee-picker-title, .mk-coffee-source-row, .mk-coffee-size-row') ? left : right).appendChild(el); });
           picker.append(left, right);
+          if (curve) picker.append(curve);   // the caffeine curve: a row of its own under both columns
           picker.classList.add('is-wide');
         }
         pw = picker.offsetWidth || pw;
         picker.style.maxHeight = room + 'px';
         picker.style.overflowY = 'auto';
+        // The caffeine curve is an extra: where the menu would have to scroll with it, it goes.
+        const curve = picker.querySelector('.mk-caf-curve');
+        if (curve && !curve.hidden && picker.scrollHeight > picker.clientHeight + 1) curve.hidden = true;
         const ph = Math.ceil(picker.getBoundingClientRect().height || 270);
         const left = rect ? Math.max(8, Math.min(window.innerWidth - pw - 8, rect.right - pw)) : 20;
         const safeBottom = window.innerHeight - bottomGuard;
@@ -6879,6 +6964,7 @@ function filterFullList(btn) {
             + '<span class="mk-caf-info" tabindex="0" role="button" aria-label="Par 400 mg">i<span class="mk-caf-tip" role="tooltip">'
             + '<b>400 mg</b> ir droša kofeīna dienas deva pieaugušajam (EFSA), vienā reizē līdz 200 mg.'
             + '<span class="mk-caf-key"><span><i class="is-before"></i>Jau izdzerts šodien</span><span><i class="is-add"></i>Tagad pievienosi</span></span></span></span></span></span>';
+          drawCaffeineCurve(picker.querySelector('.mk-caf-curve'), name, mg);
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {
@@ -6928,6 +7014,75 @@ function filterFullList(btn) {
         document.addEventListener('keydown', onCoffeePickerKey, true);
         picker.querySelector('.mk-coffee-source.is-on')?.focus({preventScroll:true});
       }, 0);
+    }
+
+    // The duty day's caffeine as a dot chart across the wide menu, under both columns:
+    // already drunk in the dimmer orange, the drink being added on top in the full one (as
+    // the day bar). Drawn once per menu state: a still picture, nothing runs afterwards.
+    function drawCaffeineCurve(host, name, addMg) {
+      const start = coffeeDayStart();
+      if (!host || !start) return;
+      const end = start + 24 * 3600000, now = Date.now(), live = now >= start && now < end;
+      const { drinks, unknown } = coffeeTimedDrinks(name);
+      host.hidden = !live && !drinks.length;
+      if (host.hidden) { host.replaceChildren(); return; }
+      const withNew = live ? drinks.concat([{ mg: addMg, at: now }]) : drinks;
+      const W = 408, H = 84, STEP = 6, cols = W / STEP, rows = H / STEP;
+      const tAt = c => start + (c + .5) / cols * (end - start);
+      let peak = 0;
+      const before = [], after = [];
+      for (let c = 0; c < cols; c++) { before.push(caffeineAt(drinks, tAt(c))); after.push(caffeineAt(withNew, tAt(c))); peak = Math.max(peak, after[c]); }
+      const yMax = Math.max(200, Math.ceil(peak * 1.15 / 50) * 50), perRow = yMax / rows;
+      const cv = document.createElement('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = W * dpr; cv.height = H * dpr;
+      const g = cv.getContext('2d');
+      g.scale(dpr, dpr);
+      for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) {
+        const v = (r + .5) * perRow, x = c * STEP + STEP / 2, y = H - r * STEP - STEP / 2;
+        const edge = v > before[c] - perRow;   // the ridge of what is already in the body is a little brighter
+        g.fillStyle = v <= before[c] ? 'rgba(255,183,124,' + (edge ? .8 : .46) + ')' : v <= after[c] ? '#ffb77c' : 'rgba(255,255,255,.07)';
+        g.beginPath(); g.arc(x, y, v <= after[c] ? 2.1 : 1.1, 0, 6.2832); g.fill();
+      }
+      // The 50 mg line and "now", each with its word on the chart.
+      const label = (str, x, y, align) => {
+        g.font = '500 10px Inter, system-ui, sans-serif'; g.textAlign = align; g.textBaseline = 'alphabetic';
+        g.lineWidth = 3; g.strokeStyle = '#2f231b'; g.strokeText(str, x, y);
+        g.fillStyle = 'rgba(246,229,218,.85)'; g.fillText(str, x, y);
+      };
+      const y50 = Math.round(H - 50 / perRow * STEP);
+      g.fillStyle = 'rgba(255,255,255,.3)';
+      for (let x = 0; x < W; x += 6) g.fillRect(x, y50, 3, 1);
+      label('50 mg', W - 1, y50 - 4, 'right');
+      if (live) {
+        const x = Math.round((now - start) / (end - start) * W);
+        g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(x, 12, 1, H - 12);
+        label('Tagad', Math.max(16, Math.min(W - 16, x)), 9, 'center');
+      }
+      // Now, the end of the shift, and when it falls under 50 mg (a rough line for sleep).
+      const hm = t => new Date(t).toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
+      const nowMg = Math.round(caffeineAt(drinks, now)), endMg = Math.round(caffeineAt(withNew, end));
+      let under = 0;
+      if (caffeineAt(withNew, live ? now + 3600000 : end) >= 50) for (let t = (live ? now : start) + 3600000; t < end + 24 * 3600000; t += 600000) if (caffeineAt(withNew, t) < 50) { under = t; break; }
+      // [label, value, what it means]; the last two count the drink being added.
+      const facts = [];
+      if (live) facts.push(['Šobrīd', '~' + nowMg + ' mg', 'Kofeīns organismā šobrīd, bez šī dzēriena']);
+      facts.push(['Maiņas beigās', '~' + endMg + ' mg', live ? 'Kofeīns organismā plkst. 08:00, ar šo dzērienu' : 'Kofeīns organismā plkst. 08:00']);
+      if (under) facts.push(['Zem 50 mg', hm(under), 'Ap šo laiku kofeīns nokrīt zem 50 mg (aptuvena robeža miegam)']);
+      const note = unknown > 0 ? (unknown === 1 ? '1 dzērienam' : unknown + ' dzērieniem') + ' nav zināms laiks' : '';
+      cv.setAttribute('role', 'img');
+      cv.setAttribute('aria-label', 'Kofeīns organismā maiņas laikā. ' + facts.map(f => f[0] + ' ' + f[1]).join(', ') + (note ? '. ' + note : ''));
+      cv.title = 'Blāvākie punkti: jau izdzertais. Spilgtie: dzēriens, ko tagad pievienosi.';
+      const el = (cls, html) => { const n = document.createElement('div'); n.className = cls; n.innerHTML = html; return n; };
+      const axis = el('mk-caf-curve-axis', ['08:00', '14:00', '20:00', '02:00', '08:00'].map(h => '<span>' + h + '</span>').join(''));
+      axis.setAttribute('aria-hidden', 'true');
+      const chart = el('mk-caf-curve-chart', '');
+      chart.append(cv, axis);
+      host.replaceChildren(
+        el('mk-caf-curve-title', 'Kofeīns organismā <small>aptuveni</small>'
+          + (note ? '<small class="mk-caf-curve-note" title="Atzīmēti, pirms laiki tika glabāti, tāpēc līknē to nav">' + note + '</small>' : '')),
+        chart,
+        el('mk-caf-curve-facts', facts.map(f => '<span title="' + f[2] + '"><small>' + f[0] + '</small><b>' + f[1] + '</b></span>').join(''))
+      );
     }
 
     function buildCoffeeCup(mode) {

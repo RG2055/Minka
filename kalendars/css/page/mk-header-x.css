@@ -1522,3 +1522,19 @@
   /* Kafijas QR tagad ir galvenē; noskaņas kartītē tas vairs neatkārtojas. */
   :root.mk-hx:not(.mk-mobile-shell) #grafiks-list .rg-feedback-card .rg-bmc-qrblock { display: none !important; }
 }
+
+@layer mk-hx {
+/* ── 2.0 polish with no idle cost: static states only, motion only under a click ── */
+/* Day strip: where more days continue, the edge fades out instead of cutting a day in half.
+   data-hx-more ("l", "r", "lr") comes from an IntersectionObserver (mk-header-x.js) and
+   changes only when an end of the month is reached or left. */
+:root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap #grafiks-scroller[data-hx-more="r"] { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+:root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap #grafiks-scroller[data-hx-more="l"] { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); }
+:root.mk-hx:not(.mk-mobile-shell) #minkaBarWrap #grafiks-scroller[data-hx-more="lr"] { -webkit-mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); }
+/* Pressed feel on the strip's arrows and icon buttons: scale only, composited, during the
+   click. The day pills stay still on purpose (switching days has no motion). */
+@media (prefers-reduced-motion: no-preference) {
+  :root.mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row :is(.arrow, #minkaBarMenu) { transition: background-color 120ms var(--mk-ease-effects, ease), scale 120ms var(--mk-ease-effects, ease) !important; }
+  :root.mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row :is(.arrow, #minkaBarMenu):active { scale: .96 !important; }
+}
+}

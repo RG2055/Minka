@@ -187,6 +187,62 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
   animation: mk-cl-rain 1s steps(8) infinite;
 }
 @keyframes mk-cl-rain { to { translate: -80px 0; } }
+/* Widgets in the mood's place (card-layout.js mountWidget): a big emoji, the month, the radio's
+   controls. No frame of their own, the theme's ink (--ink); only the emoji moves, and only with
+   transform (composited). */
+.mk-cl-wbox { position: relative; width: 100%; height: 100%; min-height: 0; container-type: size; display: grid; place-items: center; align-content: center; gap: 10px; }
+.mk-cl-wbox button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+.mk-cl-wbox button:focus-visible { outline: 2px solid var(--ink, #a8c7fa); outline-offset: 2px; }
+/* emoji: one of the app's 3D pictures, with small pieces of itself rising around it */
+.mk-cl-emo { position: relative; z-index: 1; display: grid; place-items: center; width: 60cqmin; height: 60cqmin; padding: 0; border-radius: 28px; }
+.mk-cl-emo > img { display: block; width: 54cqmin; height: 54cqmin; object-fit: contain; }
+/* the pieces: all on one beat (the same duration and steps, delays in whole seconds), five
+   steps a second and only transform and opacity, so they cost next to nothing */
+.mk-cl-ebits { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.mk-cl-ebits > img { position: absolute; bottom: 8%; height: auto; opacity: 0; will-change: transform, opacity; }
+@media (prefers-reduced-motion: no-preference) {
+  .mk-cl-ebits > img { animation: mk-cl-e-rise 8s steps(40) infinite; }
+}
+@keyframes mk-cl-e-rise { 0% { transform: translateY(0) rotate(-8deg); opacity: 0; } 15% { opacity: .55; } 70% { opacity: .4; } 100% { transform: translateY(-62cqh) rotate(10deg); opacity: 0; } }
+.mk-cl-emopick { position: absolute; inset: 0; z-index: 2; box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px;
+  padding: 10px; border-radius: 18px; background: #1b2128; box-shadow: 0 8px 24px oklch(0 0 0 / .45), inset 0 0 0 1px oklch(1 0 0 / .08); font-family: Inter, system-ui, sans-serif; }
+.mk-cl-emopick[hidden] { display: none; }
+.mk-cl-emotabs { display: flex; gap: 4px; }
+.mk-cl-emotabs button { flex: 1 1 auto; min-height: 28px; padding: 0 8px; border-radius: 14px; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: inset 0 0 0 1px oklch(1 0 0 / .18); }
+.mk-cl-emotabs button[aria-pressed="true"] { background: color-mix(in srgb, var(--ink, #a8c7fa) 26%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink, #a8c7fa) 60%, transparent); }
+.mk-cl-emogrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 2px; align-content: start; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; }
+.mk-cl-emogrid button { aspect-ratio: 1; padding: 3px; border-radius: 10px; }
+.mk-cl-emogrid img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.mk-cl-emogrid button:hover { background: oklch(1 0 0 / .1); }
+.mk-cl-emogrid button[aria-pressed="true"] { background: color-mix(in srgb, var(--ink, #a8c7fa) 26%, transparent); }
+.mk-cl-emobits { justify-self: start; font-size: 12.5px; font-weight: 600; }
+/* month */
+.mk-cl-art[data-c="month"] .mk-cl-wbox { align-content: center; gap: 8px; }
+.mk-cl-mhead { font: 600 15px/1.2 Inter, system-ui, sans-serif; color: var(--ink, #eef2f6); }
+.mk-cl-mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; width: min(100%, 300px); font: 500 13px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.mk-cl-mgrid > * { display: grid; place-items: center; height: min(34px, 11cqh); border-radius: 10px; }
+.mk-cl-mwd { font-size: 11px; opacity: .6; }
+.mk-cl-mgrid .is-we { color: #ffb4a8; }
+.mk-cl-mgrid button:hover { background: oklch(1 0 0 / .1); }
+.mk-cl-mgrid button.is-today { box-shadow: inset 0 0 0 1.5px var(--ink, #a8c7fa); }
+.mk-cl-mgrid button[aria-pressed="true"] { background: var(--ink, #a8c7fa); color: #0b0e12; font-weight: 700; }
+/* radio */
+.mk-cl-art[data-c="radio"] .mk-cl-wbox { gap: 14px; font-family: Inter, system-ui, sans-serif; }
+.mk-cl-rnow { display: grid; gap: 4px; justify-items: center; max-width: 100%; text-align: center; }
+.mk-cl-rnow b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 20px; font-weight: 600; color: var(--ink, #eef2f6); }
+.mk-cl-rnow span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; opacity: .75; }
+.mk-cl-rbtns { display: flex; align-items: center; gap: 12px; }
+.mk-cl-rbtns button { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: oklch(1 0 0 / .08); transition: background-color 150ms cubic-bezier(.2, 0, 0, 1), scale 120ms cubic-bezier(.2, 0, 0, 1); }
+.mk-cl-rbtns button:hover { background: oklch(1 0 0 / .16); }
+.mk-cl-rbtns button:active { scale: .96; }
+.mk-cl-rbtns svg { width: 22px; height: 22px; fill: currentColor; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mk-cl-rbtns .mk-cl-rplay { width: 64px; height: 64px; background: var(--ink, #a8c7fa); color: #0b0e12; }
+.mk-cl-rbtns .mk-cl-rplay:hover { background: color-mix(in srgb, var(--ink, #a8c7fa) 86%, #fff); }
+.mk-cl-rbtns .mk-cl-rplay svg { width: 28px; height: 28px; }
+.mk-cl-rmore { display: flex; gap: 8px; }
+.mk-cl-ropen { min-height: 32px; padding: 0 14px; border-radius: 16px; font-size: 12.5px; font-weight: 600; box-shadow: inset 0 0 0 1px oklch(1 0 0 / .2); }
+.mk-cl-ropen:hover { background: oklch(1 0 0 / .1); }
+.mk-cl-rnote { margin: 0; font: 500 13px/1.4 Inter, system-ui, sans-serif; opacity: .7; }
 /* a game in the box: the gallery's window alone, centred, without its title bar and extras */
 .mk-cl-game-box { position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden; border-radius: 14px; }
 .pc98-root.pc98-embed { position: absolute; inset: 0; z-index: auto; background: transparent; }
@@ -296,7 +352,11 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .mk-cl-cicon { font-size: 22px; }
 /* "show also": fatigue, coffee (M3 filter chips; the box ticks itself) */
 .mk-cl-cshow { display: flex; align-items: center; gap: 6px; }
-.mk-cl-cshow .mk-cl-switch { flex: 1; min-width: 0; }
+/* "Kaķis" off: the daily cat and its speech bubble are not drawn */
+:root.mk-cl-nocat #mkDailyCatPet, :root.mk-cl-nocat .mk-cat-say { display: none !important; }
+/* three chips: two to a row, the third under them */
+.mk-cl-cshow { flex-wrap: wrap; }
+.mk-cl-cshow .mk-cl-switch { flex: 1 1 40%; min-width: 0; }
 .mk-cl-cshow .mk-cl-switch span { width: 100%; justify-content: center; box-sizing: border-box; }
 .mk-cl-cshow > span { font-size: 12px; opacity: .6; margin-right: 2px; }
 .mk-cl-cshow .mk-cl-switch { position: relative; }

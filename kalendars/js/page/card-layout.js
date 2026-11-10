@@ -61,13 +61,19 @@
       uniforms: { ripplesA: [.3, .36, .72, .68], ripplesB: [.3, .36, .3, .36], ripplesCount: 2, ripplesDecay: 1, ripplesIntensity: 1, ripplesRings: 12 } } },
     { id: 'storm', name: 'Kaķis', note: 'Kaķis ar zobenu dejo lietū', fx: { field: 'cat', img: 'center-g-cat.webp', shares: [0, .5, 1], uniforms: {} } },
     { id: 'mines', name: 'Mīnas', note: 'Mīnas noskaņas krāsā, spēlē uzreiz', icon: '💣', game: 'mines' },
-    { id: 'candy', name: 'Konfektes', note: 'Konfektes 98 no galerijas, bezgalīgi', icon: '🍬', game: 'candy' }
+    { id: 'candy', name: 'Konfektes', note: 'Konfektes 98 no galerijas, bezgalīgi', icon: '🍬', game: 'candy' },
+    // widgets: plain DOM in the mood's place (see mountWidget)
+    { id: 'emoji', name: 'Emoji', note: 'Liels emoji pēc izvēles, ar kustību', icon: '😎', widget: 'emoji' },
+    { id: 'month', name: 'Kalendārs', note: 'Mēneša kalendārs: klikšķis atver dienu', icon: '📅', widget: 'month' },
+    { id: 'radio', name: 'Radio', note: 'Radio vadība, neatverot radio logu', icon: '📻', widget: 'radio' }
   ];
   function clampOwn(o) {
     o = o || {};
     var n = function (v, lo, hi, d) { v = Number(v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
     // few controls, each always giving a sound layout: no forced rows, no tilt, no walls turned away
-    return { angle: n(o.angle, 0, 40, 22), max: n(o.max, 140, 340, 240), rows: 0, tilt: 0,
+    // max from 100: in a low window the largest cards that fit are smaller than the usual 140 px,
+    // and the slider must still have somewhere to go
+    return { angle: n(o.angle, 0, 40, 22), max: n(o.max, 100, 340, 240), rows: 0, tilt: 0,
       mood: o.mood !== false, moodScale: n(o.moodScale, 0.7, 1.3, 1) };
   }
   function ownLayout(o) {
@@ -335,6 +341,7 @@
   // Two tabs: how the cards stand, and what stands in the mood's place (large previews: the picture
   // with the mood's face on it, as it will look)
   var CUP = '<svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M2.6 5.6h11v7.6a3.6 3.6 0 0 1-3.6 3.6H6.2a3.6 3.6 0 0 1-3.6-3.6V5.6Z"/><path fill="none" stroke="currentColor" stroke-width="1.7" d="M14.2 7.6h1.1a2.6 2.6 0 0 1 0 5.2h-1.1"/></svg>';
+  var PAW = '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><ellipse cx="12" cy="16" rx="5" ry="4"/><circle cx="5.5" cy="11" r="2.2"/><circle cx="9.5" cy="6.5" r="2.2"/><circle cx="14.5" cy="6.5" r="2.2"/><circle cx="18.5" cy="11" r="2.2"/></g></svg>';
   var BOLT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="currentColor"/></svg>';
   function centreTile(c) {
     var pic = c.fx ? '<canvas width="52" height="38"></canvas>'
@@ -354,7 +361,7 @@
         '<i class="mk-cl-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12.5 4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i></button>';
     }).join('') + '</div>' +
     '<section class="mk-cl-own" hidden>' +
-      range('max', 'Kartīšu izmērs', 140, 340, 10) + range('angle', 'Sienu leņķis', 0, 40, 1) + range('moodScale', 'Noskaņas izmērs', 0.7, 1.3, 0.05) +
+      range('max', 'Kartīšu izmērs', 100, 340, 10) + range('angle', 'Sienu leņķis', 0, 40, 1) + range('moodScale', 'Noskaņas izmērs', 0.7, 1.3, 0.05) +
       '<label class="mk-cl-switch"><input type="checkbox" role="switch" data-own="mood"><span>Noskaņa</span></label>' +
     '</section>' +
     // saving, for both sheets' choices, under the views (the right sheet holds more)
@@ -366,7 +373,8 @@
     '<div class="mk-cl-centers">' + CENTERS.map(centreTile).join('') + '</div>' +
     '<div class="mk-cl-cshow" role="group" aria-label="Rādīt arī">' +
       '<label class="mk-cl-switch" title="Rādīt maiņas nogurumu"><input type="checkbox" role="switch" data-chip-on="fatigue"><span>' + BOLT + 'Nogurums</span></label>' +
-      '<label class="mk-cl-switch" title="Rādīt dežūras kafiju"><input type="checkbox" role="switch" data-chip-on="coffee"><span>' + CUP + 'Kafija</span></label></div>' +
+      '<label class="mk-cl-switch" title="Rādīt dežūras kafiju"><input type="checkbox" role="switch" data-chip-on="coffee"><span>' + CUP + 'Kafija</span></label>' +
+      '<label class="mk-cl-switch" title="Rādīt kaķi"><input type="checkbox" role="switch" data-chip-on="cat"><span>' + PAW + 'Kaķis</span></label></div>' +
     '</section>';
   document.body.appendChild(panel);
   var ownBox = panel.querySelector('.mk-cl-own');
@@ -400,9 +408,14 @@
       var o = l.own;
       Array.prototype.forEach.call(panel.querySelectorAll('[data-own]'), function (input) {
         var k = input.dataset.own;
-        if (input.type === 'checkbox') input.checked = o.mood; else if (Number(input.value) !== o[k]) input.value = String(o[k]);
+        // The card size slider ends where the cards stop growing in this window (corridor.js
+        // reports the largest size that fits), so its whole travel does something and the number
+        // is the size really shown. The chosen size is kept: with more room the cards grow to it.
+        var free = k === 'max' && window.MkCardLayout.free || 0, shown = free ? Math.min(o.max, free) : o.max;
+        if (k === 'max') input.max = String(free ? Math.max(120, Math.min(340, Math.ceil(free / 10) * 10)) : 340);
+        if (input.type === 'checkbox') input.checked = o.mood; else if (Number(input.value) !== (k === 'max' ? Math.min(o.max, Number(input.max)) : o[k])) input.value = String(o[k]);
         var out = panel.querySelector('[data-out="' + k + '"]');
-        if (out) out.textContent = k === 'moodScale' ? Math.round(o[k] * 100) + '%' : k === 'max' ? o[k] + ' px' : o[k] + '°';
+        if (out) out.textContent = k === 'moodScale' ? Math.round(o[k] * 100) + '%' : k === 'max' ? shown + ' px' : o[k] + '°';
         if (k === 'moodScale') input.disabled = !o.mood;
       });
     }
@@ -421,6 +434,7 @@
     panel.style.setProperty('--mk-cl-side', side + 'px');
   }
   window.addEventListener('resize', function () { if (isOpen) placePanel(); });
+  window.addEventListener('mk-corridor-fit', function () { if (isOpen) paint(); });
 
   var MM = window.MinkaMotion, isOpen = false;   // not panel.hidden: it stays shown while closing
   function open() {
@@ -634,12 +648,15 @@
   }
   var CHIPS = KEY + 'chips';
   function chipsOn() {
-    try { var v = JSON.parse(localStorage.getItem(CHIPS) || 'null'); if (v) return { fatigue: v.fatigue !== false, coffee: v.coffee !== false }; } catch (_e) {}
+    try { var v = JSON.parse(localStorage.getItem(CHIPS) || 'null'); if (v) return { fatigue: v.fatigue !== false, coffee: v.coffee !== false, cat: v.cat !== false }; } catch (_e) {}
     var st = profile(), a = st && st.cardChips;
-    return a ? { fatigue: a.fatigue !== false, coffee: a.coffee !== false } : { fatigue: true, coffee: true };
+    return a ? { fatigue: a.fatigue !== false, coffee: a.coffee !== false, cat: a.cat !== false } : { fatigue: true, coffee: true, cat: true };
   }
+  // the daily cat and what it says can be switched off with the other two (css/page/card-layout.css)
+  root.classList.toggle('mk-cl-nocat', !chipsOn().cat);
   function paintChips(mood) {
     var on = chipsOn(), box = centerEl.firstElementChild;
+    root.classList.toggle('mk-cl-nocat', !on.cat);
     if (!box) return;
     ['fatigue', 'coffee'].forEach(function (k) {
       var chip = box.querySelector('.mk-cl-chip[data-chip="' + k + '"]'), src = mood && mood.querySelector(k === 'fatigue' ? '[data-rg-fatigue-num]' : '[data-rg-coffee-num]');
@@ -660,6 +677,7 @@
   function centerHtml(id, mood) {
     var c = byCenter(id);
     if (c.game) return '<div class="mk-cl-art mk-cl-game" data-c="' + id + '"><div class="mk-cl-game-box"></div>' + moodLine() + rateRow() + '</div>';
+    if (c.widget) return '<div class="mk-cl-art mk-cl-widget" data-c="' + id + '"><div class="mk-cl-wbox"></div>' + moodLine() + rateRow() + '</div>';
     var art = "<canvas class='mk-cl-fx' aria-hidden='true'></canvas>";
     if (id === 'storm') art += '<div class="mk-cl-rain" aria-hidden="true"></div>';
     return '<div class="mk-cl-art" data-c="' + id + '"' + (c.face ? ' data-face="' + c.face + '"' : '') + '><div class="mk-cl-stage">' + art + '<span class="mk-cl-bigface" aria-hidden="true"></span></div>' + moodLine() + rateRow() + '</div>';
@@ -708,17 +726,18 @@
     if (on !== root.classList.contains('mk-cl-center-on')) document.dispatchEvent(new CustomEvent('mk-mood-covered', { detail: on }));
     root.classList.toggle('mk-cl-center-on', on);
     centerEl.hidden = !on;
-    if (!on) { if (centerSig) { centerSig = ''; centerMood = null; centerBox = ''; unmountGame(); stopLive(); centerEl.innerHTML = ''; } return; }
+    if (!on) { if (centerSig) { centerSig = ''; centerMood = null; centerBox = ''; unmountGame(); unmountWidget(); stopLive(); centerEl.innerHTML = ''; } return; }
     // The picture (its worker and WebGL program) or the game lives on through day switches: only a
     // new choice builds it again. The mood's face, word and rating row follow the day's own mood
     // card when that card is a new one; later changes to it come through watchMoodState.
     var fresh = id !== centerSig;
     if (fresh) {
-      centerSig = id; unmountGame(); stopLive();
+      centerSig = id; unmountGame(); unmountWidget(); stopLive();
       centerEl.dataset.center = id; centerEl.innerHTML = centerHtml(id, mood);
       var cc = byCenter(id);
-      if (cc.game) mountGame(cc.game); else startFx(cc);
+      if (cc.game) mountGame(cc.game); else if (cc.widget) mountWidget(cc.widget); else startFx(cc);
     }
+    else if (widget && widget.sync) widget.sync();   // a day switch: the month follows the shown day
     if (fresh) { centerMood = mood; watchMoodState(mood); paintMood(); paintRate(); }
     else if (mood !== centerMood) {
       // a new day's mood card: its face and row are copied right after this frame is painted (the
@@ -748,6 +767,157 @@
     }, function () {});
   }
   function unmountGame() { if (game) { var g = game; game = null; try { g.close(); } catch (_e) {} } }
+
+  /* Widgets in the mood's place: a big emoji of one's choice (still, or with a quiet movement),
+     the month (a click opens that day) and the radio's controls (the radio window stays shut).
+     Plain DOM, drawn when something changes: nothing runs while a widget only stands there (the
+     emoji's movement is one composited CSS animation). */
+  var widget = null;
+  function unmountWidget() { if (widget) { var w = widget; widget = null; if (w.off) try { w.off(); } catch (_e) {} } }
+  function mountWidget(kind) {
+    var box = centerEl.querySelector('.mk-cl-wbox');
+    if (box) widget = (kind === 'emoji' ? emojiWidget : kind === 'month' ? monthWidget : radioWidget)(box) || {};
+  }
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // The big emoji: one of the app's own 3D pictures (js/emoji3d.js: Noto 3D, Emoji 18, Roji,
+  // Baloni), chosen from a menu by set, with small pieces of itself drifting up around it (they
+  // can be switched off). It plays its own animation while the pointer is on it, where it has one.
+  // Kept on this computer.
+  var EMOJI = KEY + 'emoji';
+  // tabs: Noto 3D (with the few Emoji 18 ones), the classic Noto that can move, Roji, Baloni
+  var EMOJI_SETS = [['noto', 'Noto 3D'], ['notoanim', 'Kustīgie'], ['roji', 'Roji'], ['balloon', 'Baloni']];
+  function emojiTab(set) { return set === 'noto18' ? 'noto' : set; }
+  // where the eight pieces rise: left %, size px, how far along its way each one starts
+  var EMOJI_BITS = [[8, 26, 0], [22, 18, 3], [36, 22, 6], [62, 20, 1], [76, 28, 4], [90, 18, 7], [48, 16, 5], [14, 20, 2]];
+  function emojiWidget(box) {
+    var E3 = window.MinkaEmoji3D;
+    if (!E3) { box.innerHTML = '<p class="mk-cl-rnote">Emoji šeit nav pieejami.</p>'; return {}; }
+    var first = E3.decode(E3.styled('noto', '😎') || '') || (E3.list('noto')[0] || E3.list()[0]).id;
+    var st = { id: first, bits: true, set: 'noto' };
+    try { var v = JSON.parse(localStorage.getItem(EMOJI) || 'null'); if (v && E3.get(v.id)) st = { id: v.id, bits: v.bits !== false, set: emojiTab(E3.get(v.id).set) }; } catch (_e) {}
+    var src = function (id, big) { return new URL(E3.url(id, big ? 320 : 128), location.href).href; };
+    box.innerHTML = '<div class="mk-cl-ebits" aria-hidden="true"></div>' +
+      '<button type="button" class="mk-cl-emo" aria-haspopup="dialog" aria-expanded="false" title="Mainīt emoji"><img alt="" draggable="false"></button>' +
+      '<div class="mk-cl-emopick" role="dialog" aria-label="Emoji" hidden>' +
+      '<div class="mk-cl-emotabs" role="group" aria-label="Komplekts">' + EMOJI_SETS.map(function (t) { return '<button type="button" data-emoset="' + t[0] + '" aria-pressed="false">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="mk-cl-emogrid"></div>' +
+      '<label class="mk-cl-switch mk-cl-emobits"><input type="checkbox" role="switch" data-emobits><span>Gabaliņi apkārt</span></label></div>';
+    var pick = box.querySelector('.mk-cl-emopick'), big = box.querySelector('.mk-cl-emo'), img = big.firstElementChild, grid = box.querySelector('.mk-cl-emogrid'), bits = box.querySelector('.mk-cl-ebits');
+    var gridSet = '';
+    function paintGrid() {
+      if (gridSet !== st.set) {   // a set's pictures: small ones, each loaded when it scrolls into sight
+        gridSet = st.set;
+        grid.innerHTML = (st.set === 'noto' ? E3.list('noto').concat(E3.list('noto18')) : E3.list(st.set)).map(function (it) { return '<button type="button" data-emo="' + it.id + '" title="' + esc(it.label) + '" aria-pressed="false"><img alt="' + esc(it.label) + '" loading="lazy" decoding="async" src="' + src(it.id) + '"></button>'; }).join('');
+        grid.scrollTop = 0;
+      }
+      [].forEach.call(grid.children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.emo === st.id)); });
+      [].forEach.call(box.querySelectorAll('[data-emoset]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.emoset === st.set)); });
+    }
+    function paint() {
+      img.src = src(st.id, true);
+      img.alt = E3.get(st.id).label;
+      bits.innerHTML = st.bits ? EMOJI_BITS.map(function (b) { return '<img alt="" src="' + src(st.id) + '" style="left:' + b[0] + '%;width:' + b[1] + 'px;animation-delay:-' + b[2] + 's">'; }).join('') : '';
+      box.querySelector('[data-emobits]').checked = st.bits;
+      if (!pick.hidden) paintGrid();
+    }
+    function save() { try { localStorage.setItem(EMOJI, JSON.stringify({ id: st.id, bits: st.bits })); } catch (_e) {} }
+    function toggle(open) { pick.hidden = !open; big.setAttribute('aria-expanded', String(open)); if (open) { st.set = emojiTab(E3.get(st.id).set); paintGrid(); } }
+    function onClick(e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      if (b === big) toggle(pick.hidden);
+      else if (b.dataset.emoset) { st.set = b.dataset.emoset; paintGrid(); }
+      else if (b.dataset.emo) { st.id = b.dataset.emo; save(); paint(); toggle(false); }
+    }
+    function onInput(e) { if (e.target.matches('[data-emobits]')) { st.bits = e.target.checked; save(); paint(); } }
+    // its own animation while the pointer is on it
+    function play() { var a = E3.animUrl(st.id); if (a && pick.hidden) img.src = new URL(a, location.href).href; }
+    function still() { img.src = src(st.id, true); }
+    function away(e) { if (!pick.hidden && !box.contains(e.target)) toggle(false); }
+    box.addEventListener('click', onClick);
+    box.addEventListener('input', onInput);
+    big.addEventListener('pointerenter', play);
+    big.addEventListener('pointerleave', still);
+    document.addEventListener('pointerdown', away, true);
+    paint();
+    return { off: function () { document.removeEventListener('pointerdown', away, true); } };
+  }
+
+  // The month of the shown day; a click opens that day.
+  var MONTHS = ['Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'];
+  function monthWidget(box) {
+    var shown = '';
+    var two = function (n) { return (n < 10 ? '0' : '') + n; };
+    function paint() {
+      var act = String(window.__activeDateStr || ''), p = act.split('.').map(Number);
+      if (act === shown || p.length !== 3 || !p[2]) return;
+      shown = act;
+      var y = p[2], m = p[1] - 1, lead = (new Date(y, m, 1).getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
+      // the duty day (until 08:00 it is still yesterday's), as everywhere in the calendar
+      var now = new Date(); if (now.getHours() < 8) now.setDate(now.getDate() - 1);
+      var today = now.getFullYear() === y && now.getMonth() === m ? now.getDate() : 0;
+      var html = '<div class="mk-cl-mhead">' + MONTHS[m] + ' ' + y + '</div><div class="mk-cl-mgrid">' +
+        ['P', 'O', 'T', 'C', 'Pk', 'S', 'Sv'].map(function (w, i) { return '<span class="mk-cl-mwd' + (i > 4 ? ' is-we' : '') + '" aria-hidden="true">' + w + '</span>'; }).join('');
+      for (var i = 0; i < lead; i++) html += '<span></span>';
+      for (var d = 1; d <= days; d++) {
+        var we = (lead + d - 1) % 7 > 4;
+        html += '<button type="button" data-day="' + two(d) + '.' + two(m + 1) + '.' + y + '" class="' + (d === today ? 'is-today' : '') + (we ? ' is-we' : '') + '" aria-pressed="' + (d === p[0]) + '">' + d + '</button>';
+      }
+      box.innerHTML = html + '</div>';
+    }
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-day]');
+      if (b && window.g_goToDate) window.g_goToDate(b.dataset.day);
+    });
+    paint();
+    return { sync: paint };
+  }
+
+  // The radio's controls: station, what plays, play / pause, previous and next station. The radio
+  // itself lives in the shell page; its window stays shut. Its own elements say what it does
+  // (observed, not polled).
+  function radioWidget(box) {
+    var P = null;
+    try { if (window.parent !== window && window.parent.document.getElementById('playBtn')) P = window.parent; } catch (_e) {}
+    if (!P) { box.innerHTML = '<p class="mk-cl-rnote">Radio šeit nav pieejams.</p>'; return {}; }
+    var ICON = { prev: '<path d="M7 6v12M19 6 9.5 12 19 18Z"/>', next: '<path d="M17 6v12M5 6l9.5 6L5 18Z"/>', play: '<path d="M8 5v14l11-7Z"/>', pause: '<path d="M8 5v14M16 5v14"/>' };
+    var svg = function (k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON[k] + '</svg>'; };
+    box.innerHTML = '<div class="mk-cl-rnow"><b></b><span></span></div>' +
+      '<div class="mk-cl-rbtns"><button type="button" data-r="prev" aria-label="Iepriekšējā stacija" title="Iepriekšējā stacija">' + svg('prev') + '</button>' +
+      '<button type="button" data-r="play" class="mk-cl-rplay" aria-label="Atskaņot"></button>' +
+      '<button type="button" data-r="next" aria-label="Nākamā stacija" title="Nākamā stacija">' + svg('next') + '</button></div>' +
+      '<div class="mk-cl-rmore"><button type="button" class="mk-cl-ropen" data-r="stations" title="Izvēlēties staciju">Stacijas</button>' +
+      '<button type="button" class="mk-cl-ropen" data-r="open">Atvērt radio</button></div>';
+    var doc = P.document, text = function (id) { var n = doc.getElementById(id); return n ? n.textContent.trim() : ''; };
+    function paint() {
+      var st = P.__mkRadioPlaybackState ? P.__mkRadioPlaybackState() : null, playing = !!st && !st.paused;
+      var station = text('curStation'), track = [text('npArtist'), text('npTitle')].filter(Boolean).join(' – ');
+      box.querySelector('.mk-cl-rnow b').textContent = station || 'Radio';
+      box.querySelector('.mk-cl-rnow span').textContent = track || (playing ? 'Skan' : 'Nospied, lai klausītos');
+      var play = box.querySelector('.mk-cl-rplay');
+      play.innerHTML = svg(playing ? 'pause' : 'play');
+      play.setAttribute('aria-label', playing ? 'Pauze' : 'Atskaņot');
+      play.title = playing ? 'Pauze' : 'Atskaņot';
+    }
+    // the radio's scripts load on first use (as when its window is opened)
+    function ready() { return Promise.resolve(typeof P.loadRadioScripts === 'function' ? P.loadRadioScripts() : true); }
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-r]'), what = b && b.dataset.r;
+      if (!what) return;
+      if (what === 'open') { var t = doc.getElementById('radioToggle'); if (t) t.click(); return; }
+      ready().then(function () {
+        if (what === 'play') doc.getElementById('playBtn').click();
+        else if (what === 'stations') { if (typeof P.toggleMenu === 'function') P.toggleMenu(true); }   // the radio's own station list
+        else if (typeof P.stepStation === 'function') P.stepStation(what === 'next' ? 1 : -1);
+        setTimeout(paint, 60);
+      }, function () {});
+    });
+    var mo = new MutationObserver(paint);
+    ['curStation', 'npTitle', 'npArtist', 'playBtn'].forEach(function (id) { var n = doc.getElementById(id); if (n) mo.observe(n, { childList: true, characterData: true, subtree: true }); });
+    paint();
+    return { off: function () { mo.disconnect(); } };
+  }
 
   /* The moving picture: one WebGL canvas drawn by MkDither (js/page/mk-dither.js) on the shared
      slow clock, the time in seconds. The GPU does the work; without a real GPU (software

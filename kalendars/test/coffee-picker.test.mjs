@@ -17,7 +17,7 @@ function harness({ innerWidth = 1280, innerHeight = 900, contentHeight = 270 } =
   assert.ok(from > 0 && to > from, 'calendar.js no longer contains the picker placement block');
   const classes = new Set(), moved = [];
   const kid = cls => ({ cls, matches: sel => sel.split(', ').includes('.' + cls) });
-  const picker = { style: {}, getBoundingClientRect: () => ({ height: 270 }), scrollHeight: contentHeight, offsetWidth: 0,
+  const picker = { style: {}, getBoundingClientRect: () => ({ height: 270 }), scrollHeight: contentHeight, offsetWidth: 0, querySelector: () => null,
     classList: { contains: c => classes.has(c), add: c => classes.add(c) },
     children: [kid('mk-coffee-picker-title'), kid('mk-coffee-source-row'), kid('mk-coffee-price-row'), kid('mk-coffee-save')],
     append(...cols) { moved.push(...cols.map(c => c.items.map(i => i.cls))); } };

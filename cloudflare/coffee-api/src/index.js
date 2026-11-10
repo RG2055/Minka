@@ -344,7 +344,22 @@ const handler = {
         const detailed = Object.values(d.sources).reduce((a, b) => a + (Number(b) || 0), 0);
         if (detailed < counts[worker]) d.sources.philips += counts[worker] - detailed;
       });
-      return json({ ok: true, date, counts, updated, details });
+      // When each drink of the day was logged, for the caffeine curve in the coffee menu:
+      // the added drinks in order, without those a later "minus" of the same source took back.
+      const times = Object.create(null);
+      try {
+        const events = await env.COFFEE_DB
+          .prepare("SELECT worker, source, delta, created_at FROM coffee_events WHERE date = ?1 AND source IS NOT NULL AND source <> '' AND source <> 'adjustment' ORDER BY id")
+          .bind(date)
+          .all();
+        for (const row of events.results || []) {
+          const list = times[row.worker] || (times[row.worker] = []);
+          const source = cleanSource(row.source);
+          if (Number(row.delta) > 0) list.push([source, Number(row.created_at) || 0]);
+          else for (let i = list.length - 1; i >= 0; i--) if (list[i][0] === source) { list.splice(i, 1); break; }
+        }
+      } catch (_e) {}
+      return json({ ok: true, date, counts, updated, details, times });
     }
 
     if (request.method === 'POST') {
