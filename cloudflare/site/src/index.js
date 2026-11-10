@@ -34,7 +34,7 @@ const SAFETY = {
     "img-src 'self' data: blob: https:",
     "media-src 'self' data: blob: https:",
     "connect-src 'self' https: wss:",
-    "frame-src 'self' https://lacitis.pages.dev https://www.youtube.com https://www.youtube-nocookie.com https://grafika-planotajs.pages.dev https://pusdieninas.pages.dev",
+    "frame-src 'self' https://lacitis.pages.dev https://www.youtube.com https://www.youtube-nocookie.com https://grafika-planotajs.pages.dev https://pusdieninas.pages.dev https://music.rgapp.page",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",

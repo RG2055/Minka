@@ -1991,6 +1991,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #mobileDockBtn,
     #statsDocBtn,
     #monthCalDocBtn,
+    #rgMusicDockBtn,
     #pusdienasDockBtn,
 	    #planotajsDockBtn,
     #lacitisDockBtn,
@@ -2020,6 +2021,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusLed,
     #statsDocBtn > div,
     #monthCalDocBtn > div,
+    #rgMusicDockBtn > div,
     #pusdienasDockBtn > div,
     #planotajsDockBtn > div,
     #lacitisDockBtn > div,
@@ -2324,6 +2326,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #mobileDockBtn,
 	    #statsDocBtn,
 	    #monthCalDocBtn,
+	    #rgMusicDockBtn,
 	    #pusdienasDockBtn,
 	    #planotajsDockBtn,
 	    #lacitisDockBtn,
@@ -2360,6 +2363,7 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn { --dock-accent: #34d7bf; --dock-glow: rgba(52,215,191,.28); }
 	    #statsDocBtn { --dock-accent: #ff9856; --dock-glow: rgba(255,152,86,.26); }
 	    #pusdienasDockBtn { --dock-accent: #f59e0b; --dock-glow: rgba(245,158,11,.26); }
+	    #rgMusicDockBtn { --dock-accent: #ff0000; --dock-glow: rgba(255,0,0,.26); }
 	    #planotajsDockBtn { --dock-accent: #38bdf8; --dock-glow: rgba(56,189,248,.26); }
 	    #planotajsDockBtn.planotajs-open {
 	      background: #101c2b !important;
@@ -2390,6 +2394,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #mobileDockBtn::after,
 	    #statsDocBtn::after,
 	    #monthCalDocBtn::after,
+	    #rgMusicDockBtn::after,
 	    #pusdienasDockBtn::after,
 	    #planotajsDockBtn::after,
 	    #lacitisDockBtn::after,
@@ -2412,6 +2417,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #mobileDockBtn:hover,
 	    #statsDocBtn:hover,
 	    #monthCalDocBtn:hover,
+	    #rgMusicDockBtn:hover,
 	    #pusdienasDockBtn:hover,
 	    #planotajsDockBtn:hover,
 	    #lacitisDockBtn:hover,
@@ -2463,6 +2469,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #mobileDockBtn > *,
 	    #statsDocBtn > *,
 	    #monthCalDocBtn > *,
+	    #rgMusicDockBtn > *,
 	    #pusdienasDockBtn > *,
 	    #planotajsDockBtn > *,
 	    #lacitisDockBtn > *,
@@ -2502,6 +2509,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	      #mobileDockBtn,
 	      #statsDocBtn,
 	      #monthCalDocBtn,
+	      #rgMusicDockBtn,
 	      #pusdienasDockBtn,
 	    #planotajsDockBtn,
 	      #lacitisDockBtn,
@@ -2553,6 +2561,7 @@ window.addEventListener('DOMContentLoaded', () => {
       #nsToggleBtnParent,
       #bolusDocBtn,
 	      #mobileDockBtn,
+	      #rgMusicDockBtn,
 	      #pusdienasDockBtn,
 	    #planotajsDockBtn,
 	      #lacitisDockBtn,
@@ -2569,7 +2578,7 @@ window.addEventListener('DOMContentLoaded', () => {
     /* ── Responsive: very narrow (hide emoji labels) ── */
     @media (max-width: 320px) {
       .dock-emoji { display: none !important; }
-	      #nsToggleBtnParent, #bolusDocBtn, #mobileDockBtn, #pusdienasDockBtn, #planotajsDockBtn, #lacitisDockBtn, #settingsDockBtn, #radioIdleBtn, #radioToggle {
+	      #nsToggleBtnParent, #bolusDocBtn, #mobileDockBtn, #pusdienasDockBtn, #rgMusicDockBtn, #planotajsDockBtn, #lacitisDockBtn, #settingsDockBtn, #radioIdleBtn, #radioToggle {
         padding: 6px 9px !important;
       }
     }
@@ -2601,6 +2610,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #mobileDockBtn,
 	    #statsDocBtn,
 	    #monthCalDocBtn,
+	    #rgMusicDockBtn,
 	    #pusdienasDockBtn,
 	    #planotajsDockBtn,
 	    #lacitisDockBtn,
@@ -2634,6 +2644,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #mobileDockBtn::after,
 	    #statsDocBtn::after,
 	    #monthCalDocBtn::after,
+	    #rgMusicDockBtn::after,
 	    #pusdienasDockBtn::after,
 	    #planotajsDockBtn::after,
 	    #lacitisDockBtn::after,
@@ -2648,6 +2659,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #mobileDockBtn:hover,
 	    #statsDocBtn:hover,
 	    #monthCalDocBtn:hover,
+	    #rgMusicDockBtn:hover,
 	    #pusdienasDockBtn:hover,
 	    #planotajsDockBtn:hover,
 	    #lacitisDockBtn:hover,
@@ -2665,6 +2677,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	    #mobileDockBtn:active,
 	    #statsDocBtn:active,
 	    #monthCalDocBtn:active,
+	    #rgMusicDockBtn:active,
 	    #pusdienasDockBtn:active,
 	    #lacitisDockBtn:active,
     #settingsDockBtn:active,
@@ -2896,6 +2909,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
 
+    <!-- Pusdienas: right before Radio. The two numbers right of the icon are today's deals,
+         Narvesen (yellow) and Wolt (orange); tapping one opens straight into that section. -->
+    <button id="pusdienasDockBtn" onclick="openPusdienasLauncher(event)" title="Pusdienas">
+      <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="0" width="1.04" height="4.04" fill="#fde68a"/><rect x="3" y="0" width="1.04" height="4.04" fill="#fde68a"/><rect x="1" y="3" width="3.04" height="1.04" fill="#fbbf24"/><rect x="2" y="4" width="1.04" height="5.04" fill="#f59e0b"/><rect x="6" y="0" width="2.04" height="1.04" fill="#fbbf24"/><rect x="5" y="1" width="3.04" height="4.04" fill="#fbbf24"/><rect x="7" y="5" width="1.04" height="4.04" fill="#f59e0b"/></svg>
+      <span class="pd-counts" aria-hidden="true"><b class="pd-nv" id="pdCountNv" data-mode="narvesen" hidden></b><b class="pd-wolt" id="pdCountWolt" data-mode="wolt" hidden></b></span>
+      <span>PUSDIENAS</span>
+    </button>
     <button id="radioIdleBtn" onclick="radioIdleClick()" title="RG Radio" aria-label="RG Radio">
       <div class="rtog-led" style="background:#00ff88;box-shadow:none;"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="1.04" height="1.04" fill="#34d399"/><rect x="6" y="1" width="1.04" height="1.04" fill="#34d399"/><rect x="5" y="2" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="3" width="9.04" height="1.04" fill="#34d399"/><rect x="0" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="8" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="5" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="6" y="5" width="1.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="6" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="7" width="9.04" height="1.04" fill="#34d399"/></svg>
@@ -2908,12 +2928,11 @@ window.addEventListener('DOMContentLoaded', () => {
       <span id="radioToggleLabel">RADIO</span>
       <span id="radioToggleIcon"><svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </button>
-    <!-- Pusdienas: right after Radio. The two numbers right of the icon are today's deals,
-         Narvesen (yellow) and Wolt (orange); tapping one opens straight into that section. -->
-    <button id="pusdienasDockBtn" onclick="openPusdienasLauncher(event)" title="Pusdienas">
-      <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="0" width="1.04" height="4.04" fill="#fde68a"/><rect x="3" y="0" width="1.04" height="4.04" fill="#fde68a"/><rect x="1" y="3" width="3.04" height="1.04" fill="#fbbf24"/><rect x="2" y="4" width="1.04" height="5.04" fill="#f59e0b"/><rect x="6" y="0" width="2.04" height="1.04" fill="#fbbf24"/><rect x="5" y="1" width="3.04" height="4.04" fill="#fbbf24"/><rect x="7" y="5" width="1.04" height="4.04" fill="#f59e0b"/></svg>
-      <span class="pd-counts" aria-hidden="true"><b class="pd-nv" id="pdCountNv" data-mode="narvesen" hidden></b><b class="pd-wolt" id="pdCountWolt" data-mode="wolt" hidden></b></span>
-      <span>PUSDIENAS</span>
+    <!-- RG Music: a YouTube Music player on a home server (music.rgapp.page), opened in the
+         same sheet as Plānotājs (#rgMusicSheet below). -->
+    <button id="rgMusicDockBtn" onclick="openRgMusic()" title="RG Music" aria-label="RG Music">
+      <svg class="rgm-logo" width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#ff0000"/><g fill="#ffffff"><rect x="5.25" y="10.5" width="1.5" height="3"/><rect x="8.25" y="7.5" width="1.5" height="9"/><rect x="11.25" y="4.5" width="1.5" height="15"/><rect x="14.25" y="7.5" width="1.5" height="9"/><rect x="17.25" y="10.5" width="1.5" height="3"/></g></svg>
+      <span>RG MUSIC</span>
     </button>
     <button id="dockMoreBtn" type="button" aria-expanded="false" aria-controls="dockMoreMenu" title="Pārējie rīki">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
@@ -2945,7 +2964,7 @@ window.addEventListener('DOMContentLoaded', () => {
 body.radio-idle #dockShelf #bottomBtnBar>#radioToggle{display:none!important}
 body:not(.radio-idle) #dockShelf #bottomBtnBar>#radioIdleBtn{display:none!important}
 #dockShelf #bottomBtnBar #radioToggleIcon{display:none!important}
-#dockShelf #bottomBtnBar>.ns-open,#dockShelf #bottomBtnBar>.stats-open,#dockShelf #bottomBtnBar>#monthCalDocBtn.stats-open,#dockShelf #bottomBtnBar>#planotajsDockBtn.planotajs-open{background:rgba(80,116,170,.16)!important;border-color:rgba(111,164,236,.32)!important;color:#edf5ff!important}
+#dockShelf #bottomBtnBar>.ns-open,#dockShelf #bottomBtnBar>.stats-open,#dockShelf #bottomBtnBar>#monthCalDocBtn.stats-open,#dockShelf #bottomBtnBar>#planotajsDockBtn.planotajs-open,#dockShelf #bottomBtnBar>#rgMusicDockBtn.rgmusic-open{background:rgba(80,116,170,.16)!important;border-color:rgba(111,164,236,.32)!important;color:#edf5ff!important}
 #dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover{background:rgba(255,255,255,.065)!important;border-color:rgba(255,255,255,.09)!important;color:#f2f6fd!important;transform:translateY(-1px)!important}
 #dockShelf #bottomBtnBar .dock-px{width:21px!important;max-height:22px!important;filter:saturate(.78) brightness(1.08)}
 #dockMoreBtn svg{width:21px;height:21px;fill:currentColor}
@@ -3075,6 +3094,19 @@ html #dockShelf#dockShelf #bottomBtnBar>#planotajsDockBtn{--dk-acc:#38bdf8}
 html #dockShelf#dockShelf #bottomBtnBar>#statsDocBtn{--dk-acc:#1fe091}
 html #dockShelf#dockShelf #bottomBtnBar>:is(#radioIdleBtn,#radioToggle){--dk-acc:var(--radio-accent,#ff8a5c)}
 html #dockShelf#dockShelf #bottomBtnBar>#pusdienasDockBtn{--dk-acc:#ffa53d}
+html #dockShelf#dockShelf #bottomBtnBar>#rgMusicDockBtn{--dk-acc:#ff3b30}
+/* While RG Music plays (also with its sheet closed) the bars bounce, like YouTube's now-playing mark */
+#bottomBtnBar #rgMusicDockBtn .rgm-logo rect:not(:first-child){transform-box:fill-box;transform-origin:center}
+#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect{animation:rgmEq .9s cubic-bezier(.45,0,.55,1) infinite alternate}
+#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect:nth-child(1){animation-delay:-.6s}
+#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect:nth-child(2){animation-delay:-.2s}
+#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect:nth-child(3){animation-delay:-.75s}
+#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect:nth-child(4){animation-delay:-.35s}
+#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect:nth-child(5){animation-delay:-.5s}
+@keyframes rgmEq{0%{transform:scaleY(.35)}100%{transform:scaleY(1.25)}}
+@media (prefers-reduced-motion:reduce){#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect{animation:none}}
+/* RG Music keeps its own red tile in every dock icon set (it is the player's logo, not a dock glyph) */
+#bottomBtnBar #rgMusicDockBtn .rgm-logo,#bottomBtnBar #rgMusicDockBtn:is(:hover,:active,:focus) .rgm-logo{position:relative;z-index:1;display:block;flex:0 0 auto;width:21px;height:21px;margin:5px 0!important;opacity:1!important;filter:none!important;transform:none!important}
 /* Pusdienas: today's deal counts beside the icon in each brand's own colours, Narvesen yellow on
    the left, Wolt blue on the right (from pusdieninas.pages.dev/api/counts; hidden until known or when zero) */
 #dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts{position:absolute!important;z-index:2!important;left:0;right:0;top:0;height:44px;display:block!important;pointer-events:none}
@@ -3120,7 +3152,7 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.d
   }
   tones();
   // BOLUS has its own frame (progress ring, warning colours): not marked.
-  var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|mc-open|pusdienas-open)(\s|$)/;
+  var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|rgmusic-open|mc-open|pusdienas-open)(\s|$)/;
   function sync() {
     var found = false;
     Array.prototype.forEach.call(bar.querySelectorAll(':scope > button'), function (b) {
@@ -3171,6 +3203,18 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.d
       <button type="button" class="mk-sheet-x" onclick="closePlanotajsSheet()" aria-label="Aizvērt plānotāju" title="Aizvērt (Esc)"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.47 4.47a.75.75 0 0 1 1.06 0L10 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L11.06 10l4.47 4.47a.75.75 0 1 1-1.06 1.06L10 11.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L8.94 10 4.47 5.53a.75.75 0 0 1 0-1.06Z"/></svg></button>
     </div>
     <iframe id="planotajsSheetFrame" title="Grafika plānotājs" style="display:block;width:100%;height:calc(100% - 56px);border:0;background:#141019;" referrerpolicy="no-referrer"></iframe>
+  </section>
+</div>
+
+<!-- RG Music (music.rgapp.page): the same sheet as Plānotājs. ✕ only hides it, so the music keeps
+     playing in the background (the dock icon's bars bounce meanwhile); pause it in the player. -->
+<div id="rgMusicSheet" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171195;pointer-events:none;background:transparent;">
+  <section id="rgMusicSheetPanel" class="mk-frame-sheet" aria-label="RG Music" style="background:#141218;">
+    <div class="mk-sheet-head">
+      <span class="mk-sheet-title">RG Music</span>
+      <button type="button" class="mk-sheet-x" onclick="closeRgMusicSheet()" aria-label="Aizvērt RG Music" title="Aizvērt (Esc)"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.47 4.47a.75.75 0 0 1 1.06 0L10 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L11.06 10l4.47 4.47a.75.75 0 1 1-1.06 1.06L10 11.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L8.94 10 4.47 5.53a.75.75 0 0 1 0-1.06Z"/></svg></button>
+    </div>
+    <iframe id="rgMusicSheetFrame" title="RG Music" allow="autoplay; encrypted-media; fullscreen" style="display:block;width:100%;height:calc(100% - 56px);border:0;background:#141218;" referrerpolicy="no-referrer"></iframe>
   </section>
 </div>
 
@@ -4110,6 +4154,85 @@ function mkSheetClose(sheet, panel, key, btn, done) {
     if (event.key === 'Escape' && sheet && sheet.style.display !== 'none') {
       event.preventDefault();
       window.closePlanotajsSheet();
+    }
+  });
+})();
+
+/* RG Music launcher: Plānotājs' sheet logic. It signs in with this device's Minka session: the token
+   rides in the iframe's #hash (never sent in a request) and the music server checks it once at
+   api.rgapp.page/api/me. Loaded on hover/first open and kept while hidden, so the music plays on;
+   the player reports play/pause with postMessage and the dock icon animates while it plays. */
+(function(){
+  var RG_MUSIC_URL = 'https://music.rgapp.page/';
+  var lastRgMusicFocus = null;
+  function frame() { return document.getElementById('rgMusicSheetFrame'); }
+  function loadRgMusic() {
+    var f = frame();
+    if (!f || f.dataset.loaded === '1') return;
+    var token = '';
+    try { token = sessionStorage.getItem('minka_api_token_v1') || localStorage.getItem('minka_api_token_v1') || ''; } catch (e) {}
+    f.dataset.loaded = '1';
+    f.src = RG_MUSIC_URL + (token ? '#minka=' + encodeURIComponent(token) : '');
+  }
+  (function wireWarm() {
+    var btn = document.getElementById('rgMusicDockBtn');
+    if (!btn) { document.addEventListener('DOMContentLoaded', wireWarm, { once: true }); return; }
+    btn.addEventListener('pointerenter', loadRgMusic, { passive: true });
+    btn.addEventListener('focus', loadRgMusic);
+  })();
+
+  function positionRgMusicSheet() {
+    var sheet = document.getElementById('rgMusicSheet');
+    if (!sheet || sheet.style.display === 'none') return;
+    mkFrameSheet(document.getElementById('rgMusicSheetPanel'));
+  }
+
+  window.openRgMusic = function openRgMusic() {
+    var sheet = document.getElementById('rgMusicSheet');
+    var btn = document.getElementById('rgMusicDockBtn');
+    if (!sheet || !frame()) { window.open(RG_MUSIC_URL, '_blank', 'noopener'); return; }
+    if (sheet.style.display !== 'none' && sheet.dataset.closing !== '1') {
+      window.closeRgMusicSheet();
+      return;
+    }
+    if (sheet.dataset.closing !== '1') lastRgMusicFocus = document.activeElement;
+    sheet.style.display = 'block';
+    sheet.setAttribute('aria-hidden', 'false');
+    if (btn) btn.classList.add('rgmusic-open');
+    positionRgMusicSheet();
+    loadRgMusic();
+    mkSheetOpen(sheet, document.getElementById('rgMusicSheetPanel'), 'rgmusic', btn);
+    if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
+  };
+
+  window.closeRgMusicSheet = function closeRgMusicSheet() {
+    var sheet = document.getElementById('rgMusicSheet');
+    var btn = document.getElementById('rgMusicDockBtn');
+    if (!sheet || sheet.dataset.closing === '1' || sheet.style.display === 'none') return;
+    sheet.setAttribute('aria-hidden', 'true');
+    mkSheetClose(sheet, document.getElementById('rgMusicSheetPanel'), 'rgmusic', btn, function () {
+      sheet.style.display = 'none';
+    });
+    if (btn) btn.classList.remove('rgmusic-open');
+    if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
+    if (lastRgMusicFocus && typeof lastRgMusicFocus.focus === 'function') lastRgMusicFocus.focus({ preventScroll: true });
+    lastRgMusicFocus = null;
+  };
+
+  window.addEventListener('message', function (event) {
+    var f = frame();
+    if (!f || event.source !== f.contentWindow || !event.data || event.data.type !== 'rg-music') return;
+    var btn = document.getElementById('rgMusicDockBtn');
+    if (btn) btn.classList.toggle('rgmusic-playing', !!event.data.playing);
+  });
+
+  window.addEventListener('resize', positionRgMusicSheet);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', positionRgMusicSheet);
+  document.addEventListener('keydown', function (event) {
+    var sheet = document.getElementById('rgMusicSheet');
+    if (event.key === 'Escape' && sheet && sheet.style.display !== 'none') {
+      event.preventDefault();
+      window.closeRgMusicSheet();
     }
   });
 })();
