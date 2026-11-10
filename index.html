@@ -2931,7 +2931,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <!-- RG Music: a YouTube Music player on a home server (music.rgapp.page), opened in the
          same sheet as Plānotājs (#rgMusicSheet below). -->
     <button id="rgMusicDockBtn" onclick="openRgMusic()" title="RG Music" aria-label="RG Music">
-      <svg class="rgm-logo" width="21" height="21" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#ff0000"/><g fill="#ffffff"><rect x="5.25" y="10.5" width="1.5" height="3"/><rect x="8.25" y="7.5" width="1.5" height="9"/><rect x="11.25" y="4.5" width="1.5" height="15"/><rect x="14.25" y="7.5" width="1.5" height="9"/><rect x="17.25" y="10.5" width="1.5" height="3"/></g></svg>
+      <svg class="rgm-logo" width="22" height="22" viewBox="-0.5 -0.5 25 25" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#ff0000"/><g fill="#ffffff"><rect x="5.25" y="10.5" width="1.5" height="3"/><rect x="8.25" y="7.5" width="1.5" height="9"/><rect x="11.25" y="4.5" width="1.5" height="15"/><rect x="14.25" y="7.5" width="1.5" height="9"/><rect x="17.25" y="10.5" width="1.5" height="3"/></g></svg>
       <span>RG MUSIC</span>
     </button>
     <button id="dockMoreBtn" type="button" aria-expanded="false" aria-controls="dockMoreMenu" title="Pārējie rīki">
@@ -3106,7 +3106,7 @@ html #dockShelf#dockShelf #bottomBtnBar>#rgMusicDockBtn{--dk-acc:#ff3b30}
 @keyframes rgmEq{0%{transform:scaleY(.35)}100%{transform:scaleY(1.25)}}
 @media (prefers-reduced-motion:reduce){#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect{animation:none}}
 /* RG Music keeps its own red tile in every dock icon set (it is the player's logo, not a dock glyph) */
-#bottomBtnBar #rgMusicDockBtn .rgm-logo,#bottomBtnBar #rgMusicDockBtn:is(:hover,:active,:focus) .rgm-logo{position:relative;z-index:1;display:block;flex:0 0 auto;width:21px;height:21px;margin:5px 0!important;opacity:1!important;filter:none!important;transform:none!important}
+#bottomBtnBar #rgMusicDockBtn .rgm-logo,#bottomBtnBar #rgMusicDockBtn:is(:hover,:active,:focus) .rgm-logo{display:block;opacity:1!important;filter:none!important;transform:none!important}
 /* Pusdienas: today's deal counts beside the icon in each brand's own colours, Narvesen yellow on
    the left, Wolt blue on the right (from pusdieninas.pages.dev/api/counts; hidden until known or when zero) */
 #dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts{position:absolute!important;z-index:2!important;left:0;right:0;top:0;height:44px;display:block!important;pointer-events:none}
@@ -3127,7 +3127,8 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{backgroun
 html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on:hover{background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#1a1e26)!important}
 html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}
 /* the icon centred in the 32 px zone */
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:22px!important;height:auto;max-height:22px!important;margin:5px 0!important;filter:none!important;transform:none}
+/* Every dock icon gets the same 22 px box (the art is centred in it), so all labels share one line */
+html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt,.rgm-logo),html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:22px!important;height:22px!important;max-height:22px!important;margin:5px 0!important;filter:none!important;transform:none}
 html #dockShelf#dockShelf #bottomBtnBar>button .dock-alt{height:22px!important}
 html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{height:22px!important}
 html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>i{right:20px!important;top:8px!important}
