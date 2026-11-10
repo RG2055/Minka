@@ -11,7 +11,13 @@
 // twice (rejected by the browser), inv.thepixora.com is gone. When nothing
 // works the caller falls back to the official YouTube player.
 
-export const STREAM_INSTANCES = ["https://invidious.schenkel.eti.br", "https://yt.omada.cafe", "https://invidious.kemonomimi.nl"];
+// Prefer currently listed Invidious instances; slow/down servers are hedged.
+export const STREAM_INSTANCES = [
+  "https://invidious.tiekoetter.com",
+  "https://invidious.nerdvpn.de",
+  "https://inv.nadeko.net",
+  "https://yt.chocolatemoo53.com"
+];
 
 const LAST_GOOD_KEY = "webamp.lacitis.instance.v1";
 const cache = new Map(); // id -> { url, expires }
@@ -52,11 +58,14 @@ function orderedInstances(instances) {
 }
 
 async function probe(url, signal) {
-  const timeout = withTimeout(5000, signal);
+  const timeout = withTimeout(2200, signal);
   try {
     const response = await fetch(url, { headers: { Range: "bytes=0-1" }, signal: timeout.signal, cache: "no-store" });
     // Reading the status at all means CORS passed (fetch rejects otherwise).
-    return response.status === 206 || response.status === 200;
+    const valid = response.status === 206 || response.status === 200;
+    // A proxy may ignore Range and return the whole song. Never consume it.
+    response.body?.cancel().catch(() => {});
+    return valid;
   } catch {
     return false;
   } finally {
@@ -74,7 +83,7 @@ function expiresOf(url) {
 const trusted = new Set();
 
 async function tryInstance(instance, id, signal) {
-  const timeout = withTimeout(6000, signal);
+  const timeout = withTimeout(4800, signal);
   try {
     const response = await fetch(`${instance}/api/v1/videos/${encodeURIComponent(id)}?fields=adaptiveFormats,lengthSeconds`, { headers: { Accept: "application/json" }, signal: timeout.signal });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -99,53 +108,77 @@ async function tryInstance(instance, id, signal) {
   }
 }
 
-const pending = new Map(); // id -> Promise (a prefetch and a play share one lookup)
+const pending = new Map(); // id -> Promise (prefetch and play share the same lookup)
 
 /**
- * Hedged: the best instance is asked first; if it has not answered within
- * HEDGE_MS the next one is asked too, and the first working answer wins.
- * @returns {Promise<{url: string, instance: string, duration: number} | null>}
+ * Start the preferred mirror immediately and hedge the others at short
+ * intervals. Whichever first returns *playable* audio wins. On slow/dead
+ * mirrors, this removes the former 1.2s / 2.4s scheduled waits.
  */
-const HEDGE_MS = 1200;
+const HEDGE_MS = 250;
+
+function withConsumerAbort(promise, signal) {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.resolve(null);
+  // A selection changing must not abort the shared lookup for a prefetch.
+  return new Promise((resolve, reject) => {
+    const onAbort = () => { cleanup(); resolve(null); };
+    const cleanup = () => signal.removeEventListener("abort", onAbort);
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then((value) => { cleanup(); resolve(value); },
+      (error) => { cleanup(); reject(error); });
+  });
+}
+
 export function resolveStream(id, { signal, instances = STREAM_INSTANCES } = {}) {
+  if (!id) return Promise.resolve(null);
   const hit = cache.get(id);
-  if (hit && hit.expires > Date.now()) return Promise.resolve(hit);
+  // An almost expired googlevideo URL might fail while the browser buffers.
+  if (hit && hit.expires > Date.now() + 15_000) return withConsumerAbort(Promise.resolve(hit), signal);
   cache.delete(id);
-  if (pending.has(id)) return pending.get(id);
-  const order = orderedInstances(instances);
-  const lookup = new Promise((resolve) => {
-    let left = order.length;
-    let done = false;
-    const timers = [];
-    const finish = (value) => {
-      if (done) return;
-      done = true;
-      timers.forEach(clearTimeout);
-      resolve(value);
-    };
-    order.forEach((instance, index) => {
-      timers.push(setTimeout(() => {
-        if (done || signal?.aborted) { if (--left === 0) finish(null); return; }
-        tryInstance(instance, id, signal).then((result) => {
-          cache.set(id, result);
-          if (cache.size > 40) cache.delete(cache.keys().next().value);
-          try { localStorage.setItem(LAST_GOOD_KEY, instance); } catch {}
-          failures.delete(instance);
-          finish(result);
-        }, (error) => {
-          if (!signal?.aborted) {
+
+  let lookup = pending.get(id);
+  if (!lookup) {
+    const order = orderedInstances(instances);
+    lookup = new Promise((resolve) => {
+      if (!order.length) { resolve(null); return; }
+      let finished = false;
+      let failed = 0;
+      const timers = [];
+      const controllers = [];
+      const finish = (result) => {
+        if (finished) return;
+        finished = true;
+        timers.forEach(clearTimeout);
+        controllers.forEach((controller) => controller.abort());
+        resolve(result);
+      };
+      order.forEach((instance, index) => {
+        const controller = new AbortController();
+        controllers.push(controller);
+        timers.push(setTimeout(() => {
+          if (finished) return;
+          tryInstance(instance, id, controller.signal).then((result) => {
+            if (finished) return;
+            cache.set(id, result);
+            if (cache.size > 40) cache.delete(cache.keys().next().value);
+            try { localStorage.setItem(LAST_GOOD_KEY, instance); } catch {}
+            failures.delete(instance);
+            finish(result);
+          }, (error) => {
+            if (finished || controller.signal.aborted) return;
+            failed++;
             failures.set(instance, Date.now());
             trusted.delete(instance);
             console.warn("Lācītis stream:", instance, error?.message);
-          }
-          if (--left === 0) finish(null);
-        });
-      }, index * HEDGE_MS));
-    });
-    signal?.addEventListener("abort", () => finish(null), { once: true });
-  }).finally(() => pending.delete(id));
-  pending.set(id, lookup);
-  return lookup;
+            if (failed === order.length) finish(null);
+          });
+        }, index * HEDGE_MS));
+      });
+    }).finally(() => pending.delete(id));
+    pending.set(id, lookup);
+  }
+  return withConsumerAbort(lookup, signal);
 }
 
 /** Looks a song up ahead of time (the next in the playlist, a selected row). */
