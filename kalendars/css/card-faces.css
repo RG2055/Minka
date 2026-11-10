@@ -319,28 +319,28 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
    Reserve space for the icon and count so they cannot overlap the +/- buttons.
    Expanded controls take the same space at rest, hover
    and focus. Clamp the entire capsule inside the face, including user scaling. */
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="coffee"] {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] [data-wf-part="coffee"] {
   --wf-coffee-glyph-size:max(13px,calc(16px / var(--wf-scale)));
   --wf-coffee-open-width:max(clamp(70px,38cqw,100px),calc(var(--wf-coffee-glyph-size) + 51px));
   --wf-coffee-width:var(--wf-coffee-open-width);
   width:var(--wf-coffee-width) !important;max-width:none !important;
   left:clamp(calc(var(--wf-coffee-width) * var(--wf-scale) / 2 + 5%),var(--wf-x),calc(95% - var(--wf-coffee-width) * var(--wf-scale) / 2)) !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-step {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-step {
   display:grid !important;grid-template-columns:18px minmax(0,1fr) 18px !important;gap:0 !important;
   width:100% !important;min-width:0 !important;min-height:28px !important;box-sizing:border-box !important;padding:2px !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] :is(.mk-coffee-add,.mk-coffee-sub) {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] :is(.mk-coffee-add,.mk-coffee-sub) {
   display:flex !important;position:relative !important;align-items:center;justify-content:center;
   width:18px !important;min-width:0 !important;height:24px !important;min-height:24px !important;
   flex:none !important;opacity:1 !important;pointer-events:auto !important;overflow:visible !important;
   padding:0 !important;margin:0 !important;transition:none !important;transform:none !important;font-size:14px !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] :is(.mk-coffee-add,.mk-coffee-sub)::after {display:none !important;}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-mid {width:100% !important;min-width:0 !important;padding:0 !important;gap:1px !important;justify-content:center !important;}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-copy {padding-left:1px !important;border:0 !important;}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-num {font-size:10px !important;}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-cup {width:var(--wf-coffee-glyph-size) !important;height:var(--wf-coffee-glyph-size) !important;max-width:none !important;flex-shrink:0 !important;shape-rendering:geometricPrecision;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] :is(.mk-coffee-add,.mk-coffee-sub)::after {display:none !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-mid {width:100% !important;min-width:0 !important;padding:0 !important;gap:1px !important;justify-content:center !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-copy {padding-left:1px !important;border:0 !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-num {font-size:10px !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-cup {width:var(--wf-coffee-glyph-size) !important;height:var(--wf-coffee-glyph-size) !important;max-width:none !important;flex-shrink:0 !important;shape-rendering:geometricPrecision;}
 /* In the editor the whole capsule is the drag target, not a live action. */
 html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-editing :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;pointer-events:none !important;}
 
@@ -451,40 +451,40 @@ html body #grafiks-list.grid-view .card.mk-mid-card.mk-watch-face[data-watch-fac
 /* Coffee presentation is saved per card; icon mode expands on card hover. */
 .wf-coffee-options[hidden] {display:none !important;}
 .wf-coffee-mode {grid-template-columns:repeat(2,minmax(0,1fr));}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card .mk-coffee-mid {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card .mk-coffee-mid {
   border:0 !important;background:transparent !important;box-shadow:none !important;cursor:pointer;font:inherit;color:inherit;pointer-events:auto !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) [data-wf-part="coffee"] {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) [data-wf-part="coffee"] {
   --wf-coffee-width:max(clamp(32px,16cqw,44px),calc(var(--wf-coffee-glyph-size) + 14px));
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) .mk-coffee-step {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) .mk-coffee-step {
   grid-template-columns:minmax(0,1fr) !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) :is(.mk-coffee-add,.mk-coffee-sub) {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]) :is(.mk-coffee-add,.mk-coffee-sub) {
   display:none !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-mid {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face] .mk-coffee-mid {
   min-height:24px !important;line-height:1 !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) .mk-coffee-step {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) .mk-coffee-step {
   background:var(--wf-coffee-bg,#17212d) !important;border-color:var(--wf-coffee-ink,#fff) !important;
   box-shadow:0 1px 3px #0005 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) :is(.mk-coffee-add,.mk-coffee-sub,.mk-coffee-mid,.mk-coffee-num,.mk-coffee-cup) {
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) :is(.mk-coffee-add,.mk-coffee-sub,.mk-coffee-mid,.mk-coffee-num,.mk-coffee-cup) {
   color:var(--wf-coffee-ink,#fff) !important;-webkit-text-fill-color:var(--wf-coffee-ink,#fff) !important;text-shadow:none !important;filter:none !important;
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) .mk-coffee-cup [fill]:not([fill="none"]) {fill:currentColor !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]) .mk-coffee-cup [fill]:not([fill="none"]) {fill:currentColor !important;}
 html body #worker-modal #modal-skin-view #grafiks-list .card.mk-watch-face.wf-editing .mk-coffee-mid {pointer-events:none !important;}
 
 /* Hovering the coffee icon itself (not the whole card) reveals the icon-mode controls. */
 @media (hover:hover) {
-  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
-  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
-  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
+  html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:hover :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
 }
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
-html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd [data-wf-part="coffee"] {--wf-coffee-width:var(--wf-coffee-open-width);}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd .mk-coffee-step {grid-template-columns:18px minmax(0,1fr) 18px !important;}
+html body :is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"].mk-coffee-kbd :is(.mk-coffee-add,.mk-coffee-sub) {display:flex !important;}
 
 /* ── Per-element colour and iOS-style full tint ──────────────────────── */
 /* An element with its own colour carries its own --wf-tint; the numeral's

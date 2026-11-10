@@ -1077,6 +1077,10 @@
       var i = d.indexOf(':'); c.style.setProperty(d.slice(0, i), d.slice(i + 1), 'important');
     });
     var wrap = document.createElement('div'); wrap.id = 'grafiks-list'; wrap.className = 'grid-view mk-skin-preview-list mk-acc-wrap';
+    // the card inherits its text from the list it stands in: the copy gets the real list's, not
+    // this window's (the cards' own rules reach it as ".mk-acc #grafiks-list", see card-faces.css)
+    var ls = getComputedStyle(list);
+    ['font-family', 'font-size', 'font-weight', 'font-style', 'line-height', 'letter-spacing', 'color', 'text-align', 'font-variant-numeric', '-webkit-font-smoothing'].forEach(function (k) { wrap.style.setProperty(k, ls.getPropertyValue(k)); });
     wrap.appendChild(c); stage.replaceChildren(wrap);
     var side = Math.min(stage.clientWidth || 200, 220), k = side / Math.max(w, h);
     stage.style.height = Math.round(h * k) + 'px';

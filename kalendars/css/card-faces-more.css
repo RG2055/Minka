@@ -282,14 +282,14 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 .card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd) [data-wf-part="coffee"] .mk-coffee-step {width: 16cqw !important; min-width: 0 !important; padding: 0 !important; border-radius: 32% !important; rotate: 45deg; transition: rotate 170ms cubic-bezier(.2,0,0,1), width 170ms cubic-bezier(.2,0,0,1), border-radius 170ms cubic-bezier(.2,0,0,1) !important;}
 .card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd) [data-wf-part="coffee"] .mk-coffee-step > * {rotate: -45deg;}
 .card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd) [data-wf-part="coffee"] .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {display: none !important;}
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face="material"]:not(.wf-editing) [data-wf-part="coffee"] {transition: width 280ms cubic-bezier(.2,0,0,1), left 280ms cubic-bezier(.2,0,0,1) !important;}
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd):not(.wf-editing) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face="material"]:not(.wf-editing) [data-wf-part="coffee"] {transition: width 280ms cubic-bezier(.2,0,0,1), left 280ms cubic-bezier(.2,0,0,1) !important;}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd):not(.wf-editing) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
 /* a touch screen: only the cup's tap opens it (a tap leaves :hover stuck on the card) */
 @media (hover: none) {
 .card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd) [data-wf-part="coffee"] .mk-coffee-step {width: 16cqw !important; min-width: 0 !important; padding: 0 !important; border-radius: 32% !important; rotate: 45deg; transition: rotate 170ms cubic-bezier(.2,0,0,1), width 170ms cubic-bezier(.2,0,0,1), border-radius 170ms cubic-bezier(.2,0,0,1) !important;}
 .card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd) [data-wf-part="coffee"] .mk-coffee-step > * {rotate: -45deg;}
 .card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd) [data-wf-part="coffee"] .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {display: none !important;}
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd):not(.wf-editing) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face="material"][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd):not(.wf-editing) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
 }
 @media (prefers-reduced-motion: reduce) {
   .card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step, .card.mk-watch-face[data-watch-face="material"] [data-wf-part="coffee"] .mk-coffee-step > * {transition: none !important;}
@@ -368,7 +368,7 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
    tonis). The M3 face has its own (above); Winamp and Dither keep their pixel controls. */
 @layer mk-fx {
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-step,
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {
   --mkc-b: 20px; --mkc-e: cubic-bezier(.2,0,0,1); --mkc-on: color-mix(in oklab, var(--mkc-fill) 22%, #000);
   display: flex !important; align-items: center !important; justify-content: center !important; gap: 0 !important;
   min-height: 0 !important; padding: 0 2px !important; border-radius: 999px !important; box-sizing: border-box !important;
@@ -376,24 +376,24 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-step {
   --mkc-fill: #ffc266; height: 30px !important; min-width: 30px !important; padding: 0 4px !important;
 }
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {
   --mkc-fill: var(--wf-tint, #ffc266); width: 100% !important; height: 28px !important; padding: 0 4px !important;
 }
 /* the − / + take black or white by the fill's own lightness (a black or a dark tint
    gets white bars), lightly tinted with the fill; the coffee palettes below set theirs */
 @supports (color: oklch(from red l c h)) {
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-step,
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {--mkc-on: color-mix(in oklab, var(--mkc-fill) 22%, oklch(from var(--mkc-fill) calc((.66 - l) * 1000) 0 0));}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {--mkc-on: color-mix(in oklab, var(--mkc-fill) 22%, oklch(from var(--mkc-fill) calc((.66 - l) * 1000) 0 0));}
 /* Stikls: the buttons in a light tone of the tint (a black or a dark tint would vanish
    on the dark glass) */
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {--mkc-fill: oklch(from var(--wf-tint, #ffc266) clamp(.74, l, .92) c h);}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {--mkc-fill: oklch(from var(--wf-tint, #ffc266) clamp(.74, l, .92) c h);}
 }
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:is([data-coffee-contrast="auto"],[data-coffee-contrast="tint"]):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step {
   --mkc-fill: var(--wf-coffee-ink, #fff); --mkc-on: var(--wf-coffee-bg, #17212d);
 }
 /* the buttons */
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add),
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {
   display: block !important; position: relative !important; flex: 0 0 var(--mkc-b) !important; width: var(--mkc-b) !important; height: var(--mkc-b) !important; min-width: 0 !important; min-height: 0 !important;
   padding: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 50% !important; overflow: visible !important;
   opacity: 1 !important; scale: 1; transform: none !important; pointer-events: auto !important; cursor: pointer;
@@ -402,17 +402,17 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
   transition: flex-basis 280ms var(--mkc-e), width 280ms var(--mkc-e), opacity 180ms var(--mkc-e) 40ms, scale 280ms var(--mkc-e), box-shadow 150ms var(--mkc-e) !important;
 }
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-step > .mk-coffee-add,
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > .mk-coffee-add {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > .mk-coffee-add {
   background: linear-gradient(var(--mkc-on), var(--mkc-on)) center / 44% 2px no-repeat, linear-gradient(var(--mkc-on), var(--mkc-on)) center / 2px 44% no-repeat, var(--mkc-fill) !important;
 }
 /* M3 state layer under the pointer, a small press */
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add):hover,
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add):hover {box-shadow: inset 0 0 0 99px color-mix(in srgb, var(--mkc-on) 10%, transparent) !important;}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add):hover {box-shadow: inset 0 0 0 99px color-mix(in srgb, var(--mkc-on) 10%, transparent) !important;}
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add):active,
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add):active {scale: .92;}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add):active {scale: .92;}
 /* the cup (and count) between them, in the middle */
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-step > .mk-coffee-mid,
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > .mk-coffee-mid {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > .mk-coffee-mid {
   flex: 1 0 auto !important; width: auto !important; justify-content: center !important; align-items: center !important; min-width: max-content !important; min-height: 0 !important; height: 100% !important; padding: 0 4px !important;
 }
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face) .mk-coffee-mid svg {transform: none !important;}
@@ -420,30 +420,30 @@ html body :is(#grafiks-list,#worker-modal,#mk-any) .card.card.mk-mid-card.mk-wat
    marks it data-coffee-mode="icon": until the cup is tapped); a face in "Ikona → pogas" */
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face):not([data-coffee-mode="icon"]):not(:hover):not(.mk-coffee-kbd) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add),
 :root:not(.mk-mobile-shell) #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face)[data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add),
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {
   flex-basis: 0 !important; width: 0 !important; opacity: 0 !important; scale: .5; pointer-events: none !important;
   transition: flex-basis 170ms var(--mkc-e), width 170ms var(--mkc-e), opacity 100ms linear, scale 170ms var(--mkc-e) !important;
 }
 /* a face's coffee widens with the buttons (the pill holds both, the cup and a count);
    near the card's edge the pill is kept inside, and that shift moves with it too */
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) [data-wf-part="coffee"] {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face]:not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) [data-wf-part="coffee"] {
   min-width: max-content !important; interpolate-size: allow-keywords;
   transition: width 280ms cubic-bezier(.2,0,0,1), min-width 280ms cubic-bezier(.2,0,0,1), left 280ms cubic-bezier(.2,0,0,1) !important;
 }
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), min-width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(:hover):not(.mk-coffee-kbd):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), min-width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
 /* A touch screen has no hover: a tap leaves :hover stuck on the card (iPhone Safari), which
    held the pill open over the number after any tap. There only the cup's tap opens it. */
 @media (hover: none) {
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {
   flex-basis: 0 !important; width: 0 !important; opacity: 0 !important; scale: .5; pointer-events: none !important;
   transition: flex-basis 170ms var(--mkc-e), width 170ms var(--mkc-e), opacity 100ms linear, scale 170ms var(--mkc-e) !important;
 }
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), min-width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face[data-watch-face][data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd):not([data-watch-face="material"]):not([data-watch-face="winamp"]):not([data-watch-face="dither"]):not(.mk-fx-dither):not(.mk-fx-ditherpaper) [data-wf-part="coffee"] {transition: width 170ms cubic-bezier(.2,0,0,1), min-width 170ms cubic-bezier(.2,0,0,1), left 170ms cubic-bezier(.2,0,0,1) !important;}
 }
 /* the phone's own coffee (mobile shell, larger buttons) on a touch screen: the cup alone
    until it is tapped, then − cup + */
 :root.mk-mobile-shell #grafiks-list.grid-view .card.mk-mid-card:not(.rg-feedback-card):not(.mk-watch-face)[data-coffee-mode="icon"]:not([data-coffee-expanded="true"]):not(.mk-coffee-kbd) .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add) {display: none !important;}
-:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-editing [data-wf-part="coffee"] {transition: none !important;}
+:is(#grafiks-app #grafiks-list, #worker-modal #modal-skin-view #grafiks-list, .mk-acc #grafiks-list).grid-view .card.mk-mid-card.mk-watch-face.wf-editing [data-wf-part="coffee"] {transition: none !important;}
 @media (prefers-reduced-motion: reduce) {
   #grafiks-list .card.mk-mid-card .mk-coffee-step > :is(.mk-coffee-sub,.mk-coffee-add), #grafiks-list .card.mk-mid-card [data-wf-part="coffee"] {transition: none !important;}
 }
