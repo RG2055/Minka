@@ -7710,6 +7710,19 @@ function filterFullList(btn) {
   window.__minkaCalendarState = window.__minkaCalendarState || {};
   window.__minkaCalendarState.getSelectedDayState = __minkaGetSelectedDayState;
   window.__minkaGetSelectedDayState = __minkaGetSelectedDayState;
+  // Everyone on the loaded schedule months, for the sign-in list (js/media-profile.js).
+  window.__minkaGetAllWorkers = function () {
+    const names = (months) => {
+      const seen = new Map();
+      for (const days of Object.values(months || {})) {
+        for (const day of Array.isArray(days) ? days : []) {
+          for (const w of (day && day.workers) || []) if (w && w.name) seen.set(workerIdentity(w.name), String(w.name));
+        }
+      }
+      return [...seen.values()];
+    };
+    return { rg: names(store), rd: names(storeRad) };
+  };
   window.__minkaParseShiftHours = parseShiftHours;
 
   function __minkaPostAssistantState() {

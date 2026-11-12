@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261111ac1';
+  var CALENDAR_BUILD = '20261112aw1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -725,7 +725,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
 
 <!-- App CSS: critical shell loads normally; radio extras load non-blocking -->
 <link rel="stylesheet" href="css/minka.css?v=20260930rperf1">
-<link rel="stylesheet" href="css/radio-extra.css?v=20261109rm1">
+<link rel="stylesheet" href="css/radio-extra.css?v=20261112nw1">
 <!-- Non-critical CSS loaded async -->
 <link rel="preload" as="style" href="css/improvements.css?v=20260910pioneer2"
   onload="this.onload=null;this.rel='stylesheet'">
@@ -736,18 +736,18 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
   <link rel="stylesheet" href="css/radio_extras_v4.css?v=20261013pf1">
 </noscript>
 <!-- Radio polish overrides — must load after all other radio CSS -->
-<link rel="stylesheet" href="css/radio_polish_v1.css?v=20261109rm1">
+<link rel="stylesheet" href="css/radio_polish_v1.css?v=20261112nw1">
 <link rel="stylesheet" href="css/radio_lacitis_v2.css?v=20260926mo2">
-<link rel="stylesheet" href="css/radio-source.css?v=20260926mo3">
+<link rel="stylesheet" href="css/radio-source.css?v=20261112nw1">
 <link rel="stylesheet" href="css/radio-equalizer.css?v=20260919pixel2">
-<link rel="stylesheet" href="css/radio-pixel.css?v=20260919pixel5">
-<link rel="stylesheet" href="css/radio-deck-v1.css?v=20261109rm1">
+<link rel="stylesheet" href="css/radio-pixel.css?v=20261112nw1">
+<link rel="stylesheet" href="css/radio-deck-v1.css?v=20261112nw1">
 <!-- Dither/Amp/Pioneer stili ielādējas fonā jau lapas sākumā (nebloķē), lai aukstā
      radio atvēršanā uz mirkli nerādās parastais radio rāmis pirms skata stila. -->
-<link rel="stylesheet" href="css/radio-dither-layout.css?v=20261109rm1" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="css/radio-amp-layout.css?v=20261109rm1" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="css/radio-pioneer-layout.css?v=20260910oel1" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="css/media-profile.css?v=20261012rd1">
+<link rel="stylesheet" href="css/radio-dither-layout.css?v=20261112nw1" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/radio-amp-layout.css?v=20261112nw1" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/radio-pioneer-layout.css?v=20261112nw1" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/media-profile.css?v=20261112aw1">
 
 <style>
 /* ═══ MINKA v11 Shell ═══ */
@@ -1163,7 +1163,6 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
   <div class="radio-drag-strip" id="radioWinHeader" title="Drag"></div>
   <div id="radioSourceBar" class="radio-source-bar" role="group" aria-label="Atskaņošanas avots">
     <button id="radioSourceBroadcast" type="button" aria-pressed="true" onclick="setRadioSource('radio')"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 7 13-4M5 8h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="14.5" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M14 12h4m-4 4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>RADIO</span></button>
-    <button id="radioSourceMusic" type="button" aria-pressed="false" onclick="setRadioSource('music')" title="Winamp: mūzika (Lācītis)"><svg class="wa-bolt" viewBox="0 0 1280 1288" aria-hidden="true"><path d="M640 0 1280 643 640 1288 0 638Z" fill="#000"/><path d="M640 85 1195 643 640 1200 86 638Z" fill="#fff"/><path d="M1062 88Q1103 102 1112 116Q1121 132 1124 157L1116 280 1016 378 910 484 969 506 972 580 969 709 188 1216 145 1226 112 1190 112 1002 350 766 330 766Q285 764 281 715L285 578Q287 548 315 523L1005 121Z" fill="#000"/><path d="M1066 142 1075 158 1070 258 822 503 922 540 925 580 921 683 170 1170 160 1172 160 1022 467 718 328 717 333 572 340 565Z" fill="#faa700"/><path d="M1032 175 988 225 717 466 773 390Z" fill="#fde2a6"/><path d="M1032 175 1000 237 732 465 717 466 988 225Z" fill="#f07706"/><path d="M380 568 415 563 662 558 182 1025 195 1000 611 572Z" fill="#fde2a6"/><path d="M360 578 611 572 585 597 398 589Z" fill="#f07706"/><path d="M900 546 908 556 200 1017 190 1016 318 922 668 688Z" fill="#ec5a06"/></svg><span>WINAMP</span></button>
     <span id="radioSourceStatus" role="status"></span>
   </div>
   <div class="radio-win-body">
@@ -1364,16 +1363,16 @@ async function loadRadioScripts() {
     document.head.appendChild(_fa);
   }
   await loadAny(['js/radio-metadata.js?v=20261018ehr1']);
-  await loadAny(['js/radio-pioneer-layout.js?v=20261013pf1']);
-  await loadAny(['js/radio-amp-layout.js?v=20261109rm2']);
-  await loadAny(['js/radio-dither-layout.js?v=20261013pf1']);
+  await loadAny(['js/radio-pioneer-layout.js?v=20261112nw1']);
+  await loadAny(['js/radio-amp-layout.js?v=20261112nw1']);
+  await loadAny(['js/radio-dither-layout.js?v=20261112nw1']);
   await loadAny(['js/radio-listening.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261109rm1']);
+  await loadAny(['js/radio.js?v=20261112nw1']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
-  await loadAny(['js/radio-motion.js?v=20261109cl68']);
+  await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;
   return true;
@@ -1701,7 +1700,6 @@ function toggleRadio() {
   if (isHidden) {
     // Show radio. The look was rolled while closed (see rollNextLook).
     window.__mkRadioSupersededByLacitis = false;
-    try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
     const rw = document.getElementById('radioWindow');
     if (rw) rw.style.display = '';
     // Update toggle label
@@ -1711,7 +1709,6 @@ function toggleRadio() {
     if (_radioScriptsLoaded && window.rgTheme) mkRadioReveal.run(true);
     else mkRadioReady(document.getElementById('radioToggle')).then(function () { if (!mkRadioReveal.logicalOpen()) mkRadioReveal.run(true); });
   } else {
-    // Close the music engine as well when its shared shell is hidden.
     if (window.setRadioSource) window.setRadioSource('radio');
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" style="opacity:.85;vertical-align:middle" aria-hidden="true"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>';
     mkRadioReveal.run(false);
@@ -1728,7 +1725,6 @@ function radioIdleClick() {
   btn._loading = true;
   window.__mkRadioSupersededByLacitis = false;
 
-  try { if (typeof window.__hideLacMiniForRadio === 'function') window.__hideLacMiniForRadio(); } catch(e) {}
   const rw = document.getElementById('radioWindow');
   if (rw) rw.style.display = '';
   // The window flies once, in its final look (a cold open loads the scripts first).
@@ -1792,12 +1788,8 @@ function _doSync(duringReveal) {
   // and getBoundingClientRect() then gave the calendar a too-small radio, so
   // it re-laid twice on every open (under the dim, then again at settle).
   const radioH = radioVisible ? Math.max(0, Math.round(rw.offsetHeight || rw.getBoundingClientRect().height || 0)) : 0;
-  // Lācītis mini dock shares the same bottom-console slot as the radio.
-  const lac = document.getElementById('lacMiniConsole');
-  const lacVisible = !!lac && lac.classList.contains('docked');
-  const lacH = lacVisible ? Math.max(0, Math.round(lac.getBoundingClientRect().height || 0)) : 0;
-  const consoleH = Math.max(radioH, lacH);
-  const consoleVisible = radioVisible || lacVisible;
+  const consoleH = radioH;
+  const consoleVisible = radioVisible;
   const safeGap = consoleVisible ? 10 : 0;   // closed: bottom = --btnbar-h (+4px in #calendarEmbed), as before
   const layoutKey = [btnH, consoleH, consoleVisible, window.innerWidth, window.innerHeight].join(':');
   if (layoutKey === _lastShellLayout) return;
@@ -3261,309 +3253,12 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.d
   </button>
 </div>
 
-<!-- ═══ LĀCĪTIS MINI — lightweight horizontal music dock ═══ -->
-<style id="lacMiniStyles">
-/* Flat, event-driven mini player: no 3D scene, reflections, blur or idle animation. */
-#lacMiniConsole{display:flex;position:fixed;left:0;right:0;bottom:var(--btnbar-h);width:100%;height:clamp(188px,24vh,210px);z-index:500;
-  background:#000;border-top:1px solid rgba(255,255,255,.08);
-  box-shadow:0 -14px 42px rgba(0,0,0,.6);color:#fff;font-family:'Space Grotesk',system-ui,sans-serif;
-  flex-direction:column;padding:9px 16px 9px;box-sizing:border-box;
-  transform:translateY(115%);opacity:0;pointer-events:none;
-  transition:transform .35s cubic-bezier(.4,0,.2,1),opacity .28s ease;contain:layout style;}
-#lacMiniConsole.docked{transform:translateY(0);opacity:1;pointer-events:auto;}
-#lacMiniConsole .lm-head{display:flex;align-items:center;gap:10px;height:28px;flex-shrink:0;}
-#lacMiniConsole .lm-brand{display:flex;align-items:center;gap:7px;font:800 11px/1 'Space Grotesk',system-ui;letter-spacing:.12em;text-transform:uppercase;color:#e6e6e6;flex-shrink:0;}
-#lacMiniConsole .lm-search{flex:1;display:flex;align-items:center;gap:8px;max-width:360px;height:28px;padding:0 11px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid transparent;transition:background .15s,border-color .15s;}
-#lacMiniConsole .lm-search:focus-within{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);}
-#lacMiniConsole .lm-search svg{width:14px;height:14px;fill:#9a9a9a;flex-shrink:0;}
-#lacMiniConsole .lm-search input{flex:1;min-width:0;background:none;border:0;outline:0;color:#fff;caret-color:#1ed760;font:500 12.5px/1 'Space Grotesk',system-ui;-webkit-appearance:none;appearance:none;}
-#lacMiniConsole .lm-search input:focus,#lacMiniConsole .lm-search input:focus-visible,#lacMiniConsole .lm-search input:active{outline:none !important;box-shadow:none !important;border:0 !important;}
-#lacMiniConsole .lm-search input::placeholder{color:#8a8a8a;}
-#lacMiniConsole .lm-search input::-webkit-search-cancel-button{-webkit-appearance:none;}
-#lacMiniConsole .lm-head-btns{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;}
-#lacMiniConsole .lm-hbtn{width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.05);color:#e8e8e8;font:700 14px/1 system-ui;cursor:pointer;display:grid;place-items:center;transition:background .15s;}
-#lacMiniConsole .lm-hbtn:hover{background:rgba(255,255,255,.14);}
-#lacMiniConsole .lm-favorites{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:9px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.05);color:#e9e9e9;font:750 10px/1 'Space Grotesk',system-ui;cursor:pointer;}
-#lacMiniConsole .lm-favorites:hover,#lacMiniConsole .lm-favorites.active{border-color:rgba(30,215,96,.45);background:rgba(30,215,96,.12);color:#42df79;}
-#lacMiniProfilePanel{display:none;position:absolute;right:12px;bottom:calc(100% + 9px);z-index:4;width:min(680px,calc(100vw - 24px));max-height:min(410px,calc(100dvh - 250px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
-#lacMiniProfilePanel.open{display:flex;}
-#lacMiniProfilePanel .lmp-head{height:44px;display:flex;align-items:center;gap:10px;padding:0 12px 0 16px;border-bottom:1px solid rgba(255,255,255,.09);flex-shrink:0;}
-#lacMiniProfilePanel .lmp-title{font:800 13px/1 'Space Grotesk',system-ui;letter-spacing:.04em;}
-#lacMiniProfilePanel .lmp-status{margin-left:auto;color:#8d9690;font:600 10px/1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-body{min-height:0;overflow:auto;padding:12px 14px 14px;}
-#lacMiniProfilePanel .lmp-note{color:#a8aca9;font:500 12px/1.45 'Space Grotesk',system-ui;margin-bottom:10px;}
-#lacMiniProfilePanel .lmp-workers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
-#lacMiniProfilePanel .lmp-worker{min-width:0;display:flex;align-items:center;gap:9px;padding:10px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:#1b1d1f;color:#f5f5f5;cursor:pointer;text-align:left;}
-#lacMiniProfilePanel .lmp-worker:hover{border-color:rgba(30,215,96,.55);background:#202522;}
-#lacMiniProfilePanel .lmp-avatar{width:30px;height:30px;flex:0 0 30px;border-radius:50%;display:grid;place-items:center;background:#263029;color:#49df7e;font:900 12px/1 system-ui;}
-#lacMiniProfilePanel .lmp-worker-copy{min-width:0;display:flex;flex-direction:column;gap:3px;}
-#lacMiniProfilePanel .lmp-worker-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:750 12px/1.1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-worker-pin{color:#8e9590;font:600 9.5px/1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-pin-form{display:none;gap:8px;align-items:flex-end;flex-wrap:wrap;}
-#lacMiniProfilePanel .lmp-pin-form.show{display:flex;}
-#lacMiniProfilePanel .lmp-field{flex:1 1 150px;display:flex;flex-direction:column;gap:5px;}
-#lacMiniProfilePanel .lmp-field label{color:#929993;font:700 9px/1 'Space Grotesk',system-ui;text-transform:uppercase;letter-spacing:.08em;}
-#lacMiniProfilePanel .lmp-field input{height:36px;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:#080909;color:#fff;padding:0 11px;outline:0;font:700 14px/1 ui-monospace,monospace;}
-#lacMiniProfilePanel .lmp-field input:focus,#lacMiniProfilePanel .lmp-field input:focus-visible{outline:none!important;border-color:#1ed760!important;box-shadow:0 0 0 3px rgba(30,215,96,.22)!important;}
-#lacMiniProfilePanel .lmp-btn{height:36px;padding:0 13px;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:#222527;color:#f6f6f6;font:750 11px/1 'Space Grotesk',system-ui;cursor:pointer;}
-#lacMiniProfilePanel .lmp-btn:hover{background:#2b2e30;}
-#lacMiniProfilePanel .lmp-btn.primary{border-color:#1ed760;background:#1ed760;color:#06150b;}
-#lacMiniProfilePanel .lmp-btn.danger{color:#ff777f;}
-#lacMiniProfilePanel .lmp-error{min-height:16px;margin-top:8px;color:#ff7078;font:650 11px/1.3 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-session{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-#lacMiniProfilePanel .lmp-session-copy{min-width:0;display:flex;flex-direction:column;gap:3px;}
-#lacMiniProfilePanel .lmp-session-name{font:800 13px/1.1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-session-shift{color:#949a96;font:600 10px/1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-tabs{display:flex;gap:5px;margin-bottom:9px;overflow-x:auto;}
-#lacMiniProfilePanel .lmp-tab{height:30px;white-space:nowrap;padding:0 11px;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:#1b1d1f;color:#a9aeaa;font:700 10px/1 'Space Grotesk',system-ui;cursor:pointer;}
-#lacMiniProfilePanel .lmp-tab.active{border-color:rgba(30,215,96,.52);background:rgba(30,215,96,.14);color:#48df7e;}
-#lacMiniProfilePanel .lmp-library{display:flex;flex-direction:column;gap:6px;}
-#lacMiniProfilePanel .lmp-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;min-height:48px;padding:5px 7px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:#181a1b;}
-#lacMiniProfilePanel .lmp-row img{width:38px;height:38px;border-radius:6px;object-fit:cover;background:#242626;}
-#lacMiniProfilePanel .lmp-row-copy{min-width:0;cursor:pointer;}
-#lacMiniProfilePanel .lmp-row-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:720 11.5px/1.2 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-row-artist{margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#909692;font:550 9.5px/1.1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-row-actions{display:flex;gap:4px;}
-#lacMiniProfilePanel .lmp-icon-btn{width:29px;height:29px;border:0;border-radius:8px;background:transparent;color:#8f9691;cursor:pointer;display:grid;place-items:center;font:800 14px/1 system-ui;}
-#lacMiniProfilePanel .lmp-icon-btn:hover{background:rgba(255,255,255,.08);color:#fff;}
-#lacMiniProfilePanel .lmp-icon-btn.on{color:#1ed760;}
-#lacMiniProfilePanel .lmp-empty{padding:22px 8px;text-align:center;color:#8e9590;font:600 11px/1.4 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-create{display:flex;gap:6px;margin-bottom:9px;}
-#lacMiniProfilePanel .lmp-create input{flex:1;min-width:0;height:34px;box-sizing:border-box;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:#080909;color:#fff;padding:0 10px;outline:0;font:650 11px/1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-create input:focus,#lacMiniProfilePanel .lmp-create input:focus-visible{outline:none!important;border-color:#1ed760!important;box-shadow:0 0 0 3px rgba(30,215,96,.22)!important;}
-#lacMiniProfilePanel .lmp-playlists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
-#lacMiniProfilePanel .lmp-playlist-card{display:flex;align-items:center;gap:9px;min-width:0;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#191b1c;color:#f4f4f4;text-align:left;cursor:pointer;}
-#lacMiniProfilePanel .lmp-playlist-card:hover{border-color:rgba(30,215,96,.45);background:#202522;}
-#lacMiniProfilePanel .lmp-playlist-icon{width:32px;height:32px;flex:0 0 32px;border-radius:8px;display:grid;place-items:center;background:#102a1a;color:#42df79;font:800 14px/1 system-ui;}
-#lacMiniProfilePanel .lmp-playlist-copy{min-width:0;display:flex;flex-direction:column;gap:3px;}
-#lacMiniProfilePanel .lmp-playlist-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:750 11.5px/1.1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-playlist-count{color:#8f9691;font:600 9.5px/1 'Space Grotesk',system-ui;}
-#lacMiniProfilePanel .lmp-playlist-toolbar{display:none;align-items:center;gap:6px;margin-bottom:8px;}
-#lacMiniProfilePanel .lmp-playlist-toolbar.show{display:flex;}
-#lacMiniProfilePanel .lmp-playlist-toolbar strong{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:800 12px/1 'Space Grotesk',system-ui;}
-#lacMiniActions{display:flex;align-items:center;gap:6px;}
-#lacMiniActions .lm-quick{height:24px;min-width:32px;padding:0 8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:#171919;color:#949a96;font:750 12px/1 system-ui;cursor:pointer;}
-#lacMiniActions .lm-quick:hover{color:#fff;border-color:rgba(255,255,255,.22);}
-#lacMiniActions .lm-quick.on{color:#1ed760;border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.1);}
-#lacMiniActions .lm-lyrics{font:750 10px/1 'Space Grotesk',system-ui;}
-#lacMiniActions .lm-sound{font:900 9px/1 ui-monospace,monospace;letter-spacing:.02em;}
-#lacMiniActions .lm-sound.active{color:#1ed760;border-color:rgba(30,215,96,.4);background:rgba(30,215,96,.1);}
-#lacMiniLyricsPanel{display:none;position:absolute;left:12px;bottom:calc(100% + 9px);z-index:5;width:min(520px,calc(100vw - 24px));max-height:min(440px,calc(100dvh - 250px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
-#lacMiniLyricsPanel.open{display:flex;}
-#lacMiniLyricsPanel .lml-head{height:48px;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;border-bottom:1px solid rgba(255,255,255,.09);flex-shrink:0;}
-#lacMiniLyricsPanel .lml-meta{min-width:0;display:flex;flex:1;flex-direction:column;gap:3px;}
-#lacMiniLyricsPanel .lml-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:800 12.5px/1.1 'Space Grotesk',system-ui;}
-#lacMiniLyricsPanel .lml-artist{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#8f9691;font:600 9.5px/1 'Space Grotesk',system-ui;}
-#lacMiniLyricsPanel .lml-body{min-height:150px;overflow:auto;padding:12px 14px 18px;overscroll-behavior:contain;scroll-behavior:smooth;}
-#lacMiniLyricsPanel .lml-state{padding:30px 8px;text-align:center;color:#8e9590;font:600 11px/1.5 'Space Grotesk',system-ui;}
-#lacMiniLyricsPanel .lml-line{display:block;width:100%;padding:7px 10px;border:0;border-left:3px solid transparent;border-radius:0 8px 8px 0;background:transparent;color:#929794;text-align:left;font:700 14px/1.35 'Space Grotesk',system-ui;cursor:default;transition:color .12s,background .12s,border-color .12s;}
-#lacMiniLyricsPanel .lml-line[data-time]{cursor:pointer;}
-#lacMiniLyricsPanel .lml-line[data-time]:hover{color:#fff;background:rgba(255,255,255,.05);}
-#lacMiniLyricsPanel .lml-line.active{border-left-color:#1ed760;background:rgba(30,215,96,.08);color:#fff;}
-#lacMiniSoundPanel{display:none;position:absolute;left:12px;bottom:calc(100% + 9px);z-index:6;width:min(380px,calc(100vw - 24px));overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:#111315;box-shadow:0 24px 70px rgba(0,0,0,.72);color:#f4f4f4;flex-direction:column;}
-#lacMiniSoundPanel.open{display:flex;}
-#lacMiniSoundPanel .lms-head{height:48px;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;border-bottom:1px solid rgba(255,255,255,.09);}
-#lacMiniSoundPanel .lms-title{font:800 13px/1 'Space Grotesk',system-ui;}
-#lacMiniSoundPanel .lms-status{margin-left:auto;color:#7f8882;font:650 9px/1 'Space Grotesk',system-ui;}
-#lacMiniSoundPanel .lms-body{padding:12px;}
-#lacMiniSoundPanel .lms-note{margin:0 3px 10px;color:#969c98;font:550 10px/1.4 'Space Grotesk',system-ui;}
-#lacMiniSoundPanel .lms-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
-#lacMiniSoundPanel .lms-option{position:relative;min-height:66px;padding:10px 10px 9px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:#191b1c;color:#f3f3f3;text-align:left;cursor:pointer;}
-#lacMiniSoundPanel .lms-option:hover{border-color:rgba(255,255,255,.2);background:#202223;}
-#lacMiniSoundPanel .lms-option.active{border-color:#1ed760;background:rgba(30,215,96,.11);box-shadow:inset 3px 0 0 #1ed760;}
-#lacMiniSoundPanel .lms-option strong{display:block;padding-right:18px;font:780 11.5px/1.15 'Space Grotesk',system-ui;}
-#lacMiniSoundPanel .lms-option small{display:block;margin-top:5px;color:#949a96;font:550 9.5px/1.3 'Space Grotesk',system-ui;}
-#lacMiniSoundPanel .lms-option.active small{color:#b2c9ba;}
-#lacMiniSoundPanel .lms-check{display:none;position:absolute;right:9px;top:9px;color:#1ed760;font:900 12px/1 system-ui;}
-#lacMiniSoundPanel .lms-option.active .lms-check{display:block;}
-#lacMiniSoundPanel .lms-rec{display:inline-block;margin-left:4px;color:#1ed760;font:800 7.5px/1 'Space Grotesk',system-ui;text-transform:uppercase;letter-spacing:.06em;}
-#lacMiniConsole button:focus-visible,#lacMiniProfilePanel button:focus-visible,#lacMiniLyricsPanel button:focus-visible,#lacMiniSoundPanel button:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(30,215,96,.25)!important;}
-/* body: now-playing info (left) + a native horizontally scrolling result list. */
-#lacMiniConsole .lm-body{flex:1;min-height:0;display:flex;align-items:stretch;gap:14px;margin-top:6px;}
-#lacMiniInfo{flex:0 0 clamp(180px,22%,270px);min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:2px;padding-right:12px;border-right:1px solid rgba(255,255,255,.08);}
-#lacMiniNowLbl,#lacMiniTitle,#lacMiniArtist,#lacMiniActions{flex-shrink:0;}
-#lacMiniNowLbl{display:flex;align-items:center;gap:6px;font:700 9.5px/1 'Space Grotesk',system-ui;letter-spacing:.15em;text-transform:uppercase;color:#1ed760;}
-#lacMiniTitle{min-height:18px;font:700 15px/1.15 'Space Grotesk',system-ui;color:#fff;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#lacMiniArtist{min-height:14px;font:500 11.5px/1.15 'Space Grotesk',system-ui;color:#a7a7a7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#lacMiniProg{position:relative;height:4px;border-radius:2px;background:rgba(255,255,255,.14);cursor:pointer;flex-shrink:0;margin-top:7px;}
-#lacMiniProgFill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:2px;background:#1ed760;}
-#lacMiniBottom{position:relative;display:flex;align-items:center;justify-content:center;height:40px;margin-top:8px;flex-shrink:0;}
-#lacMiniCtrls{display:flex;align-items:center;gap:20px;}
-#lacMiniCtrls .lm-cbtn{width:34px;height:34px;border:0;background:none;color:#cfcfcf;cursor:pointer;display:grid;place-items:center;transition:color .15s,transform .1s;}
-#lacMiniCtrls .lm-cbtn:hover{color:#fff;}
-#lacMiniCtrls .lm-cbtn:active{transform:scale(.9);}
-#lacMiniCtrls .lm-cbtn svg{width:20px;height:20px;fill:currentColor;}
-#lacMiniPlay{width:40px !important;height:40px !important;border-radius:50% !important;background:#1ed760 !important;color:#000 !important;box-shadow:0 3px 12px rgba(30,215,96,.42);}
-#lacMiniPlay:hover{transform:scale(1.06);}
-#lacMiniPlay svg{width:22px;height:22px;}
-#lacMiniVol{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:7px;}
-#lacMiniVol svg{fill:#9a9a9a;flex-shrink:0;}
-#lacMiniVol input{width:76px;accent-color:#1DB954;}
-#lacMiniConsole .lm-deck-shell{flex:1;min-width:0;display:flex;align-items:center;gap:6px;}
-#lacMiniConsole .lm-scroll-btn{width:30px;height:66px;flex:0 0 30px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.10);border-radius:8px;background:#181818;color:#d7d7d7;font:700 25px/1 system-ui;cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
-#lacMiniConsole .lm-scroll-btn:hover:not(:disabled){background:#242424;color:#fff;border-color:rgba(255,255,255,.20);}
-#lacMiniConsole .lm-scroll-btn:focus-visible{outline:2px solid #1ed760;outline-offset:1px;}
-#lacMiniConsole .lm-scroll-btn:disabled{opacity:.22;cursor:default;}
-#lacMiniDeck{flex:1;position:relative;min-width:0;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.20) transparent;-webkit-user-select:none;user-select:none;touch-action:pan-x;}
-#lacMiniDeck::-webkit-scrollbar{height:6px}
-#lacMiniDeck::-webkit-scrollbar-thumb{background:rgba(255,255,255,.20);border-radius:3px}
-#lacMiniTrack{display:flex;align-items:center;gap:8px;height:100%;min-width:max-content;padding:3px 2px 7px;box-sizing:border-box;}
-.lm-cover{position:relative;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:10px;flex:0 0 clamp(210px,22vw,290px);height:66px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:9px;overflow:hidden;cursor:pointer;background:#181818;color:#fff;text-align:left;font-family:'Space Grotesk',system-ui,sans-serif;box-sizing:border-box;}
-.lm-cover:hover{background:#222;border-color:rgba(255,255,255,.15)}
-.lm-cover:focus-visible{outline:2px solid #1ed760;outline-offset:1px}
-.lm-cover img{width:48px;height:48px;border-radius:6px;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;background:#262626;}
-.lm-cover-copy{min-width:0;display:flex;flex-direction:column;gap:4px;}
-.lm-cover-title{font:700 12.5px/1.15 'Space Grotesk',system-ui;color:#f5f5f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lm-cover-artist{font:500 10.5px/1.15 'Space Grotesk',system-ui;color:#989898;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.lm-cover-time{font:600 10px/1 ui-monospace,monospace;color:#8d8d8d;font-variant-numeric:tabular-nums;}
-.lm-cover.active{border-color:rgba(30,215,96,.72);background:#17231b;box-shadow:inset 3px 0 0 #1ed760;}
-.lm-cover.active .lm-cover-title{color:#42df79}
-#lacMiniEmpty{position:absolute;inset:0;display:grid;place-items:center;color:#8a8a8a;font:600 12px/1.4 'Space Grotesk',system-ui;text-align:center;pointer-events:none;}
-@media(max-width:760px){#lacMiniInfo{flex-basis:145px;}#lacMiniTitle{font-size:14px;}#lacMiniVol{display:none;}#lacMiniConsole .lm-login .lm-profile-label,#lacMiniConsole .lm-favorites span,#lacMiniConsole .lm-sound span{display:none;}#lacMiniConsole .lm-search{max-width:none;}#lacMiniConsole .lm-body{gap:10px;}.lm-cover{flex-basis:220px;}#lacMiniConsole .lm-scroll-btn{display:none;}#lacMiniProfilePanel .lmp-workers,#lacMiniProfilePanel .lmp-playlists{grid-template-columns:1fr;}}
-@media(max-width:520px){#lacMiniInfo{display:none}.lm-cover{flex-basis:205px}#lacMiniConsole{padding-left:10px;padding-right:10px}}
-@media(max-width:430px){#lacMiniSoundPanel .lms-options{grid-template-columns:1fr;}}
-@media(prefers-reduced-motion:reduce){#lacMiniLyricsPanel .lml-body{scroll-behavior:auto;}#lacMiniLyricsPanel .lml-line{transition:none;}}
-#lacMiniStage{position:fixed;left:8px;bottom:8px;width:1px;height:1px;opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;z-index:-1;background:#050609;display:flex;flex-direction:column;border:0;contain:strict;}
-#lacMiniStage.full{left:0;right:0;top:0;bottom:0;transform:none;width:100vw;height:100dvh;opacity:1;visibility:visible;pointer-events:auto;z-index:171340;border-radius:0;border:0;box-shadow:none;contain:layout style paint;}
-#lacMiniStage:fullscreen{width:100vw;height:100vh;background:#050609;}
-#lacMiniStageTop{display:none;height:42px;align-items:center;justify-content:space-between;gap:12px;padding:0 10px 0 14px;border-bottom:1px solid rgba(255,255,255,.10);background:#15171c;color:#f7f7f7;font:900 12px/1 'Space Grotesk',system-ui;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}
-#lacMiniStage.full #lacMiniStageTop{display:flex;}
-#lacMiniStageTop .lm-hbtn{width:32px;height:32px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#f7f7f7;font:900 18px/1 system-ui;cursor:pointer;}
-#lacMiniFrame{flex:1;width:100%;height:100%;min-height:0;border:0;background:#050609;display:block;}
-body.lacitis-full #calendarEmbed,
-body.lacitis-full #radioWindow,
-body.lacitis-full #dockShelf{display:none !important;}
-html.mk-low-spec .lm-cover,body.mk-low-spec .lm-cover{box-shadow:none;}
-html.mk-low-spec .lm-cover.active,body.mk-low-spec .lm-cover.active{box-shadow:inset 3px 0 0 #1ed760;}
-html.mk-low-spec #lacMiniNowLbl .dot,body.mk-low-spec #lacMiniNowLbl .dot{box-shadow:none;}
-html.mk-low-spec #lacMiniPlay,body.mk-low-spec #lacMiniPlay{box-shadow:none;}
-</style>
 
-<div id="lacMiniStage" aria-hidden="true">
-  <div id="lacMiniStageTop">
-    <span style="display:flex;align-items:center;gap:9px;"><img src="https://lacitis.pages.dev/lacitis-bear.png" alt="" style="width:24px;height:20px;object-fit:contain;image-rendering:pixelated;"><span>Lācītis</span><span style="opacity:.75;">♫</span></span>
-    <span style="display:flex;gap:8px;">
-      <button class="lm-hbtn" onclick="lacMiniMinimize()" title="Minimizēt" aria-label="Minimizēt">−</button>
-      <button class="lm-hbtn" onclick="lacMiniClose()" title="Aizvērt" aria-label="Aizvērt">×</button>
-    </span>
-  </div>
-  <iframe id="lacMiniFrame" title="Lācītis" referrerpolicy="no-referrer" allow="autoplay"></iframe>
-</div>
-
-<div id="lacMiniConsole" aria-hidden="true">
-  <div class="lm-head">
-    <span class="lm-brand">
-      <svg width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="0" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="0" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="2" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="6" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="1" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="8" y="1" width="1.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="2" width="7.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="3" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="4" width="3.04" height="1.04" fill="#e2e8f0"/><rect x="7" y="4" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="0" y="5" width="9.04" height="1.04" fill="#e2e8f0"/><rect x="1" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="3" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="4" y="6" width="1.04" height="1.04" fill="#0b1220"/><rect x="5" y="6" width="1.04" height="1.04" fill="#cbd5e1"/><rect x="6" y="6" width="2.04" height="1.04" fill="#e2e8f0"/><rect x="2" y="7" width="5.04" height="1.04" fill="#e2e8f0"/></svg>
-      <span>RG Mūzika</span>
-    </span>
-    <label class="lm-search">
-      <svg viewBox="0 0 24 24"><path d="M10.5 3a7.5 7.5 0 0 1 5.9 12.1l4.7 4.7-1.4 1.4-4.7-4.7A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg>
-      <input id="lacMiniSearch" type="search" placeholder="Meklēt mūziku…" autocomplete="off" spellcheck="false">
-    </label>
-    <span class="lm-head-btns">
-      <button class="lm-favorites" id="lacMiniFavoritesBtn" type="button" onclick="lacMiniOpenFavorites()" title="Atvērt manas iecienītās dziesmas" aria-label="Atvērt mūzikas favorītus" aria-controls="lacMiniProfilePanel" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.3 5.6a5 5 0 0 0-7.1 0L12 6.8l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 21l8.3-8.3a5 5 0 0 0 0-7.1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span>Favorīti</span></button>
-      <button class="lm-hbtn" onclick="lacMiniMaximize()" title="Pilnekrāna režīms" aria-label="Pilnekrāna režīms">⛶</button>
-      <button id="radioMusicMinimize" class="lm-hbtn" type="button" onclick="minimizeRadioMusic()" title="Minimizēt — turpināt atskaņošanu" aria-label="Minimizēt mūziku un turpināt atskaņošanu">−</button>
-      <button class="lm-hbtn" onclick="lacMiniClose()" title="Apturēt un aizvērt mūziku" aria-label="Apturēt un aizvērt mūziku">×</button>
-    </span>
-  </div>
-  <div class="lm-body">
-    <div id="lacMiniInfo">
-      <div id="lacMiniNowLbl"><span>Atskaņo</span></div>
-      <div id="lacMiniTitle">—</div>
-      <div id="lacMiniArtist"></div>
-      <div id="lacMiniActions">
-        <button id="lacMiniFavBtn" class="lm-quick" type="button" onclick="lacMiniQuickAction('favorite')" title="Pievienot/noņemt no iecienītajām" aria-label="Pievienot/noņemt no iecienītajām">♥</button>
-        <button id="lacMiniPlaylistBtn" class="lm-quick" type="button" onclick="lacMiniOpenPlaylists()" title="Pievienot dziesmu savai playlistei" aria-label="Pievienot dziesmu savai playlistei">+♫</button>
-        <button id="lacMiniLyricsBtn" class="lm-quick lm-lyrics" type="button" onclick="lacMiniToggleLyrics()" title="Rādīt lyrics" aria-label="Rādīt lyrics" aria-expanded="false">Lyrics</button>
-        <button id="lacMiniSoundBtn" class="lm-quick lm-sound" type="button" onclick="lacMiniToggleSound()" title="Skaņas uzlabojumi" aria-label="Skaņas uzlabojumi" aria-expanded="false">EQ</button>
-      </div>
-    </div>
-    <div class="lm-deck-shell">
-      <button id="lacMiniDeckPrev" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(-1)" title="Ritināt dziesmas pa kreisi" aria-label="Ritināt dziesmas pa kreisi" disabled>‹</button>
-      <div id="lacMiniDeck">
-        <div id="lacMiniTrack"></div>
-        <div id="lacMiniEmpty">Ielādē mūziku…</div>
-      </div>
-      <button id="lacMiniDeckNext" class="lm-scroll-btn" type="button" onclick="lacMiniScroll(1)" title="Ritināt dziesmas pa labi" aria-label="Ritināt dziesmas pa labi" disabled>›</button>
-    </div>
-  </div>
-  <div id="lacMiniProg" onclick="lacMiniSeek(event)"><div id="lacMiniProgFill"></div></div>
-  <div id="lacMiniBottom">
-    <span id="radioMusicStatus" role="status" aria-live="polite"></span>
-    <div id="lacMiniCtrls">
-      <button class="lm-cbtn" onclick="lacMiniCmd('prev')" title="Iepriekšējā"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
-      <button class="lm-cbtn" id="lacMiniPlay" onclick="lacMiniCmd('toggle')" title="Atskaņot/Pauze"><svg viewBox="0 0 24 24" id="lacMiniPlayIco"><path d="M8 5v14l11-7z"/></svg></button>
-      <button class="lm-cbtn" onclick="lacMiniCmd('next')" title="Nākamā"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
-    </div>
-    <span id="lacMiniVol"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg><input type="range" min="0" max="100" value="100" oninput="lacMiniVolume(this.value)" aria-label="Skaļums"></span>
-  </div>
-  <section id="lacMiniProfilePanel" role="dialog" aria-modal="false" aria-label="Lācīša profils" aria-hidden="true">
-    <div class="lmp-head">
-      <span class="lmp-title">Profils un mūzikas bibliotēka</span>
-      <span class="lmp-status" id="lacMiniProfileStatus"></span>
-      <button class="lm-hbtn" type="button" onclick="lacMiniToggleProfile(false)" title="Aizvērt profilu" aria-label="Aizvērt profilu">×</button>
-    </div>
-    <div class="lmp-body">
-      <div id="lacMiniLoggedOut">
-        <div class="lmp-note">Izvēlies savu vārdu un ievadi PIN. Profils, iecienītās dziesmas un vēsture sinhronizēsies ar Lācīti.</div>
-        <div class="lmp-workers" id="lacMiniWorkers"><div class="lmp-empty">Ielādē darbiniekus…</div></div>
-        <div class="lmp-pin-form" id="lacMiniPinForm">
-          <button class="lmp-btn" type="button" onclick="lacMiniBackToWorkers()">‹ Atpakaļ</button>
-          <div class="lmp-field"><label id="lacMiniPinLabel">PIN</label><input id="lacMiniPin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="4–8 cipari"></div>
-          <div class="lmp-field" id="lacMiniPinConfirmField" style="display:none"><label>Atkārto PIN</label><input id="lacMiniPinConfirm" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="Tas pats PIN"></div>
-          <button class="lmp-btn primary" id="lacMiniPinSubmit" type="button" onclick="lacMiniSubmitPin()">Ieiet</button>
-        </div>
-        <div class="lmp-error" id="lacMiniProfileError" role="status" aria-live="polite"></div>
-      </div>
-      <div id="lacMiniLoggedIn" style="display:none">
-        <div class="lmp-session">
-          <span class="lmp-avatar" id="lacMiniSessionAvatar">?</span>
-          <span class="lmp-session-copy"><span class="lmp-session-name" id="lacMiniSessionName"></span><span class="lmp-session-shift" id="lacMiniSessionShift"></span></span>
-          <button class="lmp-btn danger" type="button" onclick="lacMiniLogout()" style="margin-left:auto">Iziet</button>
-        </div>
-        <div class="lmp-tabs">
-          <button class="lmp-tab active" type="button" data-section="favorites" onclick="lacMiniLibrary('favorites')">Iecienītās <span id="lacMiniFavCount">0</span></button>
-          <button class="lmp-tab" type="button" data-section="history" onclick="lacMiniLibrary('history')">Vēsture <span id="lacMiniHistoryCount">0</span></button>
-          <button class="lmp-tab" type="button" data-section="playlists" onclick="lacMiniLibrary('playlists')">Mani playlisti <span id="lacMiniPlaylistCount">0</span></button>
-        </div>
-        <div id="lacMiniPlaylistArea" style="display:none">
-          <div class="lmp-create"><input id="lacMiniPlaylistName" type="text" maxlength="60" placeholder="Jaunas playlistes nosaukums"><button class="lmp-btn primary" type="button" onclick="lacMiniCreatePlaylist()">Izveidot</button></div>
-          <div class="lmp-playlists" id="lacMiniPlaylists"></div>
-          <div class="lmp-playlist-toolbar" id="lacMiniPlaylistToolbar"><button class="lmp-btn" type="button" onclick="lacMiniPlaylistBack()">‹ Playlists</button><strong id="lacMiniPlaylistTitle"></strong><button class="lmp-btn primary" type="button" onclick="lacMiniAddCurrentToPlaylist()">+ Pašreizējo</button><button class="lmp-btn danger" type="button" onclick="lacMiniDeletePlaylist()">Dzēst</button></div>
-        </div>
-        <div class="lmp-library" id="lacMiniLibrary"><div class="lmp-empty">Ielādē bibliotēku…</div></div>
-      </div>
-    </div>
-  </section>
-  <section id="lacMiniLyricsPanel" role="dialog" aria-modal="false" aria-label="Dziesmas vārdi" aria-hidden="true">
-    <div class="lml-head">
-      <span class="lml-meta"><span class="lml-title" id="lacMiniLyricsTitle">Dziesmas vārdi</span><span class="lml-artist" id="lacMiniLyricsArtist"></span></span>
-      <button class="lm-hbtn" type="button" onclick="lacMiniToggleLyrics(false)" title="Aizvērt dziesmas vārdus" aria-label="Aizvērt dziesmas vārdus">×</button>
-    </div>
-    <div class="lml-body" id="lacMiniLyricsBody"><div class="lml-state">Izvēlies dziesmu.</div></div>
-  </section>
-  <section id="lacMiniSoundPanel" role="dialog" aria-modal="false" aria-label="Skaņas uzlabojumi" aria-hidden="true">
-    <div class="lms-head">
-      <span class="lms-title">Skaņa</span>
-      <span class="lms-status" id="lacMiniSoundStatus">Native Web Audio</span>
-      <button class="lm-hbtn" type="button" onclick="lacMiniToggleSound(false)" title="Aizvērt skaņas iestatījumus" aria-label="Aizvērt skaņas iestatījumus">×</button>
-    </div>
-    <div class="lms-body">
-      <div class="lms-options" id="lacMiniSoundOptions">
-        <button class="lms-option" type="button" data-sound="off" onclick="lacMiniSetSound('off')"><span class="lms-check">✓</span><strong>Oriģināls</strong><small>Bez skaņas apstrādes</small></button>
-        <button class="lms-option" type="button" data-sound="surround" onclick="lacMiniSetSound('surround')"><span class="lms-check">✓</span><strong>Virtual Surround</strong><small>Plašāks stereo un skaidrs centrs</small></button>
-        <button class="lms-option" type="button" data-sound="speakers" onclick="lacMiniSetSound('speakers')"><span class="lms-check">✓</span><strong>Mazās tumbas <i class="lms-rec">ieteicams</i></strong><small>Pilnāks skanējums un skaidrāka balss</small></button>
-        <button class="lms-option" type="button" data-sound="night" onclick="lacMiniSetSound('night')"><span class="lms-check">✓</span><strong>Nakts</strong><small>Vienmērīgāks un klusāks skaļums</small></button>
-      </div>
-    </div>
-  </section>
-</div>
 
 <script src="kalendars/js/daybook-model.js?v=20260928perf1" defer></script>
-<script src="js/radio-daybook.js?v=20260928mx1" defer></script>
-<script src="js/media-profile.js?v=20261109cl70" defer></script>
-<script src="js/radio-source.js?v=20260927wb4" defer></script>
+<script src="js/radio-daybook.js?v=20261112nw1" defer></script>
+<script src="js/media-profile.js?v=20261112aw1" defer></script>
+<script src="js/radio-source.js?v=20261112nowa" defer></script>
 
 <div id="mobileQrModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:171000;background:rgba(2,4,8,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;">
   <div id="mobileQrBackdrop" onclick="closeMobileQrModal()" style="position:absolute;inset:0;"></div>
@@ -4172,9 +3867,18 @@ function mkSheetClose(sheet, panel, key, btn, done) {
     if (!f || f.dataset.loaded === '1') return;
     var token = '';
     try { token = sessionStorage.getItem('minka_api_token_v1') || localStorage.getItem('minka_api_token_v1') || ''; } catch (e) {}
+    var profile = profileToken();
     f.dataset.loaded = '1';
-    f.src = RG_MUSIC_URL + (token ? '#minka=' + encodeURIComponent(token) : '');
+    f.src = RG_MUSIC_URL + '#' + (token ? 'minka=' + encodeURIComponent(token) : '') + (profile ? '&profile=' + profile : '');
   }
+  // The signed-in profile (js/media-profile.js) is RG Music's account too: favourites, history, playlists.
+  function profileToken() {
+    try { var t = (JSON.parse(sessionStorage.getItem('minka:media-session:v2') || 'null') || {}).sessionToken; return /^[a-f0-9]{64}$/.test(t) ? t : ''; } catch (e) { return ''; }
+  }
+  document.addEventListener('media-profile-change', function () {
+    var f = frame();
+    if (f && f.dataset.loaded === '1' && f.contentWindow) f.contentWindow.postMessage({ type: 'rg-music-profile', token: profileToken() || null }, new URL(RG_MUSIC_URL).origin);
+  });
   (function wireWarm() {
     var btn = document.getElementById('rgMusicDockBtn');
     if (!btn) { document.addEventListener('DOMContentLoaded', wireWarm, { once: true }); return; }
@@ -5219,19 +4923,6 @@ body.mk-low-motion *::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-</style>
-<style id="mk-buddy-header-home-style">
-/* Compact media mode: keep playback controls without hiding the schedule. */
-#lacMiniConsole{height:clamp(150px,19vh,166px)!important;padding:8px 12px 7px!important}
-#lacMiniConsole .lm-head{height:28px!important}
-#lacMiniConsole .lm-body{gap:9px!important;margin-top:4px!important}
-#lacMiniInfo{flex-basis:clamp(165px,19%,230px)!important;padding-right:9px!important}
-.lm-cover{height:54px!important;grid-template-columns:38px minmax(0,1fr) auto!important;padding:6px!important;gap:8px!important}
-.lm-cover img{width:38px!important;height:38px!important}
-#lacMiniConsole .lm-scroll-btn{height:54px!important}
-#lacMiniBottom{height:34px!important;margin-top:4px!important}
-#lacMiniCtrls .lm-cbtn{width:30px!important;height:30px!important}
-#lacMiniPlay{width:34px!important;height:34px!important}
 </style>
 
 <!-- Bolus darba virsmas gala izkārtojums. Tas ir statisks, lai vecs dinamiski

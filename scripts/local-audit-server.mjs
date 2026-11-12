@@ -87,7 +87,7 @@ const server=http.createServer(async(req,res)=>{
  res.setHeader('content-type',mime[path.extname(p)]);res.setHeader('cache-control','no-store');
  res.setHeader('Content-Security-Policy',"default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; frame-src 'self'");
  let data=fs.readFileSync(p);
- if(p.endsWith('.html')&&!p.includes('/integrations/lacitis/player/')){let html=data.toString().replace('<head>','<head><script src="/__fixture.js"></script>');data=html;}
+ if(p.endsWith('.html')){let html=data.toString().replace('<head>','<head><script src="/__fixture.js"></script>');data=html;}
  res.end(data);
 });
 const port=Number(process.env.MINKA_AUDIT_PORT)||8012;

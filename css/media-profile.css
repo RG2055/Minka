@@ -176,27 +176,27 @@ body.radio-viz-flow #radioWindow .monitor-frame :is(.pixel-cat,#dolphin-bg,#slow
 #radioLookControls .radio-viz-grid button[data-viz-choice="12"] canvas{display:none}
 
 /* Optional two-column radio. Existing controls stay intact with their handlers. */
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source){--radio-content-inset:22px;height:200px!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .radio-win-body{padding:56px var(--radio-content-inset) 10px!important;height:100%;box-sizing:border-box}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .bottom-console{display:grid!important;grid-template-columns:minmax(360px,.9fr) minmax(0,1.1fr)!important;grid-template-rows:minmax(0,1fr) 44px!important;gap:10px 32px!important;padding:0!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .tech-panel{grid-column:1;grid-row:1;align-self:start}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .monitor-frame{grid-column:2;grid-row:1 / 3;width:100%;height:128px!important;align-self:center;margin:0!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel{grid-column:1;grid-row:2;justify-content:flex-start!important;gap:10px!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) #radioSourceBar{left:var(--radio-content-inset);right:auto;top:8px;height:42px;box-sizing:border-box;max-width:calc(48% - var(--radio-content-inset));}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) #radioSourceBar button{height:32px;min-height:32px;box-sizing:border-box}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) #mediaProfileButton .media-worker-avatar{line-height:1}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .meta-status{display:none!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .np-row{display:grid;grid-template-columns:60px minmax(0,1fr);min-height:60px!important;margin-top:0!important;gap:11px!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .np-cover{grid-column:1;grid-row:1;width:60px!important;height:60px!important;flex-basis:60px!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .np-lines{grid-column:2;grid-row:1;padding-top:22px}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .play-trigger{width:42px!important;height:42px!important;min-width:42px!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .nav-cluster{gap:8px!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .fader{width:84px!important;min-width:40px;flex:0 1 84px}
+html body #radioWindow[data-radio-layout="clean"]{--radio-content-inset:22px;height:200px!important}
+html body #radioWindow[data-radio-layout="clean"] .radio-win-body{padding:56px var(--radio-content-inset) 10px!important;height:100%;box-sizing:border-box}
+html body #radioWindow[data-radio-layout="clean"] .bottom-console{display:grid!important;grid-template-columns:minmax(360px,.9fr) minmax(0,1.1fr)!important;grid-template-rows:minmax(0,1fr) 44px!important;gap:10px 32px!important;padding:0!important}
+html body #radioWindow[data-radio-layout="clean"] .tech-panel{grid-column:1;grid-row:1;align-self:start}
+html body #radioWindow[data-radio-layout="clean"] .monitor-frame{grid-column:2;grid-row:1 / 3;width:100%;height:128px!important;align-self:center;margin:0!important}
+html body #radioWindow[data-radio-layout="clean"] .control-panel{grid-column:1;grid-row:2;justify-content:flex-start!important;gap:10px!important}
+html body #radioWindow[data-radio-layout="clean"] #radioSourceBar{left:var(--radio-content-inset);right:auto;top:8px;height:42px;box-sizing:border-box;max-width:calc(48% - var(--radio-content-inset));}
+html body #radioWindow[data-radio-layout="clean"] #radioSourceBar button{height:32px;min-height:32px;box-sizing:border-box}
+html body #radioWindow[data-radio-layout="clean"] #mediaProfileButton .media-worker-avatar{line-height:1}
+html body #radioWindow[data-radio-layout="clean"] .meta-status{display:none!important}
+html body #radioWindow[data-radio-layout="clean"] .np-row{display:grid;grid-template-columns:60px minmax(0,1fr);min-height:60px!important;margin-top:0!important;gap:11px!important}
+html body #radioWindow[data-radio-layout="clean"] .np-cover{grid-column:1;grid-row:1;width:60px!important;height:60px!important;flex-basis:60px!important}
+html body #radioWindow[data-radio-layout="clean"] .np-lines{grid-column:2;grid-row:1;padding-top:22px}
+html body #radioWindow[data-radio-layout="clean"] .play-trigger{width:42px!important;height:42px!important;min-width:42px!important}
+html body #radioWindow[data-radio-layout="clean"] .nav-cluster{gap:8px!important}
+html body #radioWindow[data-radio-layout="clean"] .fader{width:84px!important;min-width:40px;flex:0 1 84px}
 @media(max-width:1100px){
- html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .bottom-console{grid-template-columns:360px minmax(0,1fr)!important;column-gap:20px!important}
- html body #radioWindow[data-radio-layout="clean"]:not(.music-source) #radioSourceBar{max-width:360px}
- html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel{gap:6px!important}
- html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .fader{width:60px!important}
+ html body #radioWindow[data-radio-layout="clean"] .bottom-console{grid-template-columns:360px minmax(0,1fr)!important;column-gap:20px!important}
+ html body #radioWindow[data-radio-layout="clean"] #radioSourceBar{max-width:360px}
+ html body #radioWindow[data-radio-layout="clean"] .control-panel{gap:6px!important}
+ html body #radioWindow[data-radio-layout="clean"] .fader{width:60px!important}
 }
 #radioLookControls .radio-layout-choices{border:0;padding:0;min-width:0;margin:12px 0}
 #radioLookControls .radio-layout-choices legend{font-weight:650;margin-bottom:10px}
@@ -212,8 +212,8 @@ html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .fader{widt
 #radioLookPreview[data-layout="clean"] .radio-preview-toolbar{left:2%;right:auto}
 #radioLookPreview[data-layout="clean"] .radio-preview-copy{top:27%;max-width:38%}
 #radioLookPreview[data-layout="clean"] .radio-preview-buttons{left:2%;right:auto;top:auto;bottom:7%;width:40%}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel{justify-self:stretch;width:100%;min-width:0}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) #playBtn{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;max-height:42px!important;flex:0 0 42px!important}
+html body #radioWindow[data-radio-layout="clean"] .control-panel{justify-self:stretch;width:100%;min-width:0}
+html body #radioWindow[data-radio-layout="clean"] #playBtn{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;max-height:42px!important;flex:0 0 42px!important}
 #radioLookPreview .radio-viz-sample.is-modern::before{content:"";position:absolute;inset:0;background:var(--radio-preview-accent);mask-image:var(--viz-preview-mask);mask-size:100% 100%;mask-repeat:no-repeat;pointer-events:none}
 #radioLookPreview .radio-viz-sample.is-modern img{opacity:0}
 /* The dolphin animation fills the visualizer without surrounding bars. */
@@ -227,15 +227,15 @@ html body #radioWindow[data-viz-frame="off"] .monitor-frame{border:0!important;b
 html body #radioWindow[data-viz-frame="on"] .monitor-frame{border:1px solid rgba(var(--radio-accent-rgb,30,215,96),.25)!important;border-radius:13px!important;background:rgba(4,12,17,.32)!important;box-shadow:inset 0 1px 0 #ffffff0a!important;backdrop-filter:none!important}
 html body #radioWindow[data-viz-frame="off"] .monitor-frame::before,html body #radioWindow[data-viz-frame="off"] .monitor-frame::after{display:none!important}
 #radioLookPreview .radio-viz-sample.has-frame{border-radius:5px;background:#040c1152;box-shadow:inset 0 0 0 1px #9cceb440}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel{justify-self:start!important;justify-content:flex-start!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
+html body #radioWindow[data-radio-layout="clean"] .control-panel{justify-self:start!important;justify-content:flex-start!important;margin:0!important;padding:0!important;width:100%!important;max-width:none!important}
 
 /* Layout changes cannot leave a tall persisted window behind. */
-html body #radioWindow[data-radio-layout="classic"]:not(.music-source){height:190px!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .tech-panel{position:relative}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .header-row{position:absolute;right:0;top:0;margin:0!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .brand-text{display:none!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) #curStation{position:absolute;left:71px;right:0;top:0;margin:0!important;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .monitor-frame{height:104px!important}
+html body #radioWindow[data-radio-layout="classic"]{height:190px!important}
+html body #radioWindow[data-radio-layout="clean"] .tech-panel{position:relative}
+html body #radioWindow[data-radio-layout="clean"] .header-row{position:absolute;right:0;top:0;margin:0!important}
+html body #radioWindow[data-radio-layout="clean"] .brand-text{display:none!important}
+html body #radioWindow[data-radio-layout="clean"] #curStation{position:absolute;left:71px;right:0;top:0;margin:0!important;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body #radioWindow[data-radio-layout="clean"] .monitor-frame{height:104px!important}
 #radioLookControls .radio-display-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 8px}
 #radioLookControls .radio-display-options .radio-layout-choices{margin:0}
 #radioLookControls .radio-display-options .radio-viz-family-note{display:none}
@@ -244,14 +244,13 @@ html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .monitor-fr
 #radioLookControls .radio-display-options legend{font-size:12px}
 @media(max-width:540px){#radioLookControls .radio-display-options{grid-template-columns:1fr}}
 
-
 /* Appearance control shares the quiet surfaces of the radio transport. */
 html body #radioWindow #themeBtn{position:static;box-sizing:border-box;display:inline-flex!important;align-items:center;justify-content:center;gap:7px;width:32px!important;height:32px!important;min-width:32px!important;padding:7px!important;margin:0;border:1px solid transparent!important;border-radius:10px!important;background:rgba(225,239,236,.08)!important;box-shadow:none!important;color:#dae8e2!important;cursor:pointer;transition:background .14s,color .14s,transform .14s!important}
 html body #radioWindow #themeBtn svg{display:block;flex:0 0 19px;width:19px;height:19px}
 html body #radioWindow #themeBtn:hover{background:rgba(225,239,236,.16)!important;color:#f4faf7!important}
 html body #radioWindow #themeBtn:active{transform:scale(.97)}
 html body #radioWindow #themeBtn:focus-visible{outline:2px solid var(--radio-accent,#a7dacb)!important;outline-offset:3px;box-shadow:none!important}
-html body #radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel #themeBtn{flex:0 0 38px;width:38px!important;min-width:38px!important;height:38px!important;padding:8px!important;border-radius:12px!important}
+html body #radioWindow[data-radio-layout="clean"] .control-panel #themeBtn{flex:0 0 38px;width:38px!important;min-width:38px!important;height:38px!important;padding:8px!important;border-radius:12px!important}
 @media(prefers-reduced-motion:reduce){html body #radioWindow #themeBtn{transition:none!important}}
 
 html body #radioWindow .brand-text[hidden]{display:none!important}
@@ -331,3 +330,18 @@ html body #radioWindow #vizBtn.active{border-color:rgba(var(--radio-accent-rgb,1
 #radioLookControls .radio-display-options [data-radio-layout-choice]:hover{background:#ffffff0d!important;color:#f0faf5!important}
 #radioLookControls .radio-display-options [data-radio-layout-choice][aria-pressed=true]{background:#dfe6f4!important;color:#10161f!important;box-shadow:0 1px 2px #0003!important}
 #radioLookControls .radio-display-options .radio-layout-choices:has([data-viz-frame-choice]) .radio-viz-families{max-width:340px}
+
+/* The sign-in list holds every radiographer (about 30), laid out like RG Music's: a search field, four
+   columns of name pills with the emoji, the red mark on accounts; the dialog is wide enough to show all at once. */
+#mediaProfile:has(.media-workers){width:min(760px,calc(100vw - 24px))}
+#mediaProfile .media-find{box-sizing:border-box;width:100%;height:44px;margin:2px 0 10px;padding:0 16px;border:1px solid #c5e8dc30;border-radius:14px;background:#0000003d;color:inherit;font:inherit;outline:none}
+#mediaProfile .media-find:focus{border-color:#8fd3bd}
+#mediaProfile .media-find::placeholder{color:#bcd9ce99}
+#mediaProfile .media-workers{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#mediaProfile .media-workers button{min-width:0;min-height:46px;gap:9px;padding:6px 12px 6px 8px;border-radius:16px}
+#mediaProfile .media-workers .media-worker-avatar{width:30px;height:30px;flex:0 0 30px;font-size:22px;line-height:30px}
+#mediaProfile .media-worker-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:600}
+#mediaProfile .media-worker-mark{flex:none;width:18px;height:18px}
+#mediaProfile .media-worker-mark svg{display:block;width:100%;height:100%}
+@media(max-width:700px){#mediaProfile .media-workers{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){#mediaProfile .media-workers{grid-template-columns:repeat(2,minmax(0,1fr))}}

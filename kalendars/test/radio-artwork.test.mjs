@@ -74,7 +74,7 @@ test('Amp and Dither covers stop the hidden console visualizer, and leaving them
  vm.runInContext(extract(radio,"const radioWin = document.getElementById('radioWindow');",'function scheduleDraw('),c);
  assert.equal(c.window.__mkRadioConsoleCovered(),true);
  c.rw.dataset.radioLayout='classic';assert.equal(c.window.__mkRadioConsoleCovered(),false);
- c.rw.dataset.radioLayout='dither';c.rw.classList.contains=k=>k==='music-source';assert.equal(c.window.__mkRadioConsoleCovered(),false,'the Winamp shell hides the faceplate, not the engine');
+ c.rw.dataset.radioLayout='dither';assert.equal(c.window.__mkRadioConsoleCovered(),true);
  assert.match(extract(radio,'function draw(ts = 0) {','    if (isAdjustingVol) {'),/window\.__mkRadioConsoleCovered\?\.\(\)/);
  assert.match(extract(radio,'  function paintAppearance(){','  function lookSnapshot(){'),/previousLayout!==rw\.dataset\.radioLayout\)window\.__mkSyncRadioVisuals\?\.\(\)/);
 });

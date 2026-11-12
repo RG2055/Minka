@@ -127,7 +127,7 @@ function radioVisualsInactive() {
 const radioWin = document.getElementById('radioWindow');
 function radioConsoleCovered() {
     const layout = radioWin && radioWin.dataset.radioLayout;
-    return (layout === 'amp' || layout === 'dither') && !radioWin.classList.contains('music-source');
+    return layout === 'amp' || layout === 'dither';
 }
 window.__mkRadioConsoleCovered = radioConsoleCovered;
 function scheduleDraw(delayMs) {

@@ -47,7 +47,6 @@
     var name = (document.getElementById('curStation') || {}).textContent || '';
     name = name.trim();
     var radioWindow = document.getElementById('radioWindow');
-    if (radioWindow && radioWindow.classList.contains('music-source')) playing = false;
     state.name = name;
     state.playing = !!playing;
     // radio.js declares npStationLogo with `let` (a global binding, not a window property).

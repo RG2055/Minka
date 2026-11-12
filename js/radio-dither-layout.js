@@ -134,7 +134,7 @@
  // ---------- build ----------
  function build(rw){
   if(built)return;built=true;
-  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-dither-layout.css"]')?.href||'css/radio-dither-layout.css?v=20261012dtx3';css.onload=()=>{window.syncShellLayout?.();if(active){startVis();renderText(true);}};document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-dither-layout.css"]')?.href||'css/radio-dither-layout.css?v=20261112nw1';css.onload=()=>{window.syncShellLayout?.();if(active){startVis();renderText(true);}};document.head.append(css);
   shell=document.createElement('div');shell.className='dth-shell';shell.dataset.noDither='';
   shell.innerHTML=`
    <section class="dth-deck" aria-label="RG Dither atskaņotājs">
@@ -244,7 +244,7 @@
  function syncState(){
   const rw=document.getElementById('radioWindow');
   const bar=document.getElementById('radioSourceBar');
-  if(bar&&!rw.classList.contains('music-source')&&bar.parentElement!==els.src)move(bar,els.src);
+  if(bar&&bar.parentElement!==els.src)move(bar,els.src);
   if(bar){ditherButtons(bar);watchBar(bar);}
   const state=rw.dataset.playback||'',a=engineAudio();
   const playing=state==='playing'||(state==='loading'&&a&&!a.paused);

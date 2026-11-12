@@ -3,7 +3,7 @@
    stilā, mainās tikai rāmis un iekšējais izkārtojums, lai viss ir lielāks
    un salasāms. Tikai datoram (mobilajam ir savs skats). */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pioneer"], [data-radio-layout="pixel"]):not(.music-source) {
+  html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pioneer"], [data-radio-layout="pixel"]) {
     left: max(6px, calc(50% - 570px)) !important;
     right: max(6px, calc(50% - 570px)) !important;
     width: auto !important;
@@ -15,7 +15,7 @@
   }
   /* Mala kā iekšēja kontūra virs attēla (nevis border): skina attēls sniedzas
      līdz pašai malai un apakšā nekas nenogriežas. Pioneer paliek savs metāla rāmis. */
-  html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) {
+  html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) {
     border-width: 0 !important;
     outline: 1px solid var(--radio-edge, rgba(225, 239, 246, .1)) !important;
     outline-offset: -1px !important;
@@ -26,10 +26,10 @@
    augšā zīmols (labajā pusē pieslēgšanās josla), vidū liels vāks + nosaukumi,
    vizualizācija un lielas pogas, apakšā visi EQ vienā rindā. */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .radio-win-body {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .radio-win-body {
     padding: 10px 14px 12px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #radioApp {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #radioApp {
     display: grid !important;
     grid-template-columns: 120px minmax(0, 1.15fr) minmax(0, 1fr) auto !important;
     grid-template-rows: 32px auto auto auto minmax(0, 1fr) 30px !important;
@@ -46,77 +46,77 @@
     padding: 0 !important;
     align-items: stretch !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #radioApp :is(.tech-panel, #npRow) {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #radioApp :is(.tech-panel, #npRow) {
     display: contents !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #radioApp .header-row {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #radioApp .header-row {
     grid-area: brand !important; align-self: start !important; height: 32px !important; margin: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #radioApp .brand-text {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #radioApp .brand-text {
     font-size: 12px !important; letter-spacing: .14em !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #npCover {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #npCover {
     grid-area: cover !important; width: 120px !important; height: 120px !important; max-width: none !important;
     align-self: center !important; margin: 10px 0 !important; border-radius: 16px !important; object-fit: cover !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #curStation {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #curStation {
     grid-area: station !important; align-self: end !important; margin: 12px 0 4px !important;
     font-size: 24px !important; line-height: 1.1 !important; font-weight: 800 !important;
     white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #npRow .np-lines {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #npRow .np-lines {
     grid-area: lines !important; min-width: 0 !important; display: grid !important; gap: 3px !important; margin: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #npArtist {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #npArtist {
     font-size: 15px !important; line-height: 1.2 !important; font-weight: 800 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #npTitle {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #npTitle {
     font-size: 14px !important; line-height: 1.25 !important; font-weight: 600 !important; opacity: .86 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #npRow .np-lines > * {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #npRow .np-lines > * {
     white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important; height: auto !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #metaWrap {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #metaWrap {
     grid-area: meta !important; margin: 8px 0 0 !important; height: auto !important; gap: 12px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #metaWrap :is(.meta-tag, span) {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #metaWrap :is(.meta-tag, span) {
     font-size: 10px !important; line-height: 14px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .monitor-frame {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .monitor-frame {
     grid-area: monitor !important; align-self: stretch !important; height: auto !important; min-height: 0 !important;
     margin: 10px 0 !important; position: relative !important; border-radius: 14px !important; overflow: hidden !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .monitor-frame #vizCanvas {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .monitor-frame #vizCanvas {
     position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .control-panel {
     grid-area: ctrl !important; align-self: center !important; height: auto !important;
     display: grid !important; grid-template-columns: repeat(3, auto) !important; grid-template-areas: "nav nav nav" "st viz vol" !important;
     justify-items: center !important; align-items: center !important; gap: 12px 10px !important; padding: 0 !important; margin: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel .nav-cluster {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .control-panel .nav-cluster {
     grid-area: nav !important; gap: 14px !important; height: auto !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel .nav-btn {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .control-panel .nav-btn {
     width: 46px !important; height: 46px !important; font-size: 18px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel #playBtn {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .control-panel #playBtn {
     width: 66px !important; height: 66px !important; font-size: 24px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel .station-btn { grid-area: st !important; width: 40px !important; height: 40px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel #vizBtn { grid-area: viz !important; width: 40px !important; height: 40px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel #vol { grid-area: vol !important; width: 110px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .eq-wrap {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .control-panel .station-btn { grid-area: st !important; width: 40px !important; height: 40px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .control-panel #vizBtn { grid-area: viz !important; width: 40px !important; height: 40px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .control-panel #vol { grid-area: vol !important; width: 110px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] .eq-wrap {
     grid-area: eq !important; height: 30px !important; margin: 0 !important; padding: 0 !important; min-width: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #eqRow {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #eqRow {
     height: 30px !important; margin: 0 !important; padding: 0 !important; gap: 6px !important; justify-content: flex-start !important; -webkit-mask-image: none !important; mask-image: none !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #eqRow > .epb {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #eqRow > .epb {
     height: 30px !important; min-width: 64px !important; padding: 0 12px !important; font-size: 11px !important; flex: 1 1 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #eqRow > .epb::before,
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #eqRow > .epb > * {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #eqRow > .epb::before,
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #eqRow > .epb > * {
     font-size: 11px !important;
   }
 }
@@ -133,13 +133,13 @@ html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio
    pieslēgšanās josla augšā (kā bija), liels vāks visā augstumā, vidū
    vizualizācija ar EQ, pa labi nosaukumi un pogas — skaļums labajā malā kā citur. */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioSourceBar {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #radioSourceBar {
     left: 206px !important; max-width: none !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .radio-win-body {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .radio-win-body {
     padding: 14px 22px 14px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioApp {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #radioApp {
     display: grid !important;
     grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1.05fr) !important;
     grid-template-rows: 42px auto auto minmax(0, 1fr) 44px !important;
@@ -153,127 +153,127 @@ html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio
     height: 100% !important;
     padding: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioApp :is(.tech-panel, #npRow) {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #radioApp :is(.tech-panel, #npRow) {
     display: contents !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioApp .header-row { display: none !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npCover {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #radioApp .header-row { display: none !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #npCover {
     grid-area: cover !important; width: 170px !important; height: 170px !important; flex-basis: auto !important;
     max-width: none !important; align-self: center !important; border-radius: 28px !important; object-fit: cover !important; margin: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #curStation {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #curStation {
     grid-area: station !important; position: static !important; margin: 6px 0 4px !important;
     font-size: 13px !important; line-height: 1.2 !important; font-weight: 700 !important; letter-spacing: .06em !important; text-transform: uppercase !important;
     color: var(--radio-accent, #8fe3a6) !important; -webkit-text-fill-color: currentColor !important;
     white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npRow .np-lines {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #npRow .np-lines {
     grid-area: lines !important; padding: 0 !important; margin: 0 !important; min-width: 0 !important; display: grid !important; gap: 4px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npArtist {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #npArtist {
     font-size: 22px !important; line-height: 1.15 !important; font-weight: 800 !important; letter-spacing: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npTitle {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #npTitle {
     font-size: 15px !important; line-height: 1.25 !important; font-weight: 600 !important; opacity: .82 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npRow .np-lines > * {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #npRow .np-lines > * {
     white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important; height: auto !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .monitor-frame {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .monitor-frame {
     grid-area: monitor !important; height: auto !important; align-self: stretch !important; margin: 0 0 10px !important;
     position: relative !important; border-radius: 20px !important; overflow: hidden !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .monitor-frame #vizCanvas {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .monitor-frame #vizCanvas {
     position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .control-panel {
     grid-area: ctrl !important; align-self: center !important; height: 44px !important; gap: 10px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel #playBtn {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .control-panel #playBtn {
     width: 52px !important; height: 44px !important; min-width: 52px !important; min-height: 44px !important; max-height: 44px !important; flex: 0 0 52px !important; border-radius: 16px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .fader { flex: 1 1 90px !important; width: auto !important; min-width: 60px !important; max-width: 140px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .eq-wrap {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .fader { flex: 1 1 90px !important; width: auto !important; min-width: 60px !important; max-width: 140px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .eq-wrap {
     grid-area: eq !important; align-self: center !important; height: 32px !important; margin: 0 !important; padding: 0 !important; min-width: 0 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #eqRow { height: 32px !important; margin: 0 !important; gap: 5px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #eqRow > .epb { height: 30px !important; padding: 0 10px !important; font-size: 10.5px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #eqRow { height: 32px !important; margin: 0 !important; gap: 5px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #eqRow > .epb { height: 30px !important; padding: 0 10px !important; font-size: 10.5px !important; }
 }
 
 /* ---- Pioneer: auto magnetola ----
    ekrānā vairāk vietas tekstam (stacija + dziesma lieli kā LCD rindas),
    pieslēgšanās josla salasāma. Rokturi un pogas paliek savās vietās. */
 @media (min-width: 1000px) {
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .radio-win-body {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .radio-win-body {
     padding: 50px 22px 14px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .bottom-console {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .bottom-console {
     gap: 10px 18px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .pioneer-display {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-display {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) !important; gap: 16px !important; padding: 10px 16px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .tech-panel { gap: 8px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) #curStation {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .tech-panel { gap: 8px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] #curStation {
     font-size: 22px !important; line-height: 1.1 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .np-cover {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .np-cover {
     width: 46px !important; height: 46px !important; min-width: 46px !important; flex: 0 0 46px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) #npArtist {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] #npArtist {
     font-size: 15px !important; line-height: 1.25 !important; font-weight: 700 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) #npTitle {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] #npTitle {
     font-size: 14px !important; line-height: 1.25 !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .np-lines > * {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .np-lines > * {
     white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; height: auto !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar {
     top: 11px !important; height: 32px !important; max-width: 40% !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar button {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar button {
     height: 28px !important; min-height: 28px !important; padding: 3px 8px !important; font-size: 11.5px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) #radioSourceBar button span { font-size: 11.5px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar button span { font-size: 11.5px !important; }
 }
 
 /* ---- Pixel: PixelPlayer (M3 Expressive) ----
    liels vāks visā augstumā, vidū stacija + liels nosaukums + vilnis + EQ,
    pa labi lielā play poga (pieslēgšanās josla virs tās). */
 @media (min-width: 1100px) {
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .radio-win-body {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .radio-win-body {
     padding: 14px 24px 14px 20px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .bottom-console {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .bottom-console {
     grid-template-columns: 200px minmax(0, 1fr) 330px !important;
     grid-template-rows: auto auto minmax(0, 1fr) 26px 34px !important;
     gap: 4px 24px !important;
     align-items: stretch !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .header-row { display: none !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) #npCover {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .header-row { display: none !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] #npCover {
     grid-column: 1 !important; grid-row: 1 / 6 !important; width: 200px !important; height: 200px !important;
     align-self: center !important; border-radius: 32px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) #curStation {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] #curStation {
     grid-column: 2 !important; grid-row: 1 !important; margin-top: 10px !important; font-size: 14px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .np-lines {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .np-lines {
     grid-column: 2 !important; grid-row: 2 !important; align-self: start !important; gap: 6px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) #npTitle { font-size: 30px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) #npArtist { font-size: 15px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] #npTitle { font-size: 30px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] #npArtist { font-size: 15px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .monitor-frame {
     grid-column: 2 !important; grid-row: 4 !important; height: 26px !important; align-self: center !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .eq-wrap {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .eq-wrap {
     grid-column: 2 !important; grid-row: 5 !important; align-self: center !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .eq-pioneer { padding: 0 !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .epb { min-height: 32px !important; height: 32px !important; padding: 0 12px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .epb-label { font-size: 11px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .control-panel {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .eq-pioneer { padding: 0 !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .epb { min-height: 32px !important; height: 32px !important; padding: 0 12px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .epb-label { font-size: 11px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .control-panel {
     grid-column: 3 !important; grid-row: 2 / 6 !important; align-self: end !important; align-content: end !important;
   }
 }
@@ -284,7 +284,7 @@ html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio
    (28 px stūri), segmentēta pieslēgšanās josla savā joslā (nepārklāj saturu),
    savienota pogu grupa ar aizpildītu play, M3 slīdņi. 238 px kā citiem. */
 @media (min-width: 1081px) {
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] {
     --m3-primary: color-mix(in srgb, rgb(var(--amp-accent-rgb)) 78%, #fff 22%);
     --m3-on-primary: #0c1410;
     --m3-surface: color-mix(in srgb, #1a1c25 88%, rgb(var(--amp-accent-rgb)) 12%);
@@ -295,107 +295,107 @@ html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio
     --m3-on-variant: #a9afc4;
     --amp-inset: var(--m3-surface-top);
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-shell { padding: 0 !important; gap: 10px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pane {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-shell { padding: 0 !important; gap: 10px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-pane {
     height: 238px !important; padding: 46px 16px 14px !important; border-radius: 28px !important;
     background: var(--m3-surface) !important; color: var(--m3-on-surface) !important;
     box-shadow: 0 10px 24px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .05) !important;
   }
   /* loga virsraksti kā Winamp titlebar (M3 label) */
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) :is(.amp-eq, .amp-pl)::before {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-eq, .amp-pl)::before {
     position: absolute; left: 20px; top: 15px; font: 700 11px/16px var(--font-ui, Inter, system-ui, sans-serif);
     letter-spacing: .12em; color: var(--m3-on-variant);
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eq::before { content: "EKVALAIZERS"; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl::before { content: "SARAKSTS"; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-dots { left: 20px !important; top: 18px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-dots i { width: 10px !important; height: 10px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq::before { content: "EKVALAIZERS"; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl::before { content: "SARAKSTS"; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-dots { left: 20px !important; top: 18px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-dots i { width: 10px !important; height: 10px !important; }
 
   /* pieslēgšanās: M3 segmentētā josla augšējā joslā, nepārklāj saturu */
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceBar {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar {
     top: 9px !important; right: 12px !important; height: 30px !important; padding: 2px !important; gap: 2px !important;
     border-radius: 15px !important; background: var(--m3-surface-hi) !important; box-shadow: none !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceBar button {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar button {
     height: 26px !important; min-height: 26px !important; padding: 0 10px !important; border-radius: 13px !important;
     font: 600 11.5px/1 var(--font-ui, Inter, system-ui, sans-serif) !important; color: var(--m3-on-variant) !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceBar button span { font-size: 11.5px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) #radioSourceBar button[aria-pressed="true"] {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar button span { font-size: 11.5px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar button[aria-pressed="true"] {
     background: var(--m3-primary) !important; color: var(--m3-on-primary) !important; box-shadow: none !important;
   }
 
   /* galvenais logs */
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-top { grid-template-columns: 148px minmax(0, 1fr) !important; gap: 14px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-screen {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-top { grid-template-columns: 148px minmax(0, 1fr) !important; gap: 14px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-screen {
     height: 96px !important; border-radius: 18px !important; background: var(--m3-screen) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05) !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-right { gap: 8px !important; padding: 0 !important; justify-content: flex-start !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-cover { flex-basis: 52px !important; width: 52px !important; height: 52px !important; border-radius: 14px !important; box-shadow: none !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-song { font-size: 17px !important; font-weight: 700 !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-artist { font-size: 13.5px !important; color: var(--m3-primary) !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-volrow { margin-top: 2px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-metaline { display: none !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-seek-wrap { margin: 10px 0 0 !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-right { gap: 8px !important; padding: 0 !important; justify-content: flex-start !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-cover { flex-basis: 52px !important; width: 52px !important; height: 52px !important; border-radius: 14px !important; box-shadow: none !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-song { font-size: 17px !important; font-weight: 700 !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-artist { font-size: 13.5px !important; color: var(--m3-primary) !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-volrow { margin-top: 2px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-metaline { display: none !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-seek-wrap { margin: 10px 0 0 !important; }
 
   /* M3 slīdņi: biezs celiņš, šaurs stienīša rokturis */
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-h { height: 12px !important; border-radius: 6px !important; box-shadow: none !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) :is(.amp-vol, .amp-seek) { --amp-fill: var(--m3-primary) !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-h::-webkit-slider-thumb {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-h { height: 12px !important; border-radius: 6px !important; box-shadow: none !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-vol, .amp-seek) { --amp-fill: var(--m3-primary) !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-h::-webkit-slider-thumb {
     width: 6px !important; height: 26px !important; border-radius: 3px !important; background: var(--m3-on-surface) !important; box-shadow: 0 0 0 3px var(--m3-surface) !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-h::-moz-range-thumb {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-h::-moz-range-thumb {
     width: 6px !important; height: 26px !important; border-radius: 3px !important; background: var(--m3-on-surface) !important;
   }
 
   /* savienota pogu grupa: tonālas pogas, play aizpildīts */
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-bottom { margin-top: 9px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-transport { gap: 3px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pill {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-bottom { margin-top: 9px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-transport { gap: 3px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-pill {
     width: 50px !important; height: 42px !important; border-radius: 8px !important; background: var(--m3-surface-top) !important;
     color: var(--m3-on-surface) !important; box-shadow: none !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pill:first-child { border-radius: 21px 8px 8px 21px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pill[data-act="next"] { border-radius: 8px 21px 21px 8px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pill[data-act="play"] {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-pill:first-child { border-radius: 21px 8px 8px 21px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-pill[data-act="next"] { border-radius: 8px 21px 21px 8px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-pill[data-act="play"] {
     width: 62px !important; background: var(--m3-primary) !important; color: var(--m3-on-primary) !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-shell.is-playing .amp-pill[data-act="play"] { border-radius: 21px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) :is(.amp-sq, .amp-tog) {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-shell.is-playing .amp-pill[data-act="play"] { border-radius: 21px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-sq, .amp-tog) {
     border-radius: 14px !important; background: var(--m3-surface-hi) !important; color: var(--m3-on-surface) !important; box-shadow: none !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-tog i { background: var(--m3-surface-top) !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-tog[aria-pressed="true"] i { background: var(--m3-primary) !important; box-shadow: none !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-tog i { background: var(--m3-surface-top) !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-tog[aria-pressed="true"] i { background: var(--m3-primary) !important; box-shadow: none !important; }
 
   /* EQ logs */
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eq { padding-top: 40px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eq-head { height: 36px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-bands { margin-top: 6px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) :is(.amp-scale, .amp-vband) { height: 118px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-vband { width: 12px !important; box-shadow: none !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-vband::-webkit-slider-thumb {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq { padding-top: 40px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq-head { height: 36px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-bands { margin-top: 6px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-scale, .amp-vband) { height: 118px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-vband { width: 12px !important; box-shadow: none !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-vband::-webkit-slider-thumb {
     width: 24px !important; height: 6px !important; border-radius: 3px !important; background: var(--m3-on-surface) !important; box-shadow: 0 0 0 3px var(--m3-surface) !important;
   }
 
   /* saraksts */
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl { padding: 40px 14px 14px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-list {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl { padding: 40px 14px 14px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-list {
     border-radius: 18px !important; background: var(--m3-screen) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05) !important; padding: 6px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-list li { border-radius: 12px !important; height: 30px !important; font-size: 14px !important; }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-list li.is-current {
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-list li { border-radius: 12px !important; height: 30px !important; font-size: 14px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-list li.is-current {
     background: color-mix(in srgb, var(--m3-primary) 22%, transparent) !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl-foot { margin-top: 8px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot { margin-top: 8px !important; }
 }
 /* RG Dither: deks pie tās pašas apakšējās malas kā pārējie */
 @media (min-width: 1001px) {
-  html body #radioWindow#radioWindow[data-radio-layout="dither"]:not(.music-source) .dth-shell { padding: 0 !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell { padding: 0 !important; }
 }
 
 /* Atstarpe līdz apakšējai rīkjoslai: visi skati 12 px virs tās (agrāk pieskārās) */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow:not(.music-source) { bottom: calc(var(--dock-h, 70px) + 26px) !important; }
+  html body #radioWindow#radioWindow { bottom: calc(var(--dock-h, 70px) + 26px) !important; }
 }
 
 /* ---- "Stacijas" poga katrā skatā: tonēta albuma krāsā, ar uzrakstu, pēc
@@ -404,7 +404,7 @@ html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio
   0%, 100% { box-shadow: 0 0 12px color-mix(in srgb, var(--mk-st-tint) 30%, transparent); }
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--mk-st-tint) 40%, transparent), 0 0 24px color-mix(in srgb, var(--mk-st-tint) 70%, transparent); }
 }
-html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .control-panel .station-btn {
+html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .control-panel .station-btn {
   --mk-st-tint: var(--radio-accent, #64d2ff);
   width: auto !important; min-width: 0 !important; max-width: none !important; height: 40px !important; flex: 0 0 auto !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important;
@@ -415,26 +415,26 @@ html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio
   box-shadow: 0 0 12px color-mix(in srgb, var(--mk-st-tint) 30%, transparent) !important;
   animation: mk-stations-glow 1.4s ease-in-out 1.2s 2;
 }
-html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .control-panel .station-btn::after {
+html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .control-panel .station-btn::after {
   content: "Stacijas"; font: 700 13px/1 var(--mk-font-plain, Inter, system-ui, sans-serif); letter-spacing: .01em; color: #fff;
 }
-html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .control-panel .station-btn:hover {
+html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .control-panel .station-btn:hover {
   background: color-mix(in srgb, var(--mk-st-tint) 50%, rgba(255, 255, 255, .08)) !important;
 }
-html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .control-panel .station-btn svg {
+html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .control-panel .station-btn svg {
   width: 18px !important; height: 18px !important; flex: 0 0 18px;
 }
 /* Pioneer: metāla poga ar uzrakstu displeja krāsā */
-html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .station-btn {
+html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .station-btn {
   --mk-st-tint: var(--pioneer-ink, #70c8e6);
   width: 112px !important; gap: 6px !important; color: var(--pioneer-ink, #70c8e6) !important;
   animation: mk-stations-glow 1.4s ease-in-out 1.2s 2;
 }
-html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .station-btn::after {
+html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .station-btn::after {
   content: "STACIJAS"; font: 800 11px/1 var(--mk-font-plain, Inter, system-ui, sans-serif); letter-spacing: .1em;
 }
 /* Amp: staciju pogas aizpildītas M3 primārajā krāsā */
-html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-sq[data-act="stations"] {
+html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-sq[data-act="stations"] {
   --mk-st-tint: var(--m3-primary, #8fe3a6);
   background: color-mix(in srgb, var(--m3-primary, #8fe3a6) 30%, var(--m3-surface-hi, #262a36)) !important;
   color: #fff !important; animation: mk-stations-glow 1.4s ease-in-out 1.2s 2;
@@ -453,7 +453,7 @@ html body #radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn[data-act=
    kreisās malas (238×238, loga stūris), pārējais pa labi. Klasiskajā skatā
    teksta kolonna tikai tik plata, cik tekstam vajag — spektrs aizņem pārējo. ---- */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #radioApp {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #radioApp {
     grid-template-columns: 224px fit-content(340px) minmax(0, 1fr) auto !important;
     grid-template-areas:
       "cover brand brand ."
@@ -463,43 +463,43 @@ html body #radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn[data-act=
       "cover . monitor ctrl"
       "cover eq eq eq" !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #npCover {
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] #npCover {
     width: 238px !important; height: 238px !important; margin: -10px 0 -12px -14px !important;
     align-self: start !important; border-radius: 24px 0 0 24px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) :is(#curStation, #npRow .np-lines, #metaWrap) { max-width: 340px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="classic"] :is(#curStation, #npRow .np-lines, #metaWrap) { max-width: 340px !important; }
 
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioApp {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #radioApp {
     grid-template-columns: 216px minmax(0, 1fr) minmax(0, 1.05fr) !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npCover {
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #npCover {
     width: 238px !important; height: 238px !important; margin: -14px 0 -14px -22px !important;
     align-self: start !important; border-radius: 24px 0 0 24px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioSourceBar { left: 258px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] #radioSourceBar { left: 258px !important; }
 }
 @media (min-width: 1100px) {
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .bottom-console {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] .bottom-console {
     grid-template-columns: 218px minmax(0, 1fr) 330px !important;
   }
-  html body #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) #npCover {
+  html body #radioWindow#radioWindow[data-radio-layout="pixel"] #npCover {
     width: 238px !important; height: 238px !important; margin: -14px 0 -14px -20px !important;
     align-self: start !important; border-radius: 32px 0 0 32px !important;
   }
 }
 /* Pioneer un Amp: vāks lielāks savā rāmī (displejs / galvenais logs) */
 @media (min-width: 1000px) {
-  html body #radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .np-cover {
+  html body #radioWindow#radioWindow[data-radio-layout="pioneer"] .np-cover {
     width: 64px !important; height: 64px !important; min-width: 64px !important; flex: 0 0 64px !important; border-radius: 4px !important;
   }
 }
 @media (min-width: 1081px) {
-  html body #radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-cover { flex-basis: 60px !important; width: 60px !important; height: 60px !important; border-radius: 14px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="amp"] .amp-cover { flex-basis: 60px !important; width: 60px !important; height: 60px !important; border-radius: 14px !important; }
 }
 
 /* Kad nekas neskan, vākam nav attēla: tonēts laukums ar radio ikonu, nevis tukšums */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) #npCover:is(:not([src]), [src=""], [src$="radio-default.svg"]) {
+  html body #radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) #npCover:is(:not([src]), [src=""], [src$="radio-default.svg"]) {
     display: block !important; opacity: 1 !important;
     object-position: -9999px 0 !important; /* vispārējā radio ikona netiek zīmēta, redzama plate */
     /* vinila plate albuma krāsā: etiķete, rievas tikai uz diska, tonēts fons */
@@ -511,14 +511,14 @@ html body #radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn[data-act=
       radial-gradient(circle at 50% 50%, #121417 0 41%, var(--mk-vinyl-bg) 41.5%) !important;
   }
   /* Jauns: skaļums nepārsniedz labo malu */
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel { min-width: 0 !important; overflow: visible; }
-  html body #radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .fader { flex: 1 1 60px !important; min-width: 48px !important; max-width: 120px !important; }
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .control-panel { min-width: 0 !important; overflow: visible; }
+  html body #radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .fader { flex: 1 1 60px !important; min-width: 48px !important; max-width: 120px !important; }
 }
 
 /* ---- "Stacijas" poga: kapsula ar attēlu (zelta kalni, Super Visuals), bieza
    balta mala, melns aplis ar bultiņu labajā pusē, uzraksts virs attēla.
    Attēls 560×156 WebP (~7 KB); bez animācijām, tikai bultiņa pabīdās uz hover. ---- */
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn {
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn {
   width: 176px !important; min-width: 0 !important; height: 46px !important; flex: 0 0 auto !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 0 !important;
   padding: 0 42px 0 8px !important; position: relative !important; overflow: hidden !important;
@@ -527,33 +527,33 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout
   background: #2a1c12 url("../kalendars/data/radio-skins/stations-btn.webp") center / cover no-repeat !important;
   box-shadow: 0 6px 16px -6px rgba(0, 0, 0, .65) !important; animation: none !important; transform: none !important;
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn svg { display: none !important; }
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn::after {
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn svg { display: none !important; }
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn::after {
   content: "Stacijas" !important; font: 800 14px/1 var(--mk-font-plain, Inter, system-ui, sans-serif) !important; color: #fff !important;
   display: block; margin-top: 1px; text-align: center;
   letter-spacing: .01em; text-shadow: 0 1px 6px rgba(0, 0, 0, .75);
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn::before, html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eject[data-act="stations"]::before {
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn::before, html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"]::before {
   content: "" !important; display: block !important; position: absolute !important; right: 3px; top: 50%;
   width: 34px !important; height: 34px !important; margin: 0 !important; padding: 0 !important; border: 0 !important;
   border-radius: 50% !important; transform: translateY(-50%); box-shadow: none !important; animation: none !important;
   background: #0b0b0d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E") center / 16px no-repeat !important;
   transition: transform .2s cubic-bezier(.2, 0, 0, 1);
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn:hover::before { transform: translate(2px, -50%); }
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn:hover::before { transform: translate(2px, -50%); }
 /* Amp: apaļa poga ar to pašu attēlu, baltu malu un bultiņu */
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eject[data-act="stations"] {
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"] {
   position: relative !important; overflow: hidden !important; border: 0 !important; outline: 2px solid #fff !important; outline-offset: -2px; border-radius: 50% !important;
   width: 40px !important; height: 40px !important; color: transparent !important; animation: none !important;
   background: #2a1c12 url("../kalendars/data/radio-skins/stations-btn.webp") 35% center / cover no-repeat !important;
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eject[data-act="stations"] svg { display: none !important; }
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eject[data-act="stations"]::before { right: auto; left: 50%; width: 24px !important; height: 24px !important; transform: translate(-50%, -50%); background-size: 13px !important; }
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"]:not(.music-source) .station-btn { position: relative !important; overflow: visible !important; isolation: isolate; }
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"] svg { display: none !important; }
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"]::before { right: auto; left: 50%; width: 24px !important; height: 24px !important; transform: translate(-50%, -50%); background-size: 13px !important; }
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .station-btn { position: relative !important; overflow: visible !important; isolation: isolate; }
 /* Jauns: pogas divās rindās labajā kolonnā (atskaņošana + skaļums augšā,
    izskats + Stacijas + vizualizācija apakšā), lai attēla poga ietilpst. */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioApp {
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] #radioApp {
     grid-template-areas:
       "cover . ."
       "cover monitor station"
@@ -561,33 +561,33 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pi
       "cover monitor ctrl"
       "cover eq ctrl" !important;
   }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel {
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel {
     grid-area: ctrl !important; align-self: end !important; height: auto !important;
     display: grid !important; grid-template-columns: auto auto auto minmax(0, 1fr) !important;
     grid-template-areas: "nav nav nav vol" "theme st viz ." !important; align-items: center !important; justify-items: start !important;
     gap: 6px 10px !important;
   }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .nav-cluster { grid-area: nav !important; }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel #themeBtn { grid-area: theme !important; }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .station-btn { grid-area: st !important; }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel #vizBtn { grid-area: viz !important; }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .fader {
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .nav-cluster { grid-area: nav !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel #themeBtn { grid-area: theme !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .station-btn { grid-area: st !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel #vizBtn { grid-area: viz !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .fader {
     grid-area: vol !important; justify-self: stretch !important; width: auto !important; max-width: none !important; min-width: 60px !important;
   }
 }
 
 /* Amp: saraksta loga apakšā "+" → attēla poga "Stacijas ›" (vienādi ar citiem skatiem) */
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl-foot .amp-sq[data-act="stations"] {
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"] {
   position: relative !important; overflow: hidden !important; width: 132px !important; height: 38px !important; padding: 0 36px 0 6px !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   border: 0 !important; outline: 2px solid #fff !important; outline-offset: -2px; border-radius: 999px !important;
   background: #2a1c12 url("../kalendars/data/radio-skins/stations-btn.webp") center / cover no-repeat !important;
   font-size: 0 !important; color: #fff !important; box-shadow: 0 4px 12px -4px rgba(0, 0, 0, .6) !important;
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl-foot .amp-sq[data-act="stations"]::after {
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]::after {
   content: "Stacijas"; font: 800 13px/1 var(--mk-font-plain, Inter, system-ui, sans-serif); color: #fff; text-shadow: 0 1px 5px rgba(0, 0, 0, .75);
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl-foot .amp-sq[data-act="stations"]::before {
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]::before {
   content: ""; position: absolute; right: 3px; top: 50%; width: 30px; height: 30px; transform: translateY(-50%); border-radius: 50%;
   background: #0b0b0d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E") center / 14px no-repeat;
 }
@@ -598,8 +598,8 @@ html body #radioWindow[data-radio-layout="dither"] .dth-shell .dth-btn[data-act=
 
 /* "Stacijas" poga radio stilā: attēls iekrāsots albuma krāsā, tonēta mala,
    tonēts aplis ar bultiņu, kas nepieskaras malai. (Pēdējais vārds šai pogai.) */
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn,
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) :is(.amp-eject, .amp-pl-foot .amp-sq)[data-act="stations"] {
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn,
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-eject, .amp-pl-foot .amp-sq)[data-act="stations"] {
   background:
     linear-gradient(90deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, .05) 60%),
     linear-gradient(color-mix(in srgb, var(--mk-st-tint, #64d2ff) 55%, transparent), color-mix(in srgb, var(--mk-st-tint, #64d2ff) 55%, transparent)),
@@ -609,50 +609,50 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="am
   outline: 2px solid color-mix(in srgb, var(--mk-st-tint, #64d2ff) 60%, #fff) !important; outline-offset: -2px !important;
   box-shadow: 0 4px 14px -6px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .2) !important;
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn {
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn {
   padding: 0 44px 0 10px !important;
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn::before,
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl-foot .amp-sq[data-act="stations"]::before {
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn::before,
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]::before {
   right: 7px !important; width: 30px !important; height: 30px !important;
   background-color: color-mix(in srgb, var(--mk-st-tint, #64d2ff) 55%, #0b0d12) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 1px 4px rgba(0, 0, 0, .35) !important;
 }
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl-foot .amp-sq[data-act="stations"]::before { width: 26px !important; height: 26px !important; right: 6px !important; }
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-eject[data-act="stations"]::before {
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]::before { width: 26px !important; height: 26px !important; right: 6px !important; }
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"]::before {
   background-color: color-mix(in srgb, var(--mk-st-tint, #64d2ff) 55%, #0b0d12) !important;
 }
 /* Jauns: pogas nepieskaras dziesmas tekstam — abas pogu rindas 40 px, teksts ar atstarpi */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .station-btn { height: 40px !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .station-btn::before { width: 28px !important; height: 28px !important; right: 6px !important; }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel #playBtn {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .station-btn { height: 40px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .station-btn::before { width: 28px !important; height: 28px !important; right: 6px !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel #playBtn {
     width: 48px !important; min-width: 48px !important; height: 40px !important; min-height: 40px !important; max-height: 40px !important; flex: 0 0 48px !important;
   }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .nav-btn { width: 36px !important; height: 36px !important; }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .nav-cluster { height: 40px !important; }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npArtist { font-size: 20px !important; }
-  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npRow .np-lines { margin-bottom: 8px !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .nav-btn { width: 36px !important; height: 36px !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .nav-cluster { height: 40px !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] #npArtist { font-size: 20px !important; }
+  html body #radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] #npRow .np-lines { margin-bottom: 8px !important; }
 }
 /* "Stacijas" uzraksts precīzi pogas vidū (aplis ar bultiņu ir absolūts, uzraksts to nesasniedz) */
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn,
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl-foot .amp-sq[data-act="stations"] {
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn,
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"] {
   padding: 0 10px !important; justify-content: center !important;
 }
 
 /* Raidītāja torņa ikona pa kreisi no uzraksta (pogas vidū kopā ar tekstu) */
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn svg.station-radio-svg {
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn svg.station-radio-svg {
   display: block !important; width: 19px !important; height: 19px !important; flex: 0 0 19px !important; margin: 0 7px 0 0 !important;
   color: #fff !important; filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .7));
 }
 /* Ikona + "Stacijas" vidū laukumā līdz aplim (ne pret visu pogu, citādi šķiet pabīdīts pa labi) */
-html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]):not(.music-source) .station-btn { padding: 0 42px 0 8px !important; }
-html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]:not(.music-source) .amp-pl-foot .amp-sq[data-act="stations"] { padding: 0 34px 0 6px !important; }
+html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"], [data-radio-layout="clean"], [data-radio-layout="pixel"]) .station-btn { padding: 0 42px 0 8px !important; }
+html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"] { padding: 0 34px 0 6px !important; }
 
 /* Jauns: labā kolonna — augšā Stacijas + izskats + vizualizācija (tur bija tukšs),
    vidū nosaukumi, apakšā atskaņošana un skaļums visā platumā. */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioApp {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] #radioApp {
     grid-template-areas:
       "cover . ."
       "cover monitor station"
@@ -660,26 +660,26 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="am
       "cover monitor ."
       "cover eq ." !important;
   }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel {
     grid-area: auto !important; grid-column: 3 !important; grid-row: 1 / 6 !important; align-self: stretch !important; height: auto !important;
     display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto auto auto !important; grid-template-rows: 42px minmax(0, 1fr) 44px !important;
     grid-template-areas: ". . theme st viz" ". . . . ." "nav vol vol vol vol" !important;
     gap: 0 8px !important; align-items: center !important; justify-items: start !important; pointer-events: none;
   }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel > * { pointer-events: auto; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .nav-cluster { grid-area: nav !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel #themeBtn { grid-area: theme !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .station-btn { grid-area: st !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel #vizBtn { grid-area: viz !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel .fader {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel > * { pointer-events: auto; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .nav-cluster { grid-area: nav !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel #themeBtn { grid-area: theme !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .station-btn { grid-area: st !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel #vizBtn { grid-area: viz !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel .fader {
     grid-area: vol !important; justify-self: stretch !important; width: auto !important; min-width: 60px !important; max-width: none !important; margin-left: 14px !important;
   }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #npRow .np-lines { margin-bottom: 0 !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] #npRow .np-lines { margin-bottom: 0 !important; }
 }
 /* Klasiskais: šaurāka pogu kolonna (atskaņošana / Stacijas + vizualizācija / skaļums
    EQ rindas augstumā) un teksts līdz 300 px — spektra logs krietni platāks. */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #radioApp {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] #radioApp {
     grid-template-columns: 224px fit-content(300px) minmax(0, 1fr) auto !important;
     grid-template-areas:
       "cover brand brand ."
@@ -689,41 +689,41 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="am
       "cover . monitor ctrl"
       "cover eq eq ctrl" !important;
   }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) :is(#curStation, #npRow .np-lines, #metaWrap) { max-width: 300px !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] :is(#curStation, #npRow .np-lines, #metaWrap) { max-width: 300px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] .control-panel {
     grid-area: ctrl !important; align-self: stretch !important; height: auto !important;
     display: grid !important; grid-template-columns: auto auto !important; grid-template-rows: minmax(0, 1fr) auto 30px !important;
     grid-template-areas: "nav nav" "st viz" "vol vol" !important; align-items: center !important; justify-items: center !important;
     gap: 8px 10px !important;
   }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel .nav-cluster { grid-area: nav !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel .station-btn { grid-area: st !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel #vizBtn { grid-area: viz !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) .control-panel #vol {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] .control-panel .nav-cluster { grid-area: nav !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] .control-panel .station-btn { grid-area: st !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] .control-panel #vizBtn { grid-area: viz !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] .control-panel #vol {
     grid-area: vol !important; justify-self: stretch !important; width: auto !important; max-width: none !important;
   }
 }
 /* Klasiskais: visi 11 EQ čipi ietilpst šaurākajā rindā (bez sānu ritināšanas) */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #eqRow { gap: 4px !important; overflow: visible !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"]:not(.music-source) #eqRow > .epb {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] #eqRow { gap: 4px !important; overflow: visible !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] #eqRow > .epb {
     min-width: 0 !important; padding: 0 6px !important; flex: 1 1 auto !important;
   }
 }
 /* Pixel un Jauns: visi EQ efekti redzami bez sānu ritināšanas — divās rindās */
 @media (min-width: 900px) {
-  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]):not(.music-source) #eqRow {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]) #eqRow {
     flex-wrap: wrap !important; overflow: visible !important; height: auto !important; gap: 4px !important;
     padding: 0 !important; margin: 0 !important; scrollbar-width: none; -webkit-mask-image: none !important; mask-image: none !important;
   }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]):not(.music-source) #eqRow > .epb {
+  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]) #eqRow > .epb {
     flex: 1 1 auto !important; min-width: 0 !important; height: 24px !important; min-height: 24px !important; padding: 0 8px !important;
   }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]):not(.music-source) #eqRow .epb-label { font-size: 10px !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]):not(.music-source) .eq-wrap { height: auto !important; align-self: end !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .bottom-console { grid-template-rows: auto auto minmax(0, 1fr) 26px 52px !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) #radioApp { grid-template-rows: 42px auto auto minmax(0, 1fr) 52px !important; }
-  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"]:not(.music-source) .control-panel { grid-template-rows: 42px minmax(0, 1fr) 52px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]) #eqRow .epb-label { font-size: 10px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="pixel"], [data-radio-layout="clean"]) .eq-wrap { height: auto !important; align-self: end !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pixel"] .bottom-console { grid-template-rows: auto auto minmax(0, 1fr) 26px 52px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] #radioApp { grid-template-rows: 42px auto auto minmax(0, 1fr) 52px !important; }
+  html body #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="clean"] .control-panel { grid-template-rows: 42px minmax(0, 1fr) 52px !important; }
 }
 
 /* RG Dither "STACIJAS": gaišs dither teksts uz tumšas pogas ar tintes rāmi (kā pārējās
@@ -740,16 +740,16 @@ html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-b
 html body #radioWindow#radioWindow[data-radio-layout="dither"] .dth-shell .dth-st-label { display: inline-block; line-height: 0; }
 
 /* cliamp termināļa spektri Pixel skatā: zīmē paši savus punktus – bez joslas fona un svītrām. */
-html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame {
+html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"] .monitor-frame {
   background: transparent !important;
   box-shadow: none !important;
 }
-html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame::before,
-html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame::after { display: none !important; }
-html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) .monitor-frame { border-radius: 0 !important; overflow: visible !important; }
+html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"] .monitor-frame::before,
+html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"] .monitor-frame::after { display: none !important; }
+html body.radio-viz-term #radioWindow#radioWindow[data-radio-layout="pixel"] .monitor-frame { border-radius: 0 !important; overflow: visible !important; }
 /* Pixel josla ir 26 px – termināļa spektram par zemu: tā aizņem arī tukšo rindu virs sevis (~49 px). */
 @media (min-width: 900px) {
-  html body.radio-viz-term #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pixel"]:not(.music-source) #radioApp > .monitor-frame {
+  html body.radio-viz-term #radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pixel"] #radioApp > .monitor-frame {
     grid-row: 3 / 5 !important; height: auto !important; min-height: 26px !important; align-self: stretch !important;
   }
 }

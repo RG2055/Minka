@@ -17,7 +17,7 @@
     dither: { fade: '.dth-info', rise: '.dth-art', play: '.dth-play' },
     other: { rise: '#curStation, #npCover, #npTitle, #npArtist', play: '#playBtn' }
   };
-  function parts() { return rw.classList.contains('music-source') ? null : PARTS[rw.dataset.radioLayout] || PARTS.other; }
+  function parts() { return PARTS[rw.dataset.radioLayout] || PARTS.other; }
   // Independent scale/translate properties: they add to each layout's own transform.
   // One radio animation per element: two at once on one target keep both off the compositor.
   function spring(el, frames, name, opts) {
@@ -76,10 +76,10 @@
     swap();
   });
 
-  /* Play / pause: the toggle's icon pops; a layout or source switch settles in. */
-  var was = { playing: rw.dataset.playback === 'playing', layout: rw.dataset.radioLayout, music: rw.classList.contains('music-source') };
+  /* Play / pause: the toggle's icon pops; a layout switch settles in. */
+  var was = { playing: rw.dataset.playback === 'playing', layout: rw.dataset.radioLayout };
   new MutationObserver(function () {
-    var now = { playing: rw.dataset.playback === 'playing', layout: rw.dataset.radioLayout, music: rw.classList.contains('music-source') };
+    var now = { playing: rw.dataset.playback === 'playing', layout: rw.dataset.radioLayout };
     var p = parts();
     if (p && now.playing !== was.playing) {
       Array.prototype.forEach.call(rw.querySelectorAll(p.play), function (b) {
@@ -91,7 +91,7 @@
         else spring(b, [{ scale: '.96' }, { scale: '1' }], 'spring-fast');
       });
     }
-    if (now.layout !== was.layout || now.music !== was.music) {
+    if (now.layout !== was.layout) {
       spring(rw, [{ scale: '.985' }, { scale: '1' }], 'spring-default');   // its opacity is pinned
     }
     was = now;

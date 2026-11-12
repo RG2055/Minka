@@ -26,6 +26,8 @@
  const norm=s=>String(s||'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('lv-LV');
  let rosterDate='',session=null,radio={favorites:[],settings:{},lastStation:''},generation=0,busy=false,queue=[],flushing=false,expiryTimer=0,selected=null,recovering=false,guestLook=null,loaded=false,editingFavorites=false,favoriteUndo=null;
  const $=id=>document.getElementById(id);
+ const hasAccount=new Map(),ACCOUNTS_KEY='minka:media-accounts:v1';
+ const ACCOUNT_MARK='<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#f00"/><path fill="#fff" d="M5.25 10.5h1.5v3h-1.5zM8.25 7.5h1.5v9h-1.5zM11.25 4.5h1.5v15h-1.5zM14.25 7.5h1.5v9h-1.5zM17.25 10.5h1.5v3h-1.5z"/></svg>';
  const dialog=document.createElement('dialog');dialog.id='mediaProfile';dialog.setAttribute('aria-labelledby','mediaProfileTitle');
  dialog.innerHTML=`<header><div class="media-identity"><span id="mediaProfileAvatar" hidden></span><div><small>TAVS KONTS</small><h2 id="mediaProfileTitle">Ielogoties</h2></div></div><button type="button" data-close aria-label="Aizvērt profilu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></header>
  <p id="mediaDate"></p><p id="mediaStatus" role="status" aria-live="polite"></p><div id="mediaContent"></div>
@@ -105,11 +107,14 @@
  }
  function status(text){$('mediaStatus').textContent=text;}
  function roster(){
-  let state=window.__minkaLastSelectedDayState;
-  try{state=$('calIframe')?.contentWindow?.__minkaGetSelectedDayState?.()||state;}catch(_){}
+  let state=window.__minkaLastSelectedDayState,all=null;
+  try{const cal=$('calIframe')?.contentWindow;state=cal?.__minkaGetSelectedDayState?.()||state;all=cal?.__minkaGetAllWorkers?.()||null;}catch(_){}
   // /rad: residents (left) and radiologists (right) both log in; RG keeps its own list.
-  const people=window.MINKA_APP==='rad'?[...(state?.rg||[]),...(state?.rd||[])]:(state?.rg||[]);
+  const rad=window.MINKA_APP==='rad',people=rad?[...(state?.rg||[]),...(state?.rd||[])]:(state?.rg||[]);
+  // Everyone on the schedule can sign in on any day: the selected day's people first, the rest by name.
   const map=new Map();for(const w of people)if(w?.name)map.set(norm(w.name),{name:String(w.name),shift:'Dežūra'});
+  const rest=(all?(rad?[...all.rg,...all.rd]:all.rg):[]).filter(name=>!map.has(norm(name))).sort((a,b)=>norm(a).localeCompare(norm(b),'lv'));
+  for(const name of rest)map.set(norm(name),{name,shift:''});
   if(!map.size)for(const name of window.__lacitisTodayWorkers?.()||[])map.set(norm(name),{name,shift:'Dežūra'});
   return {date:state?.activeDateStr||state?.date||state?.dateKey||state?.day||'',workers:[...map.values()]};
  }
@@ -268,22 +273,49 @@
   const footer=document.createElement('div');footer.className='media-account-actions';footer.append(button('Mainīt profilu',()=>logout()));const exit=button('Iziet',()=>{void logout();dialog.close();trigger.focus();});exit.prepend(icon('exit'));footer.append(exit);host.append(footer);list.scrollTop=scroll;
   if(focusLabel)host.querySelectorAll('button[aria-label]').forEach(b=>{if(b.getAttribute('aria-label')===focusLabel)b.focus({preventScroll:true});});
  }
+ // The sign-in list, the same as RG Music's: search, first names, emoji, a mark on people who already have
+ // an account (those come first), everyone visible at once.
+ function loadAccounts(){
+  try{const saved=JSON.parse(localStorage.getItem(ACCOUNTS_KEY)||'null');if(saved&&Array.isArray(saved.names)){for(const n of saved.names)hasAccount.set(n,true);return saved.at||0;}}catch(_){}
+  return 0;
+ }
  async function renderWorkers(){
-  setHeading(null);const gen=generation;selected=null;recovering=false;const {date,workers}=roster();rosterDate=date;$('mediaDate').textContent=date?'Izvēlētā diena '+date:'Izvēlētās dienas darbinieki';
-  const host=$('mediaContent');host.replaceChildren();status('Izvēlies savu vārdu. Kontā saglabājas radio, izskats un kartīšu izkārtojums. Viss strādā arī bez ielogošanās.');
-  if(!workers.length){status('Izvēlies kalendārā dienu ar darbiniekiem.');return;}
-  const grid=document.createElement('div');grid.className='media-workers';host.append(grid);
-  for(const worker of workers){
-   const b=button('',async()=>{
-    if(busy)return;busy=true;b.disabled=true;status('Pārbauda profilu…');
-    $('mediaRecoveryCode').textContent='';$('mediaRecoveryNotice').hidden=true;
-    try{const data=await api('pin-status',{name:worker.name},null);if(gen!==generation||session)return;selected={...worker,...data};renderPin();}
-    catch(e){status(e.message);}finally{busy=false;b.disabled=false;}
-   });
-   const picture=avatar(worker.name);
-   const copy=document.createElement('span');copy.className='media-worker-copy';const first=document.createElement('strong'),last=document.createElement('small');const parts=pretty(worker.name).split(' ');first.textContent=parts.shift();last.textContent=parts.join(' ');copy.append(first,last);
-   b.append(picture,copy);b.setAttribute('aria-label',pretty(worker.name));grid.append(b);
-  }
+  setHeading(null);const gen=generation;selected=null;recovering=false;const {date,workers}=roster();rosterDate=date;$('mediaDate').textContent='';
+  const host=$('mediaContent');host.replaceChildren();status('Izvēlies sevi. Kontā saglabājas radio, izskats un kartīšu izkārtojums. Viss strādā arī bez ielogošanās.');
+  if(!workers.length){status('Grafiks vēl ielādējas. Pamēģini pēc brīža.');return;}
+  const find=document.createElement('input');find.type='search';find.className='media-find';find.placeholder='Meklēt vārdu…';find.autocomplete='off';find.setAttribute('aria-label','Meklēt vārdu');
+  const grid=document.createElement('div');grid.className='media-workers';host.append(find,grid);
+  // the first name; where two people share it, also the initial of the next name
+  const firsts=new Map();for(const w of workers){const f=pretty(w.name).split(' ')[0];firsts.set(f,(firsts.get(f)||0)+1);}
+  const short=name=>{const w=pretty(name).split(' ');return firsts.get(w[0])>1&&w[1]?w[0]+' '+w[1][0]+'.':w[0];};
+  const draw=()=>{
+   const q=norm(find.value);grid.replaceChildren();
+   const list=workers.filter(w=>!q||norm(w.name).includes(q)).sort((x,y)=>(hasAccount.get(norm(y.name))===true)-(hasAccount.get(norm(x.name))===true)||norm(x.name).localeCompare(norm(y.name),'lv'));
+   for(const worker of list){
+    const b=button('',async()=>{
+     if(busy)return;busy=true;b.disabled=true;status('Pārbauda profilu…');
+     $('mediaRecoveryCode').textContent='';$('mediaRecoveryNotice').hidden=true;
+     try{const data=await api('pin-status',{name:worker.name},null);if(gen!==generation||session)return;selected={...worker,...data};renderPin();}
+     catch(e){status(e.message);}finally{busy=false;b.disabled=false;}
+    });
+    let emoji='';try{emoji=$('calIframe')?.contentWindow?.MinkaEmoji?.get(worker.name)||'';}catch(_){}
+    const picture=document.createElement('span');picture.className='media-worker-avatar has-emoji';picture.textContent=emoji||'👤';
+    const name=document.createElement('span');name.className='media-worker-name';name.textContent=short(worker.name);
+    b.append(picture,name);b.setAttribute('aria-label',pretty(worker.name));
+    if(hasAccount.get(norm(worker.name))===true){const m=document.createElement('span');m.className='media-worker-mark';m.title='Ir konts';m.innerHTML=ACCOUNT_MARK;b.append(m);}
+    grid.append(b);
+   }
+  };
+  find.addEventListener('input',draw);
+  find.addEventListener('keydown',e=>{if(e.key==='Enter'&&grid.children.length===1){e.preventDefault();grid.firstChild.click();}});
+  const fresh=Date.now()-loadAccounts()<600000;draw();
+  if(fresh)return;
+  // who has an account: asked from the profile server, kept on this device so the next opening shows it at once
+  const answers=await Promise.all(workers.map(w=>api('pin-status',{name:w.name},null).then(d=>!!d.hasPin,()=>null)));
+  if(answers.every(x=>x===null))return;
+  workers.forEach((w,i)=>{if(answers[i]!==null)hasAccount.set(norm(w.name),answers[i]);});
+  try{localStorage.setItem(ACCOUNTS_KEY,JSON.stringify({at:Date.now(),names:[...hasAccount].filter(([,v])=>v===true).map(([k])=>k)}));}catch(_){}
+  if(gen===generation&&!session&&!selected&&grid.isConnected)draw();
  }
  function renderPin(){
   const host=$('mediaContent');host.replaceChildren();const h=document.createElement('h3');h.className='media-person-heading';h.append(avatar(selected.name),document.createTextNode(pretty(selected.name)));host.append(h);
@@ -323,7 +355,7 @@
  }
  let tour=null,tourGeneration=0,tourObserver=null;
  function endTour(){tourGeneration++;tourObserver?.disconnect();tourObserver=null;const old=tour;tour=null;old?.destroy();}
- function radioVisible(){return !document.hidden&&!document.body.classList.contains('radio-hidden')&&!document.body.classList.contains('radio-idle')&&!$('radioWindow')?.classList.contains('music-source');}
+ function radioVisible(){return !document.hidden&&!document.body.classList.contains('radio-hidden')&&!document.body.classList.contains('radio-idle');}
  async function startTour(){
   if(!session)return;endTour();hideLoginHint();$('radioSourceBroadcast')?.click();const gen=tourGeneration;
   try{
@@ -385,7 +417,8 @@
   window.__minkaLastSelectedDayState=e.data.payload;
   if(session&&!checkSessionDeadline())return;
   const r=roster();
-  const selectionChanged=(rosterDate&&r.date!==rosterDate)||(selected&&!r.workers.some(w=>norm(w.name)===norm(selected.name)));
+  // another day no longer interrupts a PIN entry: the list has everyone, only its order follows the day
+  const selectionChanged=selected&&!r.workers.some(w=>norm(w.name)===norm(selected.name));
   if(selectionChanged&&!session){generation++;busy=false;selected=null;}rosterDate=r.date;
   if(!session&&dialog.open&&!busy&&!selected)void renderWorkers();
  });

@@ -118,7 +118,7 @@
  // ---------- build ----------
  function build(rw){
   if(built)return;built=true;
-  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-amp-layout.css"]')?.href||'css/radio-amp-layout.css?v=20261109rm1';css.onload=()=>window.syncShellLayout?.();document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-amp-layout.css"]')?.href||'css/radio-amp-layout.css?v=20261112nw1';css.onload=()=>window.syncShellLayout?.();document.head.append(css);
   shell=document.createElement('div');shell.className='amp-shell';
   shell.innerHTML=`
    <section class="amp-pane amp-main" aria-label="Atskaņotājs">
@@ -270,7 +270,7 @@
   const rw=document.getElementById('radioWindow');
   // the music player parks #radioSourceBar at the window top when it closes
   const bar=document.getElementById('radioSourceBar'),mainPane=$('.amp-main');
-  if(bar&&mainPane&&!rw.classList.contains('music-source')&&bar.parentElement!==mainPane)mainPane.append(bar);
+  if(bar&&mainPane&&bar.parentElement!==mainPane)mainPane.append(bar);
   const state=rw.dataset.playback||'';
   const audio=window.__ampAudio;
   const playing=state==='playing'||(state==='loading'&&audio&&!audio.paused);

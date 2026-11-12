@@ -35,7 +35,7 @@ http.createServer(async(req,res)=>{
  if(url.pathname==='/api/news'&&req.method==='GET'){if(!newsMemo||Date.now()-newsMemo.at>600000){const n=await collectNews(fetch);if(n.items.length||!newsMemo)newsMemo={...n,ok:n.items.length>0};}json(res,newsMemo);return;}
  if(!['GET','HEAD'].includes(req.method)){json(res,{},405);return;}
  const decoded=decodeURIComponent(url.pathname);
- if(decoded==='/sw.js'||decoded.split('/').some(s=>s.startsWith('.'))||(/^\/(scripts|cloudflare|integrations)\//.test(decoded)&&!decoded.startsWith('/integrations/webamp/player/'))){json(res,{},404);return;}
+ if(decoded==='/sw.js'||decoded.split('/').some(s=>s.startsWith('.'))||(/^\/(scripts|cloudflare|integrations)\//.test(decoded))){json(res,{},404);return;}
  let target=await realpath(path.join(root,decoded));if(target!==root&&!target.startsWith(root+path.sep)){json(res,{},403);return;}
  let info=await stat(target);if(info.isDirectory()){target=await realpath(path.join(target,'index.html'));info=await stat(target);}
  if(!target.startsWith(root+path.sep)||!info.isFile()){json(res,{},403);return;}

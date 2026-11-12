@@ -5,19 +5,18 @@
    gradients coloured by --dth-ink-rgb (the album colour): no images, no
    filters, no blur. 50% = repeating-conic checker, 25% = one conic dot per 2×2. */
 .dth-shell{display:none}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source){
+html body #radioWindow[data-radio-layout="dither"]{
  min-width:0!important;width:100%!important;max-width:none!important;left:0!important;right:0!important;transform:none!important;
  height:auto!important;min-height:0!important;padding:0!important;margin:0!important;
  border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important
 }
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source)::before{display:none!important}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .radio-win-body{
+html body #radioWindow[data-radio-layout="dither"]::before{display:none!important}
+html body #radioWindow[data-radio-layout="dither"] .radio-win-body{
  position:absolute!important;left:0;top:0;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;padding:0!important;margin:0!important
 }
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .radio-drag-strip{position:absolute!important;left:50%;top:0;transform:translateX(-50%);width:min(1140px,100%);height:14px!important;z-index:5;cursor:grab;background:transparent!important;border:0!important}
-html body #radioWindow[data-radio-layout="dither"].music-source .dth-shell{display:none!important}
+html body #radioWindow[data-radio-layout="dither"] .radio-drag-strip{position:absolute!important;left:50%;top:0;transform:translateX(-50%);width:min(1140px,100%);height:14px!important;z-index:5;cursor:grab;background:transparent!important;border:0!important}
 
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .dth-shell{
+html body #radioWindow[data-radio-layout="dither"] .dth-shell{
  --dth-ink-rgb:120,220,200;--dth-ink:rgb(var(--dth-ink-rgb));
  --dth-paper:#050505;--dth-deck:#0b0b0b;--dth-raise:#141414;
  --dth-text:#f6f5ef;--dth-dim:#cfcec6;--dth-grey:rgba(255,255,255,.34);
@@ -53,22 +52,22 @@ html body #radioWindow[data-radio-layout="dither"]:not(.music-source) .dth-shell
 .dth-brand{display:inline-flex;align-items:center;color:var(--dth-text);white-space:nowrap;letter-spacing:0}
 .dth-rule{flex:1 1 auto;min-width:20px;height:2px;background:repeating-conic-gradient(var(--dth-grey) 0 25%,transparent 0 50%) 0 0/2px 2px}
 .dth-src,.dth-tools{display:inline-flex;align-items:center;gap:4px}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar{
+html body #radioWindow[data-radio-layout="dither"] #radioSourceBar{
  position:static!important;height:26px!important;max-width:none!important;padding:0!important;gap:4px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important;display:flex!important;align-items:center!important
 }
 /* engine buttons on the deck: text hidden (font-size 0), dithered label shown */
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar button{
+html body #radioWindow[data-radio-layout="dither"] #radioSourceBar button{
  height:26px!important;min-height:26px!important;padding:0 9px!important;border:2px solid transparent!important;border-radius:3px!important;
  background:linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important;
  color:var(--dth-dim)!important;box-shadow:none!important;gap:6px!important;display:inline-flex!important;align-items:center!important;font-size:0!important;letter-spacing:0!important}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar button:hover{color:var(--dth-text)!important;background:var(--dth-dots) padding-box,linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar button[aria-pressed="true"]{color:#050505!important;background:linear-gradient(var(--dth-ink),var(--dth-ink)) padding-box,var(--dth-frame-ink)!important}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar button>span:not(.dth-dt-wrap){display:none!important}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar [hidden]{display:none!important}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar svg{width:13px!important;height:13px!important}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceBar .dth-dt-wrap{display:inline-flex;align-items:center}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #radioSourceStatus{display:none!important}
-html body #radioWindow[data-radio-layout="dither"]:not(.music-source) #mediaAuthSeg{display:inline-flex!important;gap:4px!important;background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}
+html body #radioWindow[data-radio-layout="dither"] #radioSourceBar button:hover{color:var(--dth-text)!important;background:var(--dth-dots) padding-box,linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important}
+html body #radioWindow[data-radio-layout="dither"] #radioSourceBar button[aria-pressed="true"]{color:#050505!important;background:linear-gradient(var(--dth-ink),var(--dth-ink)) padding-box,var(--dth-frame-ink)!important}
+html body #radioWindow[data-radio-layout="dither"] #radioSourceBar button>span:not(.dth-dt-wrap){display:none!important}
+html body #radioWindow[data-radio-layout="dither"] #radioSourceBar [hidden]{display:none!important}
+html body #radioWindow[data-radio-layout="dither"] #radioSourceBar svg{width:13px!important;height:13px!important}
+html body #radioWindow[data-radio-layout="dither"] #radioSourceBar .dth-dt-wrap{display:inline-flex;align-items:center}
+html body #radioWindow[data-radio-layout="dither"] #radioSourceStatus{display:none!important}
+html body #radioWindow[data-radio-layout="dither"] #mediaAuthSeg{display:inline-flex!important;gap:4px!important;background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important}
 html body #radioWindow[data-radio-layout="dither"] .dth-tools #themeBtn{width:30px!important;height:26px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:2px solid transparent!important;border-radius:3px!important;
  background:linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important;box-shadow:none!important;color:var(--dth-text)!important;position:static!important;display:inline-flex!important;align-items:center;justify-content:center}
 html body #radioWindow[data-radio-layout="dither"] .dth-tools #themeBtn:hover{background:var(--dth-dots) padding-box,linear-gradient(var(--dth-paper),var(--dth-paper)) padding-box,var(--dth-frame)!important}

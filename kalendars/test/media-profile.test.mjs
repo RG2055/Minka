@@ -18,7 +18,7 @@ function harness({storage=memory(),fetchHandler,restored=true,now=Date.now(),sav
  }
  const body=new Element(),brand=new Element();for(const id of ['radioSourceBar','calIframe']){const e=new Element();e.id=id;}
  let state={activeDateStr:'08.09.2026',rg:[{name:'Alpha Test'}],rd:[{name:'Radiologist Only'}]};
- elements.get('calIframe').contentWindow={__minkaGetSelectedDayState:()=>state,MinkaEmoji:{get:()=> '🐈'}};
+ elements.get('calIframe').contentWindow={__minkaGetSelectedDayState:()=>state,__minkaGetAllWorkers:()=>({rg:['Zeta Test','Alpha Test','Beta Test'],rd:['Radiologist Only']}),MinkaEmoji:{get:()=> '🐈'}};
  const ss=memory(),saved={workerId:'alpha',name:'Alpha Test',sessionToken:'a'.repeat(64),expiresAt:clock+3600000,...savedPatch};if(restored)ss.setItem('minka:media-session:v2',JSON.stringify(saved));
  const document={body,hidden:false,addEventListener:(name,fn)=>{(documentEvents[name]||=[]).push(fn);},createElement:t=>new Element(t),createTextNode:text=>({textContent:text}),getElementById:id=>elements.get(id),querySelector:s=>s==='#radioWindow .brand-text'?brand:null,dispatchEvent(){}};
  const window={rgStations:{startFavorite(ids){if(!stationsReady)return false;started.push([...ids]);return true;}},addEventListener:(name,fn)=>{(events[name]||=[]).push(fn);},rgTheme:{snapshot:()=>({theme:'Guest'}),captureGuest:()=>({theme:'Guest'}),restoreGuest:v=>applied.push(v),applyProfile:v=>applied.push(v)},__minkaLastSelectedDayState:state};
@@ -30,8 +30,8 @@ function harness({storage=memory(),fetchHandler,restored=true,now=Date.now(),sav
  vm.runInContext(code.replace('window.__mkUnifiedMedia={','window.__testAdopt=adopt;window.__mkUnifiedMedia={'),c);
  return {started,signIn:()=>window.__testAdopt(saved,true),stationsReady(){stationsReady=true;for(const fn of events['rg-stations-ready']||[])fn();},api:window.__mkUnifiedMedia,c,elements,applied,requests,storage,sessionStorage:ss,brand,advance(ms,runTimers=false){clock+=ms;if(runTimers)for(const [id,t] of [...timers])if(t.at<=clock){timers.delete(id);t.fn();}},wake(event='visibilitychange'){for(const fn of (event==='visibilitychange'?documentEvents:events)[event]||[])fn();},setState(next){state=next;window.__minkaLastSelectedDayState=next;for(const fn of events.message||[])fn({origin:'http://127.0.0.1:8012',source:elements.get('calIframe').contentWindow,data:{type:'minka-calendar-selected-day-state',payload:next}});},online(){for(const fn of events.online||[])fn();}};
 }
-test('guest stays passive; roster includes only selected radiographers',async()=>{
- const h=harness({restored:false});await tick();assert.equal(h.requests.length,0);assert.deepEqual(Array.from(h.api.roster().workers,x=>x.name),['Alpha Test']);assert.equal(h.api.getSession(),null);assert.equal(h.api.roster().date,'08.09.2026');
+test('guest stays passive; roster lists every radiographer, the selected day first',async()=>{
+ const h=harness({restored:false});await tick();assert.equal(h.requests.length,0);assert.deepEqual(Array.from(h.api.roster().workers,x=>x.name),['Alpha Test','Beta Test','Zeta Test']);assert.equal(h.api.getSession(),null);assert.equal(h.api.roster().date,'08.09.2026');
 });
 test('late profile load after logout cannot apply the old appearance or favorites',async()=>{
  const load=deferred(),h=harness({fetchHandler:path=>path==='radio/load'?load.promise:undefined});await tick();assert.equal(h.api.getSession().workerId,'alpha');await h.api.logout(false);
@@ -107,16 +107,16 @@ test('a profile with no favorites leaves the current station alone',async()=>{
  const h=harness({restored:false,fetchHandler:path=>path==='radio/load'?{data:{favorites:[],settings:{},lastStation:''}}:undefined});await h.signIn();assert.equal(h.started.length,0);
 });
 
-test('calendar refresh preserves PIN entry until the day or selected worker changes',()=>{
+test('calendar refresh preserves PIN entry until the selected worker leaves the list',()=>{
  const start=code.indexOf(" window.addEventListener('message',e=>{"),end=code.indexOf(' window.__mkUnifiedMedia=',start);
  let listener,renders=0;const frame={contentWindow:{}};
  const c=vm.createContext({window:{addEventListener:(name,fn)=>listener=fn},location:{origin:'http://localhost'},$:()=>frame,session:null,selected:{name:'Alpha Test'},rosterDate:'08.09.2026',generation:0,busy:false,dialog:{open:true},norm:s=>s.toLowerCase(),roster:()=>c.window.__minkaLastSelectedDayState,renderWorkers(){renders++;},status(){},emit(){}});
  vm.runInContext(code.slice(start,end),c);
  const refresh=(date,workers=[{name:'Alpha Test'}])=>listener({origin:'http://localhost',source:frame.contentWindow,data:{type:'minka-calendar-selected-day-state',payload:{date,workers}}});
  refresh('08.09.2026');assert.equal(renders,0);assert.equal(c.selected.name,'Alpha Test');assert.equal(c.generation,0);
- refresh('09.09.2026');assert.equal(renders,1);assert.equal(c.selected,null);assert.equal(c.generation,1);
- c.selected={name:'Alpha Test'};c.busy=true;
- refresh('09.09.2026',[{name:'Beta Test'}]);assert.equal(renders,2);assert.equal(c.selected,null);assert.equal(c.generation,2);assert.equal(c.busy,false);
+ refresh('09.09.2026');assert.equal(renders,0);assert.equal(c.selected.name,'Alpha Test');assert.equal(c.generation,0);
+ c.busy=true;
+ refresh('09.09.2026',[{name:'Beta Test'}]);assert.equal(renders,1);assert.equal(c.selected,null);assert.equal(c.generation,1);assert.equal(c.busy,false);
 });
 
 test('local preview restores unsupported layout fields per account after server save and reauthentication',async()=>{
