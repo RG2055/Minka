@@ -1,7 +1,7 @@
 /* Compact version of the supplied duty-summary reference. No animated paint
    or backdrop blur; use the existing panorama, live data and person links. */
 @layer minka-duty-summary {
-  :root:not(.mk-mobile-shell) #minkaBarWrap { --mk-duty-summary-height: 108px; }
+  :root:not(.mk-mobile-shell) #minkaBarWrap { --mk-duty-summary-height: 87px; }
   :root:not(.mk-mobile-shell) #minkaBarWrap :is(#mkDutyWingLayer, #minkaBar, #minkaBarInner) {
     height: var(--mk-duty-summary-height) !important;
     min-height: var(--mk-duty-summary-height) !important;

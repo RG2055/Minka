@@ -138,15 +138,14 @@
       +       '<span class="hx-rel" aria-live="polite"></span>'
       +       '<button type="button" class="hx-today" hidden title="Atpakaļ uz šodienu (T)">' + icon('undo') + '<span>Šodien</span></button>'
       +     '</div>'
-      +     '<div class="hx-line hx-line-wd"><span class="hx-date-wd"></span><span class="hx-bday-slot"></span></div>'
-      +     '<div class="hx-line hx-namedays" title="Vārdadienas">' + icon('tag') + '<span class="hx-nameday-slot"></span></div>'
-      +     '<div class="hx-line hx-dayfact-slot"></div>'
+      +     '<div class="hx-line hx-line-wd"><span class="hx-date-wd"></span><span class="hx-dayfact-slot"></span></div>'
+      +     '<div class="hx-line hx-namedays" title="Vārdadienas">' + icon('tag') + '<span class="hx-nameday-slot"></span><span class="hx-bday-slot"></span></div>'
       +   '</div>'
       +   '<div class="hx-side">'
       +     '<div class="hx-row hx-row-tools">'
       +       '<div class="hx-searchbox">'
       +         '<button type="button" class="hx-search" aria-haspopup="dialog" aria-expanded="false" aria-keyshortcuts="Control+K Meta+K /">'
-      +           icon('search') + '<span class="hx-search-ph">Meklēt datumu vai numuru</span>'
+      +           icon('search') + '<span class="hx-search-ph">Meklēt RG…</span>'
       +           '<kbd class="hx-kbd">' + (isMac ? '⌘' : 'Ctrl') + ' K</kbd></button>'
       +         '<span class="hx-searchbox-sep" aria-hidden="true"></span>'
       +         '<button type="button" class="hx-tools" data-menu="tools" aria-haspopup="menu" aria-expanded="false" title="Tālruņi, maiņu joslas, nakts sadalījums, izskats">'
@@ -254,7 +253,8 @@
     var bday = $('mkBdayBadge'), nd = $('mkNamedayBar'), dc = $('mkDayChip');
     // A birthday more than two weeks away is not news in the header.
     els.bdaySlot.hidden = !bday || bday.style.display === 'none' || !bday.classList.contains('has-up') || bday.classList.contains('is-far');
-    els.namedaySlot.parentElement.hidden = !nd || !nd.textContent.trim() || nd.hidden;
+    // the birthday chip stands after the name days, so their line stays while either has something to say
+    els.namedaySlot.parentElement.hidden = (!nd || !nd.textContent.trim() || nd.hidden) && els.bdaySlot.hidden;
     els.dayfactSlot.hidden = !dc || dc.hidden || !dc.textContent.trim();
   }
 

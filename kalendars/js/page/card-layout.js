@@ -5,7 +5,7 @@
    the radio open there is no mood card: its Cover Flow has its own carousel/grid button.
    Whatever is picked shows on the page at once (the page itself is the preview); Atcelt brings
    the last one back. Saglabāt keeps it on this computer until the next handover (08:00), so the
-   following shift starts with the default corridor again; "Manam kontam" also keeps it for the
+   following shift starts with the default (flat) view again; "Manam kontam" also keeps it for the
    person logged in (the one shared account, js/media-profile.js), back whenever they log in.
    corridor.js lays the cards out from window.MkCardLayout. */
 (function () {
@@ -20,14 +20,14 @@
   // px; rows: exactly that many rows per wall; tilt: cards leaning back; mood false: no mood card;
   // moodScale: its size; angle null: the usual grid
   var LAYOUTS = [
-    { id: 'koridors', name: 'Telpa', note: 'Kartītes uz sienām telpā ap noskaņu (noklusējums)', angle: 22 },
-    { id: 'galerija', name: 'Plakans', note: 'Sienas taisni pret tevi', angle: 0 },
+    { id: 'koridors', name: 'Telpa', note: 'Kartītes uz sienām telpā ap noskaņu', angle: 22 },
+    { id: 'galerija', name: 'Plakans', note: 'Sienas taisni pret tevi (noklusējums)', angle: 0 },
     { id: 'fotografijas', name: 'Kolāža', note: 'Kartītes kā fotogrāfijas uz galda', angle: 0, scatter: true },
     { id: 'fokuss', name: 'Kartītes', note: 'Tikai kartītes, lielākas, bez noskaņas', angle: 12, mood: false, max: 280 },
     { id: 'rezgis', name: 'Režģis', note: 'Visi vienā tīklā, noskaņa sānā', angle: null },
     { id: 'lielas', name: 'Lielās', note: 'Visas kartītes lielas rindās, bez noskaņas', angle: null, carousel: true, flat: true, mood: false }
   ];
-  var DEFAULT = 'koridors', KEY = 'mkCardLayout:';
+  var DEFAULT = 'galerija', KEY = 'mkCardLayout:';
   // what stands in the middle (art: a one-ink mask in kalendars/assets, drawn in the mood's colour)
   // In the mood's place: dithercn's moving examples (js/page/mk-dither.js), each in the mood's colour
   // with its face and the same rating row; the cat with the sword on the same engine; two games.
