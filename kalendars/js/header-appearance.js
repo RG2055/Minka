@@ -120,7 +120,7 @@
     const header = doc.getElementById('minkaBarWrap');
     if (!header) return;
     let dialog, opener, saveOK = true, radioObserver, radioBodyObserver, radioNode, scheduled = false;
-    const imageColors = new Map(), boundImages = new WeakSet(), numberValues = new WeakMap();
+    const imageColors = new Map(), imageVivid = new Map(), boundImages = new WeakSet(), numberValues = new WeakMap();
     const reduced = host.matchMedia('(prefers-reduced-motion: reduce)');
     const modest = !!host.__mkPerfProfile?.lowSpec || (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4) ||
       (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4);
@@ -140,7 +140,7 @@
       if (img?.complete && img.naturalWidth && !imageColors.has(src)) {
         imageColors.set(src, null);
         host.MinkaImagePalette?.extract(img).then(result => {
-          if (result) { imageColors.set(src, mix(result.dominant, '#ffffff', .25)); schedule(); }
+          if (result) { imageColors.set(src, mix(result.dominant, '#ffffff', .25)); imageVivid.set(src, result.accent); schedule(); }
         });
       }
       const period = header.querySelector('#minkaBarInner')?.dataset.headerPeriod || root.dataset.minkaHeaderPeriod || header.dataset.weatherPeriod;
@@ -194,6 +194,10 @@
       root.dataset.headerColorSource = effective.source;
       lastDockAccent = effective.seed;
       const p = palette(effective.seed);
+      // The header's text roles (css/page/mk-header-x.css, --hxm-*) are mixed from the colour itself, not from
+      // the pale glass tints: the picture's most vivid swatch for a scene, else the seed of the palette or album.
+      const sceneImg = header.querySelector('.mk-header-scenic-img');
+      p.vivid = (effective.source === 'palette' && state.palette === 'scene' && imageVivid.get(sceneImg?.currentSrc || sceneImg?.src)) || effective.seed;
       // "Akcents" icon colour in the bottom bar follows the header palette.
       try { if (host.parent !== host) host.parent.document.documentElement.style.setProperty('--dock-accent', effective.seed); } catch (_) {}
       [header, dialog].filter(Boolean).forEach(node => {

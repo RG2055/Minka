@@ -823,3 +823,41 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
   width: calc(round(down, (100cqw * var(--mk-side-z, 1) - 23 * var(--mk-tick-gap)) / 24, var(--mk-dpx, 1px)) / var(--mk-side-z, 1)) !important;
 }
 
+
+/* "Nākamā maiņa" head: the full title on the left, two small counts (on duty, at night) on the right,
+   the crew under them. The counts are icon + number so that both always fit beside the title. */
+.mk-next-shift-summary > * { display: inline-flex !important; align-items: center !important; gap: 4px !important; }
+/* The side panel's line icons (calendar.js mkLineIcon): the header's drawing style, coloured by the text around them. */
+.mk-line-ic { display: inline-block; flex: none; width: 1.1em; height: 1.1em; vertical-align: -.17em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mk-next-shift-summary .mk-line-ic { width: 14px; height: 14px; }
+.mk-next-person-copy small .mk-line-ic { margin-left: 3px; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-next-container, #radiologists-next-container).mk-next-shift-card {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px 8px !important;
+}
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-next-container, #radiologists-next-container).mk-next-shift-card > .mk-next-shift-head {
+  order: 1 !important;
+  flex: 0 0 auto !important;
+  gap: 6px !important;
+}
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-next-container, #radiologists-next-container).mk-next-shift-card > .mk-next-shift-head .next-box-label {
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-next-container, #radiologists-next-container).mk-next-shift-card > .mk-next-shift-foot {
+  order: 2 !important;
+  flex: 0 0 auto !important;
+  margin-left: auto !important;
+}
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-next-container, #radiologists-next-container).mk-next-shift-card > .mk-next-shift-foot .mk-next-shift-summary {
+  gap: 9px !important;
+  font: 700 11px/1.1 Inter, system-ui, sans-serif !important;
+  font-variant-numeric: tabular-nums !important;
+}
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-next-container, #radiologists-next-container).mk-next-shift-card > .mk-next-shift-crew {
+  order: 3 !important;
+  flex: 1 0 100% !important;
+}

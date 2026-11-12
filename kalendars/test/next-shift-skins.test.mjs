@@ -96,8 +96,8 @@ test('next-shift rendering resolves full names without joining today-only worker
  const crew=[{name:'AIJA ONE',shift:12},{name:'AIJA TWO',shift:24}],cards=crew.map(w=>card(w.name)),calls=[];
  const target={classList:{remove(){},add(){}},querySelectorAll:()=>cards};
  const c=vm.createContext({document:{getElementById:()=>null},window:{mkGetWorkerSkin:name=>({owner:name}),mkApplySkinToEl:(el,skin)=>calls.push([el.name,skin.owner])},
- isValidShift:()=>true,getDutyShiftType:()=>'',getDutyShiftHours:w=>w.shift,formatSideNamePart:s=>s,mkEscAttr:s=>s,getSidePersonEmoji:()=>''});
+ isValidShift:()=>true,getDutyShiftType:()=>'',getDutyShiftHours:w=>w.shift,formatSideNamePart:s=>s,mkEscAttr:s=>s,getSidePersonEmoji:()=>'',mkLineIcon:name=>'<svg data-icon="'+name+'"></svg>'});
  vm.runInContext(js.slice(js.indexOf('  function renderNextShiftCard('),js.indexOf('  const SIDE_MONTH_SHORT')),c);
  c.renderNextShiftCard(target,'summary',crew);assert.deepEqual(calls,[['AIJA ONE','AIJA ONE'],['AIJA TWO','AIJA TWO']]);
- assert.match(target.innerHTML,/data-next-worker="AIJA ONE"/);assert.doesNotMatch(target.innerHTML,/data-worker=/);
+ assert.match(target.innerHTML,/data-next-worker="AIJA ONE"/);assert.match(target.innerHTML,/12H<svg data-icon="sun">/,'the shift mark is the shared line icon, not an emoji');assert.doesNotMatch(target.innerHTML,/data-worker=/);
 });

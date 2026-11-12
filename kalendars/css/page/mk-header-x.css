@@ -1538,3 +1538,70 @@
   :root.mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row :is(.arrow, #minkaBarMenu):active { scale: .96 !important; }
 }
 }
+
+/* ── M3 Expressive: colour roles, type and shape (2026-11) ───────────────────
+   The header had one text colour (white with a halo); only the chips followed the palette. Now the words
+   take M3-style roles from the palette's own colour (--hs-vivid, set by js/header-appearance.js: the picture's
+   most vivid swatch, or the seed of a chosen palette or the radio album), so they change colour with the picture too. Every role is mixed into the zone's own text colour
+   (--hx-text: white or dark, by the tone measured under it), so the legibility rules above still decide
+   light or dark. Chips keep their glass. No filters, nothing loops: a shape change is a one-off transition. */
+#hxTop :is(.hx-wing, .hx-center) {
+  --hxm-primary: color-mix(in oklab, var(--hs-vivid, var(--hx-accent)) 62%, var(--hx-text));   /* the emphasised words */
+  --hxm-variant: color-mix(in oklab, var(--hs-vivid, var(--hx-accent)) 26%, var(--hx-text));   /* supporting text */
+  --hxm-on-surface: color-mix(in oklab, var(--hxm-primary) 12%, var(--hx-text));              /* body text */
+  --hxm-on-primary: #071210;                                                                  /* text on a filled chip */
+}
+/* Where the browser can take a colour apart: the seed's own hue at an M3 tone that reads on the picture
+   (light on dark zones, dark on light ones). A grey picture stays grey: its colourfulness is only
+   lifted a little and capped, never invented. */
+@supports (color: oklch(from red l c h)) {
+  #hxTop :is(.hx-wing, .hx-center) {
+    --hxm-primary: oklch(from var(--hs-vivid, var(--hx-accent)) 0.87 min(calc(c * 1.5), 0.12) h);
+    --hxm-variant: oklch(from var(--hs-vivid, var(--hx-accent)) 0.92 min(calc(c * 0.6), 0.05) h);
+  }
+  #hxTop[data-tone-l="light"] .hx-wing-rg,
+  #hxTop[data-tone-c="light"] .hx-center,
+  #hxTop[data-tone-r="light"] .hx-wing-rd {
+    --hxm-primary: oklch(from var(--hs-vivid, var(--hx-accent)) 0.36 min(calc(c * 1.5), 0.11) h);
+    --hxm-variant: oklch(from var(--hs-vivid, var(--hx-accent)) 0.3 min(calc(c * 0.6), 0.05) h);
+  }
+}
+#hxTop[data-tone-l="light"] .hx-wing-rg,
+#hxTop[data-tone-c="light"] .hx-center,
+#hxTop[data-tone-r="light"] .hx-wing-rd { --hxm-on-primary: #ffffff; }
+
+/* type: one emphasised display line (the date) in the primary role, titles a step heavier, small labels in the quiet tint */
+.hx-date-num { font-weight: 800; letter-spacing: -.032em; color: var(--hxm-primary); }
+.hx-date-wd { font-weight: 600; color: var(--hxm-on-surface); }
+.hx-wing-title { font-weight: 750; letter-spacing: -.01em; color: var(--hxm-on-surface); }
+.hx-count { color: var(--hxm-variant); }
+.hx-count b { font-weight: 800; color: var(--hxm-primary); }
+.hx-crew-label { font-weight: 700; color: var(--hxm-variant); }   /* small text on the picture: the quieter tint reads better */
+.hx-crew-names { color: var(--hxm-on-surface); }
+.hx-chip, .hx-search, .hx-tools { color: var(--hxm-on-surface); }
+.hx-account-name { font-weight: 700; }
+
+/* "Šodien" is the one filled chip: the primary role as its surface */
+.hx-rel.is-today {
+  color: var(--hxm-on-primary);
+  background: var(--hxm-primary);
+  box-shadow: none;
+  text-shadow: none;
+  font-weight: 800;
+}
+
+/* shape: chips square off a little under the pointer and spring back (M3 Expressive shape change) */
+@media (prefers-reduced-motion: no-preference) {
+  .hx-chip, .hx-searchbox, .hx-count, .hx-rel {
+    transition: background-color 150ms var(--mk-ease-effects, ease), box-shadow 150ms var(--mk-ease-effects, ease),
+      scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, ease), border-radius var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, ease);
+  }
+  .hx-chip:hover, .hx-chip[aria-expanded="true"], .hx-searchbox:hover, .hx-searchbox:focus-within { border-radius: 11px; }
+}
+
+/* the old elements moved into the header (name days, the day's fact, the news) live in the layer */
+@layer mk-hx {
+  :root.mk-hx:not(.mk-mobile-shell) #hxTop :is(#mkNamedayBar, #mkDayChip) { color: var(--hxm-variant) !important; }
+  :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-tick-time { color: var(--hxm-variant) !important; font-weight: 700 !important; }
+  :root.mk-hx:not(.mk-mobile-shell) #hxTop #mkTickerTrack .mk-news-headline { color: var(--hxm-on-surface) !important; }
+}
