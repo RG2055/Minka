@@ -1582,12 +1582,12 @@
   function radioHidden(p) {
     try { return p.document.body.classList.contains('radio-hidden') || p.document.body.classList.contains('radio-idle'); } catch (_e) { return true; }
   }
-  function openRadio(source) {
+  function openRadio() {
     var p = shell();
     if (!p) return;
     try {
       if (radioHidden(p) && typeof p.toggleRadio === 'function') p.toggleRadio();
-      if (typeof p.setRadioSource === 'function') setTimeout(function () { p.setRadioSource(source === 'music' ? 'music' : 'radio'); }, source === 'music' ? 80 : 0);
+      if (typeof p.setRadioSource === 'function') p.setRadioSource('radio');
     } catch (_e) {}
   }
 
@@ -1596,8 +1596,8 @@
     { id: 'next', title: 'Nākamā diena', sub: 'Tas pats, kas bultiņa pa labi', icon: 'chevR', words: 'nakama diena rit', run: function () { if (window.g_stepDay) window.g_stepDay(1); } },
     { id: 'prev', title: 'Iepriekšējā diena', sub: 'Tas pats, kas bultiņa pa kreisi', icon: 'chevL', words: 'ieprieksejā vakar', run: function () { if (window.g_stepDay) window.g_stepDay(-1); } },
     { id: 'ns', title: 'Nakts sadalījums', sub: 'Kurš guļ kurā laikā, gultas', icon: 'moon', words: 'nakts sadalijums gulet miegs gultas', run: function () { if (!shellClick('nsToggleBtnParent') && window.toggleNsOverlay) window.toggleNsOverlay(true); } },
-    { id: 'radio', title: 'Radio', sub: 'Atvērt radio', icon: 'radio', words: 'radio muzika stacija klausities', run: function () { openRadio('radio'); } },
-    { id: 'winamp', title: 'Winamp', sub: 'Mūzika (Lācītis) radio logā', icon: 'music', words: 'winamp muzika lacitis dziesmas playlist', run: function () { openRadio('music'); } },
+    { id: 'radio', title: 'Radio', sub: 'Atvērt radio', icon: 'radio', words: 'radio muzika stacija klausities', run: openRadio },
+    { id: 'rgmusic', title: 'RG Music', sub: 'Mūzika, topi un savi saraksti', icon: 'music', words: 'rg music muzika dziesmas playlist youtube topi', run: function () { shellClick('rgMusicDockBtn'); } },
     { id: 'bolus', title: 'Bolus', sub: 'Bolusa maiņa un atzīmes', icon: 'drop', words: 'bolus bolusa maina injektors', run: function () { shellClick('bolusDocBtn'); } },
     { id: 'month', title: 'Mēneša kalendārs', sub: 'Viss mēnesis vienā skatā', icon: 'calendar', words: 'kalendars menesis grafiks datums', run: function () { if (!shellClick('monthCalDocBtn')) openDate(els.searchbox); } },
     { id: 'planner', title: 'Plānotājs', sub: 'Grafika plānotājs', icon: 'lanes', words: 'planotajs grafiks planot', run: function () { shellClick('planotajsDockBtn'); } },
@@ -1636,18 +1636,15 @@
     var query = String(q || '').trim();
     var base = parseDMY(shiftToday()) || new Date();
     if (!query) {
-      var rec = recent();
-      if (rec.length) {
-        out.push({ group: 'Nesen' });
-        rec.forEach(function (r) { out.push(fromRecent(r)); });
-      }
+      var rec = recent().map(fromRecent).filter(Boolean);   // an action that no longer exists leaves no empty heading
+      if (rec.length) out = [{ group: 'Nesen' }].concat(rec);
       if (activeDate() !== shiftToday()) {
         var t0 = ACTION_BY_ID.today;
         out.push({ group: 'Datums' });
         out.push({ kind: 'action', ref: 'a:today', icon: t0.icon, title: t0.title, sub: t0.sub, run: t0.run });
       }
       out.push({ group: 'Atvērt' });
-      ['radio', 'winamp', 'ns', 'bolus', 'month', 'planner', 'stats', 'lunch', 'rgpool', 'mobile', 'phones'].forEach(function (id) {
+      ['radio', 'rgmusic', 'ns', 'bolus', 'month', 'planner', 'stats', 'lunch', 'rgpool', 'mobile', 'phones'].forEach(function (id) {
         var a = ACTION_BY_ID[id];
         if (a) out.push({ kind: 'action', tile: true, ref: 'a:' + id, icon: a.icon, title: a.title, sub: a.sub, run: a.run });
       });
