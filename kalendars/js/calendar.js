@@ -6910,6 +6910,9 @@ function filterFullList(btn) {
           const curve = picker.querySelector(':scope > .mk-caf-curve');
           [...picker.children].forEach(el => { if (el !== curve) (el.matches('.mk-coffee-picker-title, .mk-coffee-source-row, .mk-coffee-size-row') ? left : right).appendChild(el); });
           picker.append(left, right);
+          // the cup size (Narvesen) stands in the price's row here, so the window keeps its height when it appears
+          const sizeRow = picker.querySelector('.mk-coffee-size-row'), priceInput = picker.querySelector('.mk-coffee-price');
+          if (sizeRow && priceInput) priceInput.before(sizeRow);
           if (curve) picker.append(curve);   // the caffeine curve: a row of its own under both columns
           picker.classList.add('is-wide');
         }

@@ -6273,6 +6273,10 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   color: var(--m3-on-secondary-container) !important;
   font-weight: 600 !important;
 }
+/* On a wide window the size stands between "Cena" and the price (calendar.js moves it there). */
+.mk-coffee-price-row:has(.mk-coffee-size-row:not([hidden])) { grid-template-columns: 1fr auto 108px !important; }
+.mk-coffee-price-row .mk-coffee-size-row { width: 104px !important; margin: 0 !important; }
+.mk-coffee-price-row .mk-coffee-size-row button { min-height: 36px !important; }
 /* Cena: M3 filled text field — tonēta virsma, apaļas augšmalas, bez rāmja. */
 .mk-coffee-price-row {
   display: grid !important;
