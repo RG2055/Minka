@@ -2485,9 +2485,12 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
   font-weight: 700 !important;
   font-variant-numeric: tabular-nums !important;
   letter-spacing: -.02em !important;
-  /* the mono face is wider: on a narrow card the time shrinks to stay on one line */
+  /* The time and its label share one line: the time is 7 em wide (the spaces around the dash are
+     halved), and beside it stand the clock (31 px), a gap (8 px) and the longest label ("Nakts sākums",
+     "Pēc 7 h 59 min": 108 px). The time takes the size that leaves that room, the same on every card. */
   white-space: nowrap !important;
-  font-size: min(1em, calc((100cqw - 44px) / 7.9)) !important;
+  word-spacing: -.3em !important;
+  font-size: min(1em, calc((100cqw - 147px) / 7)) !important;
 }
 /* the last part's card */
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-inner { padding-bottom: 44px !important; }
@@ -2505,13 +2508,12 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
 /* a narrow card has no room beside the time: there the label goes back on a line of its own */
 @container (max-width: 236px) {
   :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-full-desc { position: static !important; max-width: 100% !important; margin: 3px 0 0 !important; }
+  :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card:not(.nsc-has-checklist) .nsc-full-time > span { font-size: min(1em, calc((100cqw - 36px) / 7)) !important; }   /* the label is on its own line: the time has the whole row */
   /* the last part's card has no line to spare: its label stays by the time, which drops its clock and shrinks */
   :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-desc { position: absolute !important; margin: 0 !important; max-width: 46% !important; }
   :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-clock-btn { display: none !important; }
   :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-time > span { font-size: min(1em, calc((100cqw - 78px) / 7.9)) !important; }
 }
-/* a long label ("Pēc 4 h 38 min") needs the room: the time gives a little */
-:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card:has(.nsc-desc:is(.is-now, .is-next)) .nsc-full-time > span { font-size: min(1em, calc((100cqw - 44px - 116px) / 7.9)) !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-card-checklist { padding-bottom: 8px !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-last-checklist { height: auto !important; min-height: 0 !important; padding-block: 2px !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-task { height: 28px !important; min-height: 0 !important; padding-block: 0 !important; }
