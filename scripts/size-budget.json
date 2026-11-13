@@ -1,12 +1,12 @@
 {
-  "note": "Startup JS/CSS (KB, uncompressed) each page links directly. Set from the 2026-10-13 measurement with ~3 % headroom; lower it when something gets lighter, raise it only on purpose. 2026-11-09: kalendars raised for the card layout editor and centres (card-layout.js 59 KB, card-layout.css 28 KB; the dither pictures load only when chosen). 2026-11-10: kalendars JS raised by 30 KB for the caffeine curve in the coffee menu (calendar.js +10 KB) and the centre widgets Emoji / Kalendārs / Radio (card-layout.js +13 KB).",
+  "note": "Startup JS/CSS (KB, uncompressed) each page links directly. Set from the 2026-10-13 measurement with ~3 % headroom; lower it when something gets lighter, raise it only on purpose. 2026-11-09: kalendars raised for the card layout editor and centres (card-layout.js 59 KB, card-layout.css 28 KB; the dither pictures load only when chosen). 2026-11-10: kalendars JS raised by 30 KB for the caffeine curve in the coffee menu (calendar.js +10 KB) and the centre widgets Emoji / Kalendārs / Radio (card-layout.js +13 KB). 2026-11-13: kalendars JS raised by 35 KB for the coffee effects (page/coffee-fx.js 28 KB: the slice in the menu, the scan and pour on the person's card; page/coffee-gold.js 4 KB; calendar.js +3 KB).",
   "pages": {
     "index.html": {
       "jsKB": 352,
       "cssKB": 490
     },
     "kalendars/index.html": {
-      "jsKB": 2990,
+      "jsKB": 3025,
       "cssKB": 2050
     },
     "mobile.html": {
