@@ -754,7 +754,7 @@
   }
   var centerMood = null, centerBox = '';
   // the games: the gallery's own Windows 98 (js/page/mood-gallery-pc.js), one game mounted in the box
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261113cd6', pcLoad = null, game = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261113cd7', pcLoad = null, game = null;
   function mountGame(app) {
     if (!pcLoad) pcLoad = new Promise(function (ok, no) {
       if (window.MinkaGalleryPC) { ok(); return; }

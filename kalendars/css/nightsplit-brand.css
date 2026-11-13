@@ -2537,15 +2537,21 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
 /* ── The history, bigger (2026-11) ──────────────────────────────────────────────
    The same rows, drawn the same way: only the sizes go up, so they can be read at a glance at night.
    Counts 7.5 to 10.5 px, names 12.5 to 15 px, the part number 23 to 30 px, the beds' squares 15 to 18 px.
-   The row keeps its height (the panel gives it 50 px), so the name's column gives up a little width. */
-:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-row { grid-template-columns: 50px minmax(0, 1fr) 92px 78px !important; column-gap: 6px !important; padding-right: 8px !important; }
+   The row keeps its height (the panel gives it 50 px). The name comes first: on a 1440 px screen the
+   row is 294 px wide, so the part's badge, the bars and the beds are kept narrow enough to leave the
+   name 89 px (a first name of eight letters and the emoji). A longer name stays whole and its emoji
+   drops out (the name's line wraps and shows one line only). */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-row { grid-template-columns: 42px minmax(0, 1fr) 70px 74px !important; column-gap: 5px !important; padding-right: 4px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-name { flex-wrap: wrap !important; gap: 0 3px !important; height: 18px !important; overflow: hidden !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-name > span:first-child { max-width: 100% !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-bedmap { gap: 3px !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-part strong { font-size: 30px !important; line-height: 1 !important; font-weight: 800 !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-part span { font-size: 8.5px !important; font-weight: 800 !important; letter-spacing: .08em !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-name { font-size: 15px !important; line-height: 1.2 !important; font-weight: 700 !important; }
-:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-name .ns-stat-emoji { font-size: 17px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-name .ns-stat-emoji { font-size: 15px !important; line-height: 18px !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-fav { font-size: 11px !important; line-height: 1.25 !important; }
-:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-bars { height: 44px !important; max-height: 44px !important; padding: 2px 2px 1px !important; gap: 4px !important; }
-:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stbar { width: 19px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-bars { height: 44px !important; max-height: 44px !important; padding: 2px 2px 1px !important; gap: 2px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stbar { width: 15px !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stbar-c { height: 12px !important; font-size: 10.5px !important; line-height: 12px !important; font-weight: 800 !important; color: var(--pp-on, #e3e7ee) !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stbar-n { font-size: 9px !important; }
 :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-bm-main { grid-template-columns: repeat(2, 18px) !important; grid-template-rows: repeat(2, 18px) !important; }

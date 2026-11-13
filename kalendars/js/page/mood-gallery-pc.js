@@ -1015,7 +1015,8 @@
       w.onClose = function () { if (raf) cancelAnimationFrame(raf); raf = 0; anim = []; tuneOn = false; tuneStop(); };
       newGame(); kick();
       // the drinks as pieces, once their pictures are in
-      drinkPieces().then(function (ok) { if (!ok || !wins.candy) return; striped = {}; if (!G.score && !busy) newGame(); else goalIcon(); kick(); draw(); });
+      var whole = w.el.querySelector('.pc98-candy'); whole.style.visibility = 'hidden';   // no board in the pixel pieces for the seconds the drinks' pictures take to load
+      drinkPieces().then(function (ok) { if (!wins.candy) return; whole.style.visibility = ''; if (!ok) return; striped = {}; newGame(); kick(); draw(); });
       if (window.__candyTest) window.__candyTest({ G: function () { return G; }, combo: function (xa, ya, xb, yb) { busy = true; comboBlast(xa, ya, xb, yb); } });   // the test page only
     }
 

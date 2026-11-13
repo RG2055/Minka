@@ -764,7 +764,7 @@
             +'<div class="ns-stbar-n">'+(i+1)+'.</div></div>';
         }).join('');
         var short=nm.split(' ')[0];
-        var favTxt=favPart?('Parasti ņem <b>'+favPart+'. daļu</b>'):'nav datu';
+        var favTxt=favPart?('Parasti <b>'+favPart+'. daļa</b>'):'nav datu';   // short: the name's column is narrow
         return '<div class="ns-stat-row">'
           +'<div class="ns-stat-part" style="--ns-fatigue-color:'+fatigueCol+'" title="Pašlaik izvēlēta '+currentPart+'. daļa">'
             +'<strong>'+currentPart+'</strong><span>DAĻA</span>'
