@@ -2459,3 +2459,128 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
 #nsPanel .ns-own-btn:hover { background: rgba(127, 220, 234, .1); }
 #nsPanel .ns-own-time :focus-visible { outline: 2px solid var(--m3-primary, #7fdcea); outline-offset: 2px; }
 #nsPanel .ns-own-title { align-self: flex-start; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--m3-on-variant, #b7c4cf); }
+
+/* ── M3 Expressive pass (2026-11): big names and button groups ──────────────────
+   1. The cards' names in a tall display face (Anton, already shipped for the name styles) across the
+      card, the times in the mono face.
+   2. "Nogurums / Biežums" and the history's tabs as a button group: the chosen one is a full pill in
+      the accent, the others squarer and quiet, and the corners change when the choice does.
+   3. The label ("Rīts", "Vēl 40 min") stands at the right of the time on every card, so the last part's
+      card (it also lists the night's jobs, in a slightly lower strip) has room for the same big name. */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-full-inner { container-type: inline-size; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-full-name {
+  font-family: 'Anton', Impact, 'Arial Narrow', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: min(22cqw, calc(var(--ns-card-h, 190px) * .42)) !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  overflow-x: clip !important;   /* a long name is cut at the card's edge; the marks over letters (Ī, Ē) stay */
+  line-height: 1.05 !important;
+  letter-spacing: .012em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-full-time > span {
+  font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums !important;
+  letter-spacing: -.02em !important;
+  /* the mono face is wider: on a narrow card the time shrinks to stay on one line */
+  white-space: nowrap !important;
+  font-size: min(1em, calc((100cqw - 44px) / 7.9)) !important;
+}
+/* the last part's card */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-inner { padding-bottom: 44px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-time { margin-top: 2px !important; }
+/* every card's label ("Dziļā nakts", "Vēl 40 min") stands in the same place: at the right of the time */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-full-desc {
+  position: absolute !important;
+  right: 12px !important;
+  top: calc(10px + 1.05 * min(22cqw, calc(var(--ns-card-h, 190px) * .42)) + 14px) !important;   /* the time row's own line, under the name */
+  margin: 0 !important;
+  max-width: 46% !important;
+}
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-desc { top: calc(10px + 1.05 * min(22cqw, calc(var(--ns-card-h, 190px) * .42)) + 10px) !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-full-desc .nsc-desc { display: block !important; max-width: 100% !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+/* a narrow card has no room beside the time: there the label goes back on a line of its own */
+@container (max-width: 236px) {
+  :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-full-desc { position: static !important; max-width: 100% !important; margin: 3px 0 0 !important; }
+  /* the last part's card has no line to spare: its label stays by the time, which drops its clock and shrinks */
+  :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-desc { position: absolute !important; margin: 0 !important; max-width: 46% !important; }
+  :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-clock-btn { display: none !important; }
+  :root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-full-time > span { font-size: min(1em, calc((100cqw - 78px) / 7.9)) !important; }
+}
+/* a long label ("Pēc 4 h 38 min") needs the room: the time gives a little */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card:has(.nsc-desc:is(.is-now, .is-next)) .nsc-full-time > span { font-size: min(1em, calc((100cqw - 44px - 116px) / 7.9)) !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-card-checklist { padding-bottom: 8px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-last-checklist { height: auto !important; min-height: 0 !important; padding-block: 2px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-task { height: 28px !important; min-height: 0 !important; padding-block: 0 !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card.nsc-has-checklist .nsc-task-ico { width: 22px !important; height: 22px !important; }
+/* button groups */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-mode-btns { gap: 4px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel :is(.ns-mode-btn, .ns-seg-btn) {
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .04em !important;
+  text-transform: uppercase !important;
+  transition: border-radius .28s cubic-bezier(.2, 0, 0, 1), background-color .2s, color .2s, padding .28s cubic-bezier(.2, 0, 0, 1) !important;
+}
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-mode-btn:not(.is-on) { background: rgba(255, 255, 255, .08) !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-seg-btn:not(.is-on) { background: rgba(255, 255, 255, .06) !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel :is(.ns-mode-btn, .ns-seg-btn).is-on { border-radius: 999px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-mode-btn.is-on { padding-inline: 20px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-seg-btn { font-size: 11px !important; letter-spacing: .02em !important; padding-inline: 11px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-seg.ns-view-switch { gap: 4px !important; background: none !important; box-shadow: none !important; border: 0 !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel :is(.ns-mode-btn, .ns-seg-btn):active { border-radius: 6px !important; }
+@media (prefers-reduced-motion: reduce) { :root:not(.mk-mobile-shell) #nsOverlay #nsPanel :is(.ns-mode-btn, .ns-seg-btn) { transition: none !important; } }
+
+/* ── The history, bigger (2026-11) ──────────────────────────────────────────────
+   The same rows, drawn the same way: only the sizes go up, so they can be read at a glance at night.
+   Counts 7.5 to 10.5 px, names 12.5 to 15 px, the part number 23 to 30 px, the beds' squares 15 to 18 px.
+   The row keeps its height (the panel gives it 50 px), so the name's column gives up a little width. */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-row { grid-template-columns: 50px minmax(0, 1fr) 92px 78px !important; column-gap: 6px !important; padding-right: 8px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-part strong { font-size: 30px !important; line-height: 1 !important; font-weight: 800 !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-part span { font-size: 8.5px !important; font-weight: 800 !important; letter-spacing: .08em !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-name { font-size: 15px !important; line-height: 1.2 !important; font-weight: 700 !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-name .ns-stat-emoji { font-size: 17px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-fav { font-size: 11px !important; line-height: 1.25 !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stat-bars { height: 44px !important; max-height: 44px !important; padding: 2px 2px 1px !important; gap: 4px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stbar { width: 19px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stbar-c { height: 12px !important; font-size: 10.5px !important; line-height: 12px !important; font-weight: 800 !important; color: var(--pp-on, #e3e7ee) !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stbar-n { font-size: 9px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-bm-main { grid-template-columns: repeat(2, 18px) !important; grid-template-rows: repeat(2, 18px) !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-bm-nmp { grid-template-columns: 18px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-bm-cell { width: 18px !important; height: 18px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-bm-count { font-size: 10px !important; font-weight: 800 !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stats-bed-title { font-size: 11.5px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-stats-foot { font-size: 12px !important; }
+
+/* the cards' and the timeline's small print, a step up as well */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-fat-label { font-size: 9.5px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-fat-value { font-size: 15px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-full-dur { font-size: 16px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-desc { font-size: 12.5px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-task-txt b { font-size: 11.5px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nsc-full-card .nsc-task-txt small { font-size: 10px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-flow-labels > span { font-size: 13px !important; }
+
+/* The time pickers ("00:00", "07:20"): the time stood in the pill's middle with the arrow off to its
+   right, so the left side looked empty. Now the time and its arrow are one group with even margins,
+   and the pill is as wide as the group needs. */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nss-shell { width: 84px !important; min-width: 84px !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nss-shell .nss { width: 100% !important; min-width: 0 !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nss-shell .nss-display { inset: 0 auto 0 15px !important; width: auto !important; transform: none !important; translate: none !important; text-align: left !important; }
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .nss-shell .nss-chevron { right: 11px !important; }   /* the arrow is light: a little closer to the edge than the time is to its own */
+
+/* The close button stands in the head's own row: its right edge on the cards' right edge and its middle
+   on the row's middle, whatever the panel's width (it used to hang a few pixels past the cards). Where
+   the browser cannot anchor one box to another, it keeps the place it had. */
+:root:not(.mk-mobile-shell) #nsOverlay #nsPanel .ns-panel-head { anchor-name: --ns-head; padding-right: 52px !important; }
+@supports (anchor-name: --a) {
+  :root:not(.mk-mobile-shell) #nsOverlay #nsPanel #nsCloseBtn {
+    position-anchor: --ns-head;
+    top: anchor(center) !important;
+    right: anchor(right) !important;
+    translate: 0 -50%;
+  }
+}

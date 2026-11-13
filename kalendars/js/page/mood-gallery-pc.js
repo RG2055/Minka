@@ -145,6 +145,70 @@
     });
   }
 
+  /* The pieces as the coffee menu's drinks (calendar.js coffeeIcon: the cans' photos, the drawn machines),
+     each on a 128 px canvas, so they stay sharp at any cell size. Until they are loaded, and where the
+     menu's icons are not there, the six pixel pieces above are used. The seventh (Red Bull) joins the
+     board on the later levels. */
+  var DRINKS = ['narvesen', 'monster', 'kongstrong', 'lofbergs', 'dynamit', 'brite', 'redbull'], HQ = false, drinkJob = null;
+  /* The old pixel pieces (pill, cat, star, heart) stay in the game beside the drinks, drawn again as
+     smooth shapes on the same 128 px canvas: types 7 to 10. */
+  var OLD = [
+    function (q) {   // pill: a capsule, half blue, half white
+      q.translate(64, 64); q.rotate(-0.6);
+      q.beginPath(); q.roundRect(-50, -24, 100, 48, 24); q.clip();
+      var a = q.createLinearGradient(0, -24, 0, 24); a.addColorStop(0, '#8cc6ff'); a.addColorStop(1, '#2f7fe6'); q.fillStyle = a; q.fillRect(-50, -24, 50, 48);
+      var b = q.createLinearGradient(0, -24, 0, 24); b.addColorStop(0, '#ffffff'); b.addColorStop(1, '#c9d2e6'); q.fillStyle = b; q.fillRect(0, -24, 50, 48);
+      q.fillStyle = 'rgba(255,255,255,.55)'; q.beginPath(); q.roundRect(-38, -17, 76, 9, 5); q.fill();
+    },
+    function (q) {   // cat: the black face with the yellow eyes
+      var a = q.createLinearGradient(0, 14, 0, 116); a.addColorStop(0, '#4a4358'); a.addColorStop(1, '#1d1a22');
+      q.fillStyle = q.strokeStyle = a; q.lineJoin = 'round'; q.lineWidth = 10;
+      [[18, 62, 22, 14, 56, 36], [110, 62, 106, 14, 72, 36]].forEach(function (e) { q.beginPath(); q.moveTo(e[0], e[1]); q.lineTo(e[2], e[3]); q.lineTo(e[4], e[5]); q.closePath(); q.fill(); q.stroke(); });
+      q.beginPath(); q.ellipse(64, 72, 52, 42, 0, 0, 7); q.fill();
+      [44, 84].forEach(function (x) {
+        q.fillStyle = '#e6ee4f'; q.beginPath(); q.ellipse(x, 66, 11, 12, 0, 0, 7); q.fill();
+        q.fillStyle = '#1d1a22'; q.beginPath(); q.ellipse(x, 66, 4, 10, 0, 0, 7); q.fill();
+        q.fillStyle = '#ffffff'; q.beginPath(); q.arc(x - 4, 61, 3, 0, 7); q.fill();
+      });
+      q.fillStyle = '#ff8a9a'; q.beginPath(); q.moveTo(57, 84); q.lineTo(71, 84); q.lineTo(64, 93); q.closePath(); q.fill();
+      q.strokeStyle = 'rgba(255,255,255,.5)'; q.lineWidth = 2; q.lineCap = 'round';
+      [[36, 90, 12, 86], [36, 96, 14, 102], [92, 90, 116, 86], [92, 96, 114, 102]].forEach(function (l) { q.beginPath(); q.moveTo(l[0], l[1]); q.lineTo(l[2], l[3]); q.stroke(); });
+    },
+    function (q) {   // star
+      var a = q.createLinearGradient(0, 10, 0, 118); a.addColorStop(0, '#fff0a0'); a.addColorStop(0.5, '#ffd23f'); a.addColorStop(1, '#f59e0b');
+      q.fillStyle = q.strokeStyle = a; q.lineJoin = 'round'; q.lineWidth = 12;
+      q.beginPath(); for (var i = 0; i < 10; i++) { var r = i % 2 ? 22 : 48, an = -Math.PI / 2 + i * Math.PI / 5; q.lineTo(64 + Math.cos(an) * r, 68 + Math.sin(an) * r); } q.closePath(); q.fill(); q.stroke();
+      q.fillStyle = 'rgba(255,255,255,.6)'; q.beginPath(); q.ellipse(52, 52, 9, 5, -0.7, 0, 7); q.fill();
+    },
+    function (q) {   // heart
+      var a = q.createLinearGradient(0, 16, 0, 116); a.addColorStop(0, '#ff8fae'); a.addColorStop(1, '#e0245e'); q.fillStyle = a;
+      q.beginPath(); q.moveTo(64, 114); q.bezierCurveTo(-4, 70, 12, 16, 40, 16); q.bezierCurveTo(54, 16, 62, 26, 64, 36); q.bezierCurveTo(66, 26, 74, 16, 88, 16); q.bezierCurveTo(116, 16, 132, 70, 64, 114); q.fill();
+      q.fillStyle = 'rgba(255,255,255,.6)'; q.beginPath(); q.ellipse(38, 40, 11, 7, -0.7, 0, 7); q.fill();
+    }
+  ];
+  function drinkPieces() {
+    if (drinkJob) return drinkJob;
+    var icon = window.__minkaCoffeeIcon;
+    if (typeof icon !== 'function') return Promise.resolve(false);
+    drinkJob = Promise.all(DRINKS.map(function (src) {
+      return new Promise(function (ok, no) {
+        var html = String(icon(src) || ''), file = /<image[^>]*href="([^"]+)"/.exec(html), im = new Image();
+        im.onload = function () { ok(im); }; im.onerror = no;
+        im.src = file ? file[1] : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(html.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" '));
+      });
+    })).then(function (ims) {
+      PIECES = ims.map(function (im) {
+        var S = 128, c = canvas(S, S), q = c.getContext('2d'), k = Math.min(S / im.width, S / im.height);
+        q.imageSmoothingQuality = 'high';
+        q.drawImage(im, (S - im.width * k) / 2, (S - im.height * k) / 2, im.width * k, im.height * k);
+        return c;
+      }).concat(OLD.map(function (paint) { var c = canvas(128, 128), q = c.getContext('2d'); paint(q); return c; }));
+      HQ = true;
+      return true;
+    }, function () { drinkJob = null; return false; });
+    return drinkJob;
+  }
+
   /* ── sounds: short and dry ── */
   var actx = null;
   function blip(freq, dur, type, vol) {
@@ -270,8 +334,19 @@
        small (3 in a row): sparks, a soft pop, the points rising; medium (a special made, a chain):
        a little shake, more sparks; large (a blast, a bomb, a combo): a flash, a short hit-stop,
        a beam across the board, a word. Hints when idle; tips the first times. ── */
-    var PCOL = ['#c9a77a', '#c8ccc8', '#3a3346', '#ff4f7a', '#ffd23f', '#5aa8ff'];
-    var PNAME = ['kafijas', 'Monster', 'kaķu', 'siržu', 'zvaigžņu', 'tablešu'];
+    // the drinks' colours (their sparks, and the soft tile behind each so six cans are told apart at a glance)
+    var PCOL = ['#f08a24', '#7bdc3a', '#4f8dff', '#a678e0', '#ffe14a', '#b5e655', '#e5484d', '#5aa8ff', '#9a8fb8', '#ffd23f', '#ff4f7a'];
+    var PNAME = ['Narvesen', 'Monster', 'Kong Strong', 'Löfbergs', 'Dynamit', 'Brite', 'Red Bull', 'Tablete', 'Kaķis', 'Zvaigzne', 'Sirds'];
+    // A drink and an old piece of the same colour: a game takes one of the two, so every board is a mix
+    // and no two of its pieces look alike. Red Bull or the heart joins on the later levels.
+    var PAIR = [[2, 7], [3, 8], [4, 9]];
+    // Levels (the game in the calendar's middle): each has its moves and its points to reach; what is
+    // left of the moves is paid out, a bonus is dealt, and the next asks for more.
+    var LV_MOVES = 18, LV_KEY = 'minkaCandyLevelsV1';
+    // The levels never end and the one reached is kept on this computer: out of moves means the same
+    // level again, not the first one.
+    // shortcut: the points asked stop growing at level 6 (a guess, not play-tested), tune if a level proves too easy or stuck
+    function lvNeed(level) { return 900 + 300 * Math.min(level, 6); }
     var WORDS = ['Lieliski!', 'Super!', 'Fantastiski!', 'Neticami!'];
     // "Dienas maiņa": the board is the day's for everyone; each weekday changes one rule
     var CANDY_RULES = {
@@ -287,21 +362,30 @@
         : Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 236) / N)));
       var size = N * CELL;
       var w = win('candy', 'Konfektes 98', 'candy',
-        '<div class="pc98-candy"><div class="pc98-cbar"><span>Punkti <b class="pc98-score">0</b></span><span>Gājieni <b class="pc98-moves">' + MOVES + '</b></span>'
+        '<div class="pc98-candy"><div class="pc98-cbar"><span>' + (opts.endless ? '<em class="pc98-lvl" style="font-style:normal">Līmenis 1</em>' : 'Punkti') + ' <b class="pc98-score">0</b></span><span>Gājieni <b class="pc98-moves">' + MOVES + '</b></span>'
         + '<span class="pc98-goal" title="Dienas mērķis"><i class="pc98-gico"></i><b class="pc98-gnum">0/0</b></span><span class="pc98-jelly" title="Želeja"><i class="pc98-jico"></i><b class="pc98-jnum">0</b></span></div>'
         + '<div class="pc98-stars"><i class="pc98-sfill"></i><b data-s="0">★</b><b data-s="1">★</b><b data-s="2">★</b></div>'
         + '<div class="pc98-well"><canvas class="pc98-board" width="' + size + '" height="' + size + '"></canvas></div>'
         + '<div class="pc98-cfoot"><button type="button" class="pc98-btn" data-c="new">Jauna spēle</button><button type="button" class="pc98-btn" data-c="table">Dienas tabula</button><button type="button" class="pc98-btn" data-c="help">Kā spēlēt?</button><button type="button" class="pc98-btn pc98-mbtn" data-c="music" title="Mūzika">♪</button></div><div class="pc98-cstat"><span class="pc98-crule"></span><span class="pc98-week" title="Šīs nedēļas zvaigznes"></span><span>Rekords šodien: <b class="pc98-best">0</b></span></div></div>',
         size + 34, Math.max(100, (rr0.width - size - 34) / 2), Math.max(6, (rr0.height - size - 216) / 2));
-      var cv = w.el.querySelector('.pc98-board'), g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+      // drawn at two or three times the cell's size and scaled down by the page: sharp pieces on any screen
+      var K = (window.devicePixelRatio || 1) > 1.5 ? 3 : 2;
+      var cv = w.el.querySelector('.pc98-board'); cv.width = cv.height = size * K; cv.style.imageRendering = 'auto';
+      var g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
       var G = {}, anim = [], fx = { parts: [], floats: [], beams: [], rings: [], bubbles: [], pix: [], chunks: [], fly: [], stamp: null, flash: 0, shake: 0, word: null, stopUntil: 0 }, raf = 0, busy = false, sel = null, drag = null, hov = null;
       var hint = null, idleAt = performance.now(), swapOff = null;
       var best = 0; try { var b0 = JSON.parse(localStorage.getItem(BEST_KEY) || '{}'); best = b0.day === today ? b0.score : 0; } catch (_e) {}
       w.el.querySelector('.pc98-best').textContent = best;
       function newGame() {
-        var r = rng(seedOf('candy:' + today));
+        // the day's board for everyone in the gallery's game; with levels every game is a new one
+        var r = rng(opts.endless ? (Math.random() * 4294967296) >>> 0 : seedOf('candy:' + today));
         var rule = CANDY_RULES[new Date(today + 'T12:00:00Z').getUTCDay()], rx = rule[2];
-        G = { rnd: r, board: [], score: 0, moves: rx.moves || MOVES, over: false, chain: 0, goal: { t: 0, need: 24, got: 0, done: false }, stars: 0, rule: rx };
+        var lv = opts.endless ? Math.max(1, levelsBest().level) : 1;
+        G = { rnd: r, board: [], score: 0, moves: opts.endless ? (lv >= 7 ? LV_MOVES - 2 : LV_MOVES) : rx.moves || MOVES, over: false, chain: 0, goal: { t: 0, need: 24, got: 0, done: false }, stars: 0, rule: rx,
+          set: [0, 1, 2, 3, 4, 5], extra: -1, level: lv, lvFrom: 0, lvNeed: lvNeed(lv) };
+        if (lv > 1) G.goal.need = Math.min(40, 20 + 2 * lv);
+        if (HQ) { var must = (r() * 3) | 0; PAIR.forEach(function (pr, i) { G.set[pr[0]] = pr[i === must || r() < 0.5 ? 1 : 0]; }); G.extra = r() < 0.5 ? 6 : 10; if (lv >= 4) G.set.push(G.extra); }
+        var old = w.el.querySelector('.pc98-over'); if (old) old.remove();
         w.el.querySelector('.pc98-crule').textContent = rule[0] + ': ' + rule[1];
         // the day's jelly: a mirrored patch under the pieces; matching on it clears it (+2000 for all)
         var jr = rng(seedOf('jelly:' + today)); G.jelly = []; G.jellyLeft = 0; G.jellyDone = false;
@@ -311,28 +395,35 @@
         for (var y = 0; y < N; y++) { G.board.push([]); for (var x = 0; x < N; x++) G.board[y].push(fresh(x, y, true)); }
         if (!hasMove()) shuffle();
         // the goal: the day's rule, else the piece the board has least of (so it takes aiming)
-        if (rx.goal != null) G.goal.t = rx.goal;
-        else { var cnt = [0, 0, 0, 0, 0, 0]; G.board.forEach(function (row) { row.forEach(function (c) { if (c.t >= 0) cnt[c.t]++; }); }); G.goal.t = cnt.indexOf(Math.min.apply(null, cnt)); }
+        if (rx.goal != null) G.goal.t = G.set[rx.goal];
+        else { var cnt = PCOL.map(function (_, t) { return G.set.indexOf(t) < 0 ? 1e9 : 0; }); G.board.forEach(function (row) { row.forEach(function (c) { if (c.t >= 0) cnt[c.t]++; }); }); G.goal.t = cnt.indexOf(Math.min.apply(null, cnt)); }
         paintWeek();
         fx.parts = []; fx.floats = []; fx.beams = []; fx.rings = []; fx.bubbles = []; fx.pix = []; fx.chunks = []; fx.fly = []; fx.stamp = null; fx.word = null; hint = null; idleAt = performance.now();
-        w.el.querySelector('.pc98-gico').style.backgroundImage = 'url(' + PIECES[G.goal.t].toDataURL() + ')';
+        goalIcon();
         paintBar(); draw();
       }
+      function goalIcon() { w.el.querySelector('.pc98-gico').style.backgroundImage = 'url(' + PIECES[G.goal.t].toDataURL() + ')'; }
       function fresh(x, y, noMatch) {
         var t, guard = 0;
-        do { t = (G.rnd() * 6) | 0; guard++; } while (noMatch && guard < 20 && ((x >= 2 && G.board[y][x - 1].t === t && G.board[y][x - 2].t === t) || (y >= 2 && G.board[y - 1][x].t === t && G.board[y - 2][x].t === t)));
+        do { t = G.set[(G.rnd() * G.set.length) | 0]; guard++; } while (noMatch && guard < 20 && ((x >= 2 && G.board[y][x - 1].t === t && G.board[y][x - 2].t === t) || (y >= 2 && G.board[y - 1][x].t === t && G.board[y - 2][x].t === t)));
         var c = { t: t, s: '', dy: 0, k: 1, a: 1, sq: 0 };
         if (!noMatch && G.rnd() < 0.022 * ((G.rule && G.rule.gold) || 1)) c.gold = true;   // now and then a golden cup (+2 moves)
         return c;
       }
       function paintBar() {
         w.el.querySelector('.pc98-score').textContent = G.score;
-        var mv = w.el.querySelector('.pc98-moves'); mv.textContent = opts.endless ? '∞' : G.moves; mv.classList.toggle('is-low', !opts.endless && G.moves <= 5);
+        var mv = w.el.querySelector('.pc98-moves'); mv.textContent = G.moves; mv.classList.toggle('is-low', G.moves <= 5);
+        if (opts.endless) {   // points shown as this level's: "350 / 1200"
+          w.el.querySelector('.pc98-lvl').textContent = 'Līmenis ' + G.level;
+          w.el.querySelector('.pc98-score').textContent = (G.score - G.lvFrom) + '/' + G.lvNeed;
+          w.el.querySelector('.pc98-sfill').style.width = Math.min(100, (G.score - G.lvFrom) / G.lvNeed * 100) + '%';
+        }
         w.el.querySelector('.pc98-gnum').textContent = Math.min(G.goal.got, G.goal.need) + '/' + G.goal.need;
         w.el.querySelector('.pc98-goal').classList.toggle('is-done', G.goal.done);
         w.el.querySelector('.pc98-jnum').textContent = G.jellyLeft;
         w.el.querySelector('.pc98-jelly').classList.toggle('is-done', G.jellyDone);
         // three stars, as Candy Crush: 1500, 3000, 5000
+        if (opts.endless) return;
         var STAR = [1500, 3000, 5000], got = STAR.filter(function (v) { return G.score >= v; }).length;
         w.el.querySelector('.pc98-sfill').style.width = Math.min(100, G.score / STAR[2] * 100) + '%';
         w.el.querySelectorAll('.pc98-stars b').forEach(function (b, i) { b.classList.toggle('is-on', i < got); });
@@ -476,7 +567,7 @@
           else if (c.s === 'v') { fxs.push({ beam: 'col', i: x }); for (var j = 0; j < N; j++) add(x, j); tier = 'large'; }
           else if (c.s === 'w') { fxs.push({ ring: [x, y, 1] }); for (var yy = y - 1; yy <= y + 1; yy++) for (var xx = x - 1; xx <= x + 1; xx++) add(xx, yy); tier = 'large'; }
           else if (c.t < 0) {                                        // a bomb set off by others: the most common colour
-            var count = [0, 0, 0, 0, 0, 0]; G.board.forEach(function (r) { r.forEach(function (q) { if (q.t >= 0) count[q.t]++; }); });
+            var count = PCOL.map(function () { return 0; }); G.board.forEach(function (r) { r.forEach(function (q) { if (q.t >= 0) count[q.t]++; }); });
             var col = count.indexOf(Math.max.apply(null, count));
             for (var by = 0; by < N; by++) for (var bx = 0; bx < N; bx++) if (G.board[by][bx].t === col) { fxs.push({ zap: [x, y, bx, by] }); add(bx, by); }
             tier = 'large';
@@ -498,6 +589,12 @@
         paintBar();
         // the feedback, by tier
         var cx = 0, cy = 0; cells.forEach(function (c) { cx += c[0]; cy += c[1]; }); cx /= cells.length; cy /= cells.length;
+        // every kind of piece cleared shows its own effect, large, in the middle of its pieces
+        // (js/page/coffee-fx.js: the gorilla, the claws, the wings, the blast...); more than a plain
+        // three also says the drink's line
+        var byT = {};
+        cells.forEach(function (c) { var q = G.board[c[1]][c[0]]; if (q && q.t >= 0) (byT[q.t] = byT[q.t] || []).push(c); });
+        Object.keys(byT).slice(0, 3).forEach(function (t) { var cs = byT[t], m = cs[(cs.length / 2) | 0]; drinkFx(m[0], m[1], +t, tier !== 'small'); });
         cells.forEach(function (c) {
           var p = G.board[c[1]][c[0]];
           burst(c[0], c[1], p.t < 0 ? '#b07ae0' : PCOL[p.t], tier === 'small' ? 5 : tier === 'medium' ? 7 : 9);
@@ -524,6 +621,15 @@
           fall(done);
         });
       }
+      var oldPic = {};
+      function drinkFx(x, y, t, say) {
+        var F = window.MkCoffeeFx;
+        if (!HQ || !F || !F.burst || document.querySelectorAll('.mk-cfx').length > 150) return;   // a long cascade: no more than the page can carry
+        var r = cv.getBoundingClientRect(), u = r.width / N;
+        // an old piece has no drink's effect of its own: its picture is cut in two, in its colour
+        if (!DRINKS[t] && !oldPic[t]) oldPic[t] = '<img src="' + PIECES[t].toDataURL() + '" alt="" style="display:block;width:100%;height:100%">';
+        F.burst(r.left + (x + 0.5) * u, r.top + (y + 0.5) * u, DRINKS[t], Math.round(u * 1.1), oldPic[t], PCOL[t], true, say);
+      }
       function backOut(k) { var s = 1.70158; k -= 1; return k * k * ((s + 1) * k + s) + 1; }
       function fall(done) {
         var maxD = 0, moved = [];
@@ -545,7 +651,43 @@
       }
       function afterMove() {
         if (!hasMove()) { shuffle(); fx.flash = 0.4; kick(); }
-        if (G.moves <= 0 && !opts.endless) finale();
+        if (opts.endless && G.score - G.lvFrom >= G.lvNeed) { levelUp(); return; }
+        if (G.moves <= 0) finale();
+      }
+      // The level is made: the moves left are paid out (a few carried over), the next level asks for
+      // more, and a bonus is dealt onto the board. From level 4 a seventh drink joins; every third level
+      // new jelly is laid; each level has its own drink to collect.
+      function levelUp() {
+        var left = G.moves, pay = left * 40;
+        G.score += pay; G.level++; G.lvFrom = G.score; G.lvNeed = lvNeed(G.level);
+        G.moves = (G.level >= 7 ? LV_MOVES - 2 : LV_MOVES) + Math.min(left, 5);
+        if (G.level >= 4 && G.extra >= 0 && G.set.indexOf(G.extra) < 0) G.set.push(G.extra);
+        G.goal = { t: G.set[(G.rnd() * G.set.length) | 0], need: Math.min(40, 20 + 2 * G.level), got: 0, done: false }; goalIcon();
+        if (G.level % 3 === 0) {
+          for (var j = 0; j < 8; j++) { var jx = (G.rnd() * N) | 0, jy = (G.rnd() * N) | 0; if (!G.jelly[jy][jx]) { G.jelly[jy][jx] = 1; G.jellyLeft++; } }
+          G.jellyDone = false;
+        }
+        var plain = [];
+        G.board.forEach(function (row, y) { row.forEach(function (c, x) { if (c && c.t >= 0 && !c.s && !c.gold) plain.push([x, y]); }); });
+        var take = function () { if (!plain.length) return null; var q = plain.splice((G.rnd() * plain.length) | 0, 1)[0]; return G.board[q[1]][q[0]]; };
+        var deal = [
+          ['Rentgeni', function () { for (var i = 0; i < 2; i++) { var c = take(); if (c) c.s = G.rnd() < 0.5 ? 'h' : 'v'; } }],
+          ['Kafijas sprādziens', function () { var c = take(); if (c) c.s = 'w'; }],
+          ['MR bumba', function () { var c = take(); if (c) { c.t = -1; c.s = ''; } }],
+          ['Zelta krūzītes', function () { for (var i = 0; i < 3; i++) { var c = take(); if (c) c.gold = true; } }],
+          ['+5 gājieni', function () { G.moves += 5; }]
+        ][(G.rnd() * 5) | 0];
+        deal[1]();
+        fx.word = { text: 'Līmenis ' + G.level + '!', life: 1 }; fx.flash = 0.5;
+        if (pay) floatText(N / 2 - 0.5, N / 2 - 1, '+' + pay, '#1db954', 1.6);
+        floatText(N / 2 - 0.5, N / 2 + 0.6, 'Bonuss: ' + deal[0], '#000080', 1.3);
+        blip(659, 0.1, 'triangle', 0.06); setTimeout(function () { blip(880, 0.1, 'triangle', 0.06); }, 100); setTimeout(function () { blip(1175, 0.2, 'triangle', 0.06); }, 200);
+        saveLevels(); paintBar(); kick();
+        if (!hasMove()) { shuffle(); kick(); }
+      }
+      function levelsBest() { try { return JSON.parse(localStorage.getItem(LV_KEY) || 'null') || { level: 0, score: 0 }; } catch (_e) { return { level: 0, score: 0 }; } }
+      function saveLevels() {
+        if (G.level > levelsBest().level) { try { localStorage.setItem(LV_KEY, JSON.stringify({ level: G.level })); } catch (_e) {} }
       }
       // "Saldais finālis": the moves are spent; every special still on the board goes off for a bonus
       function finale() {
@@ -558,6 +700,17 @@
       }
       function gameOver() {
         G.over = true; hint = null;
+        if (opts.endless) {   // with levels: the same level again
+          blip(330, 0.2, 'triangle', 0.05);
+          var over = el('div', 'pc98-over',
+            '<b style="font:900 22px/1.1 Inter,system-ui,sans-serif">Līmenis ' + G.level + ' neizdevās</b>'
+            + '<span style="font:700 15px/1.3 Inter,system-ui,sans-serif">' + (G.score - G.lvFrom) + ' no ' + G.lvNeed + ' punktiem</span>'
+            + '<button type="button" style="margin-top:6px;padding:9px 22px;border:0;border-radius:999px;background:#ffd23f;color:#201a05;font:800 14px/1 Inter,system-ui,sans-serif;cursor:pointer">Mēģināt vēlreiz</button>');
+          over.style.cssText = 'position:absolute;inset:0;z-index:3;display:grid;place-content:center;justify-items:center;gap:6px;text-align:center;line-height:1.2;background:rgba(10,12,18,.78);color:#fff;border-radius:inherit';
+          over.querySelector('button').addEventListener('click', function () { newGame(); kick(); });
+          w.el.querySelector('.pc98-well').appendChild(over);
+          return;
+        }
         if (G.score > best) { best = G.score; try { localStorage.setItem(BEST_KEY, JSON.stringify({ day: today, score: best })); } catch (_e) {} }
         w.el.querySelector('.pc98-best').textContent = best;
         blip(660, 0.15, 'triangle', 0.06); setTimeout(function () { blip(880, 0.2, 'triangle', 0.06); }, 140);
@@ -656,9 +809,9 @@
       function draw(now) {
         now = now || performance.now();
         var sh = fx.shake * fx.shake * 7, ox = sh ? Math.sin(now * 0.09) * sh : 0, oy = sh ? Math.cos(now * 0.11) * sh : 0;
-        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.setTransform(K, 0, 0, K, 0, 0);
         g.fillStyle = '#ece9e1'; g.fillRect(0, 0, size, size);
-        g.setTransform(1, 0, 0, 1, Math.round(ox), Math.round(oy));
+        g.setTransform(K, 0, 0, K, Math.round(ox) * K, Math.round(oy) * K);
         for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if ((x + y) & 1) { g.fillStyle = '#dedad0'; g.fillRect(x * CELL, y * CELL, CELL, CELL); }
         for (y = 0; y < N; y++) for (x = 0; x < N; x++) if (G.jelly[y][x]) {   // jelly: flat pink, a 1 px darker edge, a dithered corner
           var jx0 = x * CELL + 2, jy0 = y * CELL + 2, js = CELL - 4;
@@ -736,7 +889,7 @@
           var wl = fx.word.life, zw = Math.max(3, Math.round(CELL / 14));
           drawWord(g, fx.word.text, '#ff5fb0', '#000000', size / 2, Math.round(size * 0.42), wl > 0.9 ? zw + 2 : wl > 0.8 ? zw + 1 : zw);
         }
-        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.setTransform(K, 0, 0, K, 0, 0);
         if (fx.flash > 0.25) { g.fillStyle = 'rgba(255,255,255,0.5)'; g.fillRect(0, 0, size, size); }
       }
       // the MR bomb as pixel art: a dark disc, the six colours stepping round it, "MR" in 3×5 letters
@@ -752,10 +905,10 @@
       var striped = {};
       function stripedOf(t, dir) {
         var key = t + dir; if (striped[key]) return striped[key];
-        var c = canvas(16, 16), q = c.getContext('2d'); q.drawImage(PIECES[t], 0, 0);
-        var d = q.getImageData(0, 0, 16, 16), px = d.data;
-        for (var y = 0; y < 16; y++) for (var x = 0; x < 16; x++) {
-          var i = (y * 16 + x) * 4, band = ((dir === 'h' ? y : x) + 1) % 4;
+        var S = PIECES[t].width, B = S / 16, c = canvas(S, S), q = c.getContext('2d'); q.drawImage(PIECES[t], 0, 0);   // the piece's own size: 16 px pixel art or a 128 px drink
+        var d = q.getImageData(0, 0, S, S), px = d.data;
+        for (var y = 0; y < S; y++) for (var x = 0; x < S; x++) {
+          var i = (y * S + x) * 4, band = ((((dir === 'h' ? y : x) / B) | 0) + 1) % 4;
           if (!px[i + 3]) continue;
           if (band < 2) { px[i] = px[i] + (255 - px[i]) * 0.72; px[i + 1] = px[i + 1] + (255 - px[i + 1]) * 0.72; px[i + 2] = px[i + 2] + (255 - px[i + 2]) * 0.72; }
           else { px[i] *= 0.82; px[i + 1] *= 0.82; px[i + 2] *= 0.82; }
@@ -764,9 +917,16 @@
         return (striped[key] = c);
       }
       function piece(c, px, py, now, hinted) {
-        var k = c.k || 1, sq = c.sq || 0, s = Math.round(CELL * 0.74 * k);
+        var k = c.k || 1, sq = c.sq || 0, s = Math.round(CELL * (HQ ? 0.86 : 0.74) * k);
+        g.imageSmoothingEnabled = HQ && c.t >= 0; if (HQ) g.imageSmoothingQuality = 'high';
         var sw = s * (1 + sq * 0.14), shh = s * (1 - sq * 0.14), ox = (CELL - sw) / 2, oy = CELL - (CELL - s) / 2 - shh;   // squash from the bottom
         g.globalAlpha = c.a == null ? 1 : Math.max(0, c.a);
+        if (HQ && c.t >= 0) {   // a soft tile in the drink's colour
+          var pad = Math.max(2, CELL * 0.06) + (1 - Math.min(1, k)) * CELL * 0.3, ts = CELL - pad * 2;
+          g.save(); g.globalAlpha *= 0.3; g.fillStyle = PCOL[c.t]; g.beginPath();
+          if (g.roundRect) g.roundRect(px + pad, py + pad, ts, ts, CELL * 0.2); else g.rect(px + pad, py + pad, ts, ts);
+          g.fill(); g.restore();
+        }
         if (c.gold && ((now / 250) | 0) % 2) { g.fillStyle = '#ffcf3a'; g.fillRect(Math.round(px) + 3, Math.round(py) + 3, CELL - 6, 2); g.fillRect(Math.round(px) + 3, Math.round(py) + CELL - 5, CELL - 6, 2); g.fillRect(Math.round(px) + 3, Math.round(py) + 3, 2, CELL - 6); g.fillRect(Math.round(px) + CELL - 5, Math.round(py) + 3, 2, CELL - 6); }
         if (c.t < 0) {                                                // the MR bomb: a dark disc with the six colours turning round it
           g.drawImage(bombFrame(((now / 120) | 0) % 6), px + ox, py + oy, sw, shh);   // 16×16, six frames, drawn nearest
@@ -782,7 +942,7 @@
           } else g.drawImage(PIECES[c.t], px + ox, py + oy, sw, shh);
           if (c.gold) { g.fillStyle = '#ffcf3a'; g.font = '900 ' + Math.round(CELL * 0.3) + 'px Tahoma, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('★', px + CELL * 0.8, py + CELL * 0.2); }
         }
-        g.globalAlpha = 1;
+        g.globalAlpha = 1; g.imageSmoothingEnabled = false;
       }
       function tween(ms, each, done) { anim.push({ t0: performance.now(), ms: ms, each: each, done: done }); kick(); }
       var last = 0;
@@ -854,6 +1014,8 @@
       if (tuneOn) tuneStart();
       w.onClose = function () { if (raf) cancelAnimationFrame(raf); raf = 0; anim = []; tuneOn = false; tuneStop(); };
       newGame(); kick();
+      // the drinks as pieces, once their pictures are in
+      drinkPieces().then(function (ok) { if (!ok || !wins.candy) return; striped = {}; if (!G.score && !busy) newGame(); else goalIcon(); kick(); draw(); });
       if (window.__candyTest) window.__candyTest({ G: function () { return G; }, combo: function (xa, ya, xb, yb) { busy = true; comboBlast(xa, ya, xb, yb); } });   // the test page only
     }
 

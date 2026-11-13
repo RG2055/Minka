@@ -341,6 +341,14 @@
       if (icon.animate) icon.animate([{ opacity: 0, transform: 'scale(.5)' }, { opacity: 0, transform: 'scale(.5)', offset: .45 }, { opacity: 1, transform: 'scale(1.12)', offset: .8 }, { opacity: 1, transform: 'scale(1)' }],
         { duration: 760, easing: 'cubic-bezier(.2,.8,.3,1)' });
     },
+    // a drink sliced at a point of the page, small (Konfektes: the pieces a match clears)
+    // (not a drink: the caller's own picture and colour)
+    burst: function (x, y, source, size, html, color, big, say) {
+      var fx = FX[source] || (color && { juice: [color, '#ffffff', color], stain: color });
+      if (!fx || (reduce && reduce.matches)) return;
+      slice(fx, { x: x, y: y }, html || (window.__minkaCoffeeIcon ? window.__minkaCoffeeIcon(source) : ''), size, size, !!big);
+      if (say && fx.line) line({ x: x, y: y }, fx.line[0], fx.line[1]);
+    },
     // saved: the flying drink is sliced where it lands (calendar.js flyCoffeeToCurve), with its line
     land: function (x, y, source, html) {
       var fx = FX[source];

@@ -61,7 +61,7 @@
       uniforms: { ripplesA: [.3, .36, .72, .68], ripplesB: [.3, .36, .3, .36], ripplesCount: 2, ripplesDecay: 1, ripplesIntensity: 1, ripplesRings: 12 } } },
     { id: 'storm', name: 'Kaķis', note: 'Kaķis ar zobenu dejo lietū', fx: { field: 'cat', img: 'center-g-cat.webp', shares: [0, .5, 1], uniforms: {} } },
     { id: 'mines', name: 'Mīnas', note: 'Mīnas noskaņas krāsā, spēlē uzreiz', icon: '💣', game: 'mines' },
-    { id: 'candy', name: 'Konfektes', note: 'Konfektes 98 no galerijas, bezgalīgi', icon: '🍬', game: 'candy' },
+    { id: 'candy', name: 'Konfektes', note: 'Konfektes 98 no galerijas, ar līmeņiem', icon: '🍬', game: 'candy' },
     // widgets: plain DOM in the mood's place (see mountWidget)
     { id: 'emoji', name: 'Emoji', note: 'Liels emoji pēc izvēles, ar kustību', icon: '😎', widget: 'emoji' },
     { id: 'month', name: 'Kalendārs', note: 'Mēneša kalendārs: klikšķis atver dienu', icon: '📅', widget: 'month' },
@@ -754,7 +754,7 @@
   }
   var centerMood = null, centerBox = '';
   // the games: the gallery's own Windows 98 (js/page/mood-gallery-pc.js), one game mounted in the box
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261109cl68', pcLoad = null, game = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261113cd6', pcLoad = null, game = null;
   function mountGame(app) {
     if (!pcLoad) pcLoad = new Promise(function (ok, no) {
       if (window.MinkaGalleryPC) { ok(); return; }

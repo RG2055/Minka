@@ -251,6 +251,13 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .pc98-embed .pc98-win, .pc98-embed .pc98-body, .pc98-embed .pc98-well, .pc98-embed .pc98-cbar, .pc98-embed .pc98-cbar > span {
   background: transparent !important; box-shadow: none !important; border: 0 !important; }
 .pc98-embed .pc98-cbar { color: #eef2f6 !important; }
+/* the line above the board is never wider than the board: four short items, a label over its number,
+   the goal's picture smooth and whole */
+.pc98-embed .pc98-cbar { gap: 2px; align-items: flex-end; justify-content: space-between; }
+.pc98-embed .pc98-cbar > span { flex: 0 0 auto; padding: 3px !important; }   /* each as wide as its own text: a long number never runs into its neighbour */
+.pc98-embed .pc98-cbar > span:not(.pc98-goal, .pc98-jelly) { display: grid; }
+.pc98-embed .pc98-cbar > span > b { float: none; justify-self: start; }
+.pc98-embed .pc98-gico { width: 22px; height: 22px; background-size: contain; image-rendering: auto; }
 /* Mīnas in the centre: Material 3 shapes in the mood's colour, closed cells a halftone of the ink
    (the same dither as the pictures), the mood's own face on the round button */
 .pc98-embed .pc98-mines { box-shadow: none !important; margin: 0 !important; padding: 0 !important; gap: 10px !important; }
