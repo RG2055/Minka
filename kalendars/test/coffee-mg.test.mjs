@@ -10,6 +10,8 @@ test('caffeine from stored sources: a Monster (stored as 2 cup units) is 160 mg,
  assert.equal(c.coffeeSourcesMg({monster:2}),160);
  assert.equal(c.coffeeSourcesMg({brite:1}),100);
  assert.equal(c.coffeeSourcesMg({monster:2,brite:1,philips:3}),500);
+ assert.equal(c.coffeeSourcesMg({kongstrong:2}),160);
+ assert.equal(c.coffeeSourcesMg({dynamit:2}),180);
  assert.equal(c.coffeeSourcesMg({nonsense:4}),0);
  assert.equal(c.coffeeSourcesMg(null),0);
 });

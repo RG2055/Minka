@@ -1809,10 +1809,10 @@
   // sources added later — nothing here is written per source count.
   var MOOD_DEPTHS = [0.06, 0.66, 0.28, 0.92, 0.44, 0.14, 0.78, 0.36, 0.58, 0.22];
   var MOOD_SRC_GAP = 10;
-  var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'cupcoffee', 'mycoffee'];
+  var MOOD_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'dynamit', 'kongstrong', 'cupcoffee', 'mycoffee'];
   var MOOD_SOURCE_NAMES = {
     philips: 'Philips', lofbergs: 'Löfbergs', narvesen: 'Narvesen', monster: 'Monster',
-    monsterultra: 'Monster Ultra', redbull: 'Red Bull', brite: 'Brite', cupcoffee: 'Cita kafija', mycoffee: 'Mana kafija'
+    monsterultra: 'Monster Ultra', redbull: 'Red Bull', brite: 'Brite', dynamit: 'Dynamit', kongstrong: 'Kong Strong', cupcoffee: 'Cita kafija', mycoffee: 'Mana kafija'
   };
   // Badge sizes follow the card's container queries, so a resize moves the
   // whole ring. Lay it out again instead of rebuilding the DOM.

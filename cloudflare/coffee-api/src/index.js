@@ -119,11 +119,12 @@ function cleanDelta(value) {
 // gate: an unknown slug that looks like a source is stored as it is, so a drink
 // added in the app starts counting before this worker is redeployed. Only the
 // bookkeeping value 'adjustment' and junk are turned away.
-const KNOWN_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'cupcoffee', 'mycoffee'];
+const KNOWN_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'dynamit', 'kongstrong', 'cupcoffee', 'mycoffee'];
 const SOURCE_ALIASES = {
   'löfbergs': 'lofbergs', 'monster-ultra': 'monsterultra', monsterwhite: 'monsterultra', ultra: 'monsterultra',
   'red-bull': 'redbull', redbul: 'redbull', 'cup-coffee': 'cupcoffee', cita: 'cupcoffee', other: 'cupcoffee',
-  'my-coffee': 'mycoffee', mana: 'mycoffee', manakafija: 'mycoffee'
+  'my-coffee': 'mycoffee', mana: 'mycoffee', manakafija: 'mycoffee',
+  dynamite: 'dynamit', 'dynami:t': 'dynamit', kong: 'kongstrong', 'kong-strong': 'kongstrong'
 };
 
 function cleanSource(value) {

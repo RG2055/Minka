@@ -2642,7 +2642,7 @@
     8:['hedgehog','🍄'],9:['fox','🍂'],10:['owl','🍁'],11:['moon','⭐']};
   var DREAM_ANY=[['cat','🌛'],['blackcat','🦋'],['dolphin','🌊'],['hedgehog','🍄'],['rabbit','🥕'],['owl','📖'],['penguin','❄️'],['fox','🍂'],
     ['coffee','🥐'],['maracas','🎵'],['rocket','🪐'],['compass','🗺️'],['robot','🎮'],['ufo','🌙'],['shell','🏖️'],['teddy','🍯']];
-  var ENERGY_DRINKS=/^(monster|monsterultra|redbull|brite)/;
+  var ENERGY_DRINKS=/^(monster|monsterultra|redbull|brite|dynamit|kongstrong)/;
   function dreamRandom(seed){ return function(){ seed=(seed+0x6D2B79F5)|0; var t=Math.imul(seed^(seed>>>15),1|seed); t=t+Math.imul(t^(t>>>7),61|t)^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
   function dreamDays(a,b){ var x=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(a||''), y=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(b||''); if(!x||!y) return null; return Math.round((new Date(+y[3],+y[2]-1,+y[1])-new Date(+x[3],+x[2]-1,+x[1]))/864e5); }
   function readJson(key){ try{ return JSON.parse(localStorage.getItem(key)||'{}')||{}; }catch(_e){ return {}; } }

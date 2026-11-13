@@ -29,7 +29,7 @@
   var PENDING_KEY = mkKey('minkaShiftPulsePendingV2');
   var COFFEE_KEY = 'minkaCoffeeCountsV1';
   var COFFEE_DETAILS_KEY = 'minkaCoffeeDetailsV1';
-  var COFFEE_SOURCES = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['brite', 'Brite'], ['cupcoffee', 'Cita kafija'], ['mycoffee', 'Mana kafija']];
+  var COFFEE_SOURCES = [['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'], ['brite', 'Brite'], ['dynamit', 'Dynamit'], ['kongstrong', 'Kong Strong'], ['cupcoffee', 'Cita kafija'], ['mycoffee', 'Mana kafija']];
 
   var state = { month: '', group: 'all', tab: 'overview', person: '', day: '' };
   // Shared radio history from the feedback API, per month: { 'YYYY-MM': { at, days: [...] } }.
@@ -548,7 +548,7 @@
   /* Sources are stored in whole caffeine cups (a 500 ml Monster = 2, as the coffee
      menu counts them; a Brite is stored as 1, its 1.25 is only for the mg). Next to a drink's icon the number is drinks —
      cans and cups — like the card's own coffee menu; the "tases" total stays cups. */
-  var COFFEE_EQ = { monster: 2, monsterultra: 2 };
+  var COFFEE_EQ = { monster: 2, monsterultra: 2, dynamit: 2, kongstrong: 2 };
   function drinks(key, units) { var n = (Number(units) || 0) / (COFFEE_EQ[key] || 1); return n > 0 ? Math.max(1, Math.round(n)) : 0; }
   function sourceChips(sources) {
     var icon = window.__minkaCoffeeIcon;

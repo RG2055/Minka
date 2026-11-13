@@ -6062,20 +6062,28 @@ function filterFullList(btn) {
     // Monster ≈160 mg ≈2 cups, a 250ml Red Bull ≈80 mg ≈1 cup. All coffee/drink
     // totals are stored in these equivalent units; mg = units × 80.
     const COFFEE_MG_PER_CUP = 80;
+    // color: the drink's own colour on the caffeine chart (the menu's "Kofeīns organismā").
     const coffeeSourceMeta = {
-      philips: { label: 'Philips', priceCents: 0, eq: 1 },
-      lofbergs: { label: 'LÖFBERGS', priceCents: 100, eq: 1 },
-      narvesen: { label: 'Narvesen', prices: { M: 200, L: 220, XL: 250 }, eq: 1 },
-      monster: { label: 'Monster', priceCents: 159, eq: 2 },
-      monsterultra: { label: 'Monster Ultra', priceCents: 159, eq: 2 },
-      redbull: { label: 'Red Bull', priceCents: 149, eq: 1 },
+      philips: { label: 'Philips', priceCents: 0, eq: 1, color: '#c8905a' },
+      lofbergs: { label: 'Löfbergs', priceCents: 100, eq: 1, color: '#a678e0' },
+      // Narvesen in Latvia has two cup sizes, L and XL (no M); a size stored as M earlier stays as it was.
+      narvesen: { label: 'Narvesen', prices: { L: 220, XL: 250 }, eq: 1, color: '#f08a24' },
+      monster: { label: 'Monster', priceCents: 159, eq: 2, color: '#7bdc3a' },
+      monsterultra: { label: 'Monster Ultra', priceCents: 159, eq: 2, color: '#e6edf5' },
+      redbull: { label: 'Red Bull', priceCents: 149, eq: 1, color: '#e5484d' },
       // Brite: 330 ml at 30 mg caffeine per 100 ml ≈ 99 mg ≈ 1.25 cups, and
       // 1.99 € in Rimi and Barbora (checked 2026-09-22).
-      brite: { label: 'Brite', priceCents: 199, eq: 1.25 },
-      cupcoffee: { label: 'Cita kafija', priceCents: 100, eq: 1 },
-      mycoffee: { label: 'Mana kafija', priceCents: 0, eq: 1 }
+      brite: { label: 'Brite', priceCents: 199, eq: 1.25, color: '#d8e84a' },
+      // Dynamit (DYNAMI:T, made in Latvia): the 568 ml can, 0.99 € in Rimi (checked 2026-11-13);
+      // the shop gives no caffeine figure, so the usual 32 mg per 100 ml: ≈182 mg ≈ 2.25 cups.
+      dynamit: { label: 'Dynamit', priceCents: 99, eq: 2.25, color: '#ffe14a' },
+      // Kong Strong (Lidl's own): 500 ml at 32 mg per 100 ml = 160 mg = 2 cups.
+      // shortcut: 0.79 € is an estimate (no Latvian Lidl price online); a typed price is remembered per device.
+      kongstrong: { label: 'Kong Strong', priceCents: 79, eq: 2, color: '#4f8dff' },
+      cupcoffee: { label: 'Cita kafija', priceCents: 100, eq: 1, color: '#a9825f' },
+      mycoffee: { label: 'Mana kafija', priceCents: 0, eq: 1, color: '#ff8fb0' }
     };
-    const COFFEE_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'cupcoffee', 'mycoffee'];
+    const COFFEE_SOURCES = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'dynamit', 'kongstrong', 'cupcoffee', 'mycoffee'];
     // Cups are stored as whole numbers (the coffee server keeps whole deltas), so a
     // drink worth 1.25 cups still counts as one cup; only the caffeine readout and the
     // picker's "1.25 tasītes" show the finer figure.
@@ -6172,7 +6180,8 @@ function filterFullList(btn) {
     const COFFEE_SOURCE_ALIASES = {
       'löfbergs': 'lofbergs', 'monster-ultra': 'monsterultra', monsterwhite: 'monsterultra', ultra: 'monsterultra',
       'red-bull': 'redbull', redbul: 'redbull', 'cup-coffee': 'cupcoffee', cita: 'cupcoffee', other: 'cupcoffee',
-      'my-coffee': 'mycoffee', mana: 'mycoffee', manakafija: 'mycoffee'
+      'my-coffee': 'mycoffee', mana: 'mycoffee', manakafija: 'mycoffee',
+      dynamite: 'dynamit', 'dynami:t': 'dynamit', kong: 'kongstrong', 'kong-strong': 'kongstrong'
     };
     function cleanCoffeeSource(source) {
       const s = String(source || 'philips').trim().toLowerCase();
@@ -6324,7 +6333,7 @@ function filterFullList(btn) {
       const times = getCoffeeTimes(name);
       for (let i = times.length - 1; i >= 0; i--) {   // newest first: a removed drink is the oldest unknown
         const k = times[i][0];
-        if (left[k] > 0) { left[k]--; drinks.push({ mg: coffeeMg(k), at: times[i][1] }); }
+        if (left[k] > 0) { left[k]--; drinks.push({ mg: coffeeMg(k), at: times[i][1], src: k }); }
       }
       return { drinks, unknown: total - drinks.length };
     }
@@ -6564,20 +6573,6 @@ function filterFullList(btn) {
           + '<rect x="14" y="24" width="6" height="1" fill="#7a4a24"/>'
           + '</svg>';
       }
-      if (source === 'narvesen') {
-        // Narvesen takeaway cup — cream paper cup, red sleeve + lid, a little steam.
-        return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
-          + '<rect x="13" y="2" width="1" height="2" fill="#aeb6c6"/>'
-          + '<rect x="16" y="1" width="1" height="2" fill="#aeb6c6"/>'
-          + '<rect x="19" y="2" width="1" height="2" fill="#aeb6c6"/>'
-          + '<rect x="14" y="5" width="5" height="2" fill="#b8312a"/>'
-          + '<rect x="9" y="7" width="15" height="3" fill="#d23b2b"/>'
-          + '<rect x="10" y="10" width="13" height="16" fill="#f3efe6"/>'
-          + '<rect x="10" y="15" width="13" height="5" fill="#d23b2b"/>'
-          + '<rect x="10" y="15" width="13" height="1" fill="#e6584a"/>'
-          + '<rect x="11" y="25" width="11" height="1" fill="#e7e1d4"/>'
-          + '</svg>';
-      }
       if (source === 'monster') {
         // Monster Energy — black can with the green claw "M".
         return '<svg viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true">'
@@ -6619,8 +6614,9 @@ function filterFullList(btn) {
           + '<rect x="16" y="21" width="2" height="1" fill="#d61f26"/>'
           + '</svg>';
       }
-      if (source === 'brite' || source === 'mycoffee') {
-        // Pixel-art artwork from the owner, cut out of its white background.
+      if (source === 'brite' || source === 'mycoffee' || source === 'dynamit' || source === 'kongstrong' || source === 'narvesen') {
+        // The product itself, cut out of its white background (Brite and "Mana kafija" from the owner;
+        // Dynamit, Kong Strong and Narvesen's cup from product photos, 2026-11-13).
         // Wrapped in the same 32x32 <svg> as the drawn icons on purpose: every
         // place that shows these icons — the picker, the stats chips, the mood
         // ring — sizes them with an `svg` rule, and a bare <img> ignored all of
@@ -6735,6 +6731,7 @@ function filterFullList(btn) {
       document.body.appendChild(icon);
       icon.animate(frames, { duration: 900, easing: 'cubic-bezier(.45,.05,.3,1)' }).onfinish = () => {
         icon.remove();
+        window.MkCoffeeFx?.land(sx + dx, sy + dy, source, icon.innerHTML);   // the drink's own effect where it lands (js/page/coffee-fx.js)
         if (!point) return;
         const url = coffeeRing();
         if (url) [0, 140].forEach(delay => {
@@ -6814,7 +6811,7 @@ function filterFullList(btn) {
     function showCoffeePicker(name, card, anchor) {
       closeCoffeePicker(true);
       let selected = 'philips';
-      let size = 'M';
+      let size = 'L';
       let priceCents = 0;
       const picker = document.createElement('div');
       const backdrop = document.createElement('div');
@@ -6835,7 +6832,7 @@ function filterFullList(btn) {
             </button>`).join('')}
         </div>
         <div class="mk-coffee-size-row" hidden>
-          ${['M', 'L', 'XL'].map(s => `<button type="button" class="${s === size ? 'is-on' : ''}" data-size="${s}">${s}</button>`).join('')}
+          ${['L', 'XL'].map(s => `<button type="button" class="${s === size ? 'is-on' : ''}" data-size="${s}">${s}</button>`).join('')}
         </div>
         <div class="mk-caf-curve" hidden></div>
         <label class="mk-coffee-price-row">
@@ -6940,7 +6937,7 @@ function filterFullList(btn) {
 
       function defaultPriceFor(src) {
         if (src === 'philips') return 0;
-        if (src === 'narvesen') return coffeeSourceMeta.narvesen.prices[size] || 200;
+        if (src === 'narvesen') return coffeeSourceMeta.narvesen.prices[size] || 220;
         const overrides = getCoffeePriceOverrides();
         if (overrides[src] != null) return overrides[src];
         return coffeeSourceMeta[src].priceCents || 0;
@@ -6977,7 +6974,7 @@ function filterFullList(btn) {
             + '<span class="mk-caf-info" tabindex="0" role="button" aria-label="Par 400 mg">i<span class="mk-caf-tip" role="tooltip">'
             + '<b>400 mg</b> ir droša kofeīna dienas deva pieaugušajam (EFSA), vienā reizē līdz 200 mg.'
             + '<span class="mk-caf-key"><span><i class="is-before"></i>Jau izdzerts šodien</span><span><i class="is-add"></i>Tagad pievienosi</span></span></span></span></span></span>';
-          drawCaffeineCurve(picker.querySelector('.mk-caf-curve'), name, mg);
+          drawCaffeineCurve(picker.querySelector('.mk-caf-curve'), name, mg, cleanCoffeeSource(selected));
         }
       }
       picker.querySelectorAll('.mk-coffee-source').forEach(btn => {
@@ -6986,12 +6983,13 @@ function filterFullList(btn) {
           priceCents = defaultPriceFor(selected);
           sync();
           placePicker();
+          window.MkCoffeeFx?.pick(btn, selected);
         });
       });
       picker.querySelectorAll('[data-size]').forEach(btn => {
         btn.addEventListener('click', () => {
-          size = btn.dataset.size || 'M';
-          priceCents = coffeeSourceMeta.narvesen.prices[size] || 200;
+          size = btn.dataset.size || 'L';
+          priceCents = coffeeSourceMeta.narvesen.prices[size] || 220;
           sync();
           placePicker();
         });
@@ -7011,6 +7009,10 @@ function filterFullList(btn) {
           if (selected !== 'philips' && selected !== 'narvesen') saveCoffeePriceOverride(selected, priceCents);
           addCoffeeEntry(name, card, { source: selected, size: selected === 'narvesen' ? size : '', priceCents });
           playCoffeeAddedEffect(card, selected);
+          // on the person's own card the drink is scanned and poured in (js/page/coffee-fx.js); about one in
+          // fifteen is a golden can (js/page/coffee-gold.js)
+          window.MkCoffeeFx?.pour?.(card, selected, (coffeeAura(name) || {}).mg);
+          window.MkCoffeeGold?.saved(name, selected).then(gold => { if (gold) { window.MkCoffeeFx?.gold?.(card); window.__minkaCoffeeAuraRefresh(); } });
           closeCoffeePicker();
           anchor?.focus({ preventScroll: true });
         });
@@ -7030,21 +7032,28 @@ function filterFullList(btn) {
     }
 
     // The duty day's caffeine as a dot chart across the wide menu, under both columns:
-    // already drunk in the dimmer orange, the drink being added on top in the full one (as
-    // the day bar). Drawn once per menu state: a still picture, nothing runs afterwards.
-    function drawCaffeineCurve(host, name, addMg) {
+    // every drink in its own colour (coffeeSourceMeta color), stacked oldest at the bottom: already
+    // drunk dimmer, the drink being added on top in full. Drawn once per menu state: a still
+    // picture, nothing runs afterwards.
+    function drawCaffeineCurve(host, name, addMg, addSrc) {
       const start = coffeeDayStart();
       if (!host || !start) return;
       const end = start + 24 * 3600000, now = Date.now(), live = now >= start && now < end;
       const { drinks, unknown } = coffeeTimedDrinks(name);
       host.hidden = !live && !drinks.length;
       if (host.hidden) { host.replaceChildren(); return; }
-      const withNew = live ? drinks.concat([{ mg: addMg, at: now }]) : drinks;
+      const adding = live ? { mg: addMg, at: now, src: addSrc } : null;
+      const withNew = adding ? drinks.concat([adding]) : drinks;
+      const stack = withNew.slice().sort((a, b) => a.at - b.at), tops = [];   // per column: where each drink's layer ends
       const W = 408, H = 84, STEP = 6, cols = W / STEP, rows = H / STEP;
       const tAt = c => start + (c + .5) / cols * (end - start);
       let peak = 0;
       const before = [], after = [];
-      for (let c = 0; c < cols; c++) { before.push(caffeineAt(drinks, tAt(c))); after.push(caffeineAt(withNew, tAt(c))); peak = Math.max(peak, after[c]); }
+      for (let c = 0; c < cols; c++) {
+        before.push(caffeineAt(drinks, tAt(c))); after.push(caffeineAt(withNew, tAt(c))); peak = Math.max(peak, after[c]);
+        let sum = 0;
+        tops.push(stack.map(d => sum += caffeineAt([d], tAt(c))));
+      }
       const yMax = Math.max(200, Math.ceil(peak * 1.15 / 50) * 50), perRow = yMax / rows;
       const cv = document.createElement('canvas'), dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = W * dpr; cv.height = H * dpr;
@@ -7053,9 +7062,14 @@ function filterFullList(btn) {
       for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) {
         const v = (r + .5) * perRow, x = c * STEP + STEP / 2, y = H - r * STEP - STEP / 2;
         const edge = v > before[c] - perRow;   // the ridge of what is already in the body is a little brighter
-        g.fillStyle = v <= before[c] ? 'rgba(255,183,124,' + (edge ? .8 : .46) + ')' : v <= after[c] ? '#ffb77c' : 'rgba(255,255,255,.07)';
+        if (v <= after[c]) {
+          const i = tops[c].findIndex(top => v <= top + 1e-6), d = stack[i < 0 ? stack.length - 1 : i];
+          g.globalAlpha = d === adding ? 1 : edge ? .85 : .5;
+          g.fillStyle = (coffeeSourceMeta[d.src] || {}).color || '#ffb77c';
+        } else { g.globalAlpha = 1; g.fillStyle = 'rgba(255,255,255,.07)'; }
         g.beginPath(); g.arc(x, y, v <= after[c] ? 2.1 : 1.1, 0, 6.2832); g.fill();
       }
+      g.globalAlpha = 1;
       // The 50 mg line and "now", each with its word on the chart.
       const label = (str, x, y, align) => {
         g.font = '500 10px Inter, system-ui, sans-serif'; g.textAlign = align; g.textBaseline = 'alphabetic';
@@ -7084,7 +7098,7 @@ function filterFullList(btn) {
       const note = unknown > 0 ? (unknown === 1 ? '1 dzērienam' : unknown + ' dzērieniem') + ' nav zināms laiks' : '';
       cv.setAttribute('role', 'img');
       cv.setAttribute('aria-label', 'Kofeīns organismā maiņas laikā. ' + facts.map(f => f[0] + ' ' + f[1]).join(', ') + (note ? '. ' + note : ''));
-      cv.title = 'Blāvākie punkti: jau izdzertais. Spilgtie: dzēriens, ko tagad pievienosi.';
+      cv.title = 'Katram dzērienam sava krāsa. Blāvākie punkti: jau izdzertais. Spilgtie: dzēriens, ko tagad pievienosi.';
       const el = (cls, html) => { const n = document.createElement('div'); n.className = cls; n.innerHTML = html; return n; };
       const axis = el('mk-caf-curve-axis', ['08:00', '14:00', '20:00', '02:00', '08:00'].map(h => '<span>' + h + '</span>').join(''));
       axis.setAttribute('aria-hidden', 'true');
@@ -7136,7 +7150,35 @@ function filterFullList(btn) {
         </div>`;
     }
 
+    // The person's card as a cup (js/page/coffee-fx.js aura): the latest drink stands in it as high as there
+    // is caffeine in the body, until under 30 mg. A drink just logged is still on its way in, so for its
+    // first 45 minutes the level is what it will be then.
+    function coffeeDayLive() { const s = coffeeDayStart(), now = Date.now(); return !!s && now >= s && now < s + 24 * 3600000; }
+    function coffeeAura(name) {
+      if (!coffeeDayLive()) return null;
+      const drinks = coffeeTimedDrinks(name).drinks;
+      if (!drinks.length) return null;
+      const last = drinks.reduce((a, b) => b.at > a.at ? b : a);
+      const mg = caffeineAt(drinks, Math.max(Date.now(), last.at + 45 * 60000));
+      return mg >= 30 ? { src: last.src, mg } : null;
+    }
+    function updateCoffeeAura(card, name) {
+      if (!card || !window.MkCoffeeFx || !window.MkCoffeeFx.aura) return;
+      const a = coffeeAura(name);
+      window.MkCoffeeFx.aura(card, a ? a.src : '', !!(window.MkCoffeeGold && window.MkCoffeeGold.today(name)), a ? a.mg : 0);
+    }
+    window.__minkaCoffeeAuraRefresh = () => document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => updateCoffeeAura(card, card.getAttribute('data-worker') || ''));
+    window.__minkaCoffeeEq = coffeeEq;
+    // drinks per kind on the shown duty day, while it is the running one (js/page/coffee-gold.js)
+    window.__minkaCoffeeTodayDrinks = name => {
+      if (!coffeeDayLive()) return null;
+      const s = getCoffeeDetail(name).sources || {}, out = {};
+      Object.keys(s).forEach(k => { if (coffeeSourceMeta[k] && s[k] > 0) out[k] = Math.round(s[k] / coffeeEq(k)); });
+      return out;
+    };
+
     function updateCoffeeRow(card, name) {
+      updateCoffeeAura(card, name);
       const row = card && card.querySelector('.mk-mid-coffee');
       if (!row) return;
       const count = getCoffeeCount(name);

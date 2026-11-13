@@ -202,7 +202,7 @@
     if (!statsLoading) {
       statsLoading = new Promise(function (resolve, reject) {
         var s = document.createElement('script');
-        s.src = 'js/daybook-stats.js?v=20261018tp2';
+        s.src = 'js/daybook-stats.js?v=20261113dk1';
         s.onload = resolve;
         s.onerror = function () { s.remove(); statsLoading = null; reject(new Error('daybook-stats')); };
         document.head.append(s);

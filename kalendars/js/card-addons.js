@@ -30,7 +30,7 @@
 
   // Defined before ITEMS: the coffee items are built from them.
   var COFFEE_DRINKS = [['narvesen', 'Narvesen'], ['monster', 'Monster'], ['monsterultra', 'Monster Ultra'], ['redbull', 'Red Bull'],
-    ['brite', 'Brite'], ['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['mycoffee', 'Mana kafija']];
+    ['brite', 'Brite'], ['dynamit', 'Dynamit'], ['kongstrong', 'Kong Strong'], ['philips', 'Philips'], ['lofbergs', 'Löfbergs'], ['mycoffee', 'Mana kafija']];
   var COFFEE_STATS = [['', 'Bez skaitļa'], ['n', 'Šodien pie katras'], ['t', 'Šodien kopā'], ['a', 'Visu laiku']];
   /* Groups in the picker. Kept: everything someone uses (checked in the cloud,
      2026-09-27). The unused originals made way for the Focus kit (focus-v1,
@@ -239,7 +239,7 @@
     if (!det) { loadCoffeeTotals(); return {}; }
     var src = (det[coffeeNorm(name)] || {}).sources || {}, out = {};
     // Stored in caffeine cups; a sticker counts drinks (as the Statistics chips do).
-    var eq = { monster: 2, monsterultra: 2 };
+    var eq = { monster: 2, monsterultra: 2, dynamit: 2, kongstrong: 2 };
     Object.keys(src).forEach(function(k) { var n = (Number(src[k]) || 0) / (eq[k] || 1); out[k] = n > 0 ? Math.max(1, Math.round(n)) : 0; });
     return out;
   }
