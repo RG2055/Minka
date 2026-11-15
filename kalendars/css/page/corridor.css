@@ -25,17 +25,18 @@ html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-
 
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card:not(.rg-feedback-card) {
   position: absolute !important; top: var(--cor-cy, 50%) !important; left: 50% !important;
-  width: var(--cs, 180px) !important; height: var(--cs, 180px) !important;
+  /* --cs-nat / --csk (corridor.js): a card smaller than 140 px is laid out at 140 and scaled down whole */
+  width: var(--cs-nat, var(--cs, 180px)) !important; height: var(--cs-nat, var(--cs, 180px)) !important;
   min-width: 0 !important; max-width: none !important; min-height: 0 !important; max-height: none !important; aspect-ratio: 1 / 1 !important;
-  margin: calc(var(--cs, 180px) / -2) 0 0 calc(var(--cs, 180px) / -2) !important;
+  margin: calc(var(--cs-nat, var(--cs, 180px)) / -2) 0 0 calc(var(--cs-nat, var(--cs, 180px)) / -2) !important;
   translate: none !important; rotate: none !important; scale: none !important;
   transform-origin: 50% 50%;
-  transform: translate3d(var(--cx, 0px), var(--cyo, 0px), var(--cz, 0px)) rotateY(var(--cry, 0deg)) rotateX(var(--crx, 0deg)) rotateZ(var(--crz, 0deg)) !important;
+  transform: translate3d(var(--cx, 0px), var(--cyo, 0px), var(--cz, 0px)) rotateY(var(--cry, 0deg)) rotateX(var(--crx, 0deg)) rotateZ(var(--crz, 0deg)) scale(var(--csk, 1)) !important;
   transition: transform 520ms cubic-bezier(.34, 1.4, .5, 1) !important;
 }
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card:not(.rg-feedback-card):is(.mk-cor-hot, :focus-within) {
   z-index: 60 !important;
-  transform: translate3d(calc(var(--cx, 0px) + var(--cin, 0px)), var(--cyo, 0px), calc(var(--cz, 0px) + var(--chz, 80px))) rotateY(var(--chry, 0deg)) rotateX(0deg) rotateZ(0deg) !important;
+  transform: translate3d(calc(var(--cx, 0px) + var(--cin, 0px)), var(--cyo, 0px), calc(var(--cz, 0px) + var(--chz, 80px))) rotateY(var(--chry, 0deg)) rotateX(0deg) rotateZ(0deg) scale(var(--csk, 1)) !important;
 }
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card.mk-cor-fresh { transition: none !important; }
 @layer mk-mx {

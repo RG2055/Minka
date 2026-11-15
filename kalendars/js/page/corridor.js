@@ -24,14 +24,13 @@
     var section = label && label.closest('.cards-section');
     return section ? [].slice.call(section.querySelectorAll('.card.mk-mid-card:not(.rg-feedback-card)')) : [];
   }
-  var tooSmallAt = '';
+  var tooSmallAt = '', NAT = 140;
   function clear() {
     root.classList.remove('mk-corridor');
     list.querySelectorAll('.card.mk-mid-card').forEach(function (c) {
-      ['--cs', '--cx', '--cyo', '--cz', '--cry', '--crx', '--crz', '--cin', '--chz', '--chry', 'z-index'].forEach(function (p) { c.style.removeProperty(p); });
+      ['--cs', '--cs-nat', '--csk', '--cx', '--cyo', '--cz', '--cry', '--crx', '--crz', '--cin', '--chz', '--chry', 'z-index'].forEach(function (p) { c.style.removeProperty(p); });
     });
     list.querySelectorAll('.cards-section-label').forEach(function (l) { l.style.removeProperty('--lx'); l.style.removeProperty('--ly'); });
-    fitNames();   // names set smaller for small cards go back to their own size
   }
   // The strip, headings and mood card as last measured. Measuring forces the whole page's layout
   // in the middle of a day switch (the cards are still being dressed): the switch itself reuses
@@ -207,6 +206,10 @@
         var row = Math.floor(i / cols), col = i % cols;   // column 0 stands next to the mood card
         var along = col * (size + GAP) + size / 2;
         card.style.setProperty('--cs', size.toFixed(1) + 'px');
+        // smaller than a card is drawn for: laid out at 140 px and scaled down as one piece (corridor.css),
+        // so its face, names, coffee pill and decorations shrink together and nothing sticks out
+        if (size < NAT) { card.style.setProperty('--cs-nat', NAT + 'px'); card.style.setProperty('--csk', (size / NAT).toFixed(4)); }
+        else { card.style.removeProperty('--cs-nat'); card.style.removeProperty('--csk'); }
         card.style.setProperty('--cx', (s * (start + along * cos)).toFixed(1) + 'px');
         card.style.setProperty('--cyo', (wallTop + LABEL + row * (size + GAP) + size / 2 - cy).toFixed(1) + 'px');
         card.style.setProperty('--cz', ((along - span + size / 2) * sin).toFixed(1) + 'px');
@@ -244,29 +247,7 @@
     if (fresh.length) requestAnimationFrame(function () { requestAnimationFrame(function () {
       fresh.forEach(function (card) { card.classList.remove('mk-cor-fresh'); });
     }); });
-    requestAnimationFrame(fitNames);
     window.dispatchEvent(new Event('mk-corridor-placed'));   // card-layout.js: the middle's box follows the walls
-  }
-  // Cards smaller than usual (the game in the middle takes room): a name (or the fatigue's word and
-  // number) that would be cut short is set smaller until it fits whole. Only those cards are measured, so the usual sizes cost nothing.
-  function fitNames() {
-    list.querySelectorAll('.card.mk-mid-card:not(.rg-feedback-card)').forEach(function (card) {
-      var small = parseFloat(card.style.getPropertyValue('--cs')) < 140;
-      card.querySelectorAll('.mk-mid-name-wrap :is(.name-main, .name-sub), .mk-mid-meta-fat :is(.mk-mid-meta-label, .mk-mid-meta-value)').forEach(function (n) {
-        if (!small && !n.dataset.fit) return;
-        n.style.removeProperty('font-size'); n.style.removeProperty('display'); delete n.dataset.fit;
-        if (!small) return;
-        // the room it has: its own box, or its parent's inside the padding (that one clips the fatigue's word)
-        var ps = getComputedStyle(n.parentNode), room = Math.min(n.clientWidth || 1e9, n.parentNode.clientWidth - (parseFloat(ps.paddingLeft) || 0) - (parseFloat(ps.paddingRight) || 0));
-        if (n.scrollWidth <= room + 0.5 || room <= 0) return;
-        var fs = parseFloat(getComputedStyle(n).fontSize) || 10;
-        var to = fs * room / n.scrollWidth * 0.97;
-        // too narrow even in 6 px: the fatigue's word goes (its number stays), never a word cut short
-        if (to < 6 && n.classList.contains('mk-mid-meta-label')) n.style.setProperty('display', 'none', 'important');
-        else n.style.setProperty('font-size', Math.max(6, to).toFixed(2) + 'px', 'important');
-        n.dataset.fit = '1';
-      });
-    });
   }
   function schedule() { if (!frame) frame = requestAnimationFrame(place); }
   // After a day switch the cards were placed from the last measurements. Measuring again in that

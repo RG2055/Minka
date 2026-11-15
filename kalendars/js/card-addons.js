@@ -1732,6 +1732,9 @@
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden) scheduleAddonPortals(80);
   });
+  // the corridor gave the cards new sizes and places (page/corridor.js): offsets follow the size,
+  // the charms' copies follow the cards while they glide (~0.5 s)
+  window.addEventListener('mk-corridor-placed', function() { scheduleAddonGeometry(); scheduleAddonPortals(600); });
   window.addEventListener('resize', function() {
     document.querySelectorAll('.mk-card-addon-surface').forEach(function(surface) {
       delete surface.dataset.surfaceSignature;
