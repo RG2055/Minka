@@ -3097,8 +3097,11 @@
         // beside them) instead of leaving it empty under them.
         var cat0 = cat ? cat.querySelector('.ns-bedcare-popover') || cat.querySelector('.ns-bedcare-perch-copy') : null;
         var rowH = cat0 ? cat0.getBoundingClientRect().bottom - (stage ? stage.getBoundingClientRect().top : fitRect.top) : 0;
+        // The rooms' top inside the row is the row's own padding, not where they stand now: they are
+        // centred in the row, so a smaller fit stood lower, read as less room, and every fit came out
+        // a little smaller than the last (the rooms jumped whenever the panel fitted again).
+        var roomTop = stageStyle ? (parseFloat(stageStyle.paddingTop)||0) : 0;
         if(!narrow && rowH > 120){
-          var roomTop = stage ? fitRect.top - (parseFloat(fit.style.marginTop)||0) - stage.getBoundingClientRect().top : 0;
           scale = Math.min(widthScale, (rowH - roomTop - 10) / naturalH);
         } else scale = Math.min(1, widthScale);
         if(!isFinite(scale) || scale <= 0) scale = 1;
@@ -3126,7 +3129,7 @@
           ['width','min-width','flex-basis'].forEach(function(k){ stats.style.removeProperty(k); });
         }
         // Any height the rooms cannot use is shared above and below them.
-        var spare = (!narrow && rowH > 120 && stage) ? rowH - (fitRect.top - (parseFloat(fit.style.marginTop)||0) - stage.getBoundingClientRect().top) - roomsH - 10 : 0;
+        var spare = (!narrow && rowH > 120 && stage) ? rowH - roomTop - roomsH - 10 : 0;
         fit.style.marginTop = spare > 4 ? Math.round(spare / 2) + 'px' : '';
         if(headEl){
           headEl.style.width = roomsW + 'px';
@@ -3529,6 +3532,7 @@
         wireBedCarePerch(panel);
         wireTimeWheels(panel);
         wireChalkboard(panel);
+        fitRoomBlocks(panel);   // before this frame is drawn: new rooms never show unfitted for a frame
         scheduleFitRoomBlocks(panel);
         nsRenderStats(st.sl);
       }
@@ -3582,6 +3586,10 @@
     var raffleTrigger=panel.querySelector('.ns-raffle-trigger');
     if(raffleTrigger)raffleTrigger.addEventListener('click',openRaffle);
 
+    // Fitted before this frame is drawn: the rebuilt rooms showed unfitted for one frame (a quick
+    // jump in size whenever the open panel was drawn again). The frame after fits once more for
+    // anything that settles late (fonts, pictures); a fit gives the same size when nothing changed.
+    fitRoomBlocks(panel);
     scheduleFitRoomBlocks(panel);
     nsRenderStats(st.sl);
     requestAnimationFrame(function(){
