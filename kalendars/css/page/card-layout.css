@@ -332,8 +332,8 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
    the box. Everything in the mood's colour (--ink): one tint, quiet surfaces, large numbers; colour is
    left to the sweets. No window, no title bar. */
 .pc98-embed .sw-candy {
-  --sw-ink: var(--ink, #a8c7fa); --sw-text: color-mix(in srgb, var(--sw-ink) 22%, #fff); --sw-dim: color-mix(in srgb, var(--sw-ink) 55%, rgba(255, 255, 255, .55));
-  --sw-surface: color-mix(in srgb, var(--sw-ink) 14%, rgba(12, 14, 20, .82));
+  --sw-ink: #8fc5ff; --sw-text: #eef3fb; --sw-dim: #8a9bb4;
+  --sw-surface: linear-gradient(180deg, #1b2338, #151b2c);
   flex-direction: row; align-items: stretch; gap: 10px; padding: 0 0 0 calc(var(--sw-side, 122px) + 10px); position: relative; font-family: Inter, system-ui, sans-serif; color: var(--sw-text);
 }
 /* the panel stands beside the board and as tall as it, never taller: the board alone sets the game's size */
@@ -372,7 +372,8 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .pc98-embed .sw-goals { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .pc98-embed .sw-goals > div { display: grid; justify-items: center; gap: 4px; padding: 8px 2px 7px; border-radius: 14px; background: color-mix(in srgb, var(--sw-ink) 10%, transparent); transition: background-color .3s; }
 .pc98-embed .sw-goals b { font: 700 13px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #fff; float: none; }
-.pc98-embed .sw-goals .is-done { background: color-mix(in srgb, #5ee07a 22%, transparent); }
+.pc98-embed .sw-goals .is-done { background: none; }
+.pc98-embed .sw-goals .is-done b { color: #7fe39a; }
 .pc98-embed .sw-goals .pc98-gico { width: 28px; height: 28px; background-size: contain; background-repeat: no-repeat; image-rendering: auto; transition: scale .12s; }
 .pc98-embed .sw-goals .is-hit .pc98-gico { scale: 1.25; }
 .pc98-embed .sw-goals .pc98-jico { width: 22px; height: 22px; margin: 3px; border-radius: 7px; background: linear-gradient(180deg, #ff9fd0, #e2378f); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .4); }
@@ -400,24 +401,98 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .pc98-embed .sw-btns .pc98-btn:active { scale: .94; }
 .pc98-embed .sw-candy .pc98-well { position: relative; flex: 1 1 0; min-width: 0; padding: 0; }
 .pc98-embed .sw-candy .pc98-board { display: block; }
-/* out of moves: a calm sheet over the board, "so close" when it was */
-.pc98-embed .sw-over { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 16px; text-align: center; border-radius: 20px;
-  background: color-mix(in srgb, var(--sw-ink) 12%, rgba(10, 12, 18, .84)); animation: sw-in .28s cubic-bezier(.2, 0, 0, 1); }
-.pc98-embed .sw-over b { font: 800 26px/1.1 Inter, system-ui, sans-serif; color: #fff; }
-.pc98-embed .sw-over span { font: 500 14px/1.3 Inter, system-ui, sans-serif; color: var(--sw-dim); margin-bottom: 6px; }
-.pc98-embed .sw-over button { min-height: 40px; padding: 0 22px; border: 0; border-radius: 999px; font: 700 14px/1 Inter, system-ui, sans-serif; cursor: pointer; transition: scale 140ms cubic-bezier(.2, 0, 0, 1); }
-.pc98-embed .sw-over .sw-go { background: var(--sw-ink); color: #0b0e12; }
-.pc98-embed .sw-over .sw-ghost { background: transparent; color: var(--sw-dim); font-weight: 600; }
-.pc98-embed .sw-over button:active { scale: .96; }
-@keyframes sw-in { from { opacity: 0; scale: .97; } }
+/* The cards over the board (start, made, out of moves): the board dimmed, one surface on it.
+   Eyebrow, the level's number in a thin ring, "Uzdevumi" between rules, the tasks as rows with the
+   game's own pictures, the moves, one sky-blue button. Enter: fade and settle 280 ms, rows staggered. */
+.pc98-embed .sw-over { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; padding: 10px; border-radius: 16px; background: rgba(8, 11, 20, .62);
+  container-type: size; animation: sw-fade .22s ease-out both; transition: opacity .18s ease-in; }
+.pc98-embed .sw-over.is-out { opacity: 0; pointer-events: none; }
+.pc98-embed .sw-over.is-out .sw-card { scale: .98; }
+.pc98-embed .sw-card { display: grid; justify-items: center; gap: 10px; width: min(340px, 100%); max-height: 100%; box-sizing: border-box; padding: 20px 20px 18px; overflow: hidden;
+  border-radius: 24px; background: linear-gradient(180deg, #1b2338, #141a2b); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), 0 18px 40px rgba(0, 0, 0, .35);
+  text-align: center; font-family: Inter, system-ui, sans-serif; color: #eef3fb; animation: sw-card-in .28s cubic-bezier(.2, .8, .2, 1) both; transition: scale .18s ease-in; }
+.pc98-embed .sw-eyebrow { font: 700 11px/1 Inter, system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #8fc5ff; }
+.pc98-embed .sw-lvnum { display: grid; place-items: center; width: 76px; height: 76px; margin: 2px 0; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(143, 197, 255, .55), 0 0 0 6px rgba(143, 197, 255, .06);
+  font: 800 40px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: #fff; }
+.pc98-embed .sw-head { font: 800 24px/1.1 Inter, system-ui, sans-serif; letter-spacing: -.01em; color: #fff; }
+.pc98-embed .sw-note { font: 500 13.5px/1.35 Inter, system-ui, sans-serif; color: #9fb0c8; }
+.pc98-embed .sw-rule { display: flex; align-items: center; gap: 12px; width: 100%; margin: 2px 0; }
+.pc98-embed .sw-rule::before, .pc98-embed .sw-rule::after { content: ''; flex: 1; height: 1px; background: rgba(143, 197, 255, .18); }
+.pc98-embed .sw-rule span { font: 600 12px/1 Inter, system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #8a9bb4; white-space: nowrap; }
+.pc98-embed .sw-rule:last-of-type span { letter-spacing: .02em; text-transform: none; font-size: 13px; color: #c9d6e8; }
+.pc98-embed .sw-tasks { display: grid; gap: 8px; width: 100%; margin: 0; padding: 0; list-style: none; }
+.pc98-embed .sw-tasks li { display: grid; grid-template-columns: 34px 1px 1fr; align-items: center; gap: 12px; padding: 9px 14px; border-radius: 14px; background: rgba(255, 255, 255, .035);
+  text-align: left; font: 600 14.5px/1.25 Inter, system-ui, sans-serif; color: #f2f6fc; animation: sw-row-in .3s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 60ms + 90ms); }
+.pc98-embed .sw-tasks li::before { content: ''; grid-column: 2; grid-row: 1; width: 1px; height: 22px; background: rgba(255, 255, 255, .1); }
+.pc98-embed .sw-tico { grid-column: 1; grid-row: 1; display: grid; place-items: center; width: 34px; height: 34px; }
+.pc98-embed .sw-tico img { width: 34px; height: 34px; object-fit: contain; }
+.pc98-embed .sw-tico i { width: 26px; height: 26px; }
+.pc98-embed .sw-tasks li > span:last-child { grid-column: 3; }
+.pc98-embed .sw-card .sw-go { min-width: 168px; min-height: 44px; margin-top: 4px; padding: 0 28px; border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(180deg, #a9d8ff, #74baff); color: #0b1a2e; font: 800 16px/1 Inter, system-ui, sans-serif; letter-spacing: .01em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -2px 0 rgba(20, 70, 140, .25), 0 6px 16px rgba(80, 160, 255, .22);
+  transition: scale .12s cubic-bezier(.2, 0, 0, 1), filter .12s; }
+.pc98-embed .sw-card .sw-go:hover { filter: brightness(1.05); }
+.pc98-embed .sw-card .sw-go:active { scale: .97; }
+.pc98-embed .sw-card .sw-go:focus-visible { outline: 2px solid #cfe7ff; outline-offset: 3px; }
+.pc98-embed .sw-card .sw-ghost { min-height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: #9fb0c8; font: 600 13px/1 Inter, system-ui, sans-serif; cursor: pointer; }
+.pc98-embed .sw-big-stars { display: flex; gap: 10px; margin: 0; }
+.pc98-embed .sw-big-stars i { font: 900 36px/1 Inter, system-ui, sans-serif; font-style: normal; color: #2b3550; }
+.pc98-embed .sw-big-stars i.on { color: #ffd75e; animation: sw-star .4s cubic-bezier(.2, .8, .2, 1) both; animation-delay: var(--d, 0ms); }
+/* a low board: everything a little tighter, nothing cut */
+@container (max-height: 380px) {
+  .pc98-embed .sw-card { gap: 7px; padding: 14px 16px 12px; }
+  .pc98-embed .sw-lvnum { width: 56px; height: 56px; font-size: 30px; }
+  .pc98-embed .sw-tasks li { padding: 6px 12px; font-size: 13px; }
+  .pc98-embed .sw-tico, .pc98-embed .sw-tico img { width: 26px; height: 26px; }
+  .pc98-embed .sw-card .sw-go { min-height: 38px; font-size: 15px; }
+  .pc98-embed .sw-head { font-size: 20px; }
+}
+@container (max-height: 280px) { .pc98-embed .sw-lvnum { width: 44px; height: 44px; font-size: 24px; } .pc98-embed .sw-rule:first-of-type { display: none; } }
+@keyframes sw-fade { from { opacity: 0; } }
+@keyframes sw-card-in { from { opacity: 0; scale: .96; translate: 0 6px; } }
+@keyframes sw-row-in { from { opacity: 0; translate: 0 6px; } }
+@keyframes sw-star { from { scale: .4; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pc98-embed :is(.sw-over, .sw-card, .sw-tasks li, .sw-big-stars i.on) { animation: none; } }
+/* the level, plainly: "Līm." over its number */
+.pc98-embed .sw-lvpill { display: grid; justify-items: center; align-content: center; gap: 3px; min-width: 34px; height: 50px; padding: 0 4px 0 2px; border-right: 1px solid rgba(255, 255, 255, .07); }
+.pc98-embed .sw-lvpill small { font: 700 9px/1 Inter, system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--sw-ink); }
+.pc98-embed .sw-lvpill b { font: 800 19px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #fff; }
+.pc98-embed .sw-side:not(.x) .sw-lvpill { display: none; }
+.pc98-embed .sw-vert .sw-side .sw-lvpill { display: grid; }
+/* the goals' chips: what is left of each; green with a tick when done */
+.pc98-embed .sw-goals > [hidden] { display: none !important; }
+.pc98-embed .sw-iico, .pc98-embed .sw-k-ice { display: inline-block; width: 20px; height: 20px; border-radius: 6px; background: linear-gradient(180deg, #eef9ff, #9fd2ee); box-shadow: inset 0 0 0 1.5px #fff, inset 0 -3px 0 rgba(90,150,190,.35); flex: none; }
+.pc98-embed .sw-k-jelly { display: inline-block; width: 20px; height: 20px; border-radius: 6px; background: rgba(240, 90, 170, .45); box-shadow: inset 0 0 0 2px #ff78be; flex: none; }
+.pc98-embed .sw-k-score { display: inline-block; width: 20px; height: 20px; flex: none; background: #ffd75e; clip-path: polygon(50% 0, 62% 36%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 36%); }
+.pc98-embed .sw-goals .is-done b::after { content: ' ✓'; color: #5ee07a; }
+.pc98-embed .sw-vert .sw-goals .sw-iico { width: 16px; height: 16px; margin: 2px; border-radius: 5px; }
+.pc98-embed .sw-icechip { display: grid; justify-items: center; gap: 4px; padding: 8px 2px 7px; border-radius: 14px; background: color-mix(in srgb, var(--sw-ink) 10%, transparent); }
+.pc98-embed .sw-vert .sw-icechip { padding: 0 2px; gap: 6px; grid-auto-flow: column; align-items: center; background: none; }
+.pc98-embed .sw-icechip b { font: 700 11px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #fff; }
+/* a goal's chip: its picture and what is left of it (green with a tick when done) */
+.pc98-embed .sw-chip { display: inline-flex; align-items: center; gap: 6px; }
+.pc98-embed .sw-chip img, .pc98-embed .sw-chip i { width: 20px; height: 20px; object-fit: contain; flex: none; }
+.pc98-embed .sw-chip .pc98-gico { background-size: contain; background-repeat: no-repeat; background-position: center; }
+.pc98-embed .sw-chip b { font: 700 13px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #fff; }
+.pc98-embed .sw-chip.is-done b { color: #7fe39a; }
+.pc98-embed .sw-chip.is-done b::after { content: ' ✓'; }
+.pc98-embed .sw-k-timer { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #141a2b; box-shadow: inset 0 0 0 2px #8fc5ff; font: 800 11px/1 Inter, system-ui, sans-serif; font-style: normal; color: #fff; }
+.pc98-embed .sw-tasks li.sw-warn { background: rgba(229, 72, 77, .08); color: #ffd5d6; font-weight: 500; font-size: 13px; }
+/* three small stars after the points, lit as they are earned (beside the number, never on the bar) */
+.pc98-embed .sw-st { display: inline-flex; gap: 1px; margin-left: 4px; font-style: normal; }
+.pc98-embed .sw-st i { font: 900 11px/1 Inter, system-ui, sans-serif; font-style: normal; color: color-mix(in srgb, var(--sw-ink) 25%, #3a3f4a); transition: color .3s; }
+.pc98-embed .sw-st i.on { color: #ffd75e; }
+
 /* a narrow, tall box (the usual grid): the panel is a strip over the board, the board takes the width */
 .pc98-embed .sw-candy.sw-vert { padding: 74px 0 0; }
-.pc98-embed .sw-vert .sw-side { right: 0; bottom: auto; width: auto; height: 66px; padding: 8px 10px; display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; grid-template-rows: 1fr auto;
+.pc98-embed .sw-vert .sw-side { right: 0; bottom: auto; width: auto; height: 66px; padding: 8px 10px; display: grid; grid-template-columns: auto 50px minmax(0, 1fr) auto; grid-template-rows: 1fr auto;
   column-gap: 10px; row-gap: 5px; align-items: center; border-radius: 16px; container-type: normal; }
-.pc98-embed .sw-vert .sw-moves { grid-row: 1 / 3; }
-.pc98-embed .sw-vert .sw-goals { grid-column: 2; grid-row: 1; justify-self: start; }
-.pc98-embed .sw-vert .sw-prog { grid-column: 2; grid-row: 2; }
-.pc98-embed .sw-vert .sw-btns { grid-column: 3; grid-row: 1 / 3; }
+.pc98-embed .sw-vert .sw-lvpill { grid-column: 1; grid-row: 1 / 3; }
+.pc98-embed .sw-vert .sw-moves { grid-column: 2; grid-row: 1 / 3; }
+.pc98-embed .sw-vert .sw-goals { grid-column: 3; grid-row: 1; justify-self: start; }
+.pc98-embed .sw-vert .sw-prog { grid-column: 3; grid-row: 2; }
+.pc98-embed .sw-vert .sw-btns { grid-column: 4; grid-row: 1 / 3; }
 .pc98-embed .sw-vert :is(.sw-title, .sw-path, .sw-rank, .sw-top, .sw-streak, .sw-btns [data-c="table"]) { display: none !important; }
 .pc98-embed .sw-vert .sw-moves { width: 50px; height: 50px; min-height: 0; flex: none; }
 .pc98-embed .sw-vert .sw-moves circle { stroke-width: 9; }
@@ -429,7 +504,9 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .pc98-embed .sw-vert .sw-prog span small { display: none; }
 .pc98-embed .sw-vert .sw-candy .pc98-stars, .pc98-embed .sw-vert .pc98-stars { flex: 1; min-width: 0; height: 6px; }
 .pc98-embed .sw-vert .sw-goals { display: flex; gap: 6px; }
-.pc98-embed .sw-vert .sw-goals > div { padding: 4px 6px; gap: 2px; grid-auto-flow: column; align-items: center; }
+.pc98-embed .sw-vert .sw-goals > div { padding: 0 2px; gap: 6px; grid-auto-flow: column; align-items: center; background: none; }
+.pc98-embed .sw-vert .sw-goals { gap: 14px; }
+.pc98-embed .sw-vert .sw-goals b { font-size: 13px; }
 .pc98-embed .sw-vert .sw-goals .pc98-gico { width: 20px; height: 20px; }
 .pc98-embed .sw-vert .sw-goals .pc98-jico { width: 16px; height: 16px; margin: 2px; }
 .pc98-embed .sw-vert .sw-goals b { font-size: 11px; }

@@ -839,7 +839,7 @@
   var centerMood = null, centerBox = '', settleUntil = 0, settleTimer = 0;
   function settled() { settleUntil = 0; centerEl.classList.remove('is-settling'); }
   // the games: the gallery's own Windows 98 (js/page/mood-gallery-pc.js), one game mounted in the box
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261115s19', pcLoad = null, game = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261115s24', pcLoad = null, game = null;
   function mountGame(app) {
     var box = centerEl.querySelector('.mk-cl-game-box');
     loadPC().then(function () {
