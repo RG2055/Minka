@@ -16,7 +16,7 @@
 }
 .mk-cl-bar[hidden] { display: none; }
 /* no room for the whole switch: only "⋯" (the menu has every layout) */
-.mk-cl-bar.is-compact { padding: 4px; border-radius: 50%; }
+.mk-cl-bar.is-compact { padding: 4px; border-radius: 14px; }
 .mk-cl-bar.is-compact .mk-cl-quick { display: none; }
 .mk-cl-bar.is-compact .mk-cl-more { border-radius: 50%; }
 .mk-cl-bar.in-rail { position: relative; left: auto !important; top: auto !important; flex: none; }
@@ -42,6 +42,35 @@
 .mk-cl-more[aria-expanded="true"] { background: var(--mk-cl-accent); color: var(--mk-cl-on-accent); }
 .mk-cl-q:active, .mk-cl-more:active { scale: .96; transition-duration: 140ms, 140ms, 120ms; }
 .mk-cl-q:focus-visible, .mk-cl-more:focus-visible { outline: 2px solid var(--mk-cl-accent); outline-offset: 2px; }
+/* "Konfektes": only the gold sweet, glowing: a still glow under it, a halo that breathes and two
+   sparks that twinkle in turn (opacity and transform only, on the compositor; none with reduced
+   motion). Pressed: the game is in the mood's place, the segment lit like the layout shown now. */
+.mk-cl-candy {
+  display: inline-grid; place-items: center; width: 44px; height: 32px; margin-left: 2px; padding: 0; border: 0; border-radius: 10px;
+  position: relative; isolation: isolate; cursor: pointer; background: transparent;
+  transition: background-color 140ms cubic-bezier(.2, 0, 0, 1), scale 420ms var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1));
+}
+.mk-cl-candy::after { content: ''; position: absolute; inset: -4px -1px; }
+.mk-cl-candy svg { position: relative; width: 36px; height: 21px; filter: drop-shadow(0 0 3px rgba(255, 200, 60, .75)) drop-shadow(0 1px 1px rgba(80, 40, 0, .5)); }
+.mk-cl-candy-halo {
+  position: absolute; z-index: -1; left: 50%; top: 50%; width: 46px; height: 34px; margin: -17px 0 0 -23px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 206, 70, .55), rgba(255, 170, 30, .18) 60%, transparent);
+  opacity: .45; animation: mk-cl-candy-glow 3.2s ease-in-out infinite;
+}
+.mk-cl-candy-spark {
+  position: absolute; width: 7px; height: 7px; pointer-events: none; background: #fff8d6;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  opacity: 0; transform: scale(.2); animation: mk-cl-candy-spark 3.2s ease-in-out infinite;
+}
+.mk-cl-candy-spark:nth-of-type(2) { left: 9px; top: 3px; }
+.mk-cl-candy-spark:nth-of-type(3) { right: 7px; bottom: 4px; width: 5px; height: 5px; animation-delay: 1.6s; }
+@keyframes mk-cl-candy-glow { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@keyframes mk-cl-candy-spark { 0%, 40%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); } 18% { opacity: 1; transform: scale(1) rotate(45deg); } }
+.mk-cl-candy:hover { background: rgba(255, 196, 64, .14); }
+.mk-cl-candy[aria-pressed="true"] { background: rgba(255, 196, 64, .24); box-shadow: inset 0 0 0 1px rgba(255, 210, 90, .45); }
+.mk-cl-candy:active { scale: .92; transition-duration: 140ms, 140ms; }
+.mk-cl-candy:focus-visible { outline: 2px solid #ffd664; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .mk-cl-candy-halo, .mk-cl-candy-spark { animation: none; } }
 
 /* A slider being dragged: the cards and the mood card follow at once, without the spring's
    overshoot (which made everything bounce on every step). */
@@ -245,6 +274,9 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .mk-cl-rnote { margin: 0; font: 500 13px/1.4 Inter, system-ui, sans-serif; opacity: .7; }
 /* a game in the box: the gallery's window alone, centred, without its title bar and extras */
 .mk-cl-game-box { position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden; border-radius: 14px; }
+/* the game appears once its box has settled (card-layout.js settleUntil), at its own size */
+.mk-cl-game-box { transition: opacity .22s cubic-bezier(.2, 0, 0, 1); }
+.mk-cl-center.is-settling .mk-cl-game-box { opacity: 0; transition: none; }
 .pc98-root.pc98-embed { position: absolute; inset: 0; z-index: auto; background: transparent; }
 .pc98-embed .pc98-win { position: absolute !important; left: 50% !important; top: 50% !important; translate: -50% -50%; margin: 0 !important; }
 /* only the board and the line of points: no window behind them */
@@ -296,6 +328,114 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 @media (prefers-reduced-motion: reduce) { .pc98-embed .pc98-mend { animation: none; } }
 
 .pc98-embed .pc98-mstat, .pc98-embed .pc98-tb, .pc98-embed .pc98-stars, .pc98-embed .pc98-cfoot, .pc98-embed .pc98-mlevels, .pc98-embed .pc98-crule, .pc98-embed .pc98-cstat, .pc98-embed .pc98-week { display: none !important; }
+/* Konfektes in the middle (mood-gallery-pc.js SW): the panel at the board's side, the board as tall as
+   the box. Everything in the mood's colour (--ink): one tint, quiet surfaces, large numbers; colour is
+   left to the sweets. No window, no title bar. */
+.pc98-embed .sw-candy {
+  --sw-ink: var(--ink, #a8c7fa); --sw-text: color-mix(in srgb, var(--sw-ink) 22%, #fff); --sw-dim: color-mix(in srgb, var(--sw-ink) 55%, rgba(255, 255, 255, .55));
+  --sw-surface: color-mix(in srgb, var(--sw-ink) 14%, rgba(12, 14, 20, .82));
+  flex-direction: row; align-items: stretch; gap: 10px; padding: 0 0 0 calc(var(--sw-side, 122px) + 10px); position: relative; font-family: Inter, system-ui, sans-serif; color: var(--sw-text);
+}
+/* the panel stands beside the board and as tall as it, never taller: the board alone sets the game's size */
+.pc98-embed .sw-side { position: absolute; left: 0; top: 0; bottom: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; width: var(--sw-side, 122px); container-type: inline-size; padding: 12px 10px; box-sizing: border-box; border-radius: 20px; background: var(--sw-surface); }
+.pc98-embed .sw-title { font: 800 15px/1.1 Inter, system-ui, sans-serif; color: #fff; letter-spacing: -.01em; float: none; }
+/* the levels' path: done ones with their stars as three dots, this one lit, the next ones waiting */
+.pc98-embed .sw-path { display: flex; align-items: flex-start; justify-content: space-between; position: relative; height: 30px; margin-top: -2px; }
+.pc98-embed .sw-path::before { content: ''; position: absolute; left: 10px; right: 10px; top: 10px; height: 2px; border-radius: 1px; background: color-mix(in srgb, var(--sw-ink) 28%, transparent); }
+.pc98-embed .sw-path i { position: relative; display: grid; justify-items: center; gap: 3px; font-style: normal; }
+.pc98-embed .sw-path b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; font: 700 10px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--sw-ink) 18%, #12151c); color: var(--sw-dim); }
+.pc98-embed .sw-path .is-done b { background: color-mix(in srgb, var(--sw-ink) 50%, #12151c); color: #fff; }
+.pc98-embed .sw-path .is-now b { width: 24px; height: 24px; margin-top: -2px; background: var(--sw-ink); color: #0b0e12; font-size: 11.5px; font-weight: 800; box-shadow: 0 0 0 3px color-mix(in srgb, var(--sw-ink) 28%, transparent); }
+.pc98-embed .sw-path s { display: flex; gap: 2px; text-decoration: none; }
+.pc98-embed .sw-path u { width: 4px; height: 4px; border-radius: 50%; background: color-mix(in srgb, var(--sw-ink) 25%, transparent); }
+.pc98-embed .sw-path u.on { background: #ffd75e; }
+/* the moves: a big number in a ring that empties as they are spent; red when few are left */
+/* as wide as the panel when there is room, smaller when not: everything else in the panel always shows */
+.pc98-embed .sw-moves { position: relative; display: grid; place-items: center; flex: 0 1 100cqw; min-height: 64px; height: auto; width: auto; aspect-ratio: 1; align-self: center; margin: 0; container-type: size; }
+.pc98-embed .sw-moves svg { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; }
+.pc98-embed .sw-moves circle { fill: none; stroke-width: 7; stroke: color-mix(in srgb, var(--sw-ink) 16%, transparent); }
+.pc98-embed .sw-moves .sw-ring { stroke: var(--sw-ink); stroke-linecap: round; stroke-dasharray: 276.5; stroke-dashoffset: 0; transition: stroke-dashoffset .45s cubic-bezier(.2, 0, 0, 1), stroke .3s; }
+.pc98-embed .sw-moves.is-low .sw-ring { stroke: #ff8e8e; }
+.pc98-embed .sw-moves span { display: grid; justify-items: center; gap: 1px; }
+.pc98-embed .sw-moves b { font: 800 34cqmin/.95 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #fff; float: none; }
+.pc98-embed .sw-moves.is-low b { color: #ff8e8e; }
+.pc98-embed .sw-moves small { font: 600 clamp(8px, 10cqmin, 11px)/1 Inter, system-ui, sans-serif; color: var(--sw-dim); }
+.pc98-embed .sw-prog small { font: 600 10.5px/1 Inter, system-ui, sans-serif; color: var(--sw-dim); }
+/* the points to the next level: what they are, how many, then the bar with its three stars above it */
+.pc98-embed .sw-prog { display: grid; gap: 7px; }
+.pc98-embed .sw-prog span { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; white-space: nowrap; }
+.pc98-embed .sw-prog .pc98-score { font: 700 11px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #fff; float: none; white-space: nowrap; }
+.pc98-embed .sw-candy .pc98-stars { display: block !important; position: relative; height: 8px; margin: 0; border-radius: 4px; background: color-mix(in srgb, var(--sw-ink) 18%, transparent); box-shadow: none; overflow: visible; }
+.pc98-embed .sw-candy .pc98-sfill { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--sw-ink); transition: width .5s cubic-bezier(.2, 0, 0, 1); }
+.pc98-embed .sw-candy .pc98-stars b { display: none; }
+.pc98-embed .sw-goals { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pc98-embed .sw-goals > div { display: grid; justify-items: center; gap: 4px; padding: 8px 2px 7px; border-radius: 14px; background: color-mix(in srgb, var(--sw-ink) 10%, transparent); transition: background-color .3s; }
+.pc98-embed .sw-goals b { font: 700 13px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; color: #fff; float: none; }
+.pc98-embed .sw-goals .is-done { background: color-mix(in srgb, #5ee07a 22%, transparent); }
+.pc98-embed .sw-goals .pc98-gico { width: 28px; height: 28px; background-size: contain; background-repeat: no-repeat; image-rendering: auto; transition: scale .12s; }
+.pc98-embed .sw-goals .is-hit .pc98-gico { scale: 1.25; }
+.pc98-embed .sw-goals .pc98-jico { width: 22px; height: 22px; margin: 3px; border-radius: 7px; background: linear-gradient(180deg, #ff9fd0, #e2378f); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .4); }
+.pc98-embed .sw-rank, .pc98-embed .sw-streak { margin: 0; font: 500 11px/1.35 Inter, system-ui, sans-serif; color: var(--sw-dim); }
+.pc98-embed .sw-rank:empty { display: none; }
+.pc98-embed .sw-top { display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; flex: 1 1 0; min-height: 0; overflow: hidden; margin: 0; padding: 0; list-style: none; }
+.pc98-embed .sw-top:empty { display: none; }
+.pc98-embed .sw-top li { display: flex; align-items: center; gap: 6px; width: 100%; height: 24px; font: 500 11px/1 Inter, system-ui, sans-serif; color: var(--sw-dim); }
+.pc98-embed .sw-top li i { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; flex: none; font: 700 9px/1 Inter, system-ui, sans-serif; font-style: normal; background: color-mix(in srgb, var(--sw-ink) 18%, transparent); color: var(--sw-text); }
+.pc98-embed .sw-top li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc98-embed .sw-top li b { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--sw-text); }
+.pc98-embed .sw-top li.is-me, .pc98-embed .sw-top li.is-me b { color: #fff; }
+.pc98-embed .sw-top li.is-me i { background: var(--sw-ink); color: #0b0e12; }
+.pc98-embed .sw-rank b, .pc98-embed .sw-streak b { color: var(--sw-text); font-weight: 700; }
+.pc98-embed .sw-streak { display: flex; align-items: center; gap: 4px; }
+.pc98-embed .sw-streak[hidden] { display: none; }
+.pc98-embed .sw-streak svg { width: 13px; height: 13px; fill: #ffb547; flex: none; }
+.pc98-embed .sw-btns { display: flex; gap: 6px; margin-top: auto; }
+.pc98-embed .sw-btns [hidden] { display: none !important; }
+.pc98-embed .sw-btns .pc98-btn { display: grid; place-items: center; width: 36px; height: 36px; min-width: 0; padding: 0; border: 0 !important; border-radius: 12px; cursor: pointer;
+  background: color-mix(in srgb, var(--sw-ink) 14%, transparent) !important; box-shadow: none !important; color: var(--sw-text);
+  transition: background-color 140ms cubic-bezier(.2, 0, 0, 1), scale 140ms cubic-bezier(.2, 0, 0, 1); }
+.pc98-embed .sw-btns .pc98-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.pc98-embed .sw-btns .pc98-btn:hover { background: color-mix(in srgb, var(--sw-ink) 26%, transparent) !important; }
+.pc98-embed .sw-btns .pc98-btn:active { scale: .94; }
+.pc98-embed .sw-candy .pc98-well { position: relative; flex: 1 1 0; min-width: 0; padding: 0; }
+.pc98-embed .sw-candy .pc98-board { display: block; }
+/* out of moves: a calm sheet over the board, "so close" when it was */
+.pc98-embed .sw-over { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 16px; text-align: center; border-radius: 20px;
+  background: color-mix(in srgb, var(--sw-ink) 12%, rgba(10, 12, 18, .84)); animation: sw-in .28s cubic-bezier(.2, 0, 0, 1); }
+.pc98-embed .sw-over b { font: 800 26px/1.1 Inter, system-ui, sans-serif; color: #fff; }
+.pc98-embed .sw-over span { font: 500 14px/1.3 Inter, system-ui, sans-serif; color: var(--sw-dim); margin-bottom: 6px; }
+.pc98-embed .sw-over button { min-height: 40px; padding: 0 22px; border: 0; border-radius: 999px; font: 700 14px/1 Inter, system-ui, sans-serif; cursor: pointer; transition: scale 140ms cubic-bezier(.2, 0, 0, 1); }
+.pc98-embed .sw-over .sw-go { background: var(--sw-ink); color: #0b0e12; }
+.pc98-embed .sw-over .sw-ghost { background: transparent; color: var(--sw-dim); font-weight: 600; }
+.pc98-embed .sw-over button:active { scale: .96; }
+@keyframes sw-in { from { opacity: 0; scale: .97; } }
+/* a narrow, tall box (the usual grid): the panel is a strip over the board, the board takes the width */
+.pc98-embed .sw-candy.sw-vert { padding: 74px 0 0; }
+.pc98-embed .sw-vert .sw-side { right: 0; bottom: auto; width: auto; height: 66px; padding: 8px 10px; display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; grid-template-rows: 1fr auto;
+  column-gap: 10px; row-gap: 5px; align-items: center; border-radius: 16px; container-type: normal; }
+.pc98-embed .sw-vert .sw-moves { grid-row: 1 / 3; }
+.pc98-embed .sw-vert .sw-goals { grid-column: 2; grid-row: 1; justify-self: start; }
+.pc98-embed .sw-vert .sw-prog { grid-column: 2; grid-row: 2; }
+.pc98-embed .sw-vert .sw-btns { grid-column: 3; grid-row: 1 / 3; }
+.pc98-embed .sw-vert :is(.sw-title, .sw-path, .sw-rank, .sw-top, .sw-streak, .sw-btns [data-c="table"]) { display: none !important; }
+.pc98-embed .sw-vert .sw-moves { width: 50px; height: 50px; min-height: 0; flex: none; }
+.pc98-embed .sw-vert .sw-moves circle { stroke-width: 9; }
+.pc98-embed .sw-vert .sw-moves b { font-size: 18px; }
+.pc98-embed .sw-side > :not(.sw-moves):not(.sw-top) { flex-shrink: 0; }
+.pc98-embed .sw-vert .sw-moves small { font-size: 8px; }
+.pc98-embed .sw-vert .sw-prog { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.pc98-embed .sw-vert .sw-prog span { order: 2; flex: none; }
+.pc98-embed .sw-vert .sw-prog span small { display: none; }
+.pc98-embed .sw-vert .sw-candy .pc98-stars, .pc98-embed .sw-vert .pc98-stars { flex: 1; min-width: 0; height: 6px; }
+.pc98-embed .sw-vert .sw-goals { display: flex; gap: 6px; }
+.pc98-embed .sw-vert .sw-goals > div { padding: 4px 6px; gap: 2px; grid-auto-flow: column; align-items: center; }
+.pc98-embed .sw-vert .sw-goals .pc98-gico { width: 20px; height: 20px; }
+.pc98-embed .sw-vert .sw-goals .pc98-jico { width: 16px; height: 16px; margin: 2px; }
+.pc98-embed .sw-vert .sw-goals b { font-size: 11px; }
+.pc98-embed .sw-vert .sw-btns { margin: 0; }
+.pc98-embed .sw-vert .sw-btns .pc98-btn { width: 30px; height: 30px; border-radius: 10px; }
+@media (prefers-reduced-motion: reduce) { .pc98-embed .sw-over { animation: none; } }
 /* the mood's own face on the picture, in a small glass */
 .mk-cl-bigface {
   position: absolute; right: 6%; bottom: 4%; display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; font-size: 30px;

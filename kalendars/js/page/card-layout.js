@@ -144,7 +144,48 @@
     if (isOpen) paint();   // the menu's own state and pictures: only while it is shown (open() paints it)
     paintBtn(l);
   }
-  window.MkCardLayout = { current: current, list: LAYOUTS };
+  // With the game in the mood's place the walls give it more room (the cards get smaller, down to
+  // 96 px; their names shrink to fit, card-name-fit in corridor.js): the corridor reads this, the mood card itself keeps its size underneath (placeCenter).
+  // The game asks for just what it uses: the board is square and as tall as the box allows, the panel
+  // stands at its side (mood-gallery-pc.js SW), so its width is the board's height plus the panel. Wider
+  // would only leave empty bands beside the board and make the cards smaller for nothing.
+  function gameOn() { return centerNow() === 'candy' && current().mood !== false; }
+  function gameSpan() {
+    var Hb = header && header.getBoundingClientRect(), top = Hb && Hb.height ? Hb.bottom + 8 : 4, h = window.innerHeight - 64 - top;
+    // what is not the game in the box (the mood's line and the rating row), as last measured
+    var gb = centerEl.querySelector('.mk-cl-game-box'), over = !centerEl.hidden && gb && gb.offsetHeight ? centerEl.offsetHeight - gb.offsetHeight : 150;
+    // the board as tall as what is left under the strip (78), plus the picture's padding; never
+    // narrower than the rating row under it
+    // nine columns of the rows' cell size at most (mood-gallery-pc.js NX): the board may be wider than tall
+    return { top: top, h: h, w: Math.max(460, Math.round(Math.max(240, h - over - 78) * 9 / 7) + 36) };
+  }
+  window.MkCardLayout = { list: LAYOUTS, current: function () {
+    var l = current(), mood = gameOn() && list.querySelector('.rg-feedback-card'), mw = mood && mood.offsetWidth;
+    if (!mw) return l;
+    var base = l.moodScale || 1, want = Math.max(base, Math.min(2.6, gameSpan().w / mw));
+    return Object.assign({}, l, { moodScale: want, grow: base, min: 96 });
+  } };
+  // the game's box: the mood card's place grown round its middle as far as the corridor made room
+  // (moodScaleNow, corridor.js) and no wider than the game uses, the whole height above the switch's
+  // row. In the usual grid nothing made room: the mood card's own place.
+  // Any layout: the box takes the free room between the cards beside the mood card, never over one.
+  // In the corridor the walls have stepped back for it and it runs the whole height; elsewhere it keeps
+  // the mood card's height and widens into whatever is free at its sides.
+  function centreRect(M) {
+    if (!M || !M.width || !gameOn()) return M;
+    var span = gameSpan(), cor = root.classList.contains('mk-corridor'), L = list.getBoundingClientRect();
+    var top = cor ? Math.max(L.top + 4, span.top) : M.top, bot = cor ? window.innerHeight - 64 : M.bottom;
+    var cx = M.left + M.width / 2, lo = Math.max(L.left + 8, 8), hi = Math.min(L.right - 8, window.innerWidth - 8);
+    [].forEach.call(list.querySelectorAll('.card.mk-mid-card:not(.rg-feedback-card), .cards-section-label'), function (c) {
+      var r = c.getBoundingClientRect();
+      if (!r.width || r.bottom <= top || r.top >= bot) return;
+      if (r.right <= cx) lo = Math.max(lo, r.right + 14); else if (r.left >= cx) hi = Math.min(hi, r.left - 14);
+    });
+    var w = Math.min(span.w, hi - lo);
+    if (w <= M.width) { if (!cor) return M; w = M.width; }
+    var left = Math.max(lo, Math.min(cx - w / 2, hi - w));
+    return { left: left, right: left + w, top: top, bottom: bot, width: w, height: bot - top };
+  }
 
   /* Pictures: the mood card as a circle in the middle, the cards as small shapes. */
   function picture(l) {
@@ -191,13 +232,29 @@
 
   /* Under the mood card: a small segmented switch with the three layouts used last (one click
      shows one and keeps it, as Saglabāt does) and "⋯" opening all of them. */
+  // a wrapped sweet in gold: glossy body with a twist, pleated wrapper ends, a highlight;
+  // the glow and the sparks round it are the button's own (card-layout.css)
+  var CANDY_ICON = '<i class="mk-cl-candy-halo" aria-hidden="true"></i><svg viewBox="0 0 44 26" aria-hidden="true">' +
+    '<defs><radialGradient id="kcA" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#fff6c8"/><stop offset=".45" stop-color="#ffcf4a"/><stop offset="1" stop-color="#b9780c"/></radialGradient>' +
+    '<linearGradient id="kcB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe58a"/><stop offset="1" stop-color="#c88a14"/></linearGradient></defs>' +
+    '<path fill="url(#kcB)" d="M13.5 13 3 4.2c-1-.8-2.4 0-2.2 1.3l1 7.5-1 7.5c-.2 1.3 1.2 2.1 2.2 1.3Z M30.5 13 41 4.2c1-.8 2.4 0 2.2 1.3l-1 7.5 1 7.5c.2 1.3-1.2 2.1-2.2 1.3Z"/>' +
+    '<path fill="none" stroke="#9a6406" stroke-opacity=".45" stroke-width=".9" stroke-linecap="round" d="M5 8.5l6 4.5-6 4.5M39 8.5l-6 4.5 6 4.5"/>' +
+    '<circle cx="22" cy="13" r="9.6" fill="url(#kcA)"/>' +
+    '<path fill="none" stroke="#a86a06" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round" d="M15.6 9.6c3.4 2.6 9.4 2.6 12.8 0M14.5 14.6c4 2.8 11 2.8 15 0"/>' +
+    '<ellipse cx="18.6" cy="8.4" rx="3.6" ry="1.9" fill="#fff" fill-opacity=".8" transform="rotate(-24 18.6 8.4)"/></svg>' +
+    '<i class="mk-cl-candy-spark" aria-hidden="true"></i><i class="mk-cl-candy-spark" aria-hidden="true"></i>';
   var bar = document.createElement('div');
   bar.className = 'mk-cl-bar';
   bar.setAttribute('role', 'group');
   bar.setAttribute('aria-label', 'Kartīšu izkārtojums');
   bar.innerHTML = '<span class="mk-cl-quick"></span><button type="button" class="mk-cl-more" aria-haspopup="dialog" aria-expanded="false" aria-label="Visi izkārtojumi" title="Visi izkārtojumi">' +
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg></button>';
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg></button>' +
+    // the game, one press away: a gold segment of the same switch
+    '<button type="button" class="mk-cl-candy" aria-pressed="false" aria-label="Konfektes: spēle noskaņas vietā" title="Konfektes">' + CANDY_ICON + '</button>';
   var quick = bar.querySelector('.mk-cl-quick'), btn = bar.querySelector('.mk-cl-more'), quickKey = '';
+  // the game in the mood's place, and back to the mood again
+  var candyBtn = bar.querySelector('.mk-cl-candy');
+  candyBtn.addEventListener('click', function () { setCenter(centerNow() === 'candy' ? 'mood' : 'candy'); });
   var RECENT = KEY + 'recent', OWN = KEY + 'own';
   function lastOwn() { try { return ownLayout(JSON.parse(localStorage.getItem(OWN) || 'null') || own); } catch (_e) { return ownLayout(own); } }
   function recent() {
@@ -246,6 +303,7 @@
     // without a mood card on the page (hidden by the layout) the pill keeps its last place
     var off = root.classList.contains('host-radio-open');
     if (!off && (!M || !M.width)) { var L0 = list.getBoundingClientRect(); M = { left: L0.left + L0.width / 2, right: L0.left + L0.width / 2, width: 0.01, top: L0.bottom, bottom: L0.bottom, height: 0 }; mood = null; }
+    if (mood && !off) M = centreRect(M);   // the game, larger than the mood card
     // The first of a few places that covers no card, the mood card's rating row nor the header and
     // stays above the dock: under the mood card's left part (the pet waits under its right end,
     // daily-cat.js), over it, beside its rating row, the roster's bottom corner.
@@ -256,37 +314,37 @@
       var full = bar.classList.contains('is-compact') ? (bar.__fullW || 260) : (bar.offsetWidth || 260);
       if (!bar.classList.contains('is-compact') && bar.offsetWidth) bar.__fullW = bar.offsetWidth;
       var w = full, h = 40, ih = window.innerHeight, iw = window.innerWidth;
-      var taps = mood && mood.querySelector('.rg-pulse-taps'), T = taps && taps.getBoundingClientRect(), ty = T && T.height ? T.top + T.height / 2 - h / 2 : M.bottom - h;
+      // the rating row on screen: the middle's own copy while a picture or game covers the mood card
+      // (the card's row is hidden under it, wherever the card now stands)
+      var covered = !centerEl.hidden && centerEl.querySelector('.mk-cl-moodrow');
+      var taps = covered || (mood && mood.querySelector('.rg-pulse-taps')), T = taps && taps.getBoundingClientRect(), ty = T && T.height ? T.top + T.height / 2 - h / 2 : M.bottom - h;
       var L = list.getBoundingClientRect();
       var busy = [].slice.call(list.querySelectorAll('.card.mk-mid-card')).filter(function (c) { return c !== mood; })
         .map(function (c) { return c.getBoundingClientRect(); }).filter(function (r) { return r.width; });
       // the carousel's own ‹ › and view buttons
       [].slice.call(list.querySelectorAll('.mk-cf-nav')).forEach(function (n) { var r = n.getBoundingClientRect(); if (r.width) busy.push(r); });
       busy.push(T && T.width ? T : M);
-      var pet = document.querySelector('.mk-daily-cat-pet'), P = pet && pet.getBoundingClientRect();
-      if (P && P.width && !pet.hidden) busy.push(P);
+      // the pet is not in the way: at home it stands beside the switch (daily-cat.js)
       var free = function (x, y) {
         // inside the roster: never over the side columns (radiographers', radiologists')
         if (x < Math.max(6, L.left + 4) || x + w > Math.min(iw - 6, L.right - 4) || y < under + 4 || y + h > ih - 6) return false;
         if (x < M.right && x + w > M.left && y < M.bottom && y + h > M.top) return false;
         return busy.every(function (r) { return x + w <= r.left - 4 || x >= r.right + 4 || y + h <= r.top - 4 || y >= r.bottom + 4; });
       };
-      // under the mood card, moved left as far as the pet needs; with no mood card shown, the
-      // roster's bottom middle first
-      var left0 = P && P.width && P.top < M.bottom + 80 && P.left > M.left ? Math.min(M.left + 6, P.left - w - 10) : M.left + 6;
+      // right in the middle under the rating row; with no mood card shown, the roster's bottom middle first
+      var left0 = M.left + 6;
       var bottomMid = [L.left + L.width / 2 - w / 2, Math.min(L.bottom, ih) - h - 8];
-      var nearPet = P && P.width && P.top < M.bottom + 80;
-      var spots = (current().mood === false ? [bottomMid] : []).concat([[left0, M.bottom + 12],
-        nearPet ? [P.right + 10, M.bottom + 12] : null, nearPet ? [M.left + 6, P.bottom + 8] : null, [M.left + M.width / 2 - w / 2, M.top - h - 8], [M.right + 12, ty], [M.left - w - 12, ty],
+      var spots = (current().mood === false ? [bottomMid] : []).concat([[M.left + M.width / 2 - w / 2, M.bottom + 12], [left0, M.bottom + 12],
+        [M.left + M.width / 2 - w / 2, M.top - h - 8], [M.right + 12, ty], [M.left - w - 12, ty],
         [L.right - w - 12, Math.min(L.bottom, ih) - h - 8], [L.left + 12, Math.min(L.bottom, ih) - h - 8], bottomMid]);
       var pick = function () { return spots.filter(function (p) { return p && free(p[0], p[1]); })[0]; };
       var spot = pick(), compact = false;
       // no room for the whole switch (a short window, many people): only "⋯", in a gap
       if (!spot) {
-        compact = true; w = 40;
+        compact = true; w = 92;   // "⋯" and the sweet
         left0 = M.left + 6;
-        spots = [[M.left + M.width / 2 - 20, M.bottom + 8], [M.right + 8, ty], [M.left - 48, ty], [M.right - 40, M.bottom + 8], [M.left, M.bottom + 8],
-          [L.right - 52, Math.min(L.bottom, ih) - 48], [L.left + 12, Math.min(L.bottom, ih) - 48]];
+        spots = [[M.left + M.width / 2 - w / 2, M.bottom + 8], [M.right + 8, ty], [M.left - w - 8, ty], [M.right - w, M.bottom + 8], [M.left, M.bottom + 8],
+          [L.right - w - 12, Math.min(L.bottom, ih) - 48], [L.left + 12, Math.min(L.bottom, ih) - 48]];
         spot = pick();
       }
       // nowhere free at all: "⋯" waits in the day rail, by the month and the calendar
@@ -305,6 +363,7 @@
     var k = key.split(',');
     bar.style.left = k[0] + 'px'; bar.style.top = k[1] + 'px';
     if (isOpen) placePanel();
+    window.dispatchEvent(new Event('mk-cl-bar-placed'));   // the pet stands beside it at home
   }
   var placeFrame = 0;
   function schedulePlace() { if (!placeFrame) placeFrame = requestAnimationFrame(function () { placeFrame = 0; placeBtn(); }); }
@@ -325,6 +384,7 @@
   }).observe(root, { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', schedulePlace);
   window.addEventListener('mk-card-layout', function () { schedulePlace(); setTimeout(schedulePlace, 600); });
+  window.addEventListener('mk-corridor-placed', schedulePlace);   // the walls moved: the middle's box follows in the same frame's wake
   list.addEventListener('scroll', schedulePlace, { passive: true });
 
   /* The menu. */
@@ -562,9 +622,16 @@
   }
   function byCenter(id) { for (var i = 0; i < CENTERS.length; i++) if (CENTERS[i].id === id) return CENTERS[i]; return null; }
   function setCenter(id) {
+    var wasGame = gameOn();
     try { if (id === 'mood') localStorage.removeItem(CENTER); else localStorage.setItem(CENTER, JSON.stringify({ id: id, until: nextHandover(Date.now()) })); } catch (_e) {}
     centerSig = '';
     schedulePlace();
+    if (wasGame !== gameOn()) {   // the walls make room for the game, or close in again: at once, no glide
+      var moving = [].slice.call(list.querySelectorAll('.card.mk-mid-card'));
+      moving.forEach(function (c) { c.classList.add('mk-cor-fresh'); });
+      window.dispatchEvent(new Event('mk-card-layout'));
+      setTimeout(function () { moving.forEach(function (c) { c.classList.remove('mk-cor-fresh'); }); }, 160);
+    }
   }
   var centerEl = document.createElement('div');
   centerEl.className = 'mk-cl-center';
@@ -723,6 +790,16 @@
   function placeCenter(M) {
     var id = centerNow(), l = current(), mood = list.querySelector('.rg-feedback-card');
     var on = id !== 'mood' && !!M && !!mood && l.mood !== false;
+    candyBtn.setAttribute('aria-pressed', String(on && id === 'candy'));
+    // The game in the usual grid (Režģis): the mood card is one cell of two columns among the cards; for
+    // the game it takes four and the height down to the switch, and the cards close up in the rest
+    // (card-layout.css mk-cl-game-grid).
+    var gameGrid = on && id === 'candy' && !root.classList.contains('mk-corridor');
+    if (root.classList.contains('mk-cl-game-grid') !== gameGrid) root.classList.toggle('mk-cl-game-grid', gameGrid);
+    if (mood) {
+      var mh = gameGrid ? Math.max(0, Math.round(window.innerHeight - 64 - mood.getBoundingClientRect().top)) + 'px' : '';
+      if (mood.style.getPropertyValue('min-height') !== mh) { if (mh) mood.style.setProperty('min-height', mh, 'important'); else mood.style.removeProperty('min-height'); }
+    }
     if (on !== root.classList.contains('mk-cl-center-on')) document.dispatchEvent(new CustomEvent('mk-mood-covered', { detail: on }));
     root.classList.toggle('mk-cl-center-on', on);
     centerEl.hidden = !on;
@@ -745,28 +822,41 @@
       centerMood = mood;
       setTimeout(function () { if (centerMood !== mood || centerEl.hidden) return; watchMoodState(mood); paintMood(); paintRate(); }, 0);
     }
-    var box = Math.round(M.left) + ',' + Math.round(M.top) + ',' + Math.round(M.width) + ',' + Math.round(M.height);
+    // a mood card scrolled up under the day rail: what is under the rail is not shown (the box is
+    // fixed and above the page, it would lie over the rail)
+    var Hb = header && header.getBoundingClientRect(), cut = Hb && Hb.height ? Math.max(0, Math.round(Hb.bottom - M.top)) : 0;
+    var box = Math.round(M.left) + ',' + Math.round(M.top) + ',' + Math.round(M.width) + ',' + Math.round(M.height) + ',' + cut;
     if (box !== centerBox) {
       centerBox = box;
+      // the game is shown once its box has stopped changing (the walls step back over ~0.6 s): it
+      // appears at its size instead of growing in front of you
+      if (game && Date.now() < settleUntil) { clearTimeout(settleTimer); settleTimer = setTimeout(settled, 90); }
       centerEl.style.left = Math.round(M.left) + 'px'; centerEl.style.top = Math.round(M.top) + 'px';
       centerEl.style.width = Math.round(M.width) + 'px'; centerEl.style.height = Math.round(M.height) + 'px';
+      centerEl.style.clipPath = cut ? 'inset(' + cut + 'px 0 0 0)' : '';
     }
   }
-  var centerMood = null, centerBox = '';
+  var centerMood = null, centerBox = '', settleUntil = 0, settleTimer = 0;
+  function settled() { settleUntil = 0; centerEl.classList.remove('is-settling'); }
   // the games: the gallery's own Windows 98 (js/page/mood-gallery-pc.js), one game mounted in the box
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261113cd7', pcLoad = null, game = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261115s19', pcLoad = null, game = null;
   function mountGame(app) {
+    var box = centerEl.querySelector('.mk-cl-game-box');
+    loadPC().then(function () {
+      if (!box.isConnected || game || window.MinkaGalleryPC.isOpen()) return;
+      centerEl.classList.add('is-settling'); settleUntil = Date.now() + 700;
+      clearTimeout(settleTimer); settleTimer = setTimeout(settled, 120);
+      game = window.MinkaGalleryPC.open({ app: app, mount: box, endless: true, me: { name: window.MinkaMyAnimal ? window.MinkaMyAnimal() : '' } });
+    }, function () {});
+  }
+  function unmountGame() { if (game) { var g = game; game = null; try { g.close(); } catch (_e) {} } }
+  function loadPC() {
     if (!pcLoad) pcLoad = new Promise(function (ok, no) {
       if (window.MinkaGalleryPC) { ok(); return; }
       var sc = document.createElement('script'); sc.src = PC_SRC; sc.onload = ok; sc.onerror = function () { pcLoad = null; no(); }; document.head.appendChild(sc);
     });
-    var box = centerEl.querySelector('.mk-cl-game-box');
-    pcLoad.then(function () {
-      if (!box.isConnected || game || window.MinkaGalleryPC.isOpen()) return;
-      game = window.MinkaGalleryPC.open({ app: app, mount: box, endless: true, me: {} });
-    }, function () {});
+    return pcLoad;
   }
-  function unmountGame() { if (game) { var g = game; game = null; try { g.close(); } catch (_e) {} } }
 
   /* Widgets in the mood's place: a big emoji of one's choice (still, or with a quiet movement),
      the month (a click opens that day) and the radio's controls (the radio window stays shut).

@@ -31,6 +31,7 @@
       ['--cs', '--cx', '--cyo', '--cz', '--cry', '--crx', '--crz', '--cin', '--chz', '--chry', 'z-index'].forEach(function (p) { c.style.removeProperty(p); });
     });
     list.querySelectorAll('.cards-section-label').forEach(function (l) { l.style.removeProperty('--lx'); l.style.removeProperty('--ly'); });
+    fitNames();   // names set smaller for small cards go back to their own size
   }
   // The strip, headings and mood card as last measured. Measuring forces the whole page's layout
   // in the middle of a day switch (the cards are still being dressed): the switch itself reuses
@@ -96,7 +97,10 @@
     // a chosen layout may draw the mood card larger or smaller (one scale), or not at all: the walls
     // then come closer to the middle (card-layout.js)
     var ms = l && l.mood === false ? 0 : (l && l.moodScale || 1);
-    var moodH = g.moods[kind] * ms, moodHalf = g.moodHalf * ms;
+    // grow: the game in the mood's place asks for a wider middle, down to this scale when the walls
+    // would not fit (card-layout.js); the mood card itself keeps its height
+    var grow = l && l.grow || 0;
+    var moodH = g.moods[kind] * (grow || ms), moodHalf = g.moodHalf * ms;
     list.style.setProperty('--cor-mcy', (moodH > vis ? base + moodH / 2 + 4 : cy).toFixed(1) + 'px');
     // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
@@ -146,6 +150,7 @@
       return { rows: rows, cols: cols, size: size, room: room, span: room.span, free: Math.max(free, size) };
     }
     var noMood = !!(l && l.mood === false);
+    for (;;) {
     [['rg', -1], ['rd', 1]].forEach(function (side) {
       var cards = cardsOf(side[0]), s = side[1], n = cards.length;
       var label = list.querySelector('.cards-section-label-' + side[0]);
@@ -175,6 +180,10 @@
         b.start = b.room.lo + Math.max(0, b.room.hi - b.room.lo) / 2;
       }
     }
+      if (!grow || !tooSmall || ms <= grow) break;
+      ms = Math.max(grow, ms - 0.1); moodHalf = g.moodHalf * ms; gapIn = moodHalf + 16; walls = []; tooSmall = false;
+    }
+    if (window.MkCardLayout) window.MkCardLayout.moodScaleNow = ms;   // the game's box takes this width
     // The layout editor's card size slider ends where the cards stop growing in this window.
     if (window.MkCardLayout) {
       var freeNow = tooSmall ? 0 : Math.round(walls.reduce(function (m, wl) { return Math.max(m, wl.free); }, 0));
@@ -235,6 +244,29 @@
     if (fresh.length) requestAnimationFrame(function () { requestAnimationFrame(function () {
       fresh.forEach(function (card) { card.classList.remove('mk-cor-fresh'); });
     }); });
+    requestAnimationFrame(fitNames);
+    window.dispatchEvent(new Event('mk-corridor-placed'));   // card-layout.js: the middle's box follows the walls
+  }
+  // Cards smaller than usual (the game in the middle takes room): a name (or the fatigue's word and
+  // number) that would be cut short is set smaller until it fits whole. Only those cards are measured, so the usual sizes cost nothing.
+  function fitNames() {
+    list.querySelectorAll('.card.mk-mid-card:not(.rg-feedback-card)').forEach(function (card) {
+      var small = parseFloat(card.style.getPropertyValue('--cs')) < 140;
+      card.querySelectorAll('.mk-mid-name-wrap :is(.name-main, .name-sub), .mk-mid-meta-fat :is(.mk-mid-meta-label, .mk-mid-meta-value)').forEach(function (n) {
+        if (!small && !n.dataset.fit) return;
+        n.style.removeProperty('font-size'); n.style.removeProperty('display'); delete n.dataset.fit;
+        if (!small) return;
+        // the room it has: its own box, or its parent's inside the padding (that one clips the fatigue's word)
+        var ps = getComputedStyle(n.parentNode), room = Math.min(n.clientWidth || 1e9, n.parentNode.clientWidth - (parseFloat(ps.paddingLeft) || 0) - (parseFloat(ps.paddingRight) || 0));
+        if (n.scrollWidth <= room + 0.5 || room <= 0) return;
+        var fs = parseFloat(getComputedStyle(n).fontSize) || 10;
+        var to = fs * room / n.scrollWidth * 0.97;
+        // too narrow even in 6 px: the fatigue's word goes (its number stays), never a word cut short
+        if (to < 6 && n.classList.contains('mk-mid-meta-label')) n.style.setProperty('display', 'none', 'important');
+        else n.style.setProperty('font-size', Math.max(6, to).toFixed(2) + 'px', 'important');
+        n.dataset.fit = '1';
+      });
+    });
   }
   function schedule() { if (!frame) frame = requestAnimationFrame(place); }
   // After a day switch the cards were placed from the last measurements. Measuring again in that

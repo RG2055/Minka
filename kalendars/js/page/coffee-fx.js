@@ -222,26 +222,36 @@
   function aura(card, source, gold, mg) {
     if (!card) return;
     var el = card.querySelector('.mk-cfx-aura'), fx = FX[source], h = fx ? Math.round(level(mg)) : 0, key = (fx ? source + ':' + h : '') + (gold ? '|g' : '');
-    if (!key) { if (el) el.remove(); return; }
-    if (el && el.dataset.k === key) return;
+    var cup = card.querySelector('.mk-coffee-mid .mk-coffee-cup'), want = fx ? source : gold ? 'gold' : '';
+    if (!key) { if (el) el.remove(); cupMark(cup, ''); return; }
+    if (el && el.dataset.k === key && (!cup || cup.dataset.cfx === want)) return;
     if (!el) { el = document.createElement('div'); el.className = 'mk-cfx-aura'; el.setAttribute('aria-hidden', 'true'); card.appendChild(el); }
     el.dataset.k = key;
     el.style.cssText = 'position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;z-index:6;'
       + (gold ? 'box-shadow:inset 0 0 0 2px #ffd24a,inset 0 0 16px #ffd24a66;' : '');
-    // the marks stand in from the corners: the cards' corners are round and cut off what is in them
-    var shade = 'filter:drop-shadow(0 1px 0 rgba(0,0,0,.6)) drop-shadow(0 2px 3px rgba(0,0,0,.55));', html = '';
-    if (fx) html += '<i style="position:absolute;left:0;right:0;bottom:0;height:' + h + '%;background:' + fx.line[1] + ';opacity:.3;clip-path:' + STILL + '"></i>';
-    if (source === 'redbull') {   // the card itself gets the wings
-      html += '<span class="mk-cfx-mark" style="position:absolute;top:6px;left:20px;width:30px;height:19px;transform:scaleX(-1);' + shade + '">' + WING + '</span>'
-        + '<span class="mk-cfx-mark" style="position:absolute;top:6px;right:20px;width:30px;height:19px;' + shade + '">' + WING + '</span>';
-    } else if (fx) {
-      html += '<span class="mk-cfx-mark" style="position:absolute;top:6px;right:22px;width:24px;height:24px;font-size:21px;line-height:24px;text-align:center;' + shade + '">' + MARK[source] + '</span>';
+    el.innerHTML = fx ? '<i style="position:absolute;left:0;right:0;bottom:0;height:' + h + '%;background:' + fx.line[1] + ';opacity:.3;clip-path:' + STILL + '"></i>' : '';
+    cupMark(cup, want);
+  }
+  // The drink's mark is drawn in the coffee pill's own cup icon, so it sits where every card face already
+  // keeps room for it and lies on top of nothing (loose marks in the corners covered the name and hours).
+  // The cup <svg> itself stays, so each face's size and ink rules still apply; its drawing is put back after.
+  function cupMark(cup, what) {
+    if (!cup || (cup.dataset.cfx || '') === what) return;
+    if (!cup.dataset.cfx) cup.__cfxCup = [cup.getAttribute('viewBox'), cup.innerHTML, cup.getAttribute('shape-rendering')];
+    var src = what === 'redbull' ? WING : what === 'gold' ? GOLD_CAN : MARK[what];
+    if (what === 'kongstrong') src = '<svg viewBox="0 0 16 16"><text x="8" y="13.5" font-size="14" text-anchor="middle">🦍</text></svg>';
+    var m = src && /viewBox="([^"]+)"[^>]*>([\s\S]*)<\/svg>$/.exec(src), old = cup.__cfxCup;
+    if (m) {
+      cup.dataset.cfx = what;
+      cup.setAttribute('viewBox', m[1]); cup.setAttribute('shape-rendering', 'geometricPrecision'); cup.innerHTML = m[2];
+    } else if (old) {
+      delete cup.dataset.cfx;
+      cup.setAttribute('viewBox', old[0]); cup.innerHTML = old[1];
+      if (old[2]) cup.setAttribute('shape-rendering', old[2]); else cup.removeAttribute('shape-rendering');
     }
-    if (gold) html += '<span class="mk-cfx-mark" style="position:absolute;top:6px;left:' + (source === 'redbull' ? 54 : 22) + 'px;width:14px;height:21px;' + shade + '" title="Zelta bundža">' + GOLD_CAN + '</span>';
-    el.innerHTML = html;
   }
   function thump(card) {
-    [].forEach.call(card.querySelectorAll('.mk-cfx-mark'), function (m, i) {
+    [].forEach.call(card.querySelectorAll('.mk-coffee-mid .mk-coffee-cup[data-cfx]'), function (m, i) {
       var flip = m.style.transform.indexOf('scaleX(-1)') >= 0 ? 'scaleX(-1) ' : '';
       m.animate([{ transform: flip + 'scale(1)' }, { transform: flip + 'scale(1.25) rotate(-8deg)', offset: .25 }, { transform: flip + 'scale(1)', offset: .5 }, { transform: flip + 'scale(1.2) rotate(6deg)', offset: .75 }, { transform: flip + 'scale(1)' }],
         { duration: 700, delay: i * 60, easing: 'ease-in-out' });
@@ -307,15 +317,10 @@
     toss(c, [COIN], 12, 1.7, { scale: 1.3 });
     line({ x: c.x, y: r.top + 30 }, 'ZELTA BUNDŽA!', '#ffd24a');
   }
-  // now and then every mark gives one small beat (a single timer for the whole page), and the marks
-  // of drinks that have worn off are taken down
-  var beat = 0;
+  // the marks of drinks that have worn off are taken down (they beat only when a drink is poured in)
   setInterval(function () {
-    if (document.hidden) return;
-    if (++beat % 4 === 0 && window.__minkaCoffeeAuraRefresh) window.__minkaCoffeeAuraRefresh();
-    if (reduce && reduce.matches) return;
-    [].forEach.call(document.querySelectorAll('.mk-cfx-aura'), function (a) { thump(a); });
-  }, 15000);
+    if (!document.hidden && window.__minkaCoffeeAuraRefresh) window.__minkaCoffeeAuraRefresh();
+  }, 60000);
 
   function slice(fx, c, html, w, h, big) {
     var deg = rnd(-34, -16) * (Math.random() < .5 ? 1 : -1);

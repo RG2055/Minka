@@ -3423,7 +3423,7 @@
   /* Galerija kā Doom (js/page/mood-gallery-3d.js, ielādējas tikai pirmajā
      reizē): pastaiga pa zāli ar zīmējumiem uz sienām. Ja tā neielādējas,
      paliek parastā galerija (režģis augstāk). */
-  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261113cd7';
+  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261115sw7';
   var gallery3dLoad = null;
   // the gallery's own paint window (js/page/mood-gallery-paint.js): only for the
   // gallery's frames; everywhere else the usual editor (js/skin-draw.js)
@@ -4524,6 +4524,9 @@
     }
     return state;
   }
+  // the day's anonymous animal, for the game in the calendar's middle (card-layout.js): its day table
+  // shows the same names as the gallery's, never a real one
+  window.MinkaMyAnimal = function () { try { return myAnimal(shiftDayKey(), false); } catch (_e) { return ''; } };
   function myAnimal(day, keep) {
     var state = communityAnimalState();
     if (animalIndex(state.days[day]) >= 0) return state.days[day];
