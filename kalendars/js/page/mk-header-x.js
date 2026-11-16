@@ -363,10 +363,15 @@
   }
 
   /* ── Datuma rinda ────────────────────────────────────────────────────── */
+  function paintCalMonth() {
+    var m = doc.querySelector('#miniCalBtn .hx-cal-month'), d = parseDMY(activeDate());
+    if (m && d) { var name = cap(d.toLocaleDateString('lv-LV', { month: 'long' })); if (m.textContent !== name) m.textContent = name; }
+  }
   function renderDate() {
     if (!top) return;
     var ds = activeDate(), d = parseDMY(ds);
     if (!d) return;
+    paintCalMonth();
     var today = shiftToday(), isToday = ds === today;
     if (els.dateNum.textContent !== ds) els.dateNum.textContent = ds;
     els.dateWd.textContent = cap(CORE.WEEKDAYS[d.getDay()]);
@@ -2017,7 +2022,9 @@
       cal.title = 'Izvēlēties datumu';
       cal.setAttribute('aria-haspopup', 'dialog');
       cal.setAttribute('aria-expanded', 'false');
-      cal.innerHTML = icon('calendar');
+      // the month's name stands in the button in the tiles layout (it replaces the month list there)
+      cal.innerHTML = icon('calendar') + '<span class="hx-cal-month"></span>';
+      paintCalMonth();
       cal.onclick = function (e) { e.preventDefault(); e.stopPropagation(); toggleDate(cal); };
     }
     var menu = $('minkaBarMenu');

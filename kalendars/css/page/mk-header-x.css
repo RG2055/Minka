@@ -2074,6 +2074,75 @@
   :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap .sl-ruler-pct { top: 0 !important; }
   :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > #shift-progress-wrap[hidden] + .scroll-row { margin-top: 15px !important; }
 }
+/* the day strip under the tiles, in the same language: flat days, the chosen one a filled capsule, round
+   buttons on one quiet fill, and one calendar button with the month's name (it opens the date picker,
+   which also changes the month). 12 px lower than before. */
+.hx-cal-month { display: none; }
+@layer mk-hx {
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row {
+    min-height: 0 !important;
+    gap: 6px !important;
+    padding-top: 3px !important;
+    padding-bottom: 5px !important;
+    border-top-color: rgba(255, 255, 255, .06) !important;
+  }
+  /* the days share the strip's whole width: on a wide monitor they reach its end (no empty stretch), on a
+     narrower screen they narrow down to 30 px so the whole month is seen; under that the strip scrolls */
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller { flex: 1 1 auto !important; min-width: 0 !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 30px !important;
+    max-width: none !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    border-radius: 10px !important;
+    background: none !important;
+    gap: 0 !important;
+  }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill:hover { background: rgba(255, 255, 255, .1) !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill > span.weekday { font-size: 10px !important; font-weight: 600 !important; line-height: 12px !important; opacity: .62 !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill > span:last-child { font-size: 14px !important; font-weight: 600 !important; line-height: 16px !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill.holiday-pill::before { top: 3px !important; right: 5px !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill.today-pill:not(.active) { box-shadow: inset 0 0 0 1.5px var(--hx-accent) !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill.active { background: var(--hx-accent) !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill.active > span.weekday { opacity: .7 !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row :is(.arrow, #miniCalBtn) {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, .085) !important;
+    box-shadow: none !important;
+  }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row :is(.arrow, #miniCalBtn):hover { background: rgba(255, 255, 255, .16) !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row :is(.arrow, #miniCalBtn) :is(svg, .hx-ic) { width: 17px !important; height: 17px !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #miniCalBtn#miniCalBtn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: 0 13px 0 10px !important;
+  }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #miniCalBtn .hx-cal-month { display: inline !important; font-size: 13px !important; font-weight: 600 !important; line-height: 32px !important; white-space: nowrap !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-monthPicker { display: none !important; }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row .mk-date-controls { gap: 6px !important; height: 32px !important; min-height: 0 !important; }
+  /* the cards' layout switch, when it stands in the strip: the same height and fill as the buttons beside it */
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row .mk-cl-bar.in-rail {
+    height: 32px !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-radius: 16px !important;
+    background: rgba(255, 255, 255, .085) !important;
+    box-shadow: none !important;
+    align-items: center !important;
+  }
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row .mk-cl-bar.in-rail :is(.mk-cl-more, .mk-cl-q) { height: 28px !important; min-height: 0 !important; }
+}
 /* another day: the same band without progress, its marks inside it */
 :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxAxis { height: 15px; }
 :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxAxis .hx-axis-band { top: 0; }
