@@ -2086,14 +2086,15 @@
     padding-bottom: 5px !important;
     border-top-color: rgba(255, 255, 255, .06) !important;
   }
-  /* the days share the strip's whole width: on a wide monitor they reach its end (no empty stretch), on a
-     narrower screen they narrow down to 30 px so the whole month is seen; under that the strip scrolls */
-  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller { flex: 1 1 auto !important; min-width: 0 !important; }
+  /* every day is the same 40 px button; on a wide monitor they are spread evenly to the strip's end (the room
+     goes between them, the buttons are not stretched), on a narrower screen they narrow down to 30 px so
+     the whole month is seen; under that the strip scrolls */
+  :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller { flex: 1 1 auto !important; min-width: 0 !important; justify-content: space-between !important; }
   :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #grafiks-app > #minkaBarWrap > .scroll-row #grafiks-scroller .pill {
-    flex: 1 1 0 !important;
+    flex: 0 1 40px !important;
     width: auto !important;
     min-width: 30px !important;
-    max-width: none !important;
+    max-width: 40px !important;
     height: 32px !important;
     min-height: 32px !important;
     border-radius: 10px !important;
