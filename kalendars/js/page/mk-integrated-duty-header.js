@@ -100,7 +100,9 @@
     // Uses the existing resize/day-change scheduling, never a polling loop.
     // three rows (css/page/mk-header-x.css); it was 108 while the day's fact had a row of its own.
     // Tiles: the time row under it is 20 px lower (no chip above the band), and the tiles take that room.
-    var dutyHeight = document.documentElement.dataset.headerLayout === 'tiles' ? 107 : 87;
+    // (header X on a desktop only: the old header and the phone keep their own heights)
+    var rootEl = document.documentElement;
+    var dutyHeight = rootEl.dataset.headerLayout === 'tiles' && rootEl.classList.contains('mk-hx') && !rootEl.classList.contains('mk-mobile-shell') ? 107 : 87;
     wrap.querySelectorAll('.mk-duty-wing-slot').forEach(function(slot) {
       dutyHeight = Math.max(dutyHeight, Math.ceil(slot.getBoundingClientRect().height) + 8);
     });

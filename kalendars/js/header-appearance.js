@@ -30,7 +30,7 @@
       palette: palettes.includes(s.palette) ? s.palette : 'scene', daily: s.daily === true,
       motion: s.motion !== false, background: backgrounds.includes(s.background) ? s.background : 'mix', day: /^\d{4}-\d{2}-\d{2}$/.test(s.day || '') ? s.day : '',
       progress: progressStyles.includes(s.progress) ? s.progress : 'classic',
-      layout: layouts.includes(s.layout) ? s.layout : 'classic',
+      layout: layouts.includes(s.layout) ? s.layout : 'tiles',   // tiles are the default; "Klasiskais" stays a choice
       profile: s.profile === 'own' || tileProfiles[s.profile] ? s.profile : 'full', ownTiles: ownTiles(s.ownTiles),
       dockIcons: dockIconSets.includes(s.dockIcons) ? s.dockIcons : 'pixel',
       dockTint: dockTints.includes(s.dockTint) ? s.dockTint : 'color',
