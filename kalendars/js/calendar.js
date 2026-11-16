@@ -7168,9 +7168,7 @@ function filterFullList(btn) {
     function updateCoffeeAura(card, name) {
       if (!card || !window.MkCoffeeFx || !window.MkCoffeeFx.aura) return;
       const a = coffeeAura(name);
-      // ?cup=gold / ?cup=diamond in the address: every card shows that cup (to see one without waiting for it)
-      let demo = ''; try { demo = (/[?&]cup=(gold|diamond)\b/.exec((window.top || window).location.search) || [])[1] || ''; } catch (_e) {}
-      window.MkCoffeeFx.aura(card, a ? a.src : '', demo || (window.MkCoffeeGold && window.MkCoffeeGold.today(name)) || '', a ? a.mg : 0);   // '', 'gold' or 'diamond'
+      window.MkCoffeeFx.aura(card, a ? a.src : '', (window.MkCoffeeGold && window.MkCoffeeGold.today(name)) || '', a ? a.mg : 0);   // '', 'gold' or 'diamond'
     }
     window.__minkaCoffeeAuraRefresh = () => document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => updateCoffeeAura(card, card.getAttribute('data-worker') || ''));
     window.__minkaCoffeeEq = coffeeEq;
