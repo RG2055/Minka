@@ -4514,11 +4514,13 @@ window.__mkMiniDock = (function () {
     var pw = el.querySelector('.rgm-pw');
     if (!pw) return;
     var parts = [[pw, 'rgmPw'], [pw.firstElementChild, 'rgmPi'], [el.querySelector('.rgm-tr'), 'rgmTr']];
-    var dur = s ? +s.dur || 0 : 0, rate = s ? +s.rate || 1 : 1, run = '';
+    var dur = s ? +s.dur || 0 : 0, rate = s ? +s.rate || 1 : 1, run = '', live = s && s.playing && !s.loading;
     if (dur > 0) {
+      // The report is from when it came (song start, seek); while playing, the song has moved on since.
+      var at = (+s.at || 0) + (live && s.t ? (performance.now() - s.t) / 1000 * rate : 0);
       el.dataset.step = el.dataset.step === 'A' ? 'B' : 'A';
       run = ' ' + (dur / rate).toFixed(2) + 's steps(' + Math.max(1, Math.round(dur)) + ') -' +
-        (Math.min(+s.at || 0, dur) / rate).toFixed(2) + 's 1 both ' + (s.playing && !s.loading ? 'running' : 'paused');
+        (Math.min(at, dur) / rate).toFixed(2) + 's 1 both ' + (live ? 'running' : 'paused');
     }
     parts.forEach(function (x) { if (x[0]) x[0].style.animation = run ? x[1] + el.dataset.step + run : 'none'; });
   }
@@ -4648,6 +4650,7 @@ window.__mkMiniDock = (function () {
       if (window.__mkRadioMini) window.__mkRadioMini.off();
     }
     state = event.data;
+    state.t = performance.now();
     // Paused for 30 s (time to resume from it), the mini player leaves by itself.
     clearTimeout(idleTimer);
     if (miniOn && !state.playing) idleTimer = setTimeout(function () { miniOn = false; renderMini(); }, IDLE_MS);
