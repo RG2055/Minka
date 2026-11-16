@@ -533,7 +533,7 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .mk-cl-mword + .mk-cl-chip { margin-left: 4px; }
 .mk-cl-mood-line .mk-cl-mface { font-size: 18px; }
 .mk-cl-mood-line .mk-cl-mword { font-weight: 700; color: color-mix(in srgb, var(--ink, var(--mk-cl-accent)) 60%, #fff); }
-.mk-cl-moodrow { display: grid; justify-items: center; width: 100%; }   /* the mood card's own row, its own rules (card-layout.js mirrorRowStyles) */
+.mk-cl-moodrow { display: grid; justify-items: center; width: 100%; grid-template-areas: "taps"; grid-template-columns: minmax(0, 1fr); }   /* the mirrored row rules place the faces in area "taps": without that area the grid made a second, implicit column and the faces sat on the right */   /* the mood card's own row, its own rules (card-layout.js mirrorRowStyles) */
 /* the games: a small Windows 98 screen with the game's name, today's line and "Spēlēt" */
 .mk-cl-game-screen {
   align-self: stretch; justify-self: stretch; display: grid; place-content: center; justify-items: center; gap: 8px; border-radius: 16px;
