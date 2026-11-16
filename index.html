@@ -1370,7 +1370,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261116pn1']);
+  await loadAny(['js/radio.js?v=20261116pn2']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
@@ -3612,6 +3612,11 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWind
 html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"].mk-st-joined .amp-shell{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;border-bottom-color:transparent!important;box-shadow:none!important;}
 html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"].mk-st-joined .dth-deck{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;border-bottom-color:transparent!important;box-shadow:none!important;}
 body:has(#radioWindow[data-radio-layout="amp"].mk-st-joined) #stationOverlay#stationOverlay#stationOverlay#stationOverlay.mk-st-joined{background:#101211!important;background-image:none!important;border:1px solid rgba(255,255,255,.07)!important;border-top:1px solid rgba(255,255,255,.07)!important;border-radius:0 0 20px 20px!important;}
+/* Pioneer joined: the faceplate (::before) squares its bottom corners with the window (they left dark notches), the
+   window drops its shadow onto the list, and the list takes the same dark 1 px rim with Pioneer's 20 px corners. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"].mk-st-joined{box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"].mk-st-joined::before{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;}
+body:has(#radioWindow[data-radio-layout="pioneer"].mk-st-joined) #stationOverlay#stationOverlay#stationOverlay#stationOverlay.mk-st-joined{border-radius:0 0 20px 20px!important;border:1px solid rgba(0,0,0,.5)!important;border-top:0!important;}
 body:has(#radioWindow[data-radio-layout="dither"].mk-st-joined) #stationOverlay#stationOverlay#stationOverlay#stationOverlay.mk-st-joined{background:color-mix(in srgb,rgb(var(--radio-accent-rgb,120,220,200)) 6%,#111316)!important;background-image:none!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:0 0 24px 24px!important;}
 
 /* Anti-slop pass over the radio (antislop-ui rules: one accent at the key moment, matte, no floating shadows): the
@@ -4630,8 +4635,14 @@ window.__mkMiniDock = (function () {
     if (!f || event.source !== f.contentWindow || !event.data || event.data.type !== 'rg-music') return;
     var btn = document.getElementById('rgMusicDockBtn');
     if (btn) btn.classList.toggle('rgmusic-playing', !!event.data.playing);
-    // One source at a time: RG Music starting stops the radio (and the radio starting pauses RG Music, below).
-    if (event.data.playing && !(state && state.playing) && window.__mkRadioPause) window.__mkRadioPause();
+    // One source at a time: RG Music starting ends the radio for good: paused, its window closed, its mini player gone
+    // (and the radio starting does the same to RG Music, below).
+    if (event.data.playing && !(state && state.playing)) {
+      if (window.__mkRadioPause) window.__mkRadioPause();
+      var b = document.body.classList;
+      if (!b.contains('radio-hidden') && !b.contains('radio-idle') && typeof window.toggleRadio === 'function') window.toggleRadio();
+      if (window.__mkRadioMini) window.__mkRadioMini.off();
+    }
     state = event.data;
     // Paused for 30 s (time to resume from it), the mini player leaves by itself.
     clearTimeout(idleTimer);
@@ -4693,7 +4704,8 @@ window.__mkMiniDock = (function () {
     }
   };
   if (rgDockMini.el) window.__mkMiniDock.add(rgDockMini);
-  window.__mkRgMusicPause = function () { if (state && state.playing) send('pause'); };
+  // The radio started: RG Music pauses and its mini player leaves (one source at a time).
+  window.__mkRgMusicPause = function () { if (state && state.playing) send('pause'); miniOn = false; clearTimeout(idleTimer); renderMini(); };
   document.addEventListener('click', function (event) {
     var b = event.target.closest && event.target.closest('#rgMini [data-rgm]');
     if (!b) return;

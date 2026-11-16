@@ -583,12 +583,17 @@ function positionStationPicker(el) {
         // Only Amp and Dither draw on a transparent full-width window; the other looks are the window itself (its frame
         // included), so the list takes the window's own edges there.
         const rw = document.getElementById('radioWindow'), w = rw.getBoundingClientRect();
-        const shell = ['amp', 'dither'].includes(rw.dataset.radioLayout) ? [...rw.children].filter(k => k.offsetWidth > 10).map(k => k.getBoundingClientRect()) : [];
-        const left = shell.length ? Math.min(...shell.map(b => b.left)) : w.left, right = shell.length ? Math.max(...shell.map(b => b.right)) : w.right;
+        // The visible shell only: the full-width drag strip and the source bar are children too, and taking their
+        // outer edges made the list wider than the player on some window sizes.
+        // Both shells stay in the DOM once built: take the one for the current look, never the first in the page.
+        const shellEl = rw.dataset.radioLayout === 'amp' ? rw.querySelector?.(':scope > .amp-shell') : rw.dataset.radioLayout === 'dither' ? rw.querySelector?.(':scope > .dth-shell') : null;
+        const b = shellEl && shellEl.offsetWidth > 10 ? shellEl.getBoundingClientRect() : w;
+        const left = b.left, right = b.right;
         const c = document.getElementById('calendarEmbed').getBoundingClientRect();
         // The player rises to where the calendar starts; the list fills the room it leaves, right under it.
         const top = Math.max(6, c.top), lift = Math.max(200, Math.round(rw.offsetTop - top));
-        Object.assign(el.style, { left: left + 'px', width: (right - left) + 'px', top: (top + rw.offsetHeight) + 'px', height: lift + 'px', right: 'auto', bottom: 'auto' });
+        // Under the lifted player itself: on short windows the lift (at least 200 px) is more than the room above it.
+        Object.assign(el.style, { left: left + 'px', width: (right - left) + 'px', top: (rw.offsetTop - lift + rw.offsetHeight) + 'px', height: lift + 'px', right: 'auto', bottom: 'auto' });
         el._mkLift = lift;
         if (el.style.display === 'grid' && !el._mkClosing) rw.style.translate = `0 ${-lift}px`;
         return;
