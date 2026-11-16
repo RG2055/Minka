@@ -7015,7 +7015,7 @@ function filterFullList(btn) {
           // on the person's own card the drink is scanned and poured in (js/page/coffee-fx.js); about one in
           // fifteen is a golden can (js/page/coffee-gold.js)
           window.MkCoffeeFx?.pour?.(card, selected, (coffeeAura(name) || {}).mg);
-          window.MkCoffeeGold?.saved(name, selected).then(gold => { if (gold) { window.MkCoffeeFx?.gold?.(card); window.__minkaCoffeeAuraRefresh(); } });
+          window.MkCoffeeGold?.saved(name, selected).then(cup => { if (cup) { window.MkCoffeeFx?.gold?.(card, cup); window.__minkaCoffeeAuraRefresh(); } });
           closeCoffeePicker();
           anchor?.focus({ preventScroll: true });
         });
@@ -7168,7 +7168,9 @@ function filterFullList(btn) {
     function updateCoffeeAura(card, name) {
       if (!card || !window.MkCoffeeFx || !window.MkCoffeeFx.aura) return;
       const a = coffeeAura(name);
-      window.MkCoffeeFx.aura(card, a ? a.src : '', !!(window.MkCoffeeGold && window.MkCoffeeGold.today(name)), a ? a.mg : 0);
+      // ?cup=gold / ?cup=diamond in the address: every card shows that cup (to see one without waiting for it)
+      let demo = ''; try { demo = (/[?&]cup=(gold|diamond)\b/.exec((window.top || window).location.search) || [])[1] || ''; } catch (_e) {}
+      window.MkCoffeeFx.aura(card, a ? a.src : '', demo || (window.MkCoffeeGold && window.MkCoffeeGold.today(name)) || '', a ? a.mg : 0);   // '', 'gold' or 'diamond'
     }
     window.__minkaCoffeeAuraRefresh = () => document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => updateCoffeeAura(card, card.getAttribute('data-worker') || ''));
     window.__minkaCoffeeEq = coffeeEq;

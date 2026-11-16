@@ -14,3 +14,14 @@ test('a golden can is the same on every device and comes about once in fifteen d
   for (let i = 1; i <= 30000; i++) if (gold.is('Tests Testiņš', 'philips', i)) n++;
   assert.ok(Math.abs(n / 30000 - 1 / 15) < .01, String(n));
 });
+
+test('a diamond cup is a golden one, about one drink in seventy-five, the same on every device', () => {
+  let d = 0;
+  for (let i = 1; i <= 75000; i++) {
+    const t = gold.tier('Tests Testiņš', 'brite', i);
+    if (t === 'diamond') { d++; assert.ok(gold.is('Tests Testiņš', 'brite', i)); }
+    if (!gold.is('Tests Testiņš', 'brite', i)) assert.equal(t, '');
+  }
+  assert.ok(Math.abs(d / 75000 - 1 / 75) < .004, String(d));
+  assert.equal(gold.tier('Anna Bērziņa', 'monster', 7), gold.tier(' anna  BĒRZIŅA', 'monster', 7));
+});

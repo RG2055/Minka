@@ -13,6 +13,8 @@
   }
   function norm(name) { return String(name || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('lv-LV'); }
   function is(name, source, n) { return hash('gold|' + norm(name) + '|' + source + '|' + n) % 15 === 0; }
+  // the cup it earns: one golden drink in five is a diamond one (about one drink in 75), worked out the same way
+  function tier(name, source, n) { return !is(name, source, n) ? '' : hash('diamond|' + norm(name) + '|' + source + '|' + n) % 5 === 0 ? 'diamond' : 'gold'; }
 
   var counts = null, job = null, fetchedAt = 0, pending = [];   // pending: saved here since the counts were asked
   function eq(source) { return window.__minkaCoffeeEq ? window.__minkaCoffeeEq(source) : 1; }
@@ -51,6 +53,7 @@
 
   window.MkCoffeeGold = {
     is: is,
+    tier: tier,
     load: load,
     // a coffee was just saved (calendar.js, the menu's Saglabāt): resolves true when it is a golden can
     saved: function (name, source) {
@@ -59,18 +62,18 @@
         var n = drinks(name, source) + 1;
         pending.push({ key: norm(name), src: source, at: Date.now() });
         refetchSoon();
-        return is(name, source, n);
+        return tier(name, source, n);   // '', 'gold' or 'diamond'
       });
     },
-    // one of today's drinks was a golden can
+    // the best cup among today's drinks: 'diamond', 'gold' or '' (none)
     today: function (name) {
-      var today = window.__minkaCoffeeTodayDrinks ? window.__minkaCoffeeTodayDrinks(name) : null;
-      if (!today || !counts) return false;
-      return Object.keys(today).some(function (src) {
+      var today = window.__minkaCoffeeTodayDrinks ? window.__minkaCoffeeTodayDrinks(name) : null, best = '';
+      if (!today || !counts) return '';
+      Object.keys(today).forEach(function (src) {
         var last = Math.max(drinks(name, src), today[src]);
-        for (var n = last - today[src] + 1; n <= last; n++) if (is(name, src, n)) return true;
-        return false;
+        for (var n = last - today[src] + 1; n <= last; n++) { var t = tier(name, src, n); if (t === 'diamond' || (t && !best)) best = t; }
       });
+      return best;
     }
   };
   setTimeout(function () { load(); }, 2500);   // the golden glow needs the counts: ask once the page has settled

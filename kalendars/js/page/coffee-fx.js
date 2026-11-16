@@ -206,10 +206,28 @@
   /* ── the drink's mark on the person's card, while its caffeine is in the body ─── */
   var CLAW = function (color) { return svg('0 0 40 40', '<g fill="none" stroke="' + color + '" stroke-width="4" stroke-linecap="round"><path d="M9 4q7 15 2 32"/><path d="M19 2q7 16 2 35"/><path d="M29 4q7 15 2 32"/></g>'); };
   var MARK = {
-    philips: BEAN[0], cupcoffee: BEAN[0], narvesen: BEAN[0], lofbergs: COIN[0], mycoffee: HEART[0],
+    philips: BEAN[0], cupcoffee: BEAN[0], narvesen: BEAN[0], lofbergs: null, mycoffee: HEART[0],
     monster: CLAW('#8ff04a'), monsterultra: CLAW('#f2f6fa'), brite: LEMON[0], dynamit: BOLT[0], kongstrong: '🦍'
   };
-  var GOLD_CAN = svg('0 0 12 18', '<rect x="2" y="1" width="8" height="1.5" rx=".7" fill="#b5810f"/><rect x="1" y="2.5" width="10" height="14.5" rx="1.6" fill="#ffd24a" stroke="#a9780c" stroke-width="1"/><rect x="2.6" y="4.5" width="1.6" height="10" rx=".8" fill="#fff6c9"/>');
+  /* The cups: exactly the pill's own cup (calendar.js buildCoffeeCup, the same 16 px rects), only
+     tinted the way Apple tints a symbol: one hue from light at the top to deeper at the bottom, the
+     crema line its lightest, the handle its deepest. Bronze for the vending machine's coffee, gold and
+     diamond for the earned cups; an earned one has, now and then, a slow soft light passing over it.
+     Colours are set !important (some faces ink the cup in one colour); ids are the cup's own. */
+  var TINT = { bronze: ['#f6d2a8', '#d39a5f', '#ad713a'], gold: ['#fff0bf', '#f2c24f', '#c8901f'], diamond: ['#ffffff', '#cdebfb', '#8fc8ec'] };
+  var cupN = 0, cupStill = reduce && reduce.matches;
+  function tintCup(kind, still) {
+    var n = 'q' + (++cupN).toString(36), c = TINT[kind] || TINT.gold;
+    var r = function (x, y, w2, h2, f) { return '<rect x="' + x + '" y="' + y + '" width="' + w2 + '" height="' + h2 + '" style="fill:' + f + ' !important"/>'; };
+    var body = 'url(#' + n + 'f)';
+    var art = '<defs><linearGradient id="' + n + 'f" x1="0" y1="4" x2="0" y2="13" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="' + c[0] + '"/><stop offset=".4" stop-color="' + c[1] + '"/><stop offset="1" stop-color="' + c[2] + '"/></linearGradient>'
+      + '<clipPath id="' + n + 'c"><rect x="3" y="4" width="8" height="8"/><rect x="4" y="12" width="6" height="1"/></clipPath></defs>'
+      + r(3, 4, 8, 8, body) + r(4, 12, 6, 1, body) + r(11, 5, 2, 1, c[2]) + r(13, 5, 1, 4, c[2]) + r(11, 8, 2, 1, c[2]) + r(4, 5, 6, 1, c[0]);
+    if (!still && !cupStill) art += '<g clip-path="url(#' + n + 'c)"><rect x="-6" y="3" width="4" height="11" transform="skewX(-16)" style="fill:rgba(255,255,255,.45) !important">'
+      + '<animate attributeName="x" values="-6;16;16" keyTimes="0;.3;1" dur="6s" repeatCount="indefinite"/></rect></g>';
+    return svg('0 0 16 16', art);
+  }
+  MARK.lofbergs = tintCup('bronze', true);   // the vending machine's coffee: a bronze cup, still
   // where the liquid stands for this much caffeine: 80 mg about a seventh of the card, 400 mg half of it
   function level(mg) { return Math.max(6, Math.min(50, 6 + (Number(mg) || 0) / 400 * 44)); }
   var STILL = (function () {   // the liquid's still surface: a low wave along its top edge
@@ -219,16 +237,19 @@
   })();
   // The card as a cup: the drink stands in it as high as there is caffeine in the body (mg), with the
   // drink's mark above; a golden can adds a gold edge. Drawn still, redrawn when the level changes.
+  // gold: '' / 'gold' / 'diamond' (coffee-gold.js), the best cup earned today; it shows in the pill
+  // instead of the drink's mark, shining, and edges the card in its colour
   function aura(card, source, gold, mg) {
     if (!card) return;
-    var el = card.querySelector('.mk-cfx-aura'), fx = FX[source], h = fx ? Math.round(level(mg)) : 0, key = (fx ? source + ':' + h : '') + (gold ? '|g' : '');
-    var cup = card.querySelector('.mk-coffee-mid .mk-coffee-cup'), want = fx ? source : gold ? 'gold' : '';
+    var tier = gold === 'diamond' ? 'diamond' : gold ? 'gold' : '';
+    var el = card.querySelector('.mk-cfx-aura'), fx = FX[source], h = fx ? Math.round(level(mg)) : 0, key = (fx ? source + ':' + h : '') + (tier ? '|' + tier : '');
+    var cup = card.querySelector('.mk-coffee-mid .mk-coffee-cup'), want = tier ? tier + 'cup' : fx ? source : '';
     if (!key) { if (el) el.remove(); cupMark(cup, ''); return; }
     if (el && el.dataset.k === key && (!cup || cup.dataset.cfx === want)) return;
     if (!el) { el = document.createElement('div'); el.className = 'mk-cfx-aura'; el.setAttribute('aria-hidden', 'true'); card.appendChild(el); }
     el.dataset.k = key;
     el.style.cssText = 'position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;z-index:6;'
-      + (gold ? 'box-shadow:inset 0 0 0 2px #ffd24a,inset 0 0 16px #ffd24a66;' : '');
+      + (tier === 'diamond' ? 'box-shadow:inset 0 0 0 1.5px #cfeeff;' : tier ? 'box-shadow:inset 0 0 0 1.5px #e9c25a;' : '');
     el.innerHTML = fx ? '<i style="position:absolute;left:0;right:0;bottom:0;height:' + h + '%;background:' + fx.line[1] + ';opacity:.3;clip-path:' + STILL + '"></i>' : '';
     cupMark(cup, want);
   }
@@ -238,12 +259,13 @@
   function cupMark(cup, what) {
     if (!cup || (cup.dataset.cfx || '') === what) return;
     if (!cup.dataset.cfx) cup.__cfxCup = [cup.getAttribute('viewBox'), cup.innerHTML, cup.getAttribute('shape-rendering')];
-    var src = what === 'redbull' ? WING : what === 'gold' ? GOLD_CAN : MARK[what];
+    var cupKind = what === 'goldcup' ? 'gold' : what === 'diamondcup' ? 'diamond' : '';
+    var src = what === 'redbull' ? WING : cupKind ? tintCup(cupKind) : MARK[what];
     if (what === 'kongstrong') src = '<svg viewBox="0 0 16 16"><text x="8" y="13.5" font-size="14" text-anchor="middle">🦍</text></svg>';
     var m = src && /viewBox="([^"]+)"[^>]*>([\s\S]*)<\/svg>$/.exec(src), old = cup.__cfxCup;
     if (m) {
       cup.dataset.cfx = what;
-      cup.setAttribute('viewBox', m[1]); cup.setAttribute('shape-rendering', 'geometricPrecision'); cup.innerHTML = m[2];
+      cup.setAttribute('viewBox', m[1]); cup.setAttribute('shape-rendering', /cup$|^lofbergs$/.test(what) ? 'crispEdges' : 'geometricPrecision'); cup.innerHTML = m[2];
     } else if (old) {
       delete cup.dataset.cfx;
       cup.setAttribute('viewBox', old[0]); cup.innerHTML = old[1];
@@ -310,12 +332,13 @@
     setTimeout(function () { [].forEach.call(card.querySelectorAll('.mk-cfx-aura'), function (r) { r.style.opacity = ''; }); }, 1900);
   }
   // the saved drink turned out to be a golden can: the card flashes gold and pays out
-  function goldBurst(card) {
+  function goldBurst(card, kind) {
     if (!card || !card.isConnected || (reduce && reduce.matches)) return;
     var r = card.getBoundingClientRect(), c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-    flash(c, 'rgba(255,210,74,.9)', Math.max(r.width, r.height) * 1.5);
-    toss(c, [COIN], 12, 1.7, { scale: 1.3 });
-    line({ x: c.x, y: r.top + 30 }, 'ZELTA BUNDŽA!', '#ffd24a');
+    var dia = kind === 'diamond';
+    flash(c, dia ? 'rgba(190,235,255,.95)' : 'rgba(255,210,74,.9)', Math.max(r.width, r.height) * 1.5);
+    toss(c, [dia ? STAR : COIN], dia ? 16 : 12, 1.7, { scale: 1.3 });
+    line({ x: c.x, y: r.top + 30 }, dia ? 'DIMANTA KRŪZĪTE!' : 'ZELTA KRŪZĪTE!', dia ? '#bfe9ff' : '#ffd24a');
   }
   // the marks of drinks that have worn off are taken down (they beat only when a drink is poured in)
   setInterval(function () {
