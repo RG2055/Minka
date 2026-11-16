@@ -77,6 +77,7 @@ test('non-Pixel random rotation exhausts every other visualizer before repeating
  assert.equal(new Set(selected).size,23);assert.ok(!selected.includes(31));assert.ok(!selected.includes(12));
  for(const mode of [8,9,10,11,20,30])assert.ok(selected.includes(mode),'includes mode '+mode);
  assert.notEqual(c.nextGuestSpectrum(String(selected.at(-1))),selected.at(-1));
- const classic=[];for(let i=0;i<7;i++)classic.push(c.nextGuestSpectrum(String(classic.at(-1)??''),'classic'));
- assert.deepEqual([...classic].sort((a,b)=>a-b),[0,3,4,7,9,10,11],'a layout cycles through its own curated spectra');
+ // Buddy (11) left the Classic guest rotation on 2026-11-16: six curated spectra, each once before a repeat.
+ const classic=[];for(let i=0;i<6;i++)classic.push(c.nextGuestSpectrum(String(classic.at(-1)??''),'classic'));
+ assert.deepEqual([...classic].sort((a,b)=>a-b),[0,3,4,7,9,10],'a layout cycles through its own curated spectra');
 });

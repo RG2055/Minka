@@ -163,7 +163,7 @@
     </div>
     <div class="amp-bands">
      <label class="amp-band amp-pre"><input type="range" class="amp-vband" min="-12" max="12" step="1" value="0" data-preamp aria-label="Preamp"><span>PRE</span></label>
-     <div class="amp-scale" aria-hidden="true"><span>+12</span><span>+0</span><span>−12</span></div>
+     <div class="amp-scale" aria-hidden="true"><span>+12</span><span>0</span><span>−12</span></div>
      ${BANDS.map((hz,i)=>`<label class="amp-band"><input type="range" class="amp-vband" min="-12" max="12" step="1" value="0" data-band="${i}" aria-label="${hz} Hz"><span>${hz>=1000?hz/1000+'K':hz}</span></label>`).join('')}
     </div>
    </section>
@@ -389,7 +389,7 @@
    if(an){
     if(!visWave||visWave.length!==an.fftSize)visWave=new Uint8Array(an.fftSize);
     an.getByteTimeDomainData(visWave);
-    const dpr=w/(cv.clientWidth||w),padX=14*dpr,top=40*dpr,bottom=h-12*dpr,mid=(top+bottom)/2,amp=(bottom-top)/2;
+    const dpr=w/(cv.clientWidth||w),padX=0,top=2*dpr,bottom=h-2*dpr,mid=(top+bottom)/2,amp=(bottom-top)/2;
     const accent=document.getElementById('radioWindow').style.getPropertyValue('--radio-accent-rgb').trim()||'164,229,214';
     ctx.lineWidth=2*dpr;ctx.lineJoin='round';ctx.strokeStyle='rgb('+accent+')';ctx.beginPath();
     const n=visWave.length,step=Math.max(1,Math.floor(n/160));
@@ -414,7 +414,7 @@
   }
   ctx.clearRect(0,0,w,h);
   const dpr=w/(cv.clientWidth||w);
-  const padX=14*dpr,padTop=40*dpr,padBot=12*dpr,gap=(visStyle==='classic'?4:3)*dpr,bw=(w-padX*2-gap*(visBars-1))/visBars,floor=h-padBot,span=floor-padTop;
+  const padX=0,padTop=2*dpr,padBot=0,gap=(visStyle==='classic'?4:3)*dpr,bw=(w-padX*2-gap*(visBars-1))/visBars,floor=h-padBot,span=floor-padTop;
   const accent=visStyle==='classic'?'':(document.getElementById('radioWindow').style.getPropertyValue('--radio-accent-rgb').trim()||'164,229,214');
   const key=visStyle+w+'x'+h+accent;
   if(visGradKey!==key){

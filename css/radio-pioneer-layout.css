@@ -1,5 +1,5 @@
 /* Static machined-metal layers; no texture downloads or decorative render loop. */
-.pioneer-faceplate,.pioneer-volume,.pioneer-display{display:none}
+.pioneer-faceplate,.pioneer-volume,.pioneer-tune,.pioneer-display{display:none}
 html body #radioWindow[data-radio-layout="pioneer"]{
  --pioneer-ink:rgb(var(--radio-accent-rgb,112,200,230));
  min-width:0!important;width:100%!important;max-width:none!important;left:0!important;right:0!important;transform:none!important;height:282px!important;

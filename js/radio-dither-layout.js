@@ -245,7 +245,8 @@
   const rw=document.getElementById('radioWindow');
   const bar=document.getElementById('radioSourceBar');
   if(bar&&bar.parentElement!==els.src)move(bar,els.src);
-  if(bar){ditherButtons(bar);watchBar(bar);}
+  // Calm night look (2026-11-16): the bar keeps its own readable labels; no dithered copies, no observer re-dithering them.
+  if(bar&&bar.querySelector('.dth-dt-host'))undither();
   const state=rw.dataset.playback||'',a=engineAudio();
   const playing=state==='playing'||(state==='loading'&&a&&!a.paused);
   shell.classList.toggle('is-playing',playing);
@@ -326,7 +327,11 @@
   if(!src||src.startsWith('data:image/svg')){fallback();return;}
   const im=new Image();im.decoding='async';
   try{if(new URL(src,document.baseURI).origin!==location.origin)im.crossOrigin='anonymous';}catch(_){}
-  im.onload=()=>{try{done(D.image(im,opts));}catch(_){fallback();}};
+  // Draw into the full 84 px square first (cover, centred, destination-only drawImage): an SVG with only a viewBox
+  // (data/radio-default.svg) reports a size that does not match how it rasterizes, and the source-rect crop left
+  // the icon in the top-left 56 % of the art box.
+  const square=()=>{const c=document.createElement('canvas');c.width=c.height=84;const nw=im.naturalWidth||84,nh=im.naturalHeight||84,s=Math.max(84/nw,84/nh),w=nw*s,h=nh*s;c.getContext('2d').drawImage(im,(84-w)/2,(84-h)/2,w,h);return c;};
+  im.onload=()=>{try{done(D.image(square(),opts));}catch(_){fallback();}};
   im.onerror=fallback;im.src=src;
  }
  function showArt(cv){

@@ -484,7 +484,11 @@ function toggleMenu(forceOpen) {
         el._mkClosing = false;
         if (el.style.display !== 'grid' || closing) {
             const profile = window.__mkUnifiedMedia;
-            stationPickerSource = profile?.getSession() && profile.getRadio()?.favorites?.length ? 'favorites' : 'featured';
+            // Opens where the playing station is (favourites first when there are any), so it shows at once.
+            const now = typeof stationsList !== 'undefined' && typeof currentIndex !== 'undefined' ? stationsList[currentIndex] : null;
+            const own = !now || now.group === 'world' || now.group === 'separator' ? '' : now.ehr ? 'ehr' : now.group === 'latvija' ? 'latvija' : 'record';
+            // The "Atklāj" tab is gone (2026-11-16): without favourites it opens where the station plays, else on Radio Record.
+            stationPickerSource = profile?.getSession() && profile.getRadio()?.favorites?.length ? 'favorites' : (own || 'record');
             stationPickerQuery = '';
             clearTimeout(stationPickerSearchTimer);
             const search = el.querySelector('#stationPickerSearch');
@@ -495,12 +499,35 @@ function toggleMenu(forceOpen) {
 
     // Kalendārs izgaist, kamēr saraksts ir atvērts; aizverot atgriežas (M3 kustība CSS).
     document.documentElement.classList.toggle('mk-stations-full', isNowOpen && stationPickerFull());
+    const joined = !!el.classList?.contains('mk-st-joined');
+    const rwin = document.getElementById('radioWindow');
+    const still = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || !el.animate;
+    // The list comes in under the player while the player rises. Opacity and a short slide only: both run on the
+    // compositor (a clip-path reveal repainted the whole list every frame, which stuttered on the work PCs).
+    const grow = [{ opacity: 0, transform: 'translateY(-16px)' }, { opacity: 1, transform: 'none' }];
+    const lifted = `0 ${-(el._mkLift || 0)}px`;
     if (isNowOpen) {
         el.style.display = 'grid';
         el.style.pointerEvents = '';
+        rwin?.classList.toggle('mk-st-joined', joined);
+        if (joined && rwin) rwin.style.translate = lifted;
         if (!wasVisible) {
             el._mkOrigin = origin;
-            if (MM) MM.openSurface(el, { key: 'stations', origin });
+            if (joined) {
+                if (!still) {
+                    el.animate(grow, { duration: 360, easing: 'cubic-bezier(.2,0,0,1)' });
+                    rwin?.animate([{ translate: '0 0' }, { translate: lifted }], { duration: 360, easing: 'cubic-bezier(.2,0,0,1)' });
+                }
+            } else if (MM) MM.openSurface(el, { key: 'stations', origin });
+        }
+    } else if (joined) {
+        el._mkClosing = true;
+        el.style.pointerEvents = 'none';
+        const done = () => { el._mkClosing = false; el.style.pointerEvents = ''; el.style.display = 'none'; if (rwin) { rwin.classList.remove('mk-st-joined'); rwin.style.translate = ''; } };
+        if (still) done();
+        else {
+            if (rwin) { rwin.style.translate = ''; rwin.animate([{ translate: lifted }, { translate: '0 0' }], { duration: 260, easing: 'cubic-bezier(.3,0,.8,.15)' }); }
+            el.animate(grow.slice().reverse(), { duration: 260, easing: 'cubic-bezier(.3,0,.8,.15)' }).finished.then(done, done);
         }
     } else if (MM) {
         el._mkClosing = true;
@@ -516,6 +543,7 @@ function toggleMenu(forceOpen) {
     if (isNowOpen) {
         renderStationOverlay();
         if (stationPickerSource === 'featured') void loadFeaturedStations();
+        if (!wasVisible) requestAnimationFrame(() => el.querySelector('.station-tile.is-current')?.scrollIntoView({ block: 'center', inline: 'nearest' }));
         el.querySelectorAll('[data-station-source]').forEach(button => {
             const active = button.dataset.stationSource === stationPickerSource;
             button.classList.toggle('active', active);
@@ -539,7 +567,32 @@ function toggleMenu(forceOpen) {
 function stationPickerFull() {
     return window.innerWidth >= 900 && !document.documentElement.classList.contains('mk-mobile-shell') && !!document.getElementById('calendarEmbed');
 }
+// On a desktop, with the radio window open, the list is the player opening up: the player rises to where the calendar
+// starts and the list fills the room under it, exactly as wide, so the two read as one player (mk-st-joined on both).
+function stationPickerJoined() {
+    const rw = document.getElementById('radioWindow');
+    return stationPickerFull() && !!rw && rw.offsetWidth > 0 && !document.body.classList.contains('radio-hidden') && !document.body.classList.contains('radio-idle');
+}
 function positionStationPicker(el) {
+    const joined = stationPickerJoined();
+    el.classList?.toggle('mk-st-joined', joined);
+    document.getElementById('radioWindow')?.classList?.toggle('mk-st-joined', joined && el.style.display === 'grid');
+    if (joined) {
+        // The visible player: Amp and Dither draw a narrower shell inside a full-width window. Its height and top are read
+        // from layout (offset*), which the lift below does not change.
+        // Only Amp and Dither draw on a transparent full-width window; the other looks are the window itself (its frame
+        // included), so the list takes the window's own edges there.
+        const rw = document.getElementById('radioWindow'), w = rw.getBoundingClientRect();
+        const shell = ['amp', 'dither'].includes(rw.dataset.radioLayout) ? [...rw.children].filter(k => k.offsetWidth > 10).map(k => k.getBoundingClientRect()) : [];
+        const left = shell.length ? Math.min(...shell.map(b => b.left)) : w.left, right = shell.length ? Math.max(...shell.map(b => b.right)) : w.right;
+        const c = document.getElementById('calendarEmbed').getBoundingClientRect();
+        // The player rises to where the calendar starts; the list fills the room it leaves, right under it.
+        const top = Math.max(6, c.top), lift = Math.max(200, Math.round(rw.offsetTop - top));
+        Object.assign(el.style, { left: left + 'px', width: (right - left) + 'px', top: (top + rw.offsetHeight) + 'px', height: lift + 'px', right: 'auto', bottom: 'auto' });
+        el._mkLift = lift;
+        if (el.style.display === 'grid' && !el._mkClosing) rw.style.translate = `0 ${-lift}px`;
+        return;
+    }
     if (stationPickerFull()) {
         const r = document.getElementById('calendarEmbed').getBoundingClientRect();
         Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', right: 'auto', bottom: 'auto' });
@@ -593,7 +646,9 @@ document.addEventListener('pointerdown', (event) => {
     const clickedOverlay = path.includes(overlay) || overlay.contains(event.target);
     // Pogas "Stacijas" (arī Amp/Dither) pašas pārslēdz sarakstu: otrs klikšķis to aizver.
     const clickedTrigger = path.some(node => node?.classList?.contains('station-btn') || node?.dataset?.act === 'stations');
-    if (!clickedOverlay && !clickedTrigger) toggleMenu(false);
+    // Joined to the radio, the player below is part of it: playing or skipping there keeps the list open.
+    const clickedPlayer = !!overlay.classList?.contains('mk-st-joined') && path.includes(document.getElementById('radioWindow'));
+    if (!clickedOverlay && !clickedTrigger && !clickedPlayer) toggleMenu(false);
 }, true);
 
 
@@ -1749,14 +1804,14 @@ function renderStationPickerList() {
         updateStationFavorites();
         return;
     }
-    list.__catalogue = stationsList;
-    list.__filter = key;
     // Pasaules filtri ritinās kopā ar stacijām (aiziet uz augšu), nevis aizņem
     // pusi saraksta augstuma; pirms pārzīmēšanas tos izceļ ārā, pēc — ieliek atpakaļ.
     const worldControls = document.getElementById('worldStationControls');
     if (worldControls && list.contains(worldControls)) list.before(worldControls);
     const placeWorldControls = () => { if (stationPickerSource === 'world' && worldControls) list.prepend(worldControls); };
     const scrollTop = list.scrollTop;
+    list.__catalogue = stationsList;
+    list.__filter = key;
     const items = stationPickerItems();
     if (stationPickerSource === 'world' && worldLoading) { list.innerHTML = '<div class="station-picker-empty" role="status">Ielādē stacijas…</div>'; placeWorldControls(); return; }
     const worldSearch = stationPickerQuery.trim() && stationPickerSource !== 'world'
@@ -1854,7 +1909,6 @@ function renderStationOverlay() {
         </div>
         <div class="station-picker-tabs" role="tablist" aria-label="Staciju avots">
             <button type="button" data-station-source="favorites" role="tab" aria-selected="${stationPickerSource === 'favorites'}">Favorīti <span>0</span></button>
-            <button type="button" data-station-source="featured" role="tab" aria-selected="false">Atklāj</button>
             <button type="button" data-station-source="record" role="tab" aria-selected="${stationPickerSource === 'record'}"
                 class="${stationPickerSource === 'record' ? 'active' : ''}">Radio Record <span>${recordCount}</span></button>
             <button type="button" data-station-source="ehr" role="tab" aria-selected="${stationPickerSource === 'ehr'}"
@@ -3151,7 +3205,12 @@ function focusRadio(){
     enabled: 'rg_theme_enabled'
   };
 
+  // The default background: no photo, the album's own colour lighting a dark window from two corners. It follows
+  // --radio-accent-rgb (set on the window per album) by itself, and costs no image download or decode.
+  const ALBUM_TONE_BG='radial-gradient(120% 170% at 0% 0%,rgba(var(--radio-accent-rgb,83,201,232),.5),rgba(var(--radio-accent-rgb,83,201,232),0) 64%),radial-gradient(90% 150% at 100% 100%,rgba(var(--radio-accent-rgb,83,201,232),.22),rgba(var(--radio-accent-rgb,83,201,232),0) 60%),linear-gradient(#07090c,#07090c)';
+  const ALBUM_TONE='Albuma tonis';
   const THEMES = [
+    {name: ALBUM_TONE, description: 'Fons seko albuma krāsai', chip: '#53c9e8', album: true, surfaceRGB: [7,9,12], background: ALBUM_TONE_BG, vars: {}},
     {
       name: 'Melns',
       description: 'Klasiskais RG skats',
@@ -3234,7 +3293,6 @@ function focusRadio(){
     ['Grafīts','Neitrāls un atturīgs','#b7c1c8','linear-gradient(135deg,#343b42,#101418 65%,#242d33)'],
     ['Dzintars','Maigs vakara siltums','#e5b67d','linear-gradient(125deg,#473420,#181411 65%,#372517)'],
     ['Jūras stikls','Mierīgi zaļi toņi','#8fd3bd','linear-gradient(125deg,#23473f,#0b1b1b 65%,#20403c)'],
-    ['Plūme','Dziļš violets tonis','#c4a5d7','linear-gradient(125deg,#3c2c49,#16131e 65%,#30243b)'],
     ['Sudraba migla','Vēss un maigs','#c1d5de','linear-gradient(125deg,#4a5c68,#1b262d 65%,#364b57)']
   ].forEach(([name,description,chip,background])=>THEMES.push({name,description,chip,background,surfaceRGB:[9,16,21],vars:{}}));
 
@@ -3254,9 +3312,7 @@ function focusRadio(){
   [
     ['Zilā zīda vilnis','Tumši zils zīds un gaisma','sv-zila-zida-vilnis','#3f78fd'],
     ['Nakts kalni','Zili kalni tumsā','sv-nakts-kalni','#3d8eff'],
-    ['Galaktika','Violeti mākoņi un zvaigznes','sv-galaktika','#c98d74'],
     ['Zeme no kosmosa','Planētas mala naktī','sv-zeme-no-kosmosa','#3da3ff'],
-    ['Violetais mirdzums','Dziļa nakts ar gaismu','sv-violetais-mirdzums','#8d5ce0'],
     ['Zilie stari','Gaismas strēles tumsā','sv-zilie-stari','#4083fc'],
     ['Zelta ceļš','Mirdzošs ceļš miglā','sv-zelta-cels','#e99c53'],
     ['Mākoņu jūra','Saulriets virs mākoņiem','sv-makonu-jura','#f8ac72'],
@@ -3274,7 +3330,8 @@ function focusRadio(){
     background:`linear-gradient(120deg,${p.surface} 55%,${p.accent})`,pixel:p
   })));
 
-  THEMES.sort((a,b)=>Number(!!b.image?.endsWith('.webp'))-Number(!!a.image?.endsWith('.webp')));
+  const themeRank=t=>t.album?0:t.pixel?3:t.image?2:1;
+  THEMES.sort((a,b)=>themeRank(a)-themeRank(b));
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
@@ -3410,7 +3467,7 @@ function focusRadio(){
 
   function getSaved(){
     return {
-      name: localStorage.getItem(STORAGE.name) || 'Dziļais okeāns',
+      name: localStorage.getItem(STORAGE.name) || ALBUM_TONE,
       accent: localStorage.getItem(STORAGE.accent) || '#1ed760',
       accentMode: localStorage.getItem(STORAGE.accentMode) || 'album',
       enabled: localStorage.getItem(STORAGE.enabled) === '1'
@@ -3437,7 +3494,7 @@ function focusRadio(){
     const VER = '7';
     if (localStorage.getItem(VER_KEY) === VER) return;
     localStorage.setItem(VER_KEY, VER);
-    localStorage.setItem(STORAGE.name, 'Dziļais okeāns');
+    localStorage.setItem(STORAGE.name, ALBUM_TONE);
     localStorage.setItem(STORAGE.accent, '#1ed760');
     localStorage.setItem(STORAGE.accentMode, 'album');
     localStorage.removeItem('rg_theme_glass');
@@ -3490,6 +3547,8 @@ function focusRadio(){
     rw.style.setProperty('background-repeat', 'no-repeat', 'important');
   }
 
+  const PIONEER_ICE = '#a8d8ff';
+  const AMP_ACCENT = '#56c98f'; // Amp's one accent (restrained emerald), like Pioneer's fixed ice
   function applyAlbumColor(color){
     // Albuma krāsa atnāk asinhroni; ja tas notiek atvēršanas lidojuma laikā,
     // pilna pārzīmēšana bloķēja ~180 ms un lidojums noraustījās — tā gaida
@@ -3505,7 +3564,8 @@ function focusRadio(){
     albumColor=color;
     // The header follows the album independently of the player's fixed palette.
     document.getElementById('radioWindow')?.style.setProperty('--radio-album-color', color);
-    if (getSaved().accentMode !== 'album' && appearance.layout !== 'pioneer' && appearance.layout !== 'dither') return;
+    // Pioneer keeps its fixed icy display colour (the reference deck), so an album colour never repaints it.
+    if (appearance.layout === 'pioneer' || appearance.layout === 'amp' || (getSaved().accentMode !== 'album' && appearance.layout !== 'dither')) return;
     applyAccent(color);
     applyAlbumSurface(color);
     paintAppearance();
@@ -3597,7 +3657,7 @@ function focusRadio(){
 
   function findTheme(name){
     if(name==='Mana kartīte')return {...THEMES[0],name,chip:safeColor(appearance.cardAccent,'#53c9e8')};
-    return THEMES.find(t => t.name.toLowerCase() === String(name||'').toLowerCase()) || THEMES[0];
+    return THEMES.find(t => t.name.toLowerCase() === String(name||'').toLowerCase()) || THEMES.find(t=>t.album);
   }
 
   function applyTheme(name){
@@ -3631,7 +3691,10 @@ function focusRadio(){
       row.className = 'theme-item' + (saved.name === t.name ? ' active' : '');
       if (t.isDefault) row.classList.add('is-default');
       row.dataset.name = t.name;
-      row.dataset.category = t.image ? 'photos' : 'colors';
+      row.dataset.category = t.pixel ? 'pixel' : t.image ? 'photos' : 'colors';
+      // A re-render keeps the chosen filter (it used to show every background again on each open).
+      const shownFilter = document.querySelector('.radio-theme-filters [aria-pressed="true"]')?.dataset.themeFilter || 'all';
+      row.hidden = shownFilter !== 'all' && row.dataset.category !== shownFilter;
       const previewAsset = t.preview || t.image;
       const previewUrl = previewAsset ? new URL(previewAsset, document.baseURI).href : '';
       row.style.setProperty('--theme-preview',t.background||'linear-gradient(#16211d,#070b09)');
@@ -3660,20 +3723,25 @@ function focusRadio(){
     });
   }
 
+  // The editor sits over the radio's own width, just above it, so the radio itself is the live preview.
+  // Only when there is no room above (short screens) does it fall back to a centred sheet.
   function positionPanel(){
     const radio = document.getElementById('radioWindow');
-    const radioRect = radio?.getBoundingClientRect();
-    const pw = Math.min(680, window.innerWidth - 24);
+    // offset* ignore the radio's open/morph transforms, which made the sheet a few px narrower than the radio.
+    const r = radio && {left:radio.offsetLeft, top:radio.offsetTop, width:radio.offsetWidth, height:radio.offsetHeight};
+    // Amp and Dither draw their visible frame inset inside the radio window: line up with that frame.
+    const shell = radio?.querySelector?.(':scope[data-radio-layout="amp"] .amp-shell, :scope[data-radio-layout="dither"] .dth-shell');
+    if (r && shell?.offsetWidth) { let x = 0, el = shell; while (el && el !== radio) { x += el.offsetLeft; el = el.offsetParent; } if (el === radio) { r.left += x; r.width = shell.offsetWidth; } }
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const above = r && r.height ? r.top - 24 : 0;
+    const docked = above >= 300;
+    const pw = docked ? Math.max(Math.min(r.width, vw - 24), Math.min(720, vw - 24)) : Math.min(920, vw - 24);
+    const ph = docked ? above : Math.min(900, vh - 24);
+    panel.classList?.toggle('is-docked', docked);
     panel.style.width = pw + 'px';
-    // Measure after applying the new constraints. A short-to-tall resize used
-    // the old panel height, then expanded it below the bottom of the screen.
-    const availableHeight = Math.max(100, Math.min(900, window.innerHeight - 24));
-    panel.style.maxHeight = availableHeight + 'px';
-    const ph = Math.min(panel.getBoundingClientRect().height || 520, availableHeight);
-    const bottom = Math.min((radioRect?.top || window.innerHeight) - 12, window.innerHeight - 12);
-    const top = Math.max(12, bottom - ph);
-    panel.style.left = Math.max(12, (window.innerWidth - pw) / 2) + 'px';
-    panel.style.top = top + 'px';
+    panel.style.maxHeight = panel.style.height = ph + 'px';
+    panel.style.left = Math.max(12, docked ? r.left + (r.width - pw) / 2 : (vw - pw) / 2) + 'px';
+    panel.style.top = '12px';
   }
 
   function openPanel(){
@@ -3682,12 +3750,15 @@ function focusRadio(){
     lookBefore=lookSnapshot();
     imageCropDraft={...appearance.imageCrops};
     buildLookControls();
+    simplifyLookMenu();
+    lookSteps?.go('layout');
     syncLookControls();
     panel.classList.add('open');
     panel.setAttribute('aria-hidden','false');
     renderList();
     setAccentModeActive(getSaved().accentMode);
     requestAnimationFrame(()=>{positionPanel();syncLayoutPreview();paintImagePosition();});
+    if(!openPanel.ro&&typeof ResizeObserver==='function'){openPanel.ro=new ResizeObserver(()=>{if(panel.classList.contains('open'))positionPanel();});openPanel.ro.observe(document.getElementById('radioWindow'));}
   }
   function closePanel(){
     imageCropDraft=null;imageDrag=null;spectrumMoveEnabled=false;spectrumDrag=null;
@@ -3727,14 +3798,21 @@ function focusRadio(){
     const y=clamp(crop?.y??(position==='top'?(h-height)/(2*height):position==='bottom'?(height-h)/(2*height):0),-limitY,limitY);
     return {width:w,height:h,left:(width-w)/2+x*width,top:(height-h)/2+y*height,x,y,zoom};
   }
+  // The window's layout size (offsetWidth/Height): a bounding rect read while the open/close animation still scales
+  // the window gave an image a few % too small, which then stayed short of the right edge.
+  function windowSize(el){return el?{width:el.offsetWidth,height:el.offsetHeight}:null;}
   function currentImageCrop(){
-    const rw=document.getElementById('radioWindow'),r=rw?.getBoundingClientRect?.();
+    const r=windowSize(document.getElementById('radioWindow'));
     if(!r?.width||!r.height||!imageMetrics)return null;
     return imageGeometry(r.width,r.height,imageMetrics.width,imageMetrics.height,(imageCropDraft||appearance.imageCrops)[imageCropKey()],appearance.position);
   }
   // Measures #radioWindow: read it at its final size even while the
   // reveal is still growing it out of the dock button (MinkaMotion.atRest).
   function paintImagePosition(){return window.MinkaMotion?.atRest?window.MinkaMotion.atRest('radio',paintImagePositionNow):paintImagePositionNow();}
+  // The skin image is laid out in px for the window's size, so it follows every resize of the window. It used to
+  // start following only once the look panel had been opened: a window that grew later kept the old width and
+  // showed a bare band at its right edge.
+  if(typeof ResizeObserver==='function'&&document.getElementById('radioWindow'))new ResizeObserver(()=>paintImagePosition()).observe(document.getElementById('radioWindow'));
   function paintImagePositionNow(){
     const rw=document.getElementById('radioWindow'),preview=document.getElementById('radioLookPreview'),tools=document.getElementById('radioImageTools');
     const geometry=currentImageCrop(),enabled=appearance.layout!=='pioneer'&&!!imageSource;
@@ -3750,10 +3828,10 @@ function focusRadio(){
     const ampWindow=appearance.layout==='amp'||appearance.layout==='dither';
     if(rw&&ampWindow)['background-color','background-size','background-position','background-repeat'].forEach(p=>rw.style.removeProperty(p));
     if(!enabled||!geometry||!rw)return;
-    const r=rw.getBoundingClientRect();
+    const r=windowSize(rw);
     for(const el of [rw,preview]){
       if(!el||(el===rw&&ampWindow))continue;
-      const ratio=el===rw?1:el.getBoundingClientRect().width/r.width;if(!ratio)continue;
+      const ratio=el===rw?1:el.offsetWidth/r.width;if(!ratio)continue;
       el.style.setProperty('background-size',`100% 100%,100% 100%,${geometry.width*ratio}px ${geometry.height*ratio}px`,'important');
       el.style.setProperty('background-position',`center,center,${geometry.left*ratio}px ${geometry.top*ratio}px`,'important');
       el.style.setProperty('background-repeat','no-repeat','important');
@@ -3881,7 +3959,7 @@ function focusRadio(){
     if(lookButton){const home=rw.querySelector(rw.dataset.radioLayout==='pioneer'?'.bottom-console':rw.dataset.radioLayout==='amp'?'.amp-eq-tools':rw.dataset.radioLayout==='dither'?'.dth-tools':['clean','pixel'].includes(rw.dataset.radioLayout)?'.control-panel':'.tech-panel .branding');if(home&&lookButton.parentElement!==home)home.prepend(lookButton);}
     const saved=getSaved(),theme=findTheme(saved.name);
     const background=saved.name==='Mana kartīte'?safeBackground(appearance.background):(theme.image?`url("${new URL(theme.image,document.baseURI).href}")`:theme.background||'');
-    const color=(appearance.layout==='pioneer'||appearance.layout==='dither'||saved.accentMode==='album')?albumColor:saved.accentMode==='card'?safeColor(appearance.cardAccent,'#53c9e8'):saved.accentMode==='custom'?saved.accent:(FIXED_ACCENTS[saved.accentMode]||theme.chip);
+    const color=appearance.layout==='pioneer'?PIONEER_ICE:appearance.layout==='amp'?AMP_ACCENT:(appearance.layout==='dither'||saved.accentMode==='album')?albumColor:saved.accentMode==='card'?safeColor(appearance.cardAccent,'#53c9e8'):saved.accentMode==='custom'?saved.accent:(FIXED_ACCENTS[saved.accentMode]||theme.chip);
     const rgb=parseColorToRGBStr(color),dark=clamp(Number(appearance.darkness)/100,.30,.92),tint=clamp(Number(appearance.tint)/100,0,.65),glass=clamp(Number(appearance.glass)/100,0,1);
     rw.style.setProperty('background-image',`linear-gradient(to top,rgba(6,13,19,.8),rgba(6,13,19,0) 24px),linear-gradient(110deg,rgba(${rgb},${tint}),rgba(4,9,13,${dark}) 62%),${background||'linear-gradient(#0a1419,#0a1419)'}`,'important');
     if(appearance.layout==='pixel'&&window.rgPixel){
@@ -3927,6 +4005,7 @@ function focusRadio(){
     if(metalControls){metalControls.hidden=appearance.layout!=='pioneer';metalControls.querySelectorAll('[data-metal-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.metalColor===appearance.metalColor)));for(const input of metalControls.querySelectorAll('[data-look]'))input.value=appearance[input.dataset.look]??LOOK_DEFAULTS[input.dataset.look];}
     const themePanel=document.getElementById('themePanel');
     if(themePanel)themePanel.dataset.radioLayout=rw.dataset.radioLayout;
+    lookSteps?.sync();
     const pixelControls=document.getElementById('pixelPaletteControls');
     if(pixelControls){pixelControls.hidden=appearance.layout!=='pixel';pixelControls.querySelectorAll('[data-pixel-palette]').forEach(b=>b.setAttribute('aria-pressed',String(saved.name===b.dataset.pixelPalette&&saved.accentMode==='custom'&&saved.accent===theme.chip)));pixelControls.querySelector('[data-pixel-album]').setAttribute('aria-pressed',String(saved.accentMode==='album'));}
     const framed=appearance.vizFrame==='on'||(appearance.vizFrame!=='off'&&!isModernViz(vizStyle));
@@ -3968,7 +4047,7 @@ function focusRadio(){
     for(const key of ['metalLight','metalShine'])appearance[key]=clamp(Number.isFinite(Number(data[key]))?Number(data[key]):LOOK_DEFAULTS[key],0,100);
     for(const key of ['darkness','tint','glass','glow'])appearance[key]=clamp(Number(appearance[key])||0,0,100);
     localStorage.setItem(LOOK_KEY,JSON.stringify(appearance));
-    setSaved({name:data.theme||'Dziļais okeāns',accent:safeColor(data.accent,'#1ed760'),accentMode:data.accentMode||'album',enabled:true});
+    setSaved({name:data.theme||ALBUM_TONE,accent:safeColor(data.accent,'#1ed760'),accentMode:data.accentMode||'album',enabled:true});
     if(/^(none|bass|bassplus|clear|studio|radio|chill|depth|lofi)$/.test(data.eq||'')){window.__eqMode=data.eq;if(lowNode)setEQ(data.eq);}
     if(/^\d+$/.test(data.viz||''))setVizStyle(Number(data.viz));
     else if(appearance.layout==='pixel')setVizStyle(31);
@@ -4007,6 +4086,78 @@ function focusRadio(){
     const monitor=rw.querySelector('.monitor-frame')?.getBoundingClientRect(),sample=preview.querySelector('.radio-viz-sample');
     if(monitor&&sample){sample.style.left=((monitor.left-rect.left)/rect.width*100)+'%';sample.style.top=((monitor.top-rect.top)/rect.height*100)+'%';sample.style.width=(monitor.width/rect.width*100)+'%';sample.style.height=(monitor.height/rect.height*100)+'%';}
   }
+  // The look menu in three plain steps (layout, background, colour); everything finer sits folded under
+  // "Vairāk iestatījumu". Only moves the controls buildLookControls made, so their wiring stays as it is.
+  let lookSteps=null;
+  function simplifyLookMenu(){
+    const box=document.getElementById('radioLookControls');
+    if(!box||box.dataset.simple)return;
+    box.dataset.simple='1';
+    const q=sel=>box.querySelector(sel);
+    const layoutSet=q('[data-radio-layout-choice]')?.closest('fieldset');
+    if(layoutSet)layoutSet.classList.add('radio-look-layouts');
+    // Drawn pictures of each layout: the same composition, proportions and colours as the real thing.
+    const LAYOUT_THUMBS={"classic": "<rect x=\"1\" y=\"1\" width=\"158\" height=\"70\" rx=\"12\" fill=\"#151d1a\" stroke=\"#ffffff1f\"/><rect x=\"10\" y=\"10\" width=\"34\" height=\"34\" rx=\"6\" fill=\"#4d6358\"/><rect x=\"52\" y=\"13\" width=\"46\" height=\"5\" rx=\"2.5\" fill=\"#e8eef0\"/><rect x=\"52\" y=\"22\" width=\"30\" height=\"4\" rx=\"2\" fill=\"#93a79d\"/><rect x=\"52.0\" y=\"38\" width=\"3\" height=\"6\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"56.5\" y=\"34\" width=\"3\" height=\"10\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"61.0\" y=\"30\" width=\"3\" height=\"14\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"65.5\" y=\"35\" width=\"3\" height=\"9\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"70.0\" y=\"28\" width=\"3\" height=\"16\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"74.5\" y=\"32\" width=\"3\" height=\"12\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"79.0\" y=\"26\" width=\"3\" height=\"18\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"83.5\" y=\"33\" width=\"3\" height=\"11\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"88.0\" y=\"36\" width=\"3\" height=\"8\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"92.5\" y=\"31\" width=\"3\" height=\"13\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"97.0\" y=\"29\" width=\"3\" height=\"15\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"101.5\" y=\"37\" width=\"3\" height=\"7\" rx=\"1.5\" fill=\"#86d9a0\"/><circle cx=\"134\" cy=\"27\" r=\"12\" fill=\"#86d9a0\"/><path d=\"M131 21.5 140 27l-9 5.5z\" fill=\"#0f2117\"/><rect x=\"10\" y=\"54\" width=\"17\" height=\"8\" rx=\"4\" fill=\"#86d9a0\"/><rect x=\"31\" y=\"54\" width=\"17\" height=\"8\" rx=\"4\" fill=\"#ffffff1c\"/><rect x=\"52\" y=\"54\" width=\"17\" height=\"8\" rx=\"4\" fill=\"#ffffff1c\"/><rect x=\"73\" y=\"54\" width=\"17\" height=\"8\" rx=\"4\" fill=\"#ffffff1c\"/><rect x=\"94\" y=\"54\" width=\"17\" height=\"8\" rx=\"4\" fill=\"#ffffff1c\"/><rect x=\"115\" y=\"54\" width=\"17\" height=\"8\" rx=\"4\" fill=\"#ffffff1c\"/><rect x=\"136\" y=\"54\" width=\"17\" height=\"8\" rx=\"4\" fill=\"#ffffff1c\"/>", "clean": "<rect x=\"1\" y=\"1\" width=\"158\" height=\"70\" rx=\"12\" fill=\"#14171b\" stroke=\"#ffffff1f\"/><rect x=\"10\" y=\"10\" width=\"34\" height=\"34\" rx=\"6\" fill=\"#5a6169\"/><rect x=\"52\" y=\"14\" width=\"50\" height=\"5\" rx=\"2.5\" fill=\"#eef0f2\"/><rect x=\"52\" y=\"23\" width=\"32\" height=\"4\" rx=\"2\" fill=\"#8b9198\"/><path d=\"M52 38q6-7 12 0t12 0 12 0 12 0\" fill=\"none\" stroke=\"#eef0f2\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"136\" cy=\"24\" r=\"11\" fill=\"#eef0f2\"/><path d=\"M133 19 141 24l-8 5z\" fill=\"#14171b\"/><rect x=\"112\" y=\"50\" width=\"38\" height=\"12\" rx=\"6\" fill=\"#eef0f2\"/><rect x=\"10\" y=\"54\" width=\"94\" height=\"3\" rx=\"1.5\" fill=\"#ffffff22\"/><rect x=\"10\" y=\"54\" width=\"40\" height=\"3\" rx=\"1.5\" fill=\"#eef0f2\"/>", "pioneer": "<defs><linearGradient id=\"rbMetal\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#dfe2e5\"/><stop offset=\"1\" stop-color=\"#8e959b\"/></linearGradient><radialGradient id=\"rbKnob\"><stop offset=\"0\" stop-color=\"#eef0f2\"/><stop offset=\".7\" stop-color=\"#aeb4b9\"/><stop offset=\"1\" stop-color=\"#7d848a\"/></radialGradient></defs><rect x=\"1\" y=\"1\" width=\"158\" height=\"70\" rx=\"9\" fill=\"url(#rbMetal)\" stroke=\"#00000059\"/><circle cx=\"19\" cy=\"31\" r=\"12\" fill=\"url(#rbKnob)\" stroke=\"#b4dcff\" stroke-width=\"1.2\"/><circle cx=\"141\" cy=\"31\" r=\"12\" fill=\"url(#rbKnob)\" stroke=\"#b4dcff\" stroke-width=\"1.2\"/><rect x=\"37\" y=\"11\" width=\"86\" height=\"40\" rx=\"4\" fill=\"#050607\"/><rect x=\"42\" y=\"17\" width=\"16\" height=\"16\" rx=\"2\" fill=\"#5a6470\"/><rect x=\"62\" y=\"19\" width=\"26\" height=\"4\" rx=\"2\" fill=\"#f3f4f6\"/><rect x=\"62\" y=\"26\" width=\"17\" height=\"3\" rx=\"1.5\" fill=\"#a6abb2\"/><path d=\"M63 42h4M71 42h4M79 42h4\" stroke=\"#f3f4f6\" stroke-width=\"2\" stroke-linecap=\"round\"/><rect x=\"96\" y=\"37\" width=\"2.4\" height=\"8\" rx=\"1.2\" fill=\"#b4dcff\"/><rect x=\"100\" y=\"31\" width=\"2.4\" height=\"14\" rx=\"1.2\" fill=\"#b4dcff\"/><rect x=\"104\" y=\"25\" width=\"2.4\" height=\"20\" rx=\"1.2\" fill=\"#b4dcff\"/><rect x=\"108\" y=\"33\" width=\"2.4\" height=\"12\" rx=\"1.2\" fill=\"#b4dcff\"/><rect x=\"112\" y=\"28\" width=\"2.4\" height=\"17\" rx=\"1.2\" fill=\"#b4dcff\"/><rect x=\"116\" y=\"36\" width=\"2.4\" height=\"9\" rx=\"1.2\" fill=\"#b4dcff\"/><rect x=\"37\" y=\"57\" width=\"12\" height=\"7\" rx=\"2\" fill=\"#2a2d31\"/><rect x=\"52\" y=\"57\" width=\"12\" height=\"7\" rx=\"2\" fill=\"#2a2d31\"/><rect x=\"67\" y=\"57\" width=\"12\" height=\"7\" rx=\"2\" fill=\"#2a2d31\"/><rect x=\"82\" y=\"57\" width=\"12\" height=\"7\" rx=\"2\" fill=\"#2a2d31\"/><rect x=\"97\" y=\"57\" width=\"12\" height=\"7\" rx=\"2\" fill=\"#2a2d31\"/><rect x=\"112\" y=\"57\" width=\"12\" height=\"7\" rx=\"2\" fill=\"#2a2d31\"/>", "pixel": "<rect x=\"1\" y=\"1\" width=\"158\" height=\"70\" rx=\"18\" fill=\"#3b2c22\"/><rect x=\"11\" y=\"11\" width=\"34\" height=\"34\" rx=\"10\" fill=\"#e3c9a8\"/><rect x=\"53\" y=\"15\" width=\"48\" height=\"6\" rx=\"3\" fill=\"#f3e7d6\"/><rect x=\"53\" y=\"25\" width=\"30\" height=\"4\" rx=\"2\" fill=\"#c9ad8f\"/><rect x=\"118\" y=\"12\" width=\"30\" height=\"30\" rx=\"10\" fill=\"#e7a96a\"/><path d=\"M129 21 139 27l-10 6z\" fill=\"#3b2c22\"/><rect x=\"11\" y=\"54\" width=\"137\" height=\"6\" rx=\"3\" fill=\"#ffffff1f\"/><rect x=\"11\" y=\"54\" width=\"62\" height=\"6\" rx=\"3\" fill=\"#e7a96a\"/>", "amp": "<rect x=\"1\" y=\"1\" width=\"158\" height=\"70\" rx=\"10\" fill=\"#121417\" stroke=\"#ffffff1f\"/><rect x=\"6\" y=\"6\" width=\"58\" height=\"60\" rx=\"6\" fill=\"#1b1f24\"/><rect x=\"11\" y=\"11\" width=\"20\" height=\"20\" rx=\"3\" fill=\"#4d6358\"/><rect x=\"35\" y=\"13\" width=\"24\" height=\"4\" rx=\"2\" fill=\"#e8eef0\"/><rect x=\"35\" y=\"21\" width=\"16\" height=\"3\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"11\" y=\"41\" width=\"3\" height=\"5\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"16\" y=\"37\" width=\"3\" height=\"9\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"21\" y=\"33\" width=\"3\" height=\"13\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"26\" y=\"38\" width=\"3\" height=\"8\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"31\" y=\"35\" width=\"3\" height=\"11\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"36\" y=\"39\" width=\"3\" height=\"7\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"41\" y=\"34\" width=\"3\" height=\"12\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"46\" y=\"40\" width=\"3\" height=\"6\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"51\" y=\"37\" width=\"3\" height=\"9\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"56\" y=\"41\" width=\"3\" height=\"5\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"11\" y=\"52\" width=\"48\" height=\"2\" rx=\"1\" fill=\"#ffffff26\"/><circle cx=\"20\" cy=\"60\" r=\"3\" fill=\"#86d9a0\"/><rect x=\"68\" y=\"6\" width=\"42\" height=\"60\" rx=\"6\" fill=\"#1b1f24\"/><rect x=\"73\" y=\"14\" width=\"1.5\" height=\"44\" fill=\"#ffffff26\"/><rect x=\"71.5\" y=\"30\" width=\"4.5\" height=\"3\" rx=\"1\" fill=\"#e8eef0\"/><rect x=\"79\" y=\"14\" width=\"1.5\" height=\"44\" fill=\"#ffffff26\"/><rect x=\"77.5\" y=\"26\" width=\"4.5\" height=\"3\" rx=\"1\" fill=\"#e8eef0\"/><rect x=\"85\" y=\"14\" width=\"1.5\" height=\"44\" fill=\"#ffffff26\"/><rect x=\"83.5\" y=\"34\" width=\"4.5\" height=\"3\" rx=\"1\" fill=\"#e8eef0\"/><rect x=\"91\" y=\"14\" width=\"1.5\" height=\"44\" fill=\"#ffffff26\"/><rect x=\"89.5\" y=\"22\" width=\"4.5\" height=\"3\" rx=\"1\" fill=\"#e8eef0\"/><rect x=\"97\" y=\"14\" width=\"1.5\" height=\"44\" fill=\"#ffffff26\"/><rect x=\"95.5\" y=\"28\" width=\"4.5\" height=\"3\" rx=\"1\" fill=\"#e8eef0\"/><rect x=\"103\" y=\"14\" width=\"1.5\" height=\"44\" fill=\"#ffffff26\"/><rect x=\"101.5\" y=\"36\" width=\"4.5\" height=\"3\" rx=\"1\" fill=\"#e8eef0\"/><rect x=\"114\" y=\"6\" width=\"40\" height=\"60\" rx=\"6\" fill=\"#1b1f24\"/><rect x=\"118\" y=\"12\" width=\"30\" height=\"3\" rx=\"1.5\" fill=\"#ffffff40\"/><rect x=\"118\" y=\"21\" width=\"24\" height=\"3\" rx=\"1.5\" fill=\"#ffffff40\"/><rect x=\"118\" y=\"30\" width=\"28\" height=\"3\" rx=\"1.5\" fill=\"#ffffff40\"/><rect x=\"118\" y=\"39\" width=\"22\" height=\"3\" rx=\"1.5\" fill=\"#86d9a0\"/><rect x=\"118\" y=\"48\" width=\"26\" height=\"3\" rx=\"1.5\" fill=\"#ffffff40\"/><rect x=\"116\" y=\"35\" width=\"36\" height=\"9\" rx=\"3\" fill=\"#86d9a01f\"/>", "dither": "<defs><pattern id=\"rbDots\" width=\"3\" height=\"3\" patternUnits=\"userSpaceOnUse\"><rect width=\"1.2\" height=\"1.2\" fill=\"#7fd6c6\"/></pattern></defs><rect x=\"1\" y=\"1\" width=\"158\" height=\"70\" rx=\"12\" fill=\"#101614\" stroke=\"#ffffff1f\"/><rect x=\"10\" y=\"10\" width=\"30\" height=\"30\" rx=\"6\" fill=\"#26352f\"/><rect x=\"10\" y=\"10\" width=\"30\" height=\"30\" rx=\"6\" fill=\"url(#rbDots)\" opacity=\".55\"/><rect x=\"48\" y=\"10\" width=\"54\" height=\"30\" rx=\"4\" fill=\"#060908\"/><path d=\"M52 34h4v-6h3v-9h3v12h3v-7h3v10h3v-14h3v9h3v-5h3v11h3v-8h3v6h3\" fill=\"none\" stroke=\"url(#rbDots)\" stroke-width=\"3\"/><rect x=\"108\" y=\"13\" width=\"40\" height=\"5\" rx=\"2.5\" fill=\"#e3e6ea\"/><rect x=\"108\" y=\"22\" width=\"26\" height=\"4\" rx=\"2\" fill=\"#9aa3a0\"/><rect x=\"10\" y=\"50\" width=\"16\" height=\"12\" rx=\"4\" fill=\"#ffffff17\"/><rect x=\"30\" y=\"50\" width=\"20\" height=\"12\" rx=\"4\" fill=\"#7fd6c6\"/><rect x=\"54\" y=\"50\" width=\"16\" height=\"12\" rx=\"4\" fill=\"#ffffff17\"/><rect x=\"76\" y=\"50\" width=\"34\" height=\"12\" rx=\"4\" fill=\"#eef1f5\"/>"};
+    layoutSet?.querySelectorAll('[data-radio-layout-choice]').forEach(b=>{if(!b.querySelector('.rb-thumb'))b.insertAdjacentHTML('afterbegin',`<svg class="rb-thumb" viewBox="0 0 160 72" aria-hidden="true">${LAYOUT_THUMBS[b.dataset.radioLayoutChoice]||''}</svg>`);});
+
+    const frameSet=q('[data-viz-frame-choice]')?.closest('fieldset');
+    const filters=q('.radio-theme-filters');
+    const colours=q('.theme-controls');
+    if(filters){
+      // Tones first and chosen by default; photos one tap away.
+      const label={colors:'Toņi',photos:'Attēli',all:'Visi'};
+      ['colors','photos','all'].forEach(k=>{const b=filters.querySelector(`[data-theme-filter="${k}"]`);if(b){b.textContent=label[k];filters.append(b);}});
+      filters.querySelector('[data-theme-filter="colors"]')?.click();
+    }
+    // A builder like the card builder: one step at a time, so nothing scrolls. The real radio under the sheet is
+    // the live preview. Steps a layout has no use for drop out (Pioneer: fixed colour; Pixel/Pioneer/Amp/Dither: no photo).
+    const page=(key,nodes)=>{const p=document.createElement('section');p.className='rb-page';p.dataset.step=key;nodes.forEach(el=>{if(el)p.append(el);});return p;};
+    const pages=[
+      page('layout',[layoutSet]),
+      page('finish',[q('#pioneerMetalControls'),q('#pixelPaletteControls'),q('#ampVisControls'),q('#ditherVisControls')]),
+      page('bg',[document.getElementById('radioUseCard'),filters,listEl]),
+      page('colour',[colours,q('#radioLookNote')]),
+      page('motion',[q('.radio-viz-choices')]),
+      page('more',[page('more-a',[q('#radioLookPreview'),q('.radio-clean-actions'),q(':scope > details')]),page('more-b',[frameSet,q('.radio-spectrum-position'),q('#radioImageTools')])])
+    ];
+    const INFO={
+      layout:['Izkārtojums','Kāds būs radio','Radio zem šī loga mainās uzreiz.'],
+      bg:['Fons','Fons','Toņi ir mierīgāki, attēli krāsaināki.'],
+      colour:['Krāsa','Pogu un spektra krāsa','Albuma krāsa mainās līdzi mūzikai.'],
+      motion:['Animācija','Kas kustas displejā','Spektrs vai attēls, kas kustas līdzi mūzikai.'],
+      more:['Smalkāk','Smalkāki iestatījumi','Rāmis, spektra vieta un fona attēla novietojums.'],
+      finish:{pioneer:['Korpuss','Korpusa metāls','Metāla tonis korpusam un pogām.'],pixel:['Paletes','Pixel krāsas','Palete vai albuma krāsa.'],amp:['Spektrs','Amp spektrs','Kā kustas spektrs.'],dither:['Raksts','Dither raksts','Punktu raksts spektram.']}
+    };
+    const head=document.createElement('header');head.className='rb-head';head.innerHTML='<h3></h3><p></p>';
+    const steps=document.createElement('ol');steps.className='rb-steps';steps.setAttribute('aria-label','Soļi');
+    document.querySelector('#themePanel .theme-head')?.insertBefore(steps,document.getElementById('themeClose'));
+    const actions=document.querySelector('#themePanel .radio-look-actions');
+    const prev=document.createElement('button');prev.type='button';prev.className='rb-prev';prev.textContent='Atpakaļ';
+    const next=document.createElement('button');next.type='button';next.className='rb-next';next.textContent='Tālāk';
+    actions?.insertBefore(next,document.getElementById('radioLookApply'));actions?.insertBefore(prev,next);
+    let current='layout';
+    const visible=()=>{const L=document.getElementById('themePanel')?.dataset.radioLayout||'classic';return pages.filter(p=>p.dataset.step==='finish'?!!INFO.finish[L]:p.dataset.step==='bg'?['classic','clean'].includes(L):p.dataset.step==='colour'?!['pioneer','dither','amp'].includes(L):true);};
+    const info=key=>{const L=document.getElementById('themePanel')?.dataset.radioLayout||'classic';return key==='finish'?INFO.finish[L]||['','','']:INFO[key];};
+    function sync(){
+      const shown=visible();if(!shown.some(p=>p.dataset.step===current))current='layout';
+      pages.forEach(p=>{p.hidden=p.dataset.step!==current;});
+      steps.innerHTML=shown.map((p,i)=>`<li><button type="button" data-go="${p.dataset.step}"${p.dataset.step===current?' aria-current="step"':''}><span>${i+1}</span>${info(p.dataset.step)[0]}</button></li>`).join('');
+      const [,title,tip]=info(current);head.firstElementChild.textContent=title;head.lastElementChild.textContent=tip;
+      const at=shown.findIndex(p=>p.dataset.step===current);prev.disabled=at<=0;next.hidden=at>=shown.length-1;
+      if(panel.classList.contains('open'))positionPanel();
+    }
+    const go=key=>{current=key;sync();box.closest('.radio-theme-scroll')?.scrollTo(0,0);};
+    steps.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)go(b.dataset.go);});
+    prev.onclick=()=>{const shown=visible(),at=shown.findIndex(p=>p.dataset.step===current);if(at>0)go(shown[at-1].dataset.step);};
+    next.onclick=()=>{const shown=visible(),at=shown.findIndex(p=>p.dataset.step===current);if(at<shown.length-1)go(shown[at+1].dataset.step);};
+    box.append(head,...pages);
+    lookSteps={sync,go};
+    // The own-colour swatch goes after the colour choices, in the flow (it sat over "Sava krāsa").
+    const colourHead=colours?.querySelector('.theme-control-head');
+    if(colourHead)colours.append(colourHead);
+    document.getElementById('themePanel')?.classList.add('radio-builder');
+    box.querySelectorAll('.radio-display-options').forEach(el=>{if(!el.children.length)el.remove();});
+  }
   function buildLookControls(){
     if(document.getElementById('radioLookControls'))return;
     const box=document.createElement('section');box.id='radioLookControls';box.innerHTML=`
@@ -4030,7 +4181,7 @@ function focusRadio(){
        <label>Burtu krāsa<input type="color" data-look="text"></label>
       </details><div class="radio-look-actions"><button type="button" id="radioLookReset">Atiestatīt izskatu</button><button type="button" id="radioLookCancel">Atcelt</button><button type="button" id="radioLookApply">Lietot</button></div>`;
     panel.append(box);
-    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{placeSpectrum();syncLayoutPreview();paintImagePosition();}).observe(document.getElementById('radioWindow'));
+    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{placeSpectrum();syncLayoutPreview();}).observe(document.getElementById('radioWindow'));
     const footer=box.querySelector('.radio-look-actions');
     const scroll=document.createElement('div');scroll.className='radio-theme-scroll';
     const filters=document.createElement('div');filters.className='radio-theme-filters';filters.setAttribute('aria-label','Fonu veids');
@@ -4138,7 +4289,7 @@ function focusRadio(){
   // Katram radio skatam savi piemērotie spektri (citi tam nepiestāv); viesim tie
   // nāk pēc kārtas, līdz katrs ir parādījies, tad cikls sākas no jauna.
   const GUEST_VIZ_BY_LAYOUT={
-    classic:[0,3,4,7,9,10,MK_BUDDY_VIZ],   // RG pikseļu stabiņi, LED, punktu režģis, spoks
+    classic:[0,3,4,7,9,10],                // RG pikseļu stabiņi, LED, punktu režģis (the ghost sprite left the rotation: it looked like a placeholder)
     clean:[21,22,23,24,25,26],             // gludās M3 formas: spogulis, līnija, stabiņi, plūsma, virsotnes, vilnis
     pioneer:[5,8,9,10,29,30,40,41,42,43],  // auto magnetola: Pioneer animācijas, VU, LED segmenti + cliamp (stereo, spogulis, retro, kalni)
     pixel:[31,44,45,46],                   // PixelPlayer vilnis + cliamp (liesmas, punkti, Red Sector)
@@ -4177,10 +4328,9 @@ function focusRadio(){
     const now = lookSnapshot();
     // All five layouts rotate. Pixel keeps its default wave and album colors.
     const layout = rand(['classic', 'clean', 'pioneer', 'amp', 'dither', 'pixel'].filter(l => l !== now.layout));
-    // Viesim katrā ieslēgšanā viens no jaunajiem Super Visuals foniem (Pixel paliek ar savām paletēm).
-    const fresh=THEMES.filter(t=>t.sv);
-    const choices=layout==='pixel'?THEMES.filter(t=>t.pixel):(fresh.length?fresh:THEMES.filter(t=>!t.pixel));
-    const theme=rand(choices.filter(t=>t.name!==now.theme))||choices[0]||THEMES[0];
+    // Guests get the album tone (the colour changes with every song); Pixel keeps its own palettes.
+    const choices=layout==='pixel'?THEMES.filter(t=>t.pixel):THEMES.filter(t=>t.album);
+    const theme=(layout==='pixel'?rand(choices.filter(t=>t.name!==now.theme)):choices[0])||choices[0]||THEMES[0];
     const viz=nextGuestSpectrum(now.viz,layout);
     closeProfileLook();
     const ditherVis = guestCycle('dither', DITHER_VIS, now.ditherVis);
@@ -4317,6 +4467,8 @@ window.MinkaShiftRadio?.attach(audio);
       button.innerHTML=running?'<i class="fas fa-pause" aria-hidden="true"></i>':'<i class="fas fa-play" aria-hidden="true"></i>';
       button.setAttribute('aria-label',running?'Pauze':value.state==='error'?'Mēģināt vēlreiz':'Atskaņot');
       button.title=button.getAttribute('aria-label');
+      // The dock's radio mini player (index.html) follows this, no polling.
+      document.dispatchEvent(new CustomEvent('rg-radio-state',{detail:{state:value.state,muted:!!value.muted}}));
     }
   });
   window.rgListening=controller;

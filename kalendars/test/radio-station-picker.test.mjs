@@ -99,9 +99,10 @@ test('opening defaults to current profile favorites and clears stale searches',(
   assert.equal(c.stationPickerSource,'latvija','already open picker keeps manual tab selection');
   c.toggleMenu(false);c.toggleMenu(true);assert.equal(c.stationPickerSource,'favorites');
   favorites=[];c.toggleMenu(false);c.toggleMenu(true);
-  assert.equal(c.stationPickerSource,'featured');assert.equal(tabs[1]['aria-selected'],'true');
+  // "Atklāj" (featured) was removed on 2026-11-16: without favourites the list opens where the station plays, else Radio Record.
+  assert.equal(c.stationPickerSource,'record');assert.equal(tabs[2]['aria-selected'],'true');
   favorites=['record:rock'];session=null;c.toggleMenu(false);c.toggleMenu(true);
-  assert.equal(c.stationPickerSource,'featured','guest opens discovery instead of another profile favorites');
+  assert.equal(c.stationPickerSource,'record','a guest never opens another profile favorites');
 });
 
 test('a pending audio unlock does not prevent preparing the favorite stream',async()=>{

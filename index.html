@@ -746,7 +746,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
      radio atvēršanā uz mirkli nerādās parastais radio rāmis pirms skata stila. -->
 <link rel="stylesheet" href="css/radio-dither-layout.css?v=20261112nw1" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="css/radio-amp-layout.css?v=20261112nw1" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="css/radio-pioneer-layout.css?v=20261112nw1" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/radio-pioneer-layout.css?v=20261116pn1" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="css/media-profile.css?v=20261112aw1">
 
 <style>
@@ -1363,14 +1363,14 @@ async function loadRadioScripts() {
     document.head.appendChild(_fa);
   }
   await loadAny(['js/radio-metadata.js?v=20261018ehr1']);
-  await loadAny(['js/radio-pioneer-layout.js?v=20261112nw1']);
-  await loadAny(['js/radio-amp-layout.js?v=20261112nw1']);
-  await loadAny(['js/radio-dither-layout.js?v=20261112nw1']);
+  await loadAny(['js/radio-pioneer-layout.js?v=20261116pn1']);
+  await loadAny(['js/radio-amp-layout.js?v=20261116pn1']);
+  await loadAny(['js/radio-dither-layout.js?v=20261116pn1']);
   await loadAny(['js/radio-listening.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261112nw1']);
+  await loadAny(['js/radio.js?v=20261116pn1']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
@@ -1700,6 +1700,7 @@ function toggleRadio() {
   if (isHidden) {
     // Show radio. The look was rolled while closed (see rollNextLook).
     window.__mkRadioSupersededByLacitis = false;
+    window.__mkRadioMini?.off();
     const rw = document.getElementById('radioWindow');
     if (rw) rw.style.display = '';
     // Update toggle label
@@ -1709,6 +1710,7 @@ function toggleRadio() {
     if (_radioScriptsLoaded && window.rgTheme) mkRadioReveal.run(true);
     else mkRadioReady(document.getElementById('radioToggle')).then(function () { if (!mkRadioReveal.logicalOpen()) mkRadioReveal.run(true); });
   } else {
+    window.__mkRadioMini?.auto();
     if (window.setRadioSource) window.setRadioSource('radio');
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" style="opacity:.85;vertical-align:middle" aria-hidden="true"><path d="M9 18V5l12-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="18" cy="16" r="3" fill="currentColor"/></svg>';
     mkRadioReveal.run(false);
@@ -1724,6 +1726,7 @@ function radioIdleClick() {
   if (!btn || btn._loading) return;
   btn._loading = true;
   window.__mkRadioSupersededByLacitis = false;
+  window.__mkRadioMini?.off();
 
   const rw = document.getElementById('radioWindow');
   if (rw) rw.style.display = '';
@@ -3211,6 +3214,619 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.d
   </section>
 </div>
 
+<!-- RG Music mini player: what plays, shown as soon as the window is closed while music plays. Its × closes it (the music plays on);
+     paused for 30 s it also leaves by itself; the cover or the title opens the full window again. Nothing runs while
+     it is hidden; while shown, the progress line is one CSS animation (a step a second), restarted only when the
+     player reports play, pause, a seek or a new song. -->
+<style>
+/* It sits in the dock's row, beside the dock (nothing else is drawn there), as tall as the dock: it never covers
+   the calendar. Narrower room gives a smaller layout (rgm-mid: cover and transport, rgm-tiny: cover and play);
+   with no room at all it stays hidden. Colours come from the album (--rgm-*, set by the player), else neutral.
+   Columns: cover | song, keys and wave | the close button. */
+:is(#rgMini,#radioMini){--rgm-bg:#161a21;--rgm-ink:#eef2f8;--rgm-sub:#aab4c3;--rgm-acc:#eef2f8;--rgm-on:#111418;--rgm-key:rgba(255,255,255,.1);position:fixed;z-index:171194;box-sizing:border-box;display:grid;grid-template-columns:56px minmax(0,1fr) 24px;grid-template-rows:28px 34px 12px;align-content:center;column-gap:12px;row-gap:0;align-items:center;padding:0 12px 0 9.5px;border-radius:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--rgm-bg) 90%,#fff 10%),var(--rgm-bg) 70%);border:1.5px solid rgba(214,226,240,.38);box-shadow:0 14px 36px rgba(0,0,0,.55);color:var(--rgm-ink);font-family:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;overflow:hidden;contain:layout paint;transition:background-color 500ms cubic-bezier(.2,0,0,1),color 500ms cubic-bezier(.2,0,0,1);}
+:is(#rgMini,#radioMini)[hidden]{display:none;}
+:is(#rgMini,#radioMini) button{border:0;padding:0;margin:0;background:none;color:inherit;cursor:pointer;font:inherit;}
+:is(#rgMini,#radioMini) button:focus-visible{outline:2px solid #a8c7fa;outline-offset:2px;}
+:is(#rgMini,#radioMini) .rgm-art{grid-column:1;grid-row:1 / 4;align-self:center;width:56px;height:56px;border-radius:22px;overflow:hidden;background:rgba(255,255,255,.08);}
+:is(#rgMini,#radioMini) .rgm-art img{display:block;width:100%;height:100%;object-fit:cover;}
+:is(#rgMini,#radioMini) .rgm-meta{grid-column:2;grid-row:1;align-self:end;min-width:0;text-align:left;padding:0 0 0 2px;}
+:is(#rgMini,#radioMini) .rgm-meta>:is(b,span){display:block;overflow:hidden;white-space:nowrap;}
+:is(#rgMini,#radioMini) .rgm-meta>:is(b,span)>i{display:inline-block;font-style:normal;}
+:is(#rgMini,#radioMini) .rgm-meta>b{font-weight:600;font-size:13px;line-height:15px;}
+:is(#rgMini,#radioMini) .rgm-meta>span{font-size:11.5px;line-height:13px;color:var(--rgm-sub);transition:color 500ms cubic-bezier(.2,0,0,1);}
+/* A name longer than its line slides to its end and back while it plays (transform only); paused, it rests at
+   its start and fades out where it is cut. Measured only when the name or the width changes. */
+:is(#rgMini,#radioMini) .rgm-run{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);}
+:is(#rgMini,#radioMini) .rgm-run>i{animation:rgmMarq var(--rgm-dur,10s) ease-in-out infinite paused;}
+:is(#rgMini,#radioMini).rgm-playing .rgm-run>i{animation-play-state:running;}
+@keyframes rgmMarq{0%,18%{transform:none}50%,68%{transform:translateX(var(--rgm-shift,0px))}100%{transform:none}}
+:is(#rgMini,#radioMini) .rgm-x{grid-column:3;grid-row:1;align-self:center;justify-self:end;width:24px;height:24px;border-radius:12px;display:grid;place-items:center;color:var(--rgm-sub);opacity:.8;transition:background-color 150ms cubic-bezier(.2,0,0,1),opacity 150ms cubic-bezier(.2,0,0,1);}
+:is(#rgMini,#radioMini) .rgm-x:hover{background:var(--rgm-key);opacity:1;color:var(--rgm-ink);}
+:is(#rgMini,#radioMini) .rgm-x svg{width:14px;height:14px;fill:currentColor;}
+:is(#rgMini,#radioMini) .rgm-ctrls{grid-column:2 / 4;grid-row:2;align-self:center;display:flex;align-items:center;justify-content:space-between;max-width:240px;}
+:is(#rgMini,#radioMini) .rgm-b{width:32px;height:32px;border-radius:16px;display:grid;place-items:center;color:inherit;opacity:.82;transition:background-color 150ms cubic-bezier(.2,0,0,1),opacity 150ms cubic-bezier(.2,0,0,1);}
+:is(#rgMini,#radioMini) .rgm-b:hover{background:var(--rgm-key);opacity:1;}
+:is(#rgMini,#radioMini) .rgm-b svg{width:20px;height:20px;fill:currentColor;}
+:is(#rgMini,#radioMini) .rgm-play{width:36px;height:36px;border-radius:18px;background:var(--rgm-acc);color:var(--rgm-on);opacity:1;transition:background-color 500ms cubic-bezier(.2,0,0,1),color 500ms cubic-bezier(.2,0,0,1);}
+:is(#rgMini,#radioMini) .rgm-play:hover{background:var(--rgm-acc);filter:brightness(1.08);}
+:is(#rgMini,#radioMini) .rgm-like[aria-pressed="true"]{color:#ff5a4f;opacity:1;}
+:is(#rgMini,#radioMini) .rgm-on,:is(#rgMini,#radioMini) [aria-pressed="true"] .rgm-off,:is(#rgMini,#radioMini).rgm-playing .rgm-play .rgm-off{display:none;}
+:is(#rgMini,#radioMini) [aria-pressed="true"] .rgm-on,:is(#rgMini,#radioMini).rgm-playing .rgm-play .rgm-on{display:inline;}
+:is(#rgMini,#radioMini).rgm-wait .rgm-play{opacity:.6;}
+/* The M3 wavy progress, in its own row under the keys (it never reaches them). Played: the wave, drawn by a mask
+   so it takes the album colour; the rest: a flat line after a small gap. Position is the counter-moved pair
+   .rgm-pw/.rgm-pi plus .rgm-tr (transforms only, a step a second). The wave tile's line runs past both edges so
+   the tiles join without a notch; it flows on its own compositor layer while playing and flattens on pause. */
+:is(#rgMini,#radioMini) .rgm-wave{grid-column:2 / 4;grid-row:3;align-self:center;position:relative;height:12px;width:100%;max-width:240px;overflow:hidden;}
+:is(#rgMini,#radioMini) .rgm-wave>*{position:absolute;inset:0;}
+:is(#rgMini,#radioMini) .rgm-tr{transform:translateX(0);}
+:is(#rgMini,#radioMini) .rgm-tr::before{content:'';position:absolute;left:6px;right:0;top:5px;height:2px;border-radius:1px;background:var(--rgm-sub);opacity:.35;}
+:is(#rgMini,#radioMini) .rgm-pw{overflow:hidden;transform:translateX(-100%);}
+:is(#rgMini,#radioMini) .rgm-pw>i,:is(#rgMini,#radioMini) .rgm-pw>i>b{position:absolute;inset:0;}
+:is(#rgMini,#radioMini) .rgm-pw>i{transform:translateX(100%);}
+:is(#rgMini,#radioMini) .rgm-pw>i>b{transform:scaleY(.2);transition:transform 400ms cubic-bezier(.2,0,0,1);}
+:is(#rgMini,#radioMini).rgm-playing .rgm-pw>i>b{transform:none;}
+:is(#rgMini,#radioMini) .rgm-wv{position:absolute;top:0;bottom:0;left:0;width:calc(100% + 24px);background:var(--rgm-acc);-webkit-mask:var(--rgm-wave) 0 50%/24px 12px repeat-x;mask:var(--rgm-wave) 0 50%/24px 12px repeat-x;will-change:transform;transition:background-color 500ms cubic-bezier(.2,0,0,1);}
+:is(#rgMini,#radioMini).rgm-playing .rgm-wv{animation:rgmFlow 1.6s linear infinite;}
+:is(#rgMini,#radioMini){--rgm-wave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M-12 6Q-6 1.5 0 6T12 6T24 6T36 6' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");}
+@keyframes rgmFlow{from{transform:translateX(-24px)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){:is(#rgMini,#radioMini) .rgm-wv,:is(#rgMini,#radioMini) .rgm-run>i{animation:none!important}}
+:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny){grid-template-rows:36px 12px;row-gap:3px;}
+:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny) :is(.rgm-meta,.rgm-like,.rgm-mute),:is(#rgMini,#radioMini).rgm-tiny :is([data-rgm="prev"],[data-rgm="next"]){display:none;}
+:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny) .rgm-art{grid-row:1 / 3;}
+:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny) .rgm-ctrls{grid-column:2;grid-row:1;justify-content:flex-start;gap:6px;}
+:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny) .rgm-wave{grid-column:2;grid-row:2;}
+@keyframes rgmPwA{from{transform:translateX(-100%)}to{transform:none}}@keyframes rgmPwB{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes rgmPiA{from{transform:translateX(100%)}to{transform:none}}@keyframes rgmPiB{from{transform:translateX(100%)}to{transform:none}}
+@keyframes rgmTrA{from{transform:none}to{transform:translateX(100%)}}@keyframes rgmTrB{from{transform:none}to{transform:translateX(100%)}}
+
+/* The radio window gets the same thin light rim (classic, clean, pixel; Pioneer, Amp and Dither draw their own
+   frames). On ::after, so the look's own inline box-shadow stays as it is. */
+html body #radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"])::after{content:"";position:absolute;inset:0;border-radius:inherit;border:1.5px solid rgba(214,226,240,.34);pointer-events:none;z-index:5;}
+/* One corner for Minka's windows: the radio's two plain looks take the 28 px of the dock windows (.mk-frame-sheet). */
+html body #radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"]){border-radius:28px!important;}
+
+/* The radio look menu in three steps (js/radio.js simplifyLookMenu): numbered headings, the finer settings folded. */
+#radioLookControls .radio-look-step{display:flex;align-items:center;gap:10px;margin:14px 0 8px;font:600 15px/1.2 'Google Sans',Inter,system-ui,sans-serif;color:#eef2f8;letter-spacing:0;text-transform:none;}
+#radioLookControls .radio-look-step:first-child{margin-top:4px;}
+#radioLookControls .radio-look-step>span{flex:none;width:24px;height:24px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:12px;font-weight:700;}
+#radioLookControls{counter-reset:look-step;}
+#radioLookControls .radio-look-step{counter-increment:look-step;}
+#radioLookControls .radio-look-step>span::before{content:counter(look-step);}
+#themePanel:is([data-radio-layout="pioneer"],[data-radio-layout="amp"],[data-radio-layout="dither"]) .radio-look-step--bg{display:none;}
+#themePanel:not([data-radio-layout="pixel"]) .radio-look-layouts>.radio-viz-family-note{display:none;}
+#radioLookControls .radio-look-layouts>legend{display:none;}
+#radioLookControls .radio-look-more{margin-top:20px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1);}
+#radioLookControls .radio-look-more>summary{cursor:pointer;list-style:none;padding:6px 0;font:600 14px/1.2 'Google Sans',Inter,system-ui,sans-serif;color:#cdd5df;}
+#radioLookControls .radio-look-more>summary::-webkit-details-marker{display:none;}
+#radioLookControls .radio-look-more>summary::before{content:'+';display:inline-block;width:18px;font-weight:700;}
+#radioLookControls .radio-look-more[open]>summary::before{content:'\2013';}
+
+/* The look menu as a builder (like the card editor): wide, three columns, pictures over words. */
+#themePanel.radio-builder .radio-look-layouts .radio-viz-families{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+#themePanel.radio-builder .radio-look-layouts .radio-viz-families>button{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;gap:7px;min-height:92px;padding:8px 8px 9px;}
+/* Each layout as a small drawing of itself (CSS only), so the choice is seen, not read. */
+#themePanel.radio-builder [data-radio-layout-choice]::before{content:'';display:block;height:46px;border-radius:8px;background-repeat:no-repeat;}
+#themePanel.radio-builder [data-radio-layout-choice="classic"]::before{background:linear-gradient(#55625a,#55625a) 6px 50%/30px 30px no-repeat,repeating-linear-gradient(90deg,#9fd8ae 0 3px,transparent 3px 6px) 44px 72%/52px 16px no-repeat,radial-gradient(circle,#9fd8ae 0 8px,transparent 9px) calc(100% - 6px) 50%/20px 20px no-repeat,#141a17;}
+#themePanel.radio-builder [data-radio-layout-choice="clean"]::before{background:linear-gradient(#5b6168,#5b6168) 6px 50%/30px 30px no-repeat,linear-gradient(#eef0f2,#eef0f2) 44px 15px/40% 5px no-repeat,linear-gradient(#8b9198,#8b9198) 44px 26px/26% 4px no-repeat,radial-gradient(circle,#eef0f2 0 8px,transparent 9px) calc(100% - 6px) 50%/20px 20px no-repeat,#16191e;}
+#themePanel.radio-builder [data-radio-layout-choice="pioneer"]::before{background:radial-gradient(circle,#d9dde0 0 8px,#6f757a 9px 10px,transparent 11px) 6px 50%/22px 22px no-repeat,radial-gradient(circle,#d9dde0 0 8px,#6f757a 9px 10px,transparent 11px) calc(100% - 6px) 50%/22px 22px no-repeat,linear-gradient(#0b0f0c,#0b0f0c) 50% 50%/50% 54% no-repeat,linear-gradient(#b3b9be,#6b7176);}
+#themePanel.radio-builder [data-radio-layout-choice="pixel"]::before{border-radius:14px;background:linear-gradient(#e3c9a8,#e3c9a8) 8px 50%/28px 28px no-repeat,linear-gradient(#f3e7d6,#f3e7d6) 44px 15px/38% 5px no-repeat,linear-gradient(#e7a96a,#e7a96a) calc(100% - 7px) 50%/22px 22px no-repeat,#3a2c22;}
+#themePanel.radio-builder [data-radio-layout-choice="amp"]::before{background:linear-gradient(90deg,#7ad04a 0 40%,transparent 40%) 6px 10px/24% 4px no-repeat,linear-gradient(#2b3048,#2b3048) 0 0/31% 100% no-repeat,linear-gradient(#2b3048,#2b3048) 50% 0/31% 100% no-repeat,linear-gradient(#2b3048,#2b3048) 100% 0/31% 100% no-repeat;}
+#themePanel.radio-builder [data-radio-layout-choice="dither"]::before{border-radius:0;background:radial-gradient(#7fd6c6 0 .9px,transparent 1.2px) 0 0/4px 4px,#050505;box-shadow:inset 0 0 0 1px #7fd6c6;}
+
+#themePanel.radio-builder #themeList .theme-item{min-height:0;height:58px;}
+#themePanel.radio-builder #themeList .theme-card-copy strong{font-size:11.5px;line-height:1.15;white-space:normal;overflow:visible;text-overflow:clip;}
+#themePanel.radio-builder .theme-control-head strong{display:none;}
+#themePanel.radio-builder .theme-control-head{margin:10px 0 0;justify-content:flex-start;}
+#themePanel.radio-builder .theme-controls{margin-top:0;padding-top:0;border-top:0;}
+#themePanel.radio-builder :is(.theme-subtitle,#themeList .theme-card-copy small,.theme-control-head span,.accent-mode-list small,#radioLookNote,.radio-viz-family-note,.radio-card-hint){display:none!important;}
+#themePanel.radio-builder .radio-card-shortcut{min-height:0;padding-top:8px;padding-bottom:8px;}
+
+/* Dither: the old dotted strips along the deck's top (square-cornered ::before/::after) ran past the rounded corner. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-deck::before,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-deck::after{content:none!important;display:none!important;}
+
+/* Amp as one compact desktop player (user brief, second pass). One graphite surface, three columns on fixed
+   proportions (46/30/24, hairline seams), every pane on the same rows: 14-42 header, content from 54, 16 px edges.
+   Player: 120 px cover; title, artist, spectrum and time line beside it; one control row under both. EQ: thin
+   2 px faders with a small silver cap, the response curve drawn through the caps, labels on one baseline. List:
+   32 px rows, four to a view, the playing row marked by a play glyph. One accent (fixed emerald, set in radio.js). */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"]{--a-acc:rgb(var(--amp-accent-rgb,86,201,143));--a-ink:#eceeed;--a-dim:#9ba19e;--a-mute:#6f7572;--a-hair:rgba(255,255,255,.07);--a-key:rgba(255,255,255,.06);--a-silver:#d4d8d6;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-shell{gap:0!important;padding:0!important;border-radius:20px!important;background:#101211!important;border:1px solid var(--a-hair)!important;box-shadow:0 10px 28px rgba(0,0,0,.4)!important;font-family:'Google Sans',system-ui,sans-serif!important;color:var(--a-ink)!important;overflow:hidden;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pane{position:relative!important;height:238px!important;margin:0!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;min-width:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-main{flex:46 1 0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq{flex:30 1 0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl{flex:24 1 0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pane:not([hidden])~.amp-pane:not([hidden]){border-left:1px solid var(--a-hair)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-dots{display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-eq,.amp-pl)::before{position:absolute!important;left:16px!important;top:14px!important;height:28px;line-height:28px!important;font:600 11px/28px 'Google Sans',system-ui,sans-serif!important;letter-spacing:.12em!important;color:var(--a-dim)!important;}
+/* keys: one size, icon 16, no fills except the one primary */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-pill,.amp-tog,.amp-sq:not(.amp-pl-foot [data-act="stations"])){width:32px!important;height:32px!important;min-width:0!important;min-height:0!important;flex:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:8px!important;background:transparent!important;box-shadow:none!important;color:var(--a-ink)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-pill,.amp-tog,.amp-sq:not(.amp-pl-foot [data-act="stations"])):hover{background:var(--a-key)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-pill,.amp-tog,.amp-sq:not(.amp-pl-foot [data-act="stations"])):active{transform:scale(.94);}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-pill,.amp-tog,.amp-sq:not(.amp-pl-foot [data-act="stations"])):focus-visible{outline:2px solid var(--a-acc)!important;outline-offset:1px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-pill,.amp-tog,.amp-sq,.amp-eq-tools #themeBtn) svg{width:16px!important;height:16px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-tog b{font:700 13px/1 'Google Sans',system-ui,sans-serif!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-tog i{display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-tog[aria-pressed="true"],.amp-tog.is-on){color:var(--a-acc)!important;}
+/* player grid */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-main{display:grid!important;padding:54px 16px 0!important;grid-template-columns:120px minmax(0,1fr) auto auto!important;grid-template-rows:42px 46px 16px 36px!important;grid-template-areas:"cover lines lines lines" "cover screen screen screen" "cover seek seek seek" "tr tr vol extra"!important;column-gap:16px!important;row-gap:8px!important;align-content:start!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-top,.amp-right,.amp-now,.amp-bottom){display:contents!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-cover{grid-area:cover!important;width:120px!important;height:120px!important;border-radius:10px!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)!important;align-self:start!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-lines{grid-area:lines!important;min-width:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-song{font:600 18px/24px 'Google Sans',system-ui,sans-serif!important;letter-spacing:-.01em!important;color:var(--a-ink)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-artist{font:500 13px/18px 'Google Sans',system-ui,sans-serif!important;color:var(--a-dim)!important;margin:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-screen{grid-area:screen!important;position:relative!important;height:auto!important;min-height:0!important;overflow:visible!important;background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-time{position:absolute!important;left:0!important;right:auto!important;top:calc(100% + 8px)!important;height:16px!important;font:500 12px/16px 'Google Sans',system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;color:var(--a-dim)!important;text-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-shell.is-playing .amp-time::before{display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-seek-wrap{grid-area:seek!important;display:block!important;margin:0!important;padding-left:56px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-metaline{position:absolute!important;left:16px!important;top:14px!important;height:28px!important;display:flex!important;align-items:center!important;gap:8px!important;font:600 11px/1 'Google Sans',system-ui,sans-serif!important;letter-spacing:.12em!important;color:var(--a-dim)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-shell.is-playing .amp-metaline [data-live]{color:var(--a-acc)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-transport{grid-area:tr!important;display:flex!important;align-items:center!important;gap:4px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-volrow{grid-area:vol!important;display:flex!important;align-items:center!important;gap:8px!important;margin:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-extra{grid-area:extra!important;display:flex!important;align-items:center!important;gap:2px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-transport .amp-pill.amp-pill[data-act="play"]{width:36px!important;height:36px!important;border-radius:50%!important;background:var(--a-acc)!important;color:#0b0f0d!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-transport .amp-pill.amp-pill[data-act="play"]:hover{background:color-mix(in srgb,var(--a-acc) 86%,#fff)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pill.is-on:not([data-act="play"]){color:var(--a-acc)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"]{margin-left:8px!important;background:transparent!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"] svg{width:16px!important;height:16px!important;fill:currentColor!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-spk{width:16px!important;height:16px!important;flex:0 0 16px!important;fill:var(--a-dim)!important;color:var(--a-dim)!important;}
+/* ranges: 2 px line, 10 px silver cap */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-h{height:16px!important;border-radius:0!important;box-shadow:none!important;background:linear-gradient(90deg,var(--amp-fill) var(--p,50%),rgba(255,255,255,.14) var(--p,50%)) center/100% 2px no-repeat!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-vol,.amp-seek){--amp-fill:var(--a-acc)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-vol{flex:0 0 72px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-bal{flex:0 0 40px!important;--amp-fill:rgba(255,255,255,.14)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-seek:disabled{--amp-fill:rgba(255,255,255,.14)!important;cursor:default!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-h::-webkit-slider-thumb{width:10px!important;height:10px!important;border-radius:50%!important;background:var(--a-silver)!important;box-shadow:0 1px 2px rgba(0,0,0,.6)!important;border:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-h::-moz-range-thumb{width:10px!important;height:10px!important;border-radius:50%!important;background:var(--a-silver)!important;border:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-seek:disabled::-webkit-slider-thumb{width:0!important;height:0!important;box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-h:focus-visible{outline:2px solid var(--a-acc)!important;outline-offset:2px!important;}
+/* equalizer */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq{display:block!important;padding:14px 16px 0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq-head{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:2px!important;height:28px!important;margin:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq-tools #themeBtn{min-width:0!important;padding:0!important;border:0!important;border-radius:8px!important;background:transparent!important;box-shadow:none!important;color:var(--a-ink)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq-tools #themeBtn:hover{background:var(--a-key)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq-tools #themeBtn svg{width:16px!important;height:16px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq-head :is(.amp-tog,#themeBtn){width:28px!important;height:28px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-curve{position:absolute!important;left:calc(64px + (100% - 80px) / 20)!important;right:calc(16px + (100% - 80px) / 20)!important;top:46.3px!important;height:161.4px!important;width:calc((100% - 80px) * .9)!important;margin:0!important;pointer-events:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-curve polyline{stroke:var(--a-acc)!important;stroke-width:1.25!important;opacity:.55;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eq.is-off .amp-curve polyline{stroke:var(--a-mute)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-bands{display:grid!important;grid-template-columns:24px 24px repeat(10,minmax(0,1fr))!important;align-items:start!important;gap:0!important;margin:10px 0 0!important;height:auto!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-band{display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;min-width:0!important;margin:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-scale{height:150px!important;padding:0!important;margin:0!important;box-sizing:border-box!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;align-items:flex-end!important;padding-right:4px!important;font:500 10px/10px 'Google Sans',system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;color:var(--a-mute)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-vband{width:16px!important;height:150px!important;box-shadow:none!important;border-radius:0!important;
+  background:linear-gradient(0deg,transparent min(50%,var(--p)),var(--a-acc) min(50%,var(--p)),var(--a-acc) max(50%,var(--p)),transparent max(50%,var(--p))) center/2px 100% no-repeat,linear-gradient(rgba(255,255,255,.14),rgba(255,255,255,.14)) center/2px 100% no-repeat!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-vband::-webkit-slider-thumb{width:14px!important;height:8px!important;border-radius:2px!important;background:var(--a-silver)!important;box-shadow:0 1px 2px rgba(0,0,0,.6)!important;border:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-vband::-moz-range-thumb{width:14px!important;height:8px!important;border-radius:2px!important;background:var(--a-silver)!important;border:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-vband:disabled{opacity:.45!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-vband:focus-visible{outline:2px solid var(--a-acc)!important;outline-offset:2px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-band span{font:500 10px/10px 'Google Sans',system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;color:var(--a-dim)!important;letter-spacing:0!important;white-space:nowrap!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-presets{top:46px!important;left:16px!important;right:16px!important;background:#191c1b!important;border:1px solid var(--a-hair)!important;box-shadow:0 12px 28px rgba(0,0,0,.55)!important;border-radius:10px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-presets button{background:transparent!important;color:var(--a-ink)!important;font:500 12px/1 'Google Sans',system-ui,sans-serif!important;height:28px!important;border-radius:6px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-presets button:hover{background:var(--a-key)!important;}
+/* playlist */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl{display:flex!important;flex-direction:column!important;padding:50px 8px 16px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list{flex:0 0 128px!important;height:128px!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;scroll-snap-type:y mandatory;scroll-padding:0;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.16) transparent!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list li{scroll-snap-align:start;display:grid!important;grid-template-columns:24px minmax(0,1fr) auto!important;align-items:center!important;gap:8px!important;height:32px!important;padding:0 8px!important;border-radius:6px!important;font:500 13px/1 'Google Sans',system-ui,sans-serif!important;color:var(--a-ink)!important;background:transparent!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list li:hover{background:rgba(255,255,255,.04)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list .amp-n{text-align:right!important;font:500 11px/1 'Google Sans',system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;color:var(--a-mute)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list .amp-name{min-width:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list .amp-len{padding:0!important;background:none!important;font:600 9.5px/1 'Google Sans',system-ui,sans-serif!important;letter-spacing:.1em!important;color:var(--a-mute)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list li.is-current{background:rgba(255,255,255,.07)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list li.is-current .amp-name{color:#fff!important;font-weight:600!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list li.is-current .amp-n{font-size:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-list li.is-current .amp-n::before{content:"";display:inline-block;border-left:7px solid var(--a-acc);border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot{display:flex!important;align-items:center!important;gap:2px!important;margin:auto 0 0!important;padding:0 8px!important;height:36px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]::after{font:600 13px/1 'Google Sans',system-ui,sans-serif!important;color:#101312!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]::before{display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]{width:auto!important;font-size:0!important;height:32px!important;min-height:32px!important;margin:0 6px 0 0!important;padding:0 14px!important;border-radius:8px!important;background:#e4e7e5!important;color:#101312!important;box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]:hover{background:#f1f3f2!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-count{position:absolute!important;right:16px!important;top:14px!important;height:28px!important;line-height:28px!important;min-width:0!important;margin:0!important;padding:0!important;background:none!important;font:500 11px/28px 'Google Sans',system-ui,sans-serif!important;font-variant-numeric:tabular-nums!important;color:var(--a-dim)!important;}
+/* account and source, in the player header */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar{top:14px!important;right:16px!important;height:28px!important;padding:0!important;gap:4px!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar button{height:28px!important;min-height:28px!important;padding:0 10px!important;border-radius:8px!important;border:0!important;background:var(--a-key)!important;color:var(--a-dim)!important;font:500 12px/1 'Google Sans',system-ui,sans-serif!important;box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar button:hover{color:var(--a-ink)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar button[aria-pressed="true"]{background:rgba(255,255,255,.1)!important;color:var(--a-ink)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] #radioSourceBar button :is(span,svg){font-size:12px!important;color:inherit!important;}
+
+@media (max-width:1000px){
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-bal{display:none!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-vol{flex-basis:56px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-main{grid-template-columns:96px minmax(0,1fr) auto auto!important;column-gap:12px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-cover{width:96px!important;height:96px!important;}
+}
+
+/* Classic: the look editor key reads as a button, not a logo next to "RG RADIO" (palette + "Izskats", the same
+   tonal pill as Ielogoties). The text is the visible name; aria-label stays the full one. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] #themeBtn{width:auto!important;min-width:0!important;height:30px!important;padding:0 12px 0 9px!important;gap:6px!important;border-radius:15px!important;border:1px solid rgba(255,255,255,.14)!important;background:rgba(255,255,255,.08)!important;color:#e9edf2!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] #themeBtn svg{flex:0 0 16px!important;width:16px!important;height:16px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] #themeBtn::after{content:"Izskats";font:600 12.5px/1 'Google Sans',system-ui,sans-serif;letter-spacing:0;color:inherit;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="classic"] #themeBtn:hover{background:rgba(255,255,255,.14)!important;}
+
+/* The radio look editor as a builder, in the card builder's language (kalendars/css/skin-organize.css .bld-*):
+   numbered step pills on top, one step on screen, a big title with one line of help, tiles that light up in the
+   primary tint when chosen, pill buttons below. It docks just above the radio, which is the live preview. */
+#themePanel.radio-builder{--rb-primary:#a8c7fa;--rb-primary-c:#d6e3ff;--rb-on-primary-c:#0b1d36;--rb-on:#e3e7ee;--rb-dim:#aab3bf;--rb-tile:rgba(255,255,255,.05);
+  display:flex!important;flex-direction:column!important;padding:14px 18px 14px!important;border-radius:24px!important;border:1px solid rgba(255,255,255,.08)!important;
+  background:#15181d!important;box-shadow:0 16px 44px rgba(0,0,0,.5)!important;font-family:'Google Sans',system-ui,sans-serif!important;color:var(--rb-on);}
+#themePanel.radio-builder[aria-hidden="true"]{display:none!important;}
+#themePanel.radio-builder .theme-head{display:flex!important;align-items:center!important;gap:16px!important;padding:0 0 10px!important;margin:0!important;border:0!important;}
+#themePanel.radio-builder .theme-head>div:first-child{flex:none;}
+#themePanel.radio-builder :is(.theme-kicker,.theme-subtitle){display:none!important;}
+#themePanel.radio-builder .theme-title{font:600 16px/1.2 'Google Sans',system-ui,sans-serif!important;color:var(--rb-on)!important;letter-spacing:0!important;}
+#themePanel.radio-builder .rb-steps{flex:1;display:flex;justify-content:center;gap:4px;margin:0;padding:0;list-style:none;min-width:0;}
+#themePanel.radio-builder .rb-steps button{display:flex;align-items:center;gap:8px;height:34px;padding:0 14px 0 5px;border:0;border-radius:17px;background:transparent;color:var(--rb-dim);font:600 13px/1 'Google Sans',system-ui,sans-serif;cursor:pointer;white-space:nowrap;}
+#themePanel.radio-builder .rb-steps button>span{display:grid;place-items:center;width:24px;height:24px;border-radius:12px;background:rgba(255,255,255,.08);color:var(--rb-on);font:700 12px/1 'Google Sans',system-ui,sans-serif;}
+#themePanel.radio-builder .rb-steps button:hover{background:rgba(255,255,255,.05);}
+#themePanel.radio-builder .rb-steps button[aria-current="step"]{background:color-mix(in srgb,var(--rb-primary) 14%,transparent);color:var(--rb-on);}
+#themePanel.radio-builder .rb-steps button[aria-current="step"]>span{background:var(--rb-primary);color:var(--rb-on-primary-c);}
+#themePanel.radio-builder .rb-steps button:focus-visible{outline:2px solid var(--rb-primary);outline-offset:2px;}
+#themePanel.radio-builder .radio-theme-scroll{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;padding:0!important;}
+#themePanel.radio-builder #radioUseCard{display:none;}
+#themePanel.radio-builder .rb-page #radioUseCard{display:flex;}
+#themePanel.radio-builder #radioLookControls{display:block!important;}
+#themePanel.radio-builder .rb-head{display:flex;align-items:baseline;gap:12px;margin:0 0 10px;min-width:0;}
+#themePanel.radio-builder .rb-head h3{margin:0;font:700 20px/1.2 'Google Sans',system-ui,sans-serif;letter-spacing:-.01em;color:var(--rb-on);}
+#themePanel.radio-builder .rb-head p{margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 13px/1.35 'Google Sans',system-ui,sans-serif;color:var(--rb-dim);}
+#themePanel.radio-builder .rb-page[hidden]{display:none!important;}
+#themePanel.radio-builder .rb-page>*{margin:0 0 8px!important;}
+#themePanel.radio-builder .rb-page fieldset{border:0!important;padding:0!important;min-width:0;}
+#themePanel.radio-builder .rb-page legend{display:none!important;}
+#themePanel.radio-builder .rb-page .radio-viz-family-note{display:none!important;}
+/* tiles: one look for every choice */
+#themePanel.radio-builder .rb-page button{border:1px solid transparent!important;border-radius:14px!important;background-color:var(--rb-tile)!important;color:var(--rb-on)!important;box-shadow:none!important;font-family:'Google Sans',system-ui,sans-serif!important;font-weight:600!important;text-shadow:none!important;cursor:pointer;transition:transform .2s cubic-bezier(.2,0,0,1),background-color .12s;}
+#themePanel.radio-builder .rb-page button:hover{background-color:rgba(255,255,255,.08)!important;}
+#themePanel.radio-builder .rb-page button:active{transform:scale(.96);}
+#themePanel.radio-builder .rb-page button:focus-visible{outline:2px solid var(--rb-primary)!important;outline-offset:2px!important;}
+#themePanel.radio-builder .rb-page :is(button[aria-pressed="true"],button[aria-checked="true"],button.active,.theme-item.active,.theme-item[aria-selected="true"]){background-color:color-mix(in srgb,var(--rb-primary) 14%,transparent)!important;border-color:color-mix(in srgb,var(--rb-primary) 60%,transparent)!important;}
+#themePanel.radio-builder .radio-look-layouts .radio-viz-families{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important;}
+#themePanel.radio-builder .radio-look-layouts .radio-viz-families>button{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-end!important;gap:8px!important;min-height:0!important;padding:8px 8px 10px!important;font-size:13px!important;}
+#themePanel.radio-builder [data-radio-layout-choice]::before{content:none!important;display:none!important;}
+#themePanel.radio-builder .rb-thumb{display:block;width:100%;height:auto;aspect-ratio:160/72;}
+#themePanel.radio-builder .radio-viz-families:not(.radio-look-layouts .radio-viz-families){display:flex!important;flex-wrap:wrap!important;gap:8px!important;}
+#themePanel.radio-builder .radio-viz-families:not(.radio-look-layouts .radio-viz-families)>button{height:40px;padding:0 16px!important;font-size:13px!important;}
+#themePanel.radio-builder #themeList{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(132px,1fr))!important;gap:8px!important;max-height:none!important;overflow:visible!important;}
+#themePanel.radio-builder #themeList .theme-item{height:54px!important;min-height:0!important;border-radius:14px!important;}
+#themePanel.radio-builder #pioneerMetalControls{margin:0!important;padding:0!important;border:0!important;}
+#themePanel.radio-builder #pioneerMetalControls>p{display:none!important;}
+#themePanel.radio-builder #pioneerMetalControls .pioneer-metal-presets{grid-template-columns:repeat(auto-fill,minmax(148px,1fr))!important;gap:8px!important;}
+#themePanel.radio-builder #pioneerMetalControls [data-metal-color]{height:44px;padding:0 10px!important;font-size:12.5px!important;}
+#themePanel.radio-builder #pioneerMetalControls .pioneer-metal-custom{grid-template-columns:repeat(4,auto)!important;justify-content:start;align-items:center;gap:8px 24px!important;margin-top:14px!important;}
+#themePanel.radio-builder #pioneerMetalReset{height:36px;padding:0 14px!important;border-radius:18px!important;}
+#themePanel.radio-builder .radio-viz-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(128px,1fr))!important;gap:8px!important;max-height:none!important;overflow:visible!important;}
+#themePanel.radio-builder .radio-viz-grid>button{display:grid!important;gap:5px!important;align-content:start!important;min-height:0!important;height:auto!important;padding:7px!important;font-size:11.5px!important;letter-spacing:.02em!important;}
+#themePanel.radio-builder .radio-viz-grid>button[hidden]{display:none!important;}
+#themePanel.radio-builder .radio-viz-thumbnail{margin:0!important;width:100%!important;height:24px!important;object-fit:cover!important;border-radius:8px!important;}
+#themePanel.radio-builder .radio-viz-choices>.radio-viz-families{margin:0 0 8px!important;}
+#themePanel.radio-builder .radio-viz-choices>.radio-viz-families>button{height:34px!important;}
+#themePanel.radio-builder .rb-page[data-step="more"]:not([hidden]){display:flex!important;gap:20px;align-items:flex-start;}
+#themePanel.radio-builder .rb-page[data-step="more-a"]{flex:0 0 380px;margin:0!important;}
+#themePanel.radio-builder .rb-page[data-step="more-b"]{flex:1 1 auto;min-width:0;margin:0!important;}
+#themePanel.radio-builder .rb-page[data-step^="more-"]>:last-child{margin-bottom:0!important;}
+#themePanel.radio-builder .radio-viz-grid>button[data-viz-choice]{grid-column:auto!important;}
+/* footer: Atiestatīt left as a quiet text button; Atpakaļ / Tālāk / Lietot right, like the card builder's pills */
+#themePanel.radio-builder .radio-look-actions{display:flex!important;align-items:center!important;gap:8px!important;margin:0!important;padding:10px 0 0!important;border-top:1px solid rgba(255,255,255,.08)!important;background:none!important;position:static!important;}
+#themePanel.radio-builder .radio-look-actions button{height:38px!important;min-height:38px!important;padding:0 18px!important;border-radius:19px!important;font:600 14px/1 'Google Sans',system-ui,sans-serif!important;box-shadow:none!important;text-shadow:none!important;cursor:pointer;}
+#themePanel.radio-builder #radioLookReset{border:0!important;background:transparent!important;color:var(--rb-dim)!important;padding:0 10px!important;}
+#themePanel.radio-builder #radioLookReset:hover{color:var(--rb-on)!important;}
+#themePanel.radio-builder #radioLookCancel{display:none!important;}
+#themePanel.radio-builder .rb-prev{margin-left:auto!important;border:1px solid rgba(255,255,255,.16)!important;background:transparent!important;color:var(--rb-on)!important;}
+#themePanel.radio-builder .rb-prev:disabled{opacity:.35;cursor:default;}
+#themePanel.radio-builder .rb-next{border:0!important;background:rgba(255,255,255,.1)!important;color:var(--rb-on)!important;}
+#themePanel.radio-builder .rb-next[hidden]{display:none!important;}
+#themePanel.radio-builder #radioLookApply{border:0!important;padding:0 24px!important;background:var(--rb-primary-c)!important;color:var(--rb-on-primary-c)!important;font-weight:700!important;}
+#themePanel.radio-builder .radio-look-actions button:focus-visible{outline:2px solid var(--rb-primary)!important;outline-offset:2px!important;}
+@media (max-width:900px){#themePanel.radio-builder .radio-look-layouts .radio-viz-families{grid-template-columns:repeat(3,minmax(0,1fr))!important;} #themePanel.radio-builder .rb-steps button{padding:0 6px;} #themePanel.radio-builder .rb-steps button:not([aria-current]) {font-size:0;gap:0;}}
+
+
+/* Station list, calmer: one theme tone for every tile (the logo carries the colour; no rainbow of station colours),
+   no decorative waveform behind the header, no helper lines. The playing station: the accent ring. */
+#stationOverlay#stationOverlay#stationOverlay{background-image:none!important;}
+#stationOverlay#stationOverlay#stationOverlay :is(.station-picker-title>span,.discovery-hint,.discovery-mouse-hint,.discovery-logo-tag){display:none!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile{--st-bg:#15181d;background:#15181d!important;border:1px solid rgba(255,255,255,.06);}
+#stationOverlay#stationOverlay#stationOverlay .station-tile:hover{background:#1c2027!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile.is-current{background:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 16%,#15181d)!important;box-shadow:inset 0 0 0 2px rgb(var(--radio-accent-rgb,30,215,96))!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile.is-offline{background:#111317!important;opacity:.7;}
+#stationOverlay#stationOverlay#stationOverlay .station-copy small{color:rgba(255,255,255,.62);}
+#stationOverlay#stationOverlay#stationOverlay .station-tile:not(.is-current)::before{display:none!important;}
+/* Station rows, one clean layout over the older picker styles (which placed the logo absolutely in the middle and the
+   star over the name): logo left, name and genre, the star right; many rows at once. The playing one: the accent ring. */
+#stationOverlay#stationOverlay#stationOverlay .station-picker-list{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))!important;grid-auto-rows:auto!important;gap:8px!important;}
+/* World view: the country and genre chips on one sideways-scrolling line each (they wrapped into tall blocks that the
+   rows then covered), and the genres in one tone like the rest (no rainbow); the chosen chip carries the accent. */
+#stationOverlay#stationOverlay#stationOverlay .world-station-controls{height:auto!important;}
+#stationOverlay#stationOverlay#stationOverlay .world-chip-row{flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);}
+#stationOverlay#stationOverlay#stationOverlay .world-chip-row::-webkit-scrollbar{display:none;}
+#stationOverlay#stationOverlay#stationOverlay .world-chip-row>*{flex:0 0 auto!important;}
+#stationOverlay#stationOverlay#stationOverlay .world-genre-row [data-wg]{background:rgba(255,255,255,.08)!important;color:#e9edf2!important;border:1px solid rgba(255,255,255,.08)!important;}
+#stationOverlay#stationOverlay#stationOverlay .world-genre-row [data-wg]:is([aria-pressed="true"],.active,[aria-selected="true"]){background:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 30%,#15181d)!important;border-color:rgb(var(--radio-accent-rgb,30,215,96))!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-entry{position:relative!important;min-width:0!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-entry .station-tile,#stationOverlay#stationOverlay#stationOverlay .station-tile{position:relative!important;display:grid!important;grid-template-columns:48px minmax(0,1fr)!important;align-items:center!important;justify-items:start!important;gap:12px!important;width:100%!important;height:60px!important;padding:0 46px 0 6px!important;text-align:left!important;border-radius:14px!important;overflow:hidden!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile::before,#stationOverlay#stationOverlay#stationOverlay .station-tile::after{display:none!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile .station-logo-wrap{position:static!important;inset:auto!important;transform:none!important;width:48px!important;height:48px!important;margin:0!important;border-radius:10px!important;overflow:hidden!important;background:#0e1013!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile .station-logo-wrap .station-logo{position:static!important;width:100%!important;height:100%!important;border-radius:0!important;object-fit:cover!important;padding:0!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile .station-copy{position:static!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:2px!important;min-width:0!important;width:100%!important;text-align:left!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile .station-copy :is(strong,small){display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:left!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile .station-copy strong{font:700 14px/1.2 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:#f2f4f7!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile .station-copy small{font:500 12px/1.25 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:rgba(242,244,247,.58)!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-tile .station-play-mark{display:none!important;}
+/* EHR rows (they were tall colour cards with the song over a banner): the same row as the others: the station's
+   logo on its colour at the left, the station's name, then "song – artist" under it. */
+#stationOverlay#stationOverlay#stationOverlay .station-tile.station-ehr{grid-template-columns:48px minmax(0,1fr)!important;grid-template-rows:auto auto!important;align-content:center!important;row-gap:2px!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-card{display:contents!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-art{grid-column:1!important;grid-row:1 / 3!important;position:relative!important;inset:auto!important;width:48px!important;height:48px!important;border-radius:10px!important;overflow:hidden!important;background:var(--ehr-a,#2a2d33)!important;display:grid!important;place-items:center!important;transform:none!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-logo{position:static!important;inset:auto!important;width:100%!important;height:100%!important;display:grid!important;place-items:center!important;transform:none!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-logo img{position:static!important;width:40px!important;height:30px!important;object-fit:contain!important;transform:none!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-head{grid-column:2!important;grid-row:1!important;position:static!important;display:block!important;min-width:0!important;padding:0!important;text-align:left!important;background:none!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-head small{display:none!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-head strong{display:block!important;font:700 14px/1.2 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:#f2f4f7!important;opacity:1!important;text-shadow:none!important;-webkit-text-stroke:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-align:left!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-now{grid-column:2!important;grid-row:2!important;position:static!important;inset:auto!important;display:block!important;min-width:0!important;padding:0!important;background:none!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;text-align:left!important;font:500 12px/1.25 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:rgba(242,244,247,.6)!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-now :is(b,i){display:inline!important;font:inherit!important;color:inherit!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-now b{color:rgba(242,244,247,.85)!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-ehr .ehr-now b:not(:empty)+i:not(:empty)::before{content:' – ';}
+#stationOverlay#stationOverlay#stationOverlay .station-entry>.station-favorite{position:absolute!important;left:auto!important;right:8px!important;top:14px!important;bottom:auto!important;transform:none!important;width:32px!important;height:32px!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-entry,#stationOverlay#stationOverlay#stationOverlay .station-entry .station-tile,#stationOverlay#stationOverlay#stationOverlay .station-tile{aspect-ratio:auto!important;}
+#stationOverlay#stationOverlay#stationOverlay .station-entry{width:100%!important;height:60px!important;align-self:start!important;}
+/* The radio window's "Stacijas" button: a plain pill in the accent tone, not a photo strip. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) .station-btn{background:#eef1f5!important;color:#14171c!important;background-blend-mode:normal!important;outline:0!important;box-shadow:none!important;border-radius:22px!important;min-height:44px!important;font-weight:700!important;transition:border-radius 300ms cubic-bezier(.42,1.67,.21,.9),background-color 150ms ease!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) .station-btn:hover{background:#ffffff!important;border-radius:14px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) .station-btn::after{color:#14171c!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) .station-btn svg{color:#14171c!important;}
+/* "Stacijas" is the radio's main way in, so it is the one solid light button beside the accent play button (antislop R-31:
+   a filled neutral reads as the second focal point without spending the accent). */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) .station-btn::before{display:none!important;}
+/* Without the arrow circle the label sits in the middle: even padding (the old right padding made room for that circle). */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) .station-btn{padding:0 16px!important;justify-content:center!important;gap:8px!important;}
+#stationOverlay#stationOverlay#stationOverlay .discovery-logo{background:#15181d;border:1px solid rgba(255,255,255,.06);}
+#stationOverlay#stationOverlay#stationOverlay .discovery-logo:hover{background:#1c2027;}
+#stationOverlay#stationOverlay#stationOverlay [data-discovery-genre].discovery-chip{background:#15181d!important;border:1px solid rgba(255,255,255,.06);}
+
+/* Radio, the three plain looks (Klasiskais, Jauns, Pixel) in one player language, as music apps do now: the song is
+   the headline and the artist under it, the station a small label above; the cover inset with round corners; no
+   codec line. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) #curStation{font:700 12px/1.2 'Google Sans','Geist Sans',system-ui,sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase!important;color:color-mix(in srgb,var(--radio-personal-text,#f5f7fa) 55%,transparent)!important;margin-bottom:4px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) .np-lines{display:flex!important;flex-direction:column!important;gap:3px!important;min-width:0!important;max-width:100%!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) :is(#npTitle,#npArtist,#curStation){align-self:stretch!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) #npTitle{order:-1;font:700 21px/1.2 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:var(--radio-personal-text,#f5f7fa)!important;letter-spacing:-.01em!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) #npArtist{font:500 14px/1.3 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:color-mix(in srgb,var(--radio-personal-text,#f5f7fa) 68%,transparent)!important;text-transform:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) :is(.meta-tag,#metaWrap){display:none!important;}
+/* The sound presets on one line (they wrapped into a ragged second row): it scrolls sideways, fading at its end. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) #eqRow{flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) #eqRow::-webkit-scrollbar{display:none;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) #eqRow>*{flex:0 0 auto!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) #npCover{clip-path:inset(12px round 20px);}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"])[data-radio-layout="clean"] #npCover{clip-path:inset(14px round 28px);}
+
+/* The dock's radio icon itself beats like a speaker while the radio plays (RG Music's bars bounce the same way);
+   nothing is added on or beside it. Stepped (6 frames a beat) so the pixel icon costs next to nothing. */
+@keyframes mkRadioThump{0%,62%,100%{transform:scale(1)}18%{transform:scale(1.14)}38%{transform:scale(.97)}}
+:is(#radioToggle,#radioIdleBtn).radio-playing :is(svg.dock-px,i.dock-alt){transform-origin:50% 70%;animation:mkRadioThump .9s steps(6,end) infinite;}
+@media (prefers-reduced-motion:reduce){:is(#radioToggle,#radioIdleBtn).radio-playing :is(svg.dock-px,i.dock-alt){animation:none;}}
+
+/* Stations joined to the radio (js/radio.js stationPickerJoined): the player rises and the list opens right under it,
+   one surface with the same rim around both. */
+html body #radioWindow#radioWindow#radioWindow.mk-st-joined::after{border-bottom-color:transparent!important;}
+#stationOverlay#stationOverlay#stationOverlay.mk-st-joined{border-radius:0 0 28px 28px!important;box-shadow:none!important;border:1.5px solid rgba(214,226,240,.34)!important;border-top:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow.mk-st-joined{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;}
+/* Amp and Dither draw their own shell, so the join is made there: the shell drops its bottom corners, rim and shadow,
+   and the list takes the shell's exact surface and hairline rim, one 1 px seam between them. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"].mk-st-joined .amp-shell{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;border-bottom-color:transparent!important;box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"].mk-st-joined .dth-deck{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important;border-bottom-color:transparent!important;box-shadow:none!important;}
+body:has(#radioWindow[data-radio-layout="amp"].mk-st-joined) #stationOverlay#stationOverlay#stationOverlay#stationOverlay.mk-st-joined{background:#101211!important;background-image:none!important;border:1px solid rgba(255,255,255,.07)!important;border-top:1px solid rgba(255,255,255,.07)!important;border-radius:0 0 20px 20px!important;}
+body:has(#radioWindow[data-radio-layout="dither"].mk-st-joined) #stationOverlay#stationOverlay#stationOverlay#stationOverlay.mk-st-joined{background:color-mix(in srgb,rgb(var(--radio-accent-rgb,120,220,200)) 6%,#111316)!important;background-image:none!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:0 0 24px 24px!important;}
+
+/* Anti-slop pass over the radio (antislop-ui rules: one accent at the key moment, matte, no floating shadows): the
+   accent stays on the play button and the playing station only; the play button sits flat. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:is([data-radio-layout="classic"],[data-radio-layout="clean"],[data-radio-layout="pixel"]) #playBtn{box-shadow:none!important;filter:none!important;}
+
+/* Amp, calmer and in the album's tone (RG Music style): the three panes share one dark surface tinted by the album,
+   matte, no fake window dots; the accent only on the active transport key and the sound levels; "Stacijas" the one
+   light button; a long title slides with soft edges instead of being cut. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pane{background:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 8%,#15181d)!important;border:1px solid rgba(255,255,255,.06)!important;box-shadow:none!important;border-radius:24px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-dots{display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-song.is-long{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 18px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 18px),transparent);}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pill{background:rgba(255,255,255,.07)!important;color:#e6e9ee!important;box-shadow:none!important;border:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pill:hover{background:rgba(255,255,255,.12)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pill.is-on{background:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 82%,#fff 18%)!important;color:#101317!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]{background:#eef1f5!important;background-blend-mode:normal!important;color:#14171c!important;outline:0!important;box-shadow:none!important;text-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0 16px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-eject,.amp-pl-foot .amp-sq)[data-act="stations"]::before{display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"] *{color:#14171c!important;text-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-pl-foot .amp-sq[data-act="stations"]::after{color:#14171c!important;text-shadow:none!important;position:static!important;margin:0!important;transform:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"]{background:rgba(255,255,255,.07)!important;background-blend-mode:normal!important;outline:0!important;box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-eject[data-act="stations"] svg{display:block!important;width:20px!important;height:20px!important;fill:#e6e9ee!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-bands{--amp-amber:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 78%,#fff 22%);--amp-green:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 78%,#fff 22%);--amp-orange:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 78%,#fff 22%);--amp-fill:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 78%,#fff 22%);}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] :is(.amp-vol,.amp-seek){--amp-fill:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 78%,#fff 22%)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-bal{--amp-fill:rgba(255,255,255,.35)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-tog,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="amp"] .amp-sq:not([data-act="stations"]){background:rgba(255,255,255,.07)!important;box-shadow:none!important;border:0!important;}
+
+/* Dither, calm for night shifts (after a dither UI where the dither lives only in the picture): real, sharp text in a
+   soft off-white (no pure white at night), a matte dark surface lightly tinted by the album, thin plain edges, quiet
+   keys; the 1-bit dither stays in the cover and the spectrum only. The dithered text bitmaps are hidden and their real
+   text (.dth-sr, kept for screen readers) is shown instead. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-deck{background:color-mix(in srgb,rgb(var(--radio-accent-rgb,120,220,200)) 6%,#111316)!important;background-image:none!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:24px!important;box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-dt,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-rule{display:none!important;}
+/* The engine's own buttons (sign-in, RADIO) keep their real label; their dithered copy goes. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] #radioSourceBar button>span:not(.dth-dt-wrap){display:inline!important;font:600 12.5px/1 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:#d6dade!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] #radioSourceBar button{width:auto!important;padding:0 12px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-dt-wrap{display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-sr{position:static!important;clip:auto!important;clip-path:none!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;display:inline-block!important;max-width:100%!important;overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;vertical-align:middle!important;font:500 13px/1.25 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:#d6dade!important;letter-spacing:.01em!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-brand .dth-sr,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-station .dth-sr,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-tag .dth-sr,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-live .dth-sr{font:600 11.5px/1.2 'Google Sans','Geist Sans',system-ui,sans-serif!important;letter-spacing:.08em!important;color:rgba(214,218,222,.6)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-song .dth-sr{font:600 21px/1.2 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:#e3e6ea!important;letter-spacing:-.005em!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-artist .dth-sr{font:500 14px/1.3 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:rgba(214,218,222,.72)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-time .dth-sr{font:500 12px/1 'Geist Mono',ui-monospace,monospace!important;color:rgba(214,218,222,.7)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] :is(.dth-song,.dth-artist).is-long{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] :is(.dth-btn,.dth-dt-host,.dth-look,.dth-head button,.dth-tools button,.dth-foot button){background:rgba(255,255,255,.055)!important;background-image:none!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:12px!important;box-shadow:none!important;font-size:13px!important;color:#d6dade!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] :is(.dth-btn,.dth-dt-host,.dth-look,.dth-head button,.dth-tools button,.dth-foot button):hover{background:rgba(255,255,255,.1)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-btn.dth-play{background:color-mix(in srgb,rgb(var(--radio-accent-rgb,120,220,200)) 70%,#d6dade)!important;border-color:transparent!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-btn.dth-play .dth-ico{filter:brightness(0)!important;opacity:.85;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-btn.dth-stations{background:#e3e6ea!important;border-color:transparent!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-btn.dth-stations .dth-sr{color:#14171c!important;font-weight:700!important;letter-spacing:.02em!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-btn.dth-stations .dth-ico{filter:brightness(0)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] .dth-art{border:0!important;border-radius:14px!important;overflow:hidden!important;background-image:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="dither"] :is(.dth-range){accent-color:rgb(var(--radio-accent-rgb,120,220,200));}
+
+/* Pioneer as a 2026 network player (user's reference): one brushed faceplate, wordmark top left, a wide black
+   OLED with cover, song, artist and the player's own prev/play/next, the spectrum on the right; two machined knobs
+   (left volume, right station tuner) with a faint icy ring lit from the top left; one continuous row of graphite
+   keys (Stacijas, every EQ preset, EQ, visuals, look). No new data on the display: a live stream has no position,
+   format or connection info, so none is shown. Metal colours still come from the user's finish. All static. */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"]{--pio-ice:#b4dcff;--pio-oled:#030405;height:282px!important;border:1px solid rgba(0,0,0,.5)!important;border-radius:20px!important;box-shadow:0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.5)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"]::before{inset:0!important;border-radius:19px!important;border:0!important;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,rgba(0,0,0,.035) 1px 2px),linear-gradient(180deg,var(--pioneer-metal-faceTop),var(--pioneer-metal-face) 48%,var(--pioneer-metal-faceBottom))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(0,0,0,.3),inset 1px 0 0 rgba(255,255,255,.12),inset -1px 0 0 rgba(0,0,0,.18)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-faceplate{justify-content:flex-start!important;left:26px!important;right:auto!important;top:11px!important;height:30px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-faceplate strong{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;font:italic 900 25px/1 Arial,sans-serif!important;letter-spacing:-1.2px!important;color:var(--pioneer-metal-ink)!important;text-shadow:0 1px 0 rgba(255,255,255,.35)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar{left:auto!important;right:24px!important;top:11px!important;max-width:46%!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .radio-win-body{padding:48px 22px 16px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .bottom-console{position:relative!important;grid-template-columns:132px minmax(0,1fr) 132px!important;grid-template-rows:minmax(0,1fr) 34px!important;gap:12px 16px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .bottom-console::before{content:""!important;display:block!important;position:relative!important;inset:auto!important;grid-column:1/-1!important;grid-row:2!important;align-self:stretch!important;margin:-4px -5px!important;border-radius:11px!important;background:#121315!important;box-shadow:inset 0 1px 2px rgba(0,0,0,.65),0 1px 0 rgba(255,255,255,.4)!important;z-index:0!important;pointer-events:none!important;width:auto!important;height:auto!important;}
+
+/* Knobs */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(.pioneer-volume,.pioneer-tune){grid-row:1!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:9px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-tune{grid-column:3!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-label{font:600 10px/1 'Google Sans','Geist Sans',system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--pioneer-metal-ink);opacity:.72;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-knob{width:104px!important;height:104px!important;border:1px solid rgba(0,0,0,.35)!important;box-shadow:0 0 0 4px #131416,0 6px 10px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.9),inset 0 0 0 6px var(--pioneer-metal-light)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-knob::before{inset:8px!important;background:repeating-radial-gradient(circle,rgba(255,255,255,var(--pioneer-metal-grain)) 0 .5px,rgba(0,0,0,.07) .8px 1.3px,transparent 1.6px 2px),conic-gradient(from 20deg,var(--pioneer-metal-light),var(--pioneer-metal-top) 12%,var(--pioneer-metal-base) 30%,var(--pioneer-metal-dark) 50%,var(--pioneer-metal-base) 68%,var(--pioneer-metal-top) 86%,var(--pioneer-metal-light))!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-knob::after{content:"";position:absolute;inset:-7px;border-radius:50%;pointer-events:none;background:conic-gradient(from 290deg,rgba(180,220,255,.85),rgba(180,220,255,.22) 22%,rgba(180,220,255,.06) 50%,rgba(180,220,255,.22) 78%,rgba(180,220,255,.85));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-knob i{inset:12px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-knob i::before{width:3px!important;left:calc(50% - 1.5px)!important;height:12px!important;background:var(--pioneer-metal-ink)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-tuner{cursor:grab;touch-action:none;outline:none;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-tuner:active{cursor:grabbing;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-tuner i{position:absolute;transform:rotate(var(--pioneer-tune-angle,0deg))!important;transition:transform .14s cubic-bezier(.2,0,0,1);pointer-events:none;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-tuner:focus-visible,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-knob:focus-within{outline:2px solid var(--pio-ice)!important;outline-offset:10px!important;}
+
+/* OLED */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-display{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)!important;gap:18px!important;padding:13px 18px 12px 13px!important;border:1px solid #000!important;border-radius:12px!important;background:linear-gradient(172deg,rgba(255,255,255,.045),transparent 36%),var(--pio-oled)!important;box-shadow:0 1px 0 rgba(255,255,255,.45),inset 0 0 0 1px rgba(255,255,255,.035)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .tech-panel{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;grid-template-rows:auto auto 1fr auto!important;column-gap:16px!important;row-gap:0!important;align-items:start!important;align-self:stretch!important;height:100%!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npRow{display:contents!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npCover{grid-column:1;grid-row:1/-1;align-self:center;width:112px!important;height:112px!important;min-width:0!important;flex:none!important;border-radius:6px!important;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,.07)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #curStation{grid-column:2;grid-row:1;margin:2px 0 4px!important;font:600 11px/1.2 'Google Sans','Geist Sans',system-ui,sans-serif!important;letter-spacing:.12em!important;text-transform:uppercase!important;color:#8e939a!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .np-lines{grid-column:2;grid-row:2;display:flex!important;flex-direction:column!important;min-width:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(#npTitle,#npArtist){display:block!important;min-width:0!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npTitle{order:-1;margin-bottom:3px!important;font:600 22px/1.2 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:#f3f4f6!important;text-transform:none!important;letter-spacing:-.005em!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npArtist{font:500 14px/1.3 'Google Sans','Geist Sans',system-ui,sans-serif!important;color:#a6abb2!important;text-transform:none!important;letter-spacing:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .nav-cluster{grid-column:2!important;grid-row:4!important;justify-self:start!important;align-self:end!important;display:flex!important;gap:14px!important;width:auto!important;height:auto!important;margin:0 0 0 -8px!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .nav-cluster::before,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .nav-cluster::after{content:none!important;display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(.nav-btn,#playBtn){display:grid!important;place-items:center!important;width:38px!important;height:38px!important;min-width:0!important;min-height:38px!important;max-height:38px!important;flex:0 0 38px!important;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;color:#f3f4f6!important;font-size:16px!important;transform:none!important;transition:background-color .12s,color .12s,transform .08s!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #playBtn{font-size:22px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(.nav-btn,#playBtn):hover{background:rgba(255,255,255,.07)!important;color:var(--pio-ice)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(.nav-btn,#playBtn):active{transform:scale(.92)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(.nav-btn,#playBtn):focus-visible{outline:2px solid var(--pio-ice)!important;outline-offset:1px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(.nav-btn,#playBtn) :is(i,svg){color:inherit!important;}
+
+/* One continuous row of graphite keys */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #eqRow{gap:4px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn){z-index:1;height:34px!important;min-height:34px!important;max-height:34px!important;border:1px solid #0b0c0e!important;border-radius:7px!important;background:linear-gradient(180deg,#3e4146,#2b2d31 55%,#232529)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 1px rgba(0,0,0,.5)!important;color:#e9ebee!important;font:600 10.5px/1 'Google Sans','Geist Sans',system-ui,sans-serif!important;letter-spacing:.07em!important;text-shadow:none!important;transition:transform .08s,box-shadow .08s!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn):hover{background:linear-gradient(180deg,#46494f,#303237 55%,#27292d)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 1px 1px rgba(0,0,0,.5)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn):active{transform:translateY(1px)!important;box-shadow:inset 0 2px 3px rgba(0,0,0,.6)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn):focus-visible{outline:2px solid var(--pio-ice)!important;outline-offset:2px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #eqRow .epb-label{font:inherit!important;letter-spacing:inherit!important;color:inherit!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #eqRow :is(.epb,#ceqTriggerBtn)::after{bottom:4px!important;width:14px!important;height:2px!important;background:rgba(255,255,255,.12)!important;box-shadow:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #eqRow :is(.epb,#ceqTriggerBtn).active{color:var(--pio-ice)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #eqRow :is(.epb,#ceqTriggerBtn).active::after{background:var(--pio-ice)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(.station-btn,#vizBtn,#themeBtn){grid-row:2!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .station-btn.station-square{grid-column:1!important;justify-self:stretch!important;width:auto!important;max-width:none!important;gap:8px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .station-btn.station-square :is(svg,i){color:var(--pio-ice)!important;fill:none!important;filter:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .station-btn.station-square svg circle{fill:currentColor!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .station-btn.station-square::after{color:inherit!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(#vizBtn,#themeBtn){grid-column:3!important;width:calc(50% - 2px)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(#vizBtn,#themeBtn) :is(svg,i){color:inherit!important;filter:none!important;}
+
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .monitor-frame{background:transparent!important;}
+/* Top-right account and source keys: one size, one finish (Reģistrēties had none, the others differed). */
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar{display:flex!important;align-items:center!important;gap:6px!important;height:30px!important;padding:0!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar button{align-items:center!important;justify-content:center!important;gap:6px!important;height:28px!important;min-height:28px!important;max-height:28px!important;margin:0!important;padding:0 12px!important;border:1px solid #0b0c0e!important;border-radius:7px!important;background:linear-gradient(180deg,#3e4146,#2b2d31 55%,#232529)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 1px rgba(0,0,0,.45)!important;color:#e9ebee!important;font:600 11px/1 'Google Sans','Geist Sans',system-ui,sans-serif!important;letter-spacing:.02em!important;text-shadow:none!important;transform:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar button:hover{background:linear-gradient(180deg,#46494f,#303237 55%,#27292d)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar button:active{transform:translateY(1px)!important;box-shadow:inset 0 2px 3px rgba(0,0,0,.6)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar button:focus-visible{outline:2px solid var(--pio-ice)!important;outline-offset:2px!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar button[aria-pressed="true"]{color:var(--pio-ice)!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #radioSourceBar button :is(svg,i,span){color:inherit!important;}
+
+@media(max-width:1000px){
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .bottom-console{grid-template-columns:104px minmax(0,1fr) 104px!important;gap:10px 12px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-knob{width:84px!important;height:84px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npCover{width:88px!important;height:88px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npTitle{font-size:18px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npArtist{font-size:13px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-display{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)!important;gap:12px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] :is(#eqRow .epb,#eqRow #ceqTriggerBtn,.station-btn,#vizBtn,#themeBtn){font-size:9px!important;letter-spacing:.03em!important;padding-inline:2px!important;}
+}
+@media(max-width:700px){
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .bottom-console{grid-template-columns:72px minmax(0,1fr) 72px!important;gap:8px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-knob{width:62px!important;height:62px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-label{display:none;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npCover{display:none!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .pioneer-display{display:grid!important;grid-template-columns:minmax(0,1fr)!important;padding:10px 12px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .monitor-frame{display:none!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] #npTitle{font-size:16px!important;}
+ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-layout="pioneer"] .eq-wrap{overflow-x:auto;scrollbar-width:none;}
+}
+
+/* Radio's mini player wears the radio's own look (data-look = the radio layout); the colours are read from the
+   radio window as it hides (--radio-accent-rgb, --pioneer-*, --amp-*, --dth-*). A live stream has no position:
+   the wave is full and only flows while it plays (rgm-live). */
+#radioMini.rgm-live .rgm-pw,#radioMini.rgm-live .rgm-pw>i{transform:none!important;animation:none!important;}
+#radioMini.rgm-live .rgm-tr{display:none;}
+/* An album accent can be dark: keys and text take it lifted towards white, as the radio's own M3 tone does. */
+#radioMini{--rgm-acc:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 78%,#fff 22%);--rgm-on:#0b0d10;--rgm-bg:color-mix(in srgb,#10161a 84%,rgb(var(--radio-accent-rgb,30,215,96)) 16%);}
+#radioMini[data-look="clean"]{--rgm-bg:#161a21;}
+#radioMini[data-look="pixel"]{--rgm-bg:color-mix(in srgb,#14171c 74%,rgb(var(--radio-accent-rgb,30,215,96)) 26%);}
+#radioMini[data-look="pixel"] .rgm-play{border-radius:12px;}
+/* Pioneer: a car head unit. One LCD window (the song over its level wave), a row of metal keys under it. */
+#radioMini[data-look="pioneer"]{--rgm-acc:var(--pioneer-ink,#1ed760);--rgm-ink:#1b1d20;--rgm-sub:#1b1d20;--rgm-key:rgba(0,0,0,.12);--key-top:#f3f4f5;--key-bottom:#b1b5b9;--key-ink:#1b1d20;grid-template-rows:28px 12px 32px;background:linear-gradient(165deg,var(--pioneer-metal-faceTop,#a6adb3),var(--pioneer-metal-face,#858b91) 42%,var(--pioneer-metal-faceBottom,#656b6f));border-color:var(--pioneer-metal-edge,rgba(0,0,0,.25));border-radius:20px;}
+#radioMini[data-look="pioneer"][data-metal="dark"]{--rgm-ink:#e6e8ea;--rgm-sub:#e6e8ea;--rgm-key:rgba(255,255,255,.12);--key-top:#45484d;--key-bottom:#1e2023;--key-ink:#e6e8ea;}
+#radioMini[data-look="pioneer"] :is(.rgm-meta,.rgm-wave){background:#0b0f0c;}
+#radioMini[data-look="pioneer"] .rgm-meta{align-self:stretch;display:flex;flex-direction:column;justify-content:center;padding:0 8px;border-radius:6px 6px 0 0;font-family:ui-monospace,'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.04em;}
+#radioMini[data-look="pioneer"] .rgm-meta>b{color:var(--pioneer-ink,#1ed760);}
+#radioMini[data-look="pioneer"] .rgm-meta>span{color:color-mix(in srgb,var(--pioneer-ink,#1ed760) 62%,#0b0f0c);}
+#radioMini[data-look="pioneer"]:not(.rgm-mid):not(.rgm-tiny) .rgm-wave{grid-column:2;grid-row:2;max-width:none;border-radius:0 0 6px 6px;}
+#radioMini[data-look="pioneer"]:not(.rgm-mid):not(.rgm-tiny) .rgm-ctrls{grid-row:3;}
+#radioMini[data-look="pioneer"]:is(.rgm-mid,.rgm-tiny) .rgm-wave{border-radius:4px;}
+#radioMini[data-look="pioneer"] .rgm-wave>*{left:8px;right:8px;}
+#radioMini[data-look="pioneer"] .rgm-art{border-radius:6px;}
+#radioMini[data-look="pioneer"] .rgm-b{width:36px;height:26px;border-radius:6px;opacity:1;color:var(--key-ink);background:linear-gradient(var(--key-top),var(--key-bottom));box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.4),0 0 0 1px rgba(0,0,0,.25);}
+#radioMini[data-look="pioneer"] .rgm-b:hover{background:linear-gradient(var(--key-top),var(--key-bottom));filter:brightness(1.07);}
+#radioMini[data-look="pioneer"] .rgm-play{width:52px;}
+#radioMini[data-look="pioneer"] .rgm-b svg{width:16px;height:16px;}
+/* Amp: Winamp. The song in the LED screen, small bevelled transport keys, an oscilloscope line. */
+#radioMini[data-look="amp"]{--amp-led:color-mix(in srgb,rgb(var(--amp-accent-rgb,105,201,30)) 70%,#fff 30%);--rgm-bg:var(--amp-body,#2b3048);--rgm-ink:var(--amp-led);--rgm-sub:var(--amp-dim,#9aa1bd);--rgm-acc:var(--amp-led);--rgm-on:var(--amp-screen,#171a2c);border-color:var(--amp-line,#3a4160);border-radius:8px;}
+#radioMini[data-look="amp"] .rgm-meta{align-self:stretch;display:flex;flex-direction:column;justify-content:center;background:var(--amp-screen,#171a2c);border-radius:3px;padding:0 7px;box-shadow:inset 0 1px 3px rgba(0,0,0,.5);font-family:var(--font-time,'Geist Mono',ui-monospace,monospace);}
+#radioMini[data-look="amp"] .rgm-art{border-radius:3px;}
+#radioMini[data-look="amp"] .rgm-b{width:34px;height:24px;border-radius:3px;opacity:1;color:var(--amp-dim,#9aa1bd);background:linear-gradient(var(--amp-line,#3a4160),var(--amp-inset,#1e2237));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 2px rgba(0,0,0,.4);}
+#radioMini[data-look="amp"] .rgm-b:hover{color:var(--amp-text,#e9ecf6);background:linear-gradient(var(--amp-line,#3a4160),var(--amp-inset,#1e2237));}
+#radioMini[data-look="amp"] .rgm-play{width:40px;color:var(--amp-led);}
+#radioMini[data-look="amp"] .rgm-b svg{width:16px;height:16px;}
+#radioMini[data-look="amp"] .rgm-x{width:16px;height:16px;border-radius:2px;color:var(--amp-dim,#9aa1bd);background:linear-gradient(var(--amp-line,#3a4160),var(--amp-inset,#1e2237));}
+#radioMini[data-look="amp"] .rgm-x svg{width:10px;height:10px;}
+/* Dither: 1-bit. Paper and one ink, a dotted ink frame, square everything, a stepped wave. */
+#radioMini[data-look="dither"]{--rgm-bg:var(--dth-paper,#050505);--rgm-ink:var(--dth-text,#f6f5ef);--rgm-sub:var(--dth-dim,#cfcec6);--rgm-acc:rgb(var(--dth-ink-rgb,120,220,200));--rgm-on:var(--dth-paper,#050505);border:2px solid transparent;border-radius:0;box-shadow:none;background:linear-gradient(var(--dth-paper,#050505),var(--dth-paper,#050505)) padding-box,repeating-conic-gradient(rgb(var(--dth-ink-rgb,120,220,200)) 0 25%,transparent 0 50%) 0 0/2px 2px border-box;--rgm-wave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12' shape-rendering='crispEdges'%3E%3Cpath d='M-2 9H6V3H18V9H26' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E");}
+#radioMini[data-look="dither"] .rgm-meta{font-family:ui-monospace,'Geist Mono',monospace;}
+#radioMini[data-look="dither"] :is(.rgm-b,.rgm-art,.rgm-x){border-radius:0;}
+#radioMini[data-look="dither"] .rgm-art img{image-rendering:pixelated;}
+</style>
+<div id="rgMini" role="region" aria-label="RG Music mini atskaņotājs" hidden>
+  <button type="button" class="rgm-art" data-rgm="open" aria-label="Atvērt RG Music" title="Atvērt RG Music"><img alt="" decoding="async"></button>
+  <button type="button" class="rgm-meta" data-rgm="open" title="Atvērt RG Music"><b><i></i></b><span><i></i></span></button>
+  <button type="button" class="rgm-x" data-rgm="hide" aria-label="Aizvērt mini atskaņotāju (mūzika skan tālāk)" title="Aizvērt (mūzika skan tālāk)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.47 4.47a.75.75 0 0 1 1.06 0L10 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L11.06 10l4.47 4.47a.75.75 0 1 1-1.06 1.06L10 11.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L8.94 10 4.47 5.53a.75.75 0 0 1 0-1.06Z"/></svg></button>
+  <div class="rgm-ctrls">
+    <button type="button" class="rgm-b rgm-like" data-rgm="like" aria-pressed="false" aria-label="Patīk" title="Patīk"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="rgm-on" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/><path class="rgm-off" d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/></svg></button>
+    <button type="button" class="rgm-b" data-rgm="prev" aria-label="Iepriekšējā" title="Iepriekšējā"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+    <button type="button" class="rgm-b rgm-play" data-rgm="play" aria-label="Atskaņot" title="Atskaņot"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="rgm-on" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/><path class="rgm-off" d="M8 5v14l11-7z"/></svg></button>
+    <button type="button" class="rgm-b" data-rgm="next" aria-label="Nākamā" title="Nākamā"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+    <button type="button" class="rgm-b rgm-mute" data-rgm="mute" aria-pressed="false" aria-label="Izslēgt skaņu" title="Izslēgt skaņu"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="rgm-on" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/><path class="rgm-off" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+  </div>
+  <div class="rgm-wave" aria-hidden="true"><i class="rgm-tr"></i><span class="rgm-pw"><i><b><i class="rgm-wv"></i></b></i></span></div>
+</div>
+<div id="radioMini" class="rgm-live" role="region" aria-label="Radio mini atskaņotājs" hidden>
+  <button type="button" class="rgm-art" data-rgm="open" aria-label="Atvērt radio" title="Atvērt radio"><img alt="" decoding="async"></button>
+  <button type="button" class="rgm-meta" data-rgm="open" title="Atvērt radio"><b><i></i></b><span><i></i></span></button>
+  <button type="button" class="rgm-x" data-rgm="hide" aria-label="Aizvērt mini atskaņotāju (mūzika skan tālāk)" title="Aizvērt (mūzika skan tālāk)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.47 4.47a.75.75 0 0 1 1.06 0L10 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L11.06 10l4.47 4.47a.75.75 0 1 1-1.06 1.06L10 11.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L8.94 10 4.47 5.53a.75.75 0 0 1 0-1.06Z"/></svg></button>
+  <div class="rgm-ctrls">
+    <button type="button" class="rgm-b" data-rgm="prev" aria-label="Iepriekšējā stacija" title="Iepriekšējā stacija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+    <button type="button" class="rgm-b rgm-play" data-rgm="play" aria-label="Atskaņot" title="Atskaņot"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="rgm-on" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/><path class="rgm-off" d="M8 5v14l11-7z"/></svg></button>
+    <button type="button" class="rgm-b" data-rgm="next" aria-label="Nākamā stacija" title="Nākamā stacija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+    <button type="button" class="rgm-b rgm-mute" data-rgm="mute" aria-pressed="false" aria-label="Izslēgt skaņu" title="Izslēgt skaņu"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="rgm-on" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/><path class="rgm-off" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+  </div>
+  <div class="rgm-wave" aria-hidden="true"><i class="rgm-tr"></i><span class="rgm-pw"><i><b><i class="rgm-wv"></i></b></i></span></div>
+</div>
+
 <!-- rgpool (rgapp.page/pool, its own Worker): the electricity price, opened from the header search. -->
 <div id="rgpoolSheet" aria-hidden="true" onclick="if(event.target===this) closeRgpoolSheet()" style="display:none;position:fixed;inset:0;z-index:171192;pointer-events:auto;background:transparent;">
   <section id="rgpoolSheetPanel" role="dialog" aria-label="rgpool, elektrības cena" style="position:absolute;right:12px;bottom:86px;width:min(480px,calc(100vw - 24px));height:min(860px,calc(100dvh - 108px));min-height:420px;border-radius:24px;background:#121318;box-shadow:0 18px 60px rgba(0,0,0,.58),inset 0 0 0 1px rgba(255,255,255,.08);overflow:hidden;pointer-events:auto;">
@@ -3854,6 +4470,86 @@ function mkSheetClose(sheet, panel, key, btn, done) {
   });
 })();
 
+/* The dock row's mini players (RG Music, radio). Each sits beside the dock and is as tall as it: nothing else is
+   drawn in that row (the calendar, with however many people in its side columns, ends above it). The first that
+   wants a place gets the right side, a second the left; with no room on a free side a mini stays hidden rather than
+   cover anything. Widths each layout needs (padding, cover, gap, buttons) come from the CSS of #rgMini. */
+window.__mkMiniDock = (function () {
+  var FULL = 290, MID = 242, TINY = 166, GAP = 10, EDGE = 8, MAX = 360;
+  var list = [];
+  function px(el, prop, v) { v = Math.round(v) + 'px'; if (el.style[prop] !== v) el.style[prop] = v; }
+  function layout(caller) {
+    var bar = document.getElementById('bottomBtnBar');
+    var b = bar && bar.offsetWidth ? bar.getBoundingClientRect() : null;
+    var free = b ? { right: window.innerWidth - b.right - GAP - EDGE, left: b.left - GAP - EDGE } : null;
+    var taken = {}, shown = [];
+    list.forEach(function (m) {
+      var el = m.el, side = null;
+      if (free && m.wants()) side = ['right', 'left'].filter(function (x) { return !taken[x] && free[x] >= TINY; })[0] || null;
+      if (!side) { if (!el.hidden) { el.hidden = true; progress(el, null); } return; }
+      taken[side] = true;
+      var room = Math.min(free[side], MAX), w = room >= FULL ? room : room >= MID ? MID : TINY;
+      el.classList.toggle('rgm-mid', room >= MID && room < FULL);
+      el.classList.toggle('rgm-tiny', room < MID);
+      var resized = el.style.width !== Math.round(w) + 'px';
+      px(el, 'width', w); px(el, 'height', b.height); px(el, 'top', b.top);
+      if (resized && !el.hidden) slide(el);
+      px(el, 'left', side === 'right' ? b.right + GAP : b.left - GAP - w);
+      if (el.hidden) { el.hidden = false; slide(el); if (m !== caller) shown.push(m); }
+    });
+    shown.forEach(function (m) { m.refresh(); });
+  }
+  // The progress wave: one step a second from where the player is; the keyframe set alternates (A/B) so a new
+  // report restarts it. s = null stops it.
+  function progress(el, s) {
+    var pw = el.querySelector('.rgm-pw');
+    if (!pw) return;
+    var parts = [[pw, 'rgmPw'], [pw.firstElementChild, 'rgmPi'], [el.querySelector('.rgm-tr'), 'rgmTr']];
+    var dur = s ? +s.dur || 0 : 0, rate = s ? +s.rate || 1 : 1, run = '';
+    if (dur > 0) {
+      el.dataset.step = el.dataset.step === 'A' ? 'B' : 'A';
+      run = ' ' + (dur / rate).toFixed(2) + 's steps(' + Math.max(1, Math.round(dur)) + ') -' +
+        (Math.min(+s.at || 0, dur) / rate).toFixed(2) + 's 1 both ' + (s.playing && !s.loading ? 'running' : 'paused');
+    }
+    parts.forEach(function (x) { if (x[0]) x[0].style.animation = run ? x[1] + el.dataset.step + run : 'none'; });
+  }
+  // The song's lines; a name longer than its line slides (CSS rgmMarq). Measured only when it changes.
+  function text(el, title, sub) {
+    var t = el.querySelector('.rgm-meta>b>i'), s = el.querySelector('.rgm-meta>span>i');
+    if (!t || (t.textContent === title && s.textContent === sub)) return;
+    t.textContent = title;
+    s.textContent = sub;
+    slide(el);
+  }
+  function slide(el) {
+    if (el.hidden) return;
+    el.querySelectorAll('.rgm-meta>:is(b,span)').forEach(function (box) {
+      var over = box.firstElementChild.offsetWidth - box.clientWidth;
+      box.classList.toggle('rgm-run', over > 1);
+      if (over > 1) {
+        box.style.setProperty('--rgm-shift', -(over + 16) + 'px');
+        box.style.setProperty('--rgm-dur', (6 + (over + 16) / 18).toFixed(1) + 's');
+      }
+    });
+  }
+  // House rule: no violet. True for colours (#rrggbb or "r,g,b") whose hue reads as violet; greys pass.
+  function violet(c) {
+    var m = /^#([0-9a-f]{6})$/i.exec(c || ''), r, g, bl;
+    if (m) { var n = parseInt(m[1], 16); r = n >> 16; g = n >> 8 & 255; bl = n & 255; }
+    else { m = /^\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*$/.exec(c || ''); if (!m) return true; r = +m[1]; g = +m[2]; bl = +m[3]; }
+    r /= 255; g /= 255; bl /= 255;
+    var max = Math.max(r, g, bl), min = Math.min(r, g, bl), d = max - min;
+    if (d < 0.08) return false;
+    var h = (max === r ? ((g - bl) / d + 6) % 6 : max === g ? (bl - r) / d + 2 : (r - g) / d + 4) * 60;
+    return h >= 255 && h <= 330;
+  }
+  window.addEventListener('resize', function () { list.forEach(function (m) { m.refresh(); }); });
+  return {
+    add: function (m) { list.push(m); },
+    layout: layout, progress: progress, violet: violet, text: text, slide: slide
+  };
+})();
+
 /* RG Music launcher: Plānotājs' sheet logic. It signs in with this device's Minka session: the token
    rides in the iframe's #hash (never sent in a request) and the music server checks it once at
    api.rgapp.page/api/me. Loaded on hover/first open and kept while hidden, so the music plays on;
@@ -3901,6 +4597,8 @@ function mkSheetClose(sheet, panel, key, btn, done) {
       return;
     }
     if (sheet.dataset.closing !== '1') lastRgMusicFocus = document.activeElement;
+    miniOn = false;
+    renderMini();
     sheet.style.display = 'block';
     sheet.setAttribute('aria-hidden', 'false');
     if (btn) btn.classList.add('rgmusic-open');
@@ -3922,6 +4620,9 @@ function mkSheetClose(sheet, panel, key, btn, done) {
     if (typeof window.updateBuddyUiSuppression === 'function') window.updateBuddyUiSuppression();
     if (lastRgMusicFocus && typeof lastRgMusicFocus.focus === 'function') lastRgMusicFocus.focus({ preventScroll: true });
     lastRgMusicFocus = null;
+    // Closed while it plays: the mini player beside the dock takes over at once.
+    miniOn = !!(state && state.playing);
+    renderMini();
   };
 
   window.addEventListener('message', function (event) {
@@ -3929,6 +4630,77 @@ function mkSheetClose(sheet, panel, key, btn, done) {
     if (!f || event.source !== f.contentWindow || !event.data || event.data.type !== 'rg-music') return;
     var btn = document.getElementById('rgMusicDockBtn');
     if (btn) btn.classList.toggle('rgmusic-playing', !!event.data.playing);
+    // One source at a time: RG Music starting stops the radio (and the radio starting pauses RG Music, below).
+    if (event.data.playing && !(state && state.playing) && window.__mkRadioPause) window.__mkRadioPause();
+    state = event.data;
+    // Paused for 30 s (time to resume from it), the mini player leaves by itself.
+    clearTimeout(idleTimer);
+    if (miniOn && !state.playing) idleTimer = setTimeout(function () { miniOn = false; renderMini(); }, IDLE_MS);
+    renderMini();
+  });
+
+  /* Mini player (#rgMini): shown when the window closes while music plays, gone by its ×, 30 s after a pause, or when
+     the window opens. It shows the player's last report and sends the buttons back as commands. */
+  var state = null, miniOn = false, shownId = null, idleTimer = 0, IDLE_MS = 30000;
+  function send(cmd) {
+    var f = frame();
+    if (!f || f.dataset.loaded !== '1' || !f.contentWindow) return;
+    try { f.contentWindow.postMessage({ type: 'rg-music-cmd', cmd: cmd }, new URL(f.src).origin); } catch (e) {}
+  }
+  // The album's colours from the player; any that would read as violet are left neutral (house rule: no violet).
+  var TINT = { bg: '--rgm-bg', ink: '--rgm-ink', sub: '--rgm-sub', accent: '--rgm-acc', onAccent: '--rgm-on' };
+  var violet = window.__mkMiniDock.violet;
+  var shownTint = '';
+  function paintMini(mini, tint) {
+    var key = JSON.stringify(tint || null);
+    if (key === shownTint) return;
+    shownTint = key;
+    var bad = !tint || violet(tint.bg) || violet(tint.accent);
+    Object.keys(TINT).forEach(function (k) {
+      if (!bad && tint[k] && !violet(tint[k])) mini.style.setProperty(TINT[k], tint[k]);
+      else mini.style.removeProperty(TINT[k]);
+    });
+  }
+  function renderMini() {
+    var mini = document.getElementById('rgMini');
+    if (!mini) return;
+    window.__mkMiniDock.layout(rgDockMini);
+    if (mini.hidden) return;
+    var s = state, song = s.song;
+    paintMini(mini, s.tint);
+    if (shownId !== song.id) {
+      shownId = song.id;
+      var img = mini.querySelector('.rgm-art img');
+      img.onerror = function () { img.onerror = null; img.src = 'https://i.ytimg.com/vi/' + song.id + '/hqdefault.jpg'; };
+      img.src = song.art || ('https://i.ytimg.com/vi/' + song.id + '/hqdefault.jpg');
+      window.__mkMiniDock.text(mini, song.title || '', song.artist || '');
+    }
+    mini.classList.toggle('rgm-playing', !!s.playing);
+    mini.classList.toggle('rgm-wait', !!s.loading);
+    var play = mini.querySelector('[data-rgm="play"]'), label = s.playing ? 'Pauze' : 'Atskaņot';
+    if (play.getAttribute('aria-label') !== label) { play.setAttribute('aria-label', label); play.title = label; }
+    mini.querySelector('[data-rgm="like"]').setAttribute('aria-pressed', String(!!s.liked));
+    var mute = mini.querySelector('[data-rgm="mute"]'), mlabel = s.muted ? 'Ieslēgt skaņu' : 'Izslēgt skaņu';
+    mute.setAttribute('aria-pressed', String(!!s.muted));
+    if (mute.getAttribute('aria-label') !== mlabel) { mute.setAttribute('aria-label', mlabel); mute.title = mlabel; }
+    window.__mkMiniDock.progress(mini, s);
+  }
+  var rgDockMini = {
+    el: document.getElementById('rgMini'), refresh: renderMini,
+    wants: function () {
+      var sheet = document.getElementById('rgMusicSheet');
+      return miniOn && !!(state && state.song) && !(sheet && sheet.style.display !== 'none' && sheet.dataset.closing !== '1');
+    }
+  };
+  if (rgDockMini.el) window.__mkMiniDock.add(rgDockMini);
+  window.__mkRgMusicPause = function () { if (state && state.playing) send('pause'); };
+  document.addEventListener('click', function (event) {
+    var b = event.target.closest && event.target.closest('#rgMini [data-rgm]');
+    if (!b) return;
+    var act = b.getAttribute('data-rgm');
+    if (act === 'open') window.openRgMusic();
+    else if (act === 'hide') { miniOn = false; renderMini(); }
+    else send(act);
   });
 
   window.addEventListener('resize', positionRgMusicSheet);
@@ -3940,6 +4712,122 @@ function mkSheetClose(sheet, panel, key, btn, done) {
       window.closeRgMusicSheet();
     }
   });
+})();
+
+/* Radio's mini player (#radioMini): when the radio window is hidden (the dock's RADIO button) while the stream plays,
+   this takes its place beside the dock, in the radio's own look. Its ×, opening the radio window, or 30 s paused end it. It follows the radio by events only: rg-radio-state
+   (js/radio.js) and rg-now-playing-art. */
+(function () {
+  var el = document.getElementById('radioMini');
+  if (!el) return;
+  var on = false, idleTimer = 0, st = { state: 'idle', muted: false }, meta = { title: '', artist: '', cover: '' };
+  var LOOK_VARS = ['--pioneer-ink', '--pioneer-metal-faceTop', '--pioneer-metal-face', '--pioneer-metal-faceBottom', '--pioneer-metal-edge',
+    '--amp-body', '--amp-inset', '--amp-screen', '--amp-line', '--amp-dim', '--amp-accent-rgb',
+    '--dth-ink-rgb', '--dth-paper', '--dth-text', '--dth-dim'];
+  var dock = window.__mkMiniDock;
+  function $(id) { return document.getElementById(id); }
+  function station() { var c = $('curStation'); return c ? c.textContent.trim() : ''; }
+  // The album/skin accent the dock's radio icon wears; a violet one stays the look's default.
+  function accent() {
+    var t = $('radioToggle') || $('radioIdleBtn'), rgb = t ? getComputedStyle(t).getPropertyValue('--radio-accent-rgb').trim() : '';
+    if (rgb && !dock.violet(rgb)) el.style.setProperty('--radio-accent-rgb', rgb); else el.style.removeProperty('--radio-accent-rgb');
+  }
+  // The look and its colours, read while the radio window is still shown.
+  function sampleLook() {
+    var rw = $('radioWindow');
+    if (!rw) return;
+    el.dataset.look = rw.dataset.radioLayout || 'classic';
+    var cs = getComputedStyle(rw);
+    LOOK_VARS.forEach(function (v) {
+      var x = cs.getPropertyValue(v).trim();
+      if (x && !(/rgb|ink/.test(v) && dock.violet(x.replace(/^rgb\(|\)$/g, '')))) el.style.setProperty(v, x); else el.style.removeProperty(v);
+    });
+    // Pioneer's metal comes light or dark: the keys take the colour that reads on it.
+    var face = /(\d+)\D+(\d+)\D+(\d+)/.exec(cs.getPropertyValue('--pioneer-metal-face') || '');
+    el.dataset.metal = face && (0.299 * face[1] + 0.587 * face[2] + 0.114 * face[3]) > 110 ? 'light' : 'dark';
+    accent();
+  }
+  function readMeta() {
+    var t = $('npTitle'), a = $('npArtist'), c = $('npCover');
+    meta = { title: t ? t.textContent.trim() : '', artist: a ? a.textContent.trim() : '', cover: c && c.getAttribute('src') || '' };
+  }
+  function playing() { return st.state === 'playing' || st.state === 'loading'; }
+  function wants() {
+    return on && document.body.classList.contains('radio-hidden') && !(window.isRadioMobileView && window.isRadioMobileView()) &&
+      !window.__mkRadioSupersededByLacitis;
+  }
+  function render() {
+    dock.layout(item);
+    if (el.hidden) return;
+    var name = station(), title = meta.title || name || 'Radio';
+    var sub = meta.title ? [meta.artist, name].filter(Boolean).join(' – ') : 'RG Radio';
+    dock.text(el, title, sub);
+    var img = el.querySelector('.rgm-art img');
+    if (meta.cover && img.getAttribute('src') !== meta.cover) img.src = meta.cover;
+    el.classList.toggle('rgm-playing', playing());
+    el.classList.toggle('rgm-wait', st.state === 'loading');
+    var play = el.querySelector('[data-rgm="play"]'), label = playing() ? 'Pauze' : 'Atskaņot';
+    if (play.getAttribute('aria-label') !== label) { play.setAttribute('aria-label', label); play.title = label; }
+    var mute = el.querySelector('[data-rgm="mute"]'), ml = st.muted ? 'Ieslēgt skaņu' : 'Izslēgt skaņu';
+    mute.setAttribute('aria-pressed', String(!!st.muted));
+    if (mute.getAttribute('aria-label') !== ml) { mute.setAttribute('aria-label', ml); mute.title = ml; }
+  }
+  var item = { el: el, wants: wants, refresh: render };
+  dock.add(item);
+  document.addEventListener('rg-radio-state', function (e) {
+    var was = playing();
+    if (e.detail) st = e.detail;
+    // One source at a time: the radio starting pauses RG Music.
+    if (playing() && !was && window.__mkRgMusicPause) window.__mkRgMusicPause();
+    // Paused for 30 s, the mini player leaves by itself.
+    clearTimeout(idleTimer);
+    if (on && !playing()) idleTimer = setTimeout(function () { on = false; render(); }, 30000);
+    if (on) render();
+  });
+  // The dock's radio icon beats while the radio plays (CSS mkRadioThump on .radio-playing).
+  function dockPlaying(on) {
+    ['radioToggle', 'radioIdleBtn'].forEach(function (id) { var b = $(id); if (b) b.classList.toggle('radio-playing', on); });
+  }
+  document.addEventListener('rg-radio-state', function () { dockPlaying(st.state === 'playing'); });
+  window.__mkRadioPause = function () {
+    var p = $('playBtn');
+    if (p && window.__mkRadioPlaybackState && !window.__mkRadioPlaybackState().paused) p.click();
+  };
+  document.addEventListener('rg-now-playing-art', function (e) {
+    var d = e.detail || {};
+    meta = { title: d.title || '', artist: d.artist || '', cover: d.coverUrl || meta.cover };
+    if (on) { accent(); render(); }
+  });
+  window.__mkRadioMini = {
+    off: function () { if (on) { on = false; render(); } },
+    // toggleRadio is hiding the window: if the radio plays, its mini player takes over (read the look first,
+    // while the window is still shown); it appears once the window is hidden (the body class watch below).
+    auto: function () {
+      if (!playing() || (window.isRadioMobileView && window.isRadioMobileView())) return;
+      sampleLook();
+      readMeta();
+      on = true;
+    }
+  };
+  el.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-rgm]');
+    if (!b) return;
+    var act = b.getAttribute('data-rgm');
+    if (act === 'open') { on = false; render(); if (document.body.classList.contains('radio-hidden')) window.toggleRadio(); }
+    else if (act === 'hide') { on = false; render(); }
+    else if (act === 'play') { var p = $('playBtn'); if (p) p.click(); }
+    else if (act === 'next' && typeof window.playNext === 'function') window.playNext();
+    else if (act === 'prev' && typeof window.playPrev === 'function') window.playPrev();
+    else if (act === 'mute' && window.rgListening) window.rgListening.toggleMute();
+  });
+  // The radio hides its window in more ways (the phone, Lācītis taking over): look again when the body's state flips.
+  var wasHidden = document.body.classList.contains('radio-hidden');
+  new MutationObserver(function () {
+    var h = document.body.classList.contains('radio-hidden');
+    if (h === wasHidden) return;
+    wasHidden = h;
+    if (on) render();
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 })();
 
 /* rgpool: the electricity price app (its own Worker at /pool) in a window

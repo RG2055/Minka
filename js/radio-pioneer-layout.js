@@ -1,7 +1,7 @@
 /* Pioneer-inspired chrome faceplate. Reuses the player's controls and audio. */
 (function(){
  'use strict';
- let head,knob,display,volume,eq,active=false,drag;
+ let head,knob,tune,display,volume,eq,active=false,drag;
  let matrix,matrixObserver,matrixEnabled=false;
  // One static mask, aligned to the displayed source pixels. No frame loop or
  // second decoder: only source changes, layout changes and resizes update it.
@@ -121,21 +121,39 @@
    wheelValue=Math.max(0,Math.min(1,wheelValue-Math.sign(delta)*Math.min(.03,Math.abs(delta)*(event.deltaMode===0?.001:.02))));wheeling=true;setVolume(wheelValue);wheeling=false;
   },{passive:false});
  }
+ // Right knob = station tuner: one detent per step (wheel, drag, touch, arrows) calls the player's own
+ // playPrev/playNext. Steps are spaced so trackpad momentum cannot queue a burst of stream loads.
+ function bindTuner(el){
+  let angle=0,last=0,wheel=0,turn=null;
+  const step=dir=>{
+   const now=performance.now();if(now-last<220)return;last=now;
+   angle+=dir*24;el.style.setProperty('--pioneer-tune-angle',angle+'deg');
+   (dir>0?window.playNext:window.playPrev)?.();
+   requestAnimationFrame(()=>el.setAttribute('aria-valuetext',document.getElementById('curStation')?.textContent.trim()||''));
+  };
+  el.addEventListener('wheel',e=>{if(!active||e.ctrlKey)return;e.preventDefault();e.stopPropagation();wheel+=e.deltaY||e.deltaX;if(Math.abs(wheel)>=60){step(Math.sign(wheel));wheel=0;}},{passive:false});
+  el.addEventListener('pointerdown',e=>{if(!active||e.button!==0)return;e.preventDefault();el.focus({preventScroll:true});turn={id:e.pointerId,x:e.clientX,y:e.clientY};el.setPointerCapture(e.pointerId);});
+  el.addEventListener('pointermove',e=>{if(!turn||e.pointerId!==turn.id)return;const d=(e.clientX-turn.x)+(turn.y-e.clientY);if(Math.abs(d)>=36){step(Math.sign(d));turn.x=e.clientX;turn.y=e.clientY;}});
+  const end=e=>{if(turn&&e.pointerId===turn.id)turn=null;};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);el.addEventListener('lostpointercapture',()=>{turn=null;});
+  el.addEventListener('keydown',e=>{const dir={ArrowUp:1,ArrowRight:1,ArrowDown:-1,ArrowLeft:-1}[e.key];if(!dir)return;e.preventDefault();e.stopPropagation();last=0;step(dir);});
+ }
  function build(rw){
   if(head)return;
-  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-pioneer-layout.css"]')?.href||'css/radio-pioneer-layout.css?v=20261112nw1';css.onload=()=>{window.syncShellLayout?.();syncMatrix();};document.head.append(css);
+  const css=document.createElement('link');css.rel='stylesheet';css.href=document.querySelector('link[href*="radio-pioneer-layout.css"]')?.href||'css/radio-pioneer-layout.css?v=20261116pn1';css.onload=()=>{window.syncShellLayout?.();syncMatrix();};document.head.append(css);
   head=document.createElement('div');head.className='pioneer-faceplate';head.innerHTML='<strong>Pioneer</strong>';rw.prepend(head);
-  knob=document.createElement('div');knob.className='pioneer-volume';knob.innerHTML='<div class="pioneer-knob"><i aria-hidden="true"></i><span aria-hidden="true">VOLUME</span></div>';
+  knob=document.createElement('div');knob.className='pioneer-volume';knob.innerHTML='<span class="pioneer-label" aria-hidden="true">Skaļums</span><div class="pioneer-knob"><i aria-hidden="true"></i></div>';
+  tune=document.createElement('div');tune.className='pioneer-tune';tune.innerHTML='<span class="pioneer-label" aria-hidden="true">Stacija</span><div class="pioneer-knob pioneer-tuner" tabindex="0" role="spinbutton" aria-label="Stacija" title="Stacija: griez, ritini vai lieto bultas"><i aria-hidden="true"></i></div>';
   display=document.createElement('div');display.className='pioneer-display';
-  rw.querySelector('.bottom-console').append(knob,display);
-  volume=rw.querySelector('#vol');eq=rw.querySelector('.eq-wrap');bindVolume();
+  rw.querySelector('.bottom-console').append(knob,display,tune);
+  volume=rw.querySelector('#vol');eq=rw.querySelector('.eq-wrap');bindVolume();bindTuner(tune.querySelector('.pioneer-tuner'));
  }
  function apply(rw,settings={}){
   const enabled=rw.dataset.radioLayout==='pioneer';
   if(enabled){
    build(rw);applyFinish(rw,settings);clearPanelOverrides(rw);
    move(eq,rw.querySelector('.bottom-console'));move(volume,knob.querySelector('.pioneer-knob'));
-   move(rw.querySelector('.tech-panel'),display);move(rw.querySelector('.monitor-frame'),display);
+   move(rw.querySelector('.tech-panel'),display);move(rw.querySelector('.monitor-frame'),display);move(rw.querySelector('.nav-cluster'),rw.querySelector('.tech-panel'));
    volume.setAttribute('aria-label','Skaļums');volume.title='Skaļums — velc augšup vai pa labi. Var arī ritināt.';syncVolume();
   }else if(active)restore();
   if(enabled!==active){active=enabled;window.syncShellLayout?.();}
