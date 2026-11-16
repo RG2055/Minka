@@ -297,3 +297,13 @@
 #headerAppearance .hs-db-tors::before {-webkit-mask-position:right 7% center !important;mask-position:right 7% center !important;-webkit-mask-repeat:no-repeat !important;mask-repeat:no-repeat !important;}
 #headerAppearance .hs-db-signals {--a:url("../data/skins/dock-dither-signals.webp");}
 #headerAppearance .hs-db-rezgis {--a:url("../data/skins/dock-dither-rezgis.webp");}
+
+/* ---- Galvene panel: tile profiles (Izkārtojums → Flīzes) ---- */
+#headerAppearance .hs-own-list {display:grid;gap:2px;}
+#headerAppearance .hs-own-row {display:flex;align-items:center;gap:6px;min-height:36px;}
+#headerAppearance .hs-own-row label {flex:1 1 auto;display:flex;align-items:center;gap:10px;min-width:0;font-size:13px;cursor:pointer;}
+#headerAppearance .hs-own-row.is-off label {color:var(--hs-muted);}
+#headerAppearance .hs-own-row button {flex:0 0 32px;width:32px;height:32px;border-radius:10px;border:1px solid #ffffff25;background:var(--hs-raised);color:var(--hs-text);font:600 15px/1 Inter,system-ui,sans-serif;cursor:pointer;}
+#headerAppearance .hs-own-row button:disabled {opacity:.3;cursor:default;}
+#headerAppearance .hs-own .hs-hint {min-height:0;margin:10px 0 6px;}
+#headerAppearance .hs-edit-row {margin-top:12px;}

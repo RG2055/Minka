@@ -10,6 +10,17 @@
   const backgrounds = ['riga', 'mix'];
   // Skin pack: the shift progress line, and the bottom bar's icons and surface.
   const progressStyles = ['classic', 'm3', 'cat', 'pixel', 'dither', 'ekg'];
+  // The top block's arrangement: the classic rows, or widget tiles (css/page/mk-header-x.css, "Flīzes").
+  const layouts = ['classic', 'tiles'];
+  // Tiles: which ones stand in the row and in what order. Three ready profiles and the user's own;
+  // the tools tile is in every one (the way back to this panel is in it).
+  const tileIds = ['rg', 'date', 'shift', 'wx', 'news', 'tools', 'rd'];
+  const tileProfiles = { full: tileIds, duty: ['rg', 'rd', 'shift', 'date', 'tools'], calm: ['date', 'shift', 'wx', 'news', 'tools'] };
+  function ownTiles(list) {
+    const out = (Array.isArray(list) ? list : tileIds).filter((t, i, a) => tileIds.includes(t) && a.indexOf(t) === i);
+    return out.includes('tools') ? out : out.concat('tools');
+  }
+  function tilesFor(s) { return s.profile === 'own' ? s.ownTiles : tileProfiles[s.profile] || tileIds; }
   const dockIconSets = ['pixel', 'm3', 'line', 'dither'];
   const dockTints = ['color', 'white', 'accent', 'muted'];
   const dockBars = ['default', 'dark', 'dots', 'fade', 'grid', 'kapas', 'tors', 'signals', 'rezgis'];
@@ -19,6 +30,8 @@
       palette: palettes.includes(s.palette) ? s.palette : 'scene', daily: s.daily === true,
       motion: s.motion !== false, background: backgrounds.includes(s.background) ? s.background : 'mix', day: /^\d{4}-\d{2}-\d{2}$/.test(s.day || '') ? s.day : '',
       progress: progressStyles.includes(s.progress) ? s.progress : 'classic',
+      layout: layouts.includes(s.layout) ? s.layout : 'classic',
+      profile: s.profile === 'own' || tileProfiles[s.profile] ? s.profile : 'full', ownTiles: ownTiles(s.ownTiles),
       dockIcons: dockIconSets.includes(s.dockIcons) ? s.dockIcons : 'pixel',
       dockTint: dockTints.includes(s.dockTint) ? s.dockTint : 'color',
       dockBar: dockBars.includes(s.dockBar) ? s.dockBar : s.dockBar === 'amoled' ? 'dark' : s.dockBar === 'dither' ? 'dots' : 'default' };
@@ -66,7 +79,7 @@
     if (radio?.open && /^#[a-f\d]{6}$/i.test(radio.album || '')) return { source: 'album', seed: radio.album };
     return { source: 'palette', seed: seeds[s.palette] || (s.palette === 'radio' ? radioAccent : scene) };
   }
-  const core = { KEY, seeds, normalize, dayKey, shuffle, resolveDay, read, write, palette, contrast, resolveColor };
+  const core = { KEY, seeds, tileIds, tilesFor, normalize, dayKey, shuffle, resolveDay, read, write, palette, contrast, resolveColor };
   if (typeof module === 'object' && module.exports) module.exports = core;
   if (!host || !host.document) return;
   const doc = host.document, root = doc.documentElement;
@@ -114,6 +127,8 @@
   root.dataset.headerSkin = state.skin;
   root.dataset.headerPalette = state.palette;
   root.dataset.headerProgress = state.progress;
+  root.dataset.headerLayout = state.layout;
+  root.dataset.headerTiles = tilesFor(state).join(' ');
   if (state.daily) write(storage, state);
 
   function mount() {
@@ -181,6 +196,9 @@
       scheduled = false;
       root.dataset.headerSkin = state.skin;
       root.dataset.headerProgress = state.progress;
+      if (root.dataset.headerLayout !== state.layout) root.dataset.headerLayout = state.layout;
+      const tileList = tilesFor(state).join(' ');
+      if (root.dataset.headerTiles !== tileList) root.dataset.headerTiles = tileList;
       if (state.progress === 'cat') syncPet();
       // The bottom bar lives in the shell document; it reads the same saved state (index.html),
       // this keeps it in step while the panel is open.
@@ -236,6 +254,20 @@
         : 'Rīts, diena, vakars un nakts mainās automātiski pēc Rīgas laika.';
       dialog.querySelectorAll('[data-palette]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.palette === state.palette)));
       dialog.querySelectorAll('[data-progress]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.progress === state.progress)));
+      dialog.querySelectorAll('[data-layout]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === state.layout)));
+      dialog.querySelector('.hs-tiles').hidden = state.layout !== 'tiles';
+      dialog.querySelectorAll('[data-profile]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.profile === state.profile)));
+      const own = dialog.querySelector('.hs-own');
+      own.hidden = state.profile !== 'own';
+      if (!own.hidden) {
+        // shown tiles in their order, then the ones that are off
+        const names = { rg: (host.__mkLeftRole && host.__mkLeftRole.many) || 'Radiogrāferi', date: 'Datums', shift: 'Maiņas laiks', wx: 'Laikapstākļi', news: 'Ziņas', tools: 'Rīki', rd: 'Radiologi' };
+        const shown = state.ownTiles, rows = shown.concat(tileIds.filter(t => !shown.includes(t)));
+        own.querySelector('.hs-own-list').innerHTML = rows.map(t => { const at = shown.indexOf(t), on = at >= 0;
+          return '<div class="hs-own-row' + (on ? '' : ' is-off') + '"><label><input type="checkbox" data-tile="' + t + '"' + (on ? ' checked' : '') + (t === 'tools' ? ' disabled' : '') + '><span>' + names[t] + '</span></label>' +
+            '<button type="button" data-move="-1" data-tile="' + t + '" aria-label="Pārvietot pa kreisi: ' + names[t] + '"' + (at > 0 ? '' : ' disabled') + '>←</button>' +
+            '<button type="button" data-move="1" data-tile="' + t + '" aria-label="Pārvietot pa labi: ' + names[t] + '"' + (on && at < shown.length - 1 ? '' : ' disabled') + '>→</button></div>'; }).join('');
+      }
       dialog.querySelectorAll('[data-dock-icons]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockIcons === state.dockIcons)));
       dialog.querySelectorAll('[data-dock-bar]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockBar === state.dockBar)));
       dialog.querySelectorAll('[data-dock-tint]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockTint === state.dockTint)));
@@ -263,7 +295,12 @@
       dialog = doc.createElement('dialog'); dialog.id = 'headerAppearance';
       dialog.setAttribute('aria-labelledby', 'hsTitle');
       dialog.innerHTML = '<div class="hs-heading"><div><span class="hs-eyebrow">Izskats</span><h2 id="hsTitle">Galvene</h2></div><button type="button" data-close aria-label="Aizvērt galvenes izskatu">×</button></div>' +
-        '<p class="hs-intro">Tas pats izkārtojums. Cita noskaņa.</p>' +
+        '<p class="hs-intro">Izkārtojums, noskaņa un krāsas.</p>' +
+        '<h3>Izkārtojums</h3><div class="hs-backgrounds hs-layouts" role="group" aria-label="Galvenes izkārtojums"><button type="button" data-layout="classic" aria-pressed="false">Klasiskais</button><button type="button" data-layout="tiles" aria-pressed="false">Flīzes</button></div>' +
+        '<div class="hs-tiles" hidden><h4 class="hs-sub">Profils</h4><div class="hs-backgrounds hs-profiles" role="group" aria-label="Flīžu profils">' +
+        [['full', 'Pilnā'], ['duty', 'Dežūra'], ['calm', 'Mierīgā'], ['own', 'Mana']].map(([key, label]) => '<button type="button" data-profile="' + key + '" aria-pressed="false">' + label + '</button>').join('') + '</div>' +
+        '<div class="hs-own" hidden><p class="hs-hint">Ieslēdz flīzes, kuras gribi redzēt, un sakārto tās ar bultiņām.</p><div class="hs-own-list"></div></div>' +
+        '<div class="hs-backgrounds hs-edit-row"><button type="button" data-edit-tiles>Rediģēt pašā galvenē</button></div></div>' +
         '<div class="hs-skins" role="group" aria-label="Galvenes skins">' +
         [['panorama', 'Panorāma', 'Tavs pašreizējais skats'], ['hybrid', 'Panorāma + Material', 'Panorāmas fons, maigas pogas']].map(([key, title, detail]) =>
           '<button type="button" data-skin="' + key + '" aria-pressed="false"><span class="hs-preview hs-preview-' + key + '" aria-hidden="true"><i></i><i></i><i></i><b></b><em></em></span><span class="hs-choice-title">' + title + '</span><small>' + detail + '</small></button>').join('') + '</div>' +
@@ -297,6 +334,16 @@
         else if (b.dataset.background) set({ background: b.dataset.background });
         else if (b.hasAttribute('data-rotate')) host.MinkaHeaderScenic?.rotate?.();
         else if (b.dataset.progress) set({ progress: b.dataset.progress });
+        else if (b.dataset.layout) set({ layout: b.dataset.layout });
+        else if (b.dataset.profile) set({ profile: b.dataset.profile });
+        else if (b.hasAttribute('data-edit-tiles')) { dialog.close(); host.MkHeaderX?.editTiles?.(); }
+        else if (b.dataset.move) {
+          const list = state.ownTiles.slice(), at = list.indexOf(b.dataset.tile), to = at + Number(b.dataset.move);
+          if (at >= 0 && to >= 0 && to < list.length) { list.splice(to, 0, list.splice(at, 1)[0]); set({ ownTiles: list }); }
+          // the row moved: the same arrow keeps the focus, so it can be pressed again
+          const again = dialog.querySelector('[data-move="' + b.dataset.move + '"][data-tile="' + b.dataset.tile + '"]');
+          if (again) (again.disabled ? dialog.querySelector('[data-move][data-tile="' + b.dataset.tile + '"]:not(:disabled)') || again : again).focus();
+        }
         else if (b.dataset.dockIcons) set({ dockIcons: b.dataset.dockIcons });
         else if (b.dataset.dockBar) set({ dockBar: b.dataset.dockBar });
         else if (b.dataset.dockTint) { if (state.dockIcons !== 'pixel') set({ dockTint: b.dataset.dockTint }); }
@@ -306,6 +353,11 @@
       dialog.addEventListener('change', e => {
         if (e.target.id === 'hsDaily') set({ daily: e.target.checked, day: dayKey() });
         if (e.target.id === 'hsMotion') set({ motion: e.target.checked });
+        if (e.target.dataset.tile) {
+          const t = e.target.dataset.tile;
+          set({ ownTiles: e.target.checked ? state.ownTiles.concat(t) : state.ownTiles.filter(x => x !== t) });
+          dialog.querySelector('input[data-tile="' + t + '"]')?.focus();
+        }
       });
       dialog.addEventListener('close', () => {
         if (opener?.isConnected) opener.focus({ preventScroll: true });

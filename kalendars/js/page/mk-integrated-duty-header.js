@@ -98,7 +98,9 @@
     app.style.setProperty('--mk-wing-right', Math.round(compact ? Math.max(rightWidth, 250) : Math.max(rightWidth, desktopWing)) + 'px');
     // Let wrapped names grow the scenic top row instead of clipping them.
     // Uses the existing resize/day-change scheduling, never a polling loop.
-    var dutyHeight = 87;   // three rows (css/page/mk-header-x.css); it was 108 while the day's fact had a row of its own
+    // three rows (css/page/mk-header-x.css); it was 108 while the day's fact had a row of its own.
+    // Tiles: the time row under it is 20 px lower (no chip above the band), and the tiles take that room.
+    var dutyHeight = document.documentElement.dataset.headerLayout === 'tiles' ? 107 : 87;
     wrap.querySelectorAll('.mk-duty-wing-slot').forEach(function(slot) {
       dutyHeight = Math.max(dutyHeight, Math.ceil(slot.getBoundingClientRect().height) + 8);
     });

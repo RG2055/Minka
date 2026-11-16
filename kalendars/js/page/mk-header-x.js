@@ -256,16 +256,18 @@
     // the birthday chip stands after the name days, so their line stays while either has something to say
     els.namedaySlot.parentElement.hidden = (!nd || !nd.textContent.trim() || nd.hidden) && els.bdaySlot.hidden;
     els.dayfactSlot.hidden = !dc || dc.hidden || !dc.textContent.trim();
+    fitTilesSoon();
   }
 
   /* ── Spārni: kas dežūrā ──────────────────────────────────────────────── */
   function crewRow(kind, label, list, listId) {
     var ic = kind === 'night' ? 'moon' : kind === 'leave' ? 'sun' : kind === 'later' ? 'arrive' : kind === 'full' ? 'full' : 'dot';
     return '<div class="hx-crew-row is-' + kind + '" role="listitem">' + icon(ic, 'hx-crew-ic')
-      + '<span class="hx-crew-label">' + esc(label) + '</span><span class="hx-crew-names">'
+      // one text box for the label and the names: in the tiles they flow as one text over the tile's full width
+      + '<span class="hx-crew-text"><span class="hx-crew-label">' + esc(label) + '</span><span class="hx-crew-names">'
       + list.map(function (p, i) {
         return (i ? '<span class="hx-sep">, </span>' : '') + '<button type="button" class="hx-name" data-w="' + esc(p.name) + '" data-list="' + esc(listId) + '" title="Parādīt kartīti">' + esc(p.first) + '</button>';
-      }).join('') + '</span></div>';
+      }).join('') + '</span></span></div>';
   }
   // Another day: one row per shift (08–08, 08–17, 17–08…), earliest first.
   function shiftGroups(people) {
@@ -318,7 +320,10 @@
       crew.classList.toggle('is-roomy', cls === 'd3'); crew.classList.toggle('is-tight', cls === 'tight');
     }
     function fitsHeight() { return !wing.clientHeight || wing.scrollHeight <= wing.clientHeight + 1; }
-    function allNames() { return Array.prototype.every.call(crew.querySelectorAll('.hx-crew-names'), function (n) { return n.scrollHeight <= n.clientHeight + 1; }); }
+    // what cuts the names off: their own box, or in the tiles the row's text box (label and names in one flow)
+    var cut = root.dataset.headerLayout === 'tiles' ? '.hx-crew-text' : '.hx-crew-names';
+    // a cut line is a whole line more (14 px at least); a name's own box may stand 1–3 px over its line
+    function allNames() { return Array.prototype.every.call(crew.querySelectorAll(cut), function (n) { return n.scrollHeight <= n.clientHeight + 6; }); }
     var tries = [[groups, ''], [groups, 'd']];
     if (merged) tries.push([merged, ''], [merged, 'd'], [merged, 'd3']);
     for (var i = 0; i < tries.length; i++) {
@@ -845,12 +850,22 @@
       + item('lanes', 'lanes', 'Katra maiņa savā joslā', t.today ? 'Laika lineālā zem galvenes' : 'Pieejams tikai šodienai', sw(t.lanes), !t.today)
       + (IS_RAD ? '' : item('ns', 'moon', 'Nakts sadalījums lineālā', t.nsAvail ? 'Kurš guļ kurā laikā, uz laika joslas' : (t.today ? 'Šodienai nakts plāna vēl nav' : 'Pieejams tikai šodienai'), sw(t.ns), !t.nsAvail))
       + item('cal', 'calendar', 'Izvēlēties datumu', 'Pāriet uz jebkuru dienu', chev)
-      + item('look', 'palette', 'Galvenes izskats', 'Fons, krāsas, progresa josla', chev)
+      + item('look', 'palette', 'Galvenes izskats', 'Izkārtojums, fons, krāsas, progresa josla', chev)
+      + profilesHtml()
       + '<div class="hx-mi-keys" role="note"><b>Taustiņi</b>'
       +   '<span><kbd>←</kbd><kbd>→</kbd> iepriekšējā, nākamā diena</span>'
       +   '<span><kbd>T</kbd> šodiena</span>'
       +   '<span><kbd>' + (isMac ? '⌘' : 'Ctrl') + '</kbd><kbd>K</kbd> meklēt</span></div>'
       + '</div>';
+  }
+  // Tiles: the profile is changed right here (the full editor is in "Galvenes izskats").
+  function profilesHtml() {
+    var api = window.MinkaHeaderAppearance, cur = api && api.snapshot().profile;
+    if (!tiles.on || !api) return '';
+    return '<div class="hx-mi-prof" role="group" aria-label="Flīžu profils"><b>Flīžu profils</b>'
+      + [['full', 'Pilnā'], ['duty', 'Dežūra'], ['calm', 'Mierīgā'], ['own', 'Mana']].map(function (p) {
+        return '<button type="button" class="hx-prof" data-profile="' + p[0] + '" aria-pressed="' + (p[0] === cur) + '">' + p[1] + '</button>';
+      }).join('') + '<button type="button" class="hx-prof hx-prof-edit" data-tool="edit-tiles">Rediģēt flīzes</button></div>';
   }
   function runTool(id) {
     if (id === 'lanes' || id === 'ns') {
@@ -866,6 +881,7 @@
     if (id === 'phones') openPhones(from);
     else if (id === 'cal') openDate(from);
     else if (id === 'look') openLook(from);
+    else if (id === 'edit-tiles') enterEdit();
   }
 
   /* ── Datuma izvēle: M3 kalendārs ─────────────────────────────────────────
@@ -1377,7 +1393,7 @@
      virs tā (fixed, z 9999). Kamēr kāds logs ir redzams, slānis paceļas virs
      kaķa; kad logs aizvērts, viss ir kā bija. */
   function layerSync() {
-    var up = (pop && !pop.hidden) || (pal && !pal.hidden) || (ph.el && !ph.el.hidden) || (dp.el && !dp.el.hidden);
+    var up = (pop && !pop.hidden) || (pal && !pal.hidden) || (ph.el && !ph.el.hidden) || (dp.el && !dp.el.hidden) || (edit && edit.on);
     root.classList.toggle('hx-layer-up', !!up);
   }
 
@@ -1393,6 +1409,12 @@
     $('minkaBarWrap').appendChild(pop);
     pop.addEventListener('pointerenter', function () { clearTimeout(popCloseT); });
     pop.addEventListener('click', function (e) {
+      var prof = e.target.closest('[data-profile]');
+      if (prof && window.MinkaHeaderAppearance) {
+        window.MinkaHeaderAppearance.set({ profile: prof.dataset.profile });
+        Array.prototype.forEach.call(pop.querySelectorAll('[data-profile]'), function (b) { b.setAttribute('aria-pressed', String(b === prof)); });
+        return;
+      }
       var mi = e.target.closest('[data-tool]');
       if (mi && mi.getAttribute('aria-disabled') !== 'true') runTool(mi.dataset.tool);
     });
@@ -2013,7 +2035,7 @@
   }
   window.addEventListener('resize', function () {
     clearTimeout(syncMoonTuck.t);
-    syncMoonTuck.t = setTimeout(function () { syncMoonTuck(); renderWing('rg'); renderWing('rd'); }, 200);
+    syncMoonTuck.t = setTimeout(function () { fitTiles(); syncMoonTuck(); renderWing('rg'); renderWing('rd'); }, 200);
   });
 
   window.addEventListener('minka:duty-summary', function (e) { renderWing(e.detail && e.detail.role); });
@@ -2031,10 +2053,280 @@
   // Facts appear and disappear with their data (birthday list, name days).
   var factObserver = new MutationObserver(function () { syncFacts(); });
 
+  /* ── Flīzes (data-header-layout="tiles", js/header-appearance.js) ─────────
+     The same elements arranged as widget tiles (css/page/mk-header-x.css). Two things are added: the
+     weather and the moon share a tile of their own (.hx-wx; in the classic layout they stand in the
+     status row), and the shift has a tile (.hx-shift): the clock, the time left, and a wave that rises
+     with the part of the shift that has gone. Nothing loops: the tile is repainted once a minute, and
+     the wave slides one period then. */
+  var tiles = { on: false, wx: null, shift: null, timer: 0 };
+  function shiftSpan() {
+    var d = parseDMY(shiftToday()) || new Date();
+    d.setHours(8, 0, 0, 0);
+    var e = new Date(d); e.setDate(e.getDate() + 1);   // 08:00 the next day by the wall clock (DST nights too)
+    return [d.getTime(), e.getTime()];
+  }
+  // The same words as the time ruler's chip (calendar.js rulerRemainingText).
+  function leftText(ms) {
+    var min = Math.max(0, Math.floor(ms / 60000));
+    if (!min) return ms > 0 ? '< 1 min' : '0 min';
+    var h = Math.floor(min / 60), m = min % 60;
+    return h ? (m ? h + ' h ' + m + ' min' : h + ' h') : m + ' min';
+  }
+  function paintShift(slide) {
+    var el = tiles.shift;
+    if (!el) return;
+    var now = new Date(), span = shiftSpan(), left = Math.max(0, span[1] - now.getTime());
+    var p = Math.max(0, Math.min(1, (now.getTime() - span[0]) / (span[1] - span[0])));
+    var clock = pad(now.getHours()) + ':' + pad(now.getMinutes()), rest = leftText(left);
+    el.querySelector('.hx-shift-clock').textContent = clock;
+    el.querySelector('.hx-shift-rest strong').textContent = rest;
+    el.style.setProperty('--hx-shift-p', (p * 100).toFixed(1));
+    el.setAttribute('aria-label', 'Tagad ' + clock + ', maiņā atlicis ' + rest + ', pagājuši ' + Math.round(p * 100) + ' %');
+    el.title = 'Maiņa 08:00–08:00, pagājuši ' + Math.round(p * 100) + ' %';
+    if (slide && root.dataset.motion !== 'reduced') {
+      el.classList.remove('is-tick');
+      void el.offsetWidth;
+      el.classList.add('is-tick');
+    }
+  }
+  function shiftTick() {
+    clearTimeout(tiles.timer);
+    if (!tiles.on) return;
+    paintShift(true);
+    tiles.timer = setTimeout(shiftTick, 60000 - Date.now() % 60000 + 250);
+  }
+  function arrangeTiles() {
+    if (!top || !center) return;
+    var on = root.dataset.headerLayout === 'tiles';
+    if (on === tiles.on) return;
+    tiles.on = on;
+    var status = top.querySelector('.hx-status');
+    if (on) {
+      if (!tiles.shift) {
+        tiles.shift = doc.createElement('div');
+        tiles.shift.className = 'hx-shift';
+        tiles.shift.setAttribute('role', 'img');
+        tiles.shift.innerHTML = '<span class="hx-shift-fill" aria-hidden="true"><i></i><i></i></span>'
+          + '<b class="hx-shift-clock"></b><span class="hx-shift-rest"><small>atlicis</small> <strong></strong></span>';
+        tiles.wx = doc.createElement('div');
+        tiles.wx.className = 'hx-wx';
+        tiles.wx.setAttribute('role', 'group');
+        tiles.wx.setAttribute('aria-label', 'Laikapstākļi un mēness');
+        center.appendChild(tiles.shift);
+        center.appendChild(tiles.wx);
+      }
+      tiles.wx.appendChild(els.weather);
+      tiles.wx.appendChild(els.moon);
+      paintShift(false);
+      tiles.timer = setTimeout(shiftTick, 60000 - Date.now() % 60000 + 250);
+    } else {
+      clearTimeout(tiles.timer);
+      if (status) { status.insertBefore(els.moon, status.firstChild); status.insertBefore(els.weather, els.moon); }
+      top.classList.remove('hxt-s', 'hxt-ts');
+      top.style.removeProperty('--hxt-z');
+      Object.keys(TILE).forEach(function (id) { var el = top.querySelector(TILE[id][0]); if (el) { el.style.order = ''; el.removeAttribute('data-hxt-off'); } });
+    }
+    fitTiles();
+    // The top block's height (mk-integrated-duty-header.js) and the wings' fit follow the layout.
+    window.dispatchEvent(new Event('resize'));
+  }
+  /* Which tiles stand in the row: the profile's list (data-header-tiles, js/header-appearance.js), in its
+     order. The row never overflows. A window too narrow for all of them first makes the tools tile small
+     (.hxt-ts: icons only), then loses the weather, then the news; narrower still, every tile turns compact
+     (.hxt-s), and under that the whole row is scaled down to fit.
+     [selector, least width, least width compact (0: not shown compact)], as the CSS sizes them. */
+  var TILE = { rg: ['.hx-wing-rg', 232, 172], date: ['.hx-dateblock', 250, 190], shift: ['.hx-shift', 132, 116], wx: ['.hx-wx', 92, 80],
+    news: ['.hx-row-feed', 236, 0], tools: ['.hx-row-tools', 126, 92], rd: ['.hx-wing-rd', 224, 172] };
+  // A day change touches the facts several times in one task: the row is measured once, at the task's end
+  // (still before the frame is painted).
+  var fitQueued = false;
+  function fitTilesSoon() {
+    if (fitQueued || !tiles.on) return;
+    fitQueued = true;
+    Promise.resolve().then(function () { fitQueued = false; fitTiles(); });
+  }
+  function fitTiles() {
+    var wrap = $('minkaBarWrap');
+    if (!tiles.on || !top || !wrap) return;
+    var want = String(root.dataset.headerTiles || '').split(' ').filter(function (id) { return TILE[id]; });
+    if (!want.length) want = Object.keys(TILE);
+    var room = wrap.clientWidth - 16;   // the block's 3 px insets and 5 px side padding
+    // The date tile asks for the room its longest line needs, so the day's fact, the name days and the
+    // birthday are read whole (460 px at most): the date with its label, the weekday with the fact, the names.
+    var fact = els.dayfactSlot.hidden ? null : els.dayfactSlot.querySelector('.mk-svinama-text') || els.dayfactSlot.firstElementChild;
+    var emoji = fact && els.dayfactSlot.querySelector('.mk-svinama-emoji');
+    var line1 = els.dateNum.offsetWidth + (els.rel.offsetWidth ? 8 + els.rel.offsetWidth : 0) + (els.today.hidden ? 0 : 8 + els.today.offsetWidth);
+    var line2 = els.dateWd.offsetWidth + (fact ? 8 + fact.scrollWidth + (emoji ? emoji.offsetWidth + 6 : 0) : 0);
+    var line3 = els.namedaySlot.parentElement.hidden ? 0 : 19 + els.namedaySlot.scrollWidth + (els.bdaySlot.hidden ? 0 : 10 + els.bdaySlot.offsetWidth);
+    var dateNeed = Math.min(460, Math.max(TILE.date[1], 28 + Math.ceil(Math.max(line1, line2, line3)) + 2)), dateFull = dateNeed;
+    var smallTools = false;
+    function need(list, k) {
+      return list.reduce(function (sum, id) {
+        return sum + (id === 'date' && k === 1 ? dateNeed : TILE[id][smallTools && id === 'tools' ? 2 : k]);
+      }, 0) + 6 * (list.length - 1);
+    }
+    var list = want.slice();
+    if (need(list, 1) > room) smallTools = true;
+    function drop(id) { if (need(list, 1) > room) list = list.filter(function (t) { return t !== id; }); }
+    drop('wx');
+    if (need(list, 1) > room) dateNeed = TILE.date[1];   // the day's fact shortens before the news goes
+    drop('news');
+    var compact = need(list, 1) > room;
+    if (compact) {
+      list = want.filter(function (id) { return TILE[id][2]; });
+      // the weather stays only while the date tile's lines are still read whole beside it (and nothing is scaled)
+      var dateExtra = list.indexOf('date') < 0 ? 0 : Math.max(0, dateFull - TILE.date[2]);
+      if (need(list, 2) + dateExtra > room) list = list.filter(function (id) { return id !== 'wx'; });
+    }
+    var zoom = compact ? Math.min(1, room / need(list, 2)) : 1;
+    Object.keys(TILE).forEach(function (id) {
+      var el = top.querySelector(TILE[id][0]), at = list.indexOf(id);
+      if (!el) return;
+      el.style.order = String(at < 0 ? 99 : at);
+      if (at < 0) el.setAttribute('data-hxt-off', ''); else el.removeAttribute('data-hxt-off');
+    });
+    top.classList.toggle('hxt-s', compact);
+    top.classList.toggle('hxt-ts', smallTools && !compact);
+    if (zoom < 1) top.style.setProperty('--hxt-z', zoom.toFixed(3)); else top.style.removeProperty('--hxt-z');
+  }
+  new MutationObserver(function () { arrangeTiles(); fitTiles(); ['rg', 'rd'].forEach(renderWing); if (edit.on) { if (tiles.on) syncEdit(); else exitEdit(); } })
+    .observe(root, { attributes: true, attributeFilter: ['data-header-layout', 'data-header-tiles'] });
+
+  /* ── Flīžu rediģēšana pašā galvenē ───────────────────────────────────────
+     Rīki → "Rediģēt flīzes" (or the button in Galvenes izskats). Every tile but the tools gets a "−" to take
+     it out, a tile is dragged to a new place, and a bar under the header offers the tiles that are out,
+     the ready profiles and "Gatavs". A change makes the profile the user's own ("Mana"). The same can be done
+     with the keyboard in Galvenes izskats (checkboxes and arrows); here Tab reaches the "−" and the bar, Esc ends. */
+  var edit = { on: false, bar: null, drag: null };
+  var TILE_NAME = { date: 'Datums', shift: 'Maiņas laiks', wx: 'Laikapstākļi', news: 'Ziņas', tools: 'Rīki', rd: 'Radiologi' };
+  function tileName(id) { return id === 'rg' ? ((window.__mkLeftRole && window.__mkLeftRole.many) || 'Radiogrāferi') : TILE_NAME[id]; }
+  function tileEl(id) { return top.querySelector(TILE[id][0]); }
+  function tileId(el) { return Object.keys(TILE).filter(function (id) { return el.matches(TILE[id][0]); })[0]; }
+  function wantTiles() { return String(root.dataset.headerTiles || '').split(' ').filter(function (id) { return TILE[id]; }); }
+  // the tiles in the row now, left to right (a narrow window may have left some of the profile's out)
+  function shownTiles() {
+    return Object.keys(TILE).filter(function (id) { var el = tileEl(id); return el && !el.hasAttribute('data-hxt-off'); })
+      .sort(function (a, b) { return (+tileEl(a).style.order || 0) - (+tileEl(b).style.order || 0); });
+  }
+  function saveTiles(list) { if (window.MinkaHeaderAppearance) window.MinkaHeaderAppearance.set({ profile: 'own', ownTiles: list }); }
+  function syncEdit() {
+    if (!edit.on) return;
+    Array.prototype.forEach.call(top.querySelectorAll('.hxt-rm'), function (b) { b.remove(); });
+    shownTiles().forEach(function (id, i, all) {
+      if (id === 'tools') return;
+      var b = doc.createElement('button');
+      b.type = 'button'; b.className = 'hxt-rm'; b.dataset.rm = id;
+      if (i === all.length - 1) b.setAttribute('data-last', '');
+      b.setAttribute('aria-label', 'Noņemt flīzi: ' + tileName(id)); b.title = 'Noņemt';
+      tileEl(id).appendChild(b);
+    });
+    var want = wantTiles(), out = Object.keys(TILE).filter(function (id) { return want.indexOf(id) < 0; });
+    var api = window.MinkaHeaderAppearance, cur = api ? api.snapshot().profile : '';
+    edit.bar.innerHTML = '<span class="hxt-bar-group"><b>Pievienot</b>'
+      + (out.length ? out.map(function (id) { return '<button type="button" class="hxt-add" data-add="' + id + '">' + esc(tileName(id)) + '</button>'; }).join('')
+        : '<span class="hxt-bar-note">Visas flīzes ir joslā</span>') + '</span>'
+      + '<span class="hxt-bar-group"><b>Profils</b>' + [['full', 'Pilnā'], ['duty', 'Dežūra'], ['calm', 'Mierīgā'], ['own', 'Mana']].map(function (p) {
+        return '<button type="button" class="hxt-prof" data-profile="' + p[0] + '" aria-pressed="' + (p[0] === cur) + '">' + p[1] + '</button>';
+      }).join('') + '</span>'
+      + '<span class="hxt-bar-note">Velc flīzi, lai pārvietotu</span><button type="button" class="hxt-done">Gatavs</button>';
+  }
+  function enterEdit() {
+    if (edit.on || !tiles.on || !top) return;
+    closePop(); closeSearch(false); closeDate(false);
+    edit.on = true;
+    top.classList.add('hxt-edit');
+    edit.bar = doc.createElement('div');
+    edit.bar.id = 'hxEditBar';
+    edit.bar.setAttribute('role', 'toolbar');
+    edit.bar.setAttribute('aria-label', 'Flīžu rediģēšana');
+    $('minkaBarWrap').appendChild(edit.bar);
+    edit.bar.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b) return;
+      if (b.dataset.add) saveTiles(wantTiles().concat(b.dataset.add));
+      else if (b.dataset.profile && window.MinkaHeaderAppearance) window.MinkaHeaderAppearance.set({ profile: b.dataset.profile });
+      else if (b.classList.contains('hxt-done')) exitEdit();
+    });
+    syncEdit();
+    layerSync();
+    var done = edit.bar.querySelector('.hxt-done');
+    if (done) done.focus({ preventScroll: true });
+  }
+  function exitEdit() {
+    if (!edit.on) return;
+    edit.on = false; edit.drag = null;
+    top.classList.remove('hxt-edit');
+    Array.prototype.forEach.call(top.querySelectorAll('.hxt-rm'), function (b) { b.remove(); });
+    if (edit.bar) edit.bar.remove();
+    edit.bar = null;
+    layerSync();
+    if (els.tools) els.tools.focus({ preventScroll: true });
+  }
+  // Dragging a tile: it follows the pointer, and a neighbour whose middle it passes steps to the other side.
+  function editZoom() { return parseFloat(top.style.getPropertyValue('--hxt-z')) || 1; }
+  function dragDown(e) {
+    if (!edit.on || e.button > 0) return;
+    var rm = e.target.closest('.hxt-rm');
+    if (rm) { e.preventDefault(); saveTiles(wantTiles().filter(function (id) { return id !== rm.dataset.rm; })); return; }
+    var el = e.target.closest('.hx-wing, .hx-dateblock, .hx-shift, .hx-wx, .hx-row-feed, .hx-row-tools');
+    if (!el || !top.contains(el)) return;
+    e.preventDefault();
+    edit.drag = { el: el, id: tileId(el), x0: e.clientX, order: shownTiles(), moved: false, pid: e.pointerId };
+    try { el.setPointerCapture(e.pointerId); } catch (_e) {}
+    el.classList.add('is-drag');
+  }
+  function dragMove(e) {
+    var g = edit.drag;
+    if (!g || e.pointerId !== g.pid) return;
+    var z = editZoom(), dx = (e.clientX - g.x0) / z;
+    g.el.style.translate = dx + 'px 0';
+    var r = g.el.getBoundingClientRect(), mid = (r.left + r.right) / 2, at = g.order.indexOf(g.id);
+    var next = g.order[at + 1] && tileEl(g.order[at + 1]).getBoundingClientRect(), prev = g.order[at - 1] && tileEl(g.order[at - 1]).getBoundingClientRect();
+    var to = next && mid > (next.left + next.right) / 2 ? at + 1 : prev && mid < (prev.left + prev.right) / 2 ? at - 1 : at;
+    if (to === at) return;
+    var other = tileEl(g.order[to]), was = other.getBoundingClientRect().left, base = r.left - dx * z;
+    g.order.splice(to, 0, g.order.splice(at, 1)[0]);
+    g.order.forEach(function (id, i) { tileEl(id).style.order = String(i); });
+    g.moved = true;
+    // the dragged tile's own place moved under it: keep it under the pointer
+    g.x0 += g.el.getBoundingClientRect().left - dx * z - base;
+    g.el.style.translate = (e.clientX - g.x0) / z + 'px 0';
+    var now = other.getBoundingClientRect().left;
+    if (other.animate && root.dataset.motion !== 'reduced') other.animate([{ translate: (was - now) / z + 'px 0' }, { translate: '0 0' }], { duration: 240, easing: 'cubic-bezier(.2, 0, 0, 1)' });
+  }
+  function dragUp(e) {
+    var g = edit.drag;
+    if (!g || e.pointerId !== g.pid) return;
+    edit.drag = null;
+    var from = g.el.style.translate || '0 0';
+    g.el.style.translate = '';
+    g.el.classList.remove('is-drag');
+    if (g.el.animate && root.dataset.motion !== 'reduced') g.el.animate([{ translate: from }, { translate: '0 0' }], { duration: 240, easing: 'cubic-bezier(.2, 0, 0, 1)' });
+    if (!g.moved) return;
+    // the profile's tiles a narrow window left out keep their places among the ones that were moved
+    var queue = g.order.slice();
+    saveTiles(wantTiles().map(function (id) { return g.order.indexOf(id) < 0 ? id : queue.shift(); }));
+  }
+  doc.addEventListener('pointerdown', function (e) { if (edit.on && top && top.contains(e.target)) dragDown(e); }, true);
+  doc.addEventListener('pointermove', dragMove, true);
+  doc.addEventListener('pointerup', dragUp, true);
+  doc.addEventListener('pointercancel', dragUp, true);
+  // while editing, a click inside a tile does nothing of its own (no popovers, no day changes)
+  doc.addEventListener('click', function (e) {
+    if (!edit.on || !top || !top.contains(e.target)) return;
+    var rm = e.target.closest('.hxt-rm');
+    e.preventDefault(); e.stopPropagation();
+    // a "−" pressed with the keyboard (the pointer's press was already taken in dragDown)
+    if (rm && e.detail === 0) saveTiles(wantTiles().filter(function (id) { return id !== rm.dataset.rm; }));
+  }, true);
+  doc.addEventListener('keydown', function (e) { if (edit.on && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); exitEdit(); } }, true);
+
   var started = false;
   function start() {
     if (started || !build()) return;
     started = true;
+    arrangeTiles();
     adopt();
     ['rg', 'rd'].forEach(renderWing);
     renderDate();
@@ -2052,7 +2344,7 @@
     if (Date.now() - bmcCheckedAt >= 36e5) setTimeout(function () { idle(function () { loadBmc(); }); }, 8000);
   }
   window.MkHeaderX = { openSearch: openSearch, closeSearch: closeSearch, goToday: goToday,
-    openMobile: function () { if (els.mobile) openPop('mobile', els.mobile, true); } };
+    openMobile: function () { if (els.mobile) openPop('mobile', els.mobile, true); }, editTiles: enterEdit };
   // A click outside the calendar frame (the shell's dock, its edges) closes the
   // header windows too, the same as a click anywhere else in the calendar.
   try {
