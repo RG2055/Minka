@@ -60,23 +60,35 @@
   /* Būtne and Dzīvnieks: the top of the face is one grid, the same on every card. The avatar's column (the card's own
      emoji stands there, untouched; its box ends at 102px, a wide 3D emoji reaches about 104px), the cell of the name,
      then the figure over its − / +. The name over its surname is one block, set in the middle of its cell: the air
-     between the avatar and the name is the same as between the name and the creature, at least 12px. Būtne's column
+     between the avatar and the name is the same as between the name and the creature, at least 8px. Būtne's column
      starts where its picture does (the kind's shape, --ar), not where its box does, so the air is measured to the fur. */
   &:is(.mk-sf-b, .mk-sf-p) > .sf-top { display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; align-items: start; padding: 9px 8px 0 0; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-nm { display: flex; justify-content: center; min-width: 0; padding-top: 5px; }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-id { position: static; gap: 1px; max-width: calc(100% - 24px); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-id { position: static; gap: 1px; max-width: calc(100% - 16px); }
   &:is(.mk-sf-b, .mk-sf-p) .sf-id :is(b, i) { white-space: nowrap; text-overflow: clip; }   /* the whole name, sized to fit (mk-side-faces.js), never "…" */
   &:is(.mk-sf-b, .mk-sf-p) .sf-fig { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
   /* Dzīvnieks: the column is the pet's width; its − / +, wider than a small pet, reach out to the left under the name */
-  &.mk-sf-p .sf-fig { width: clamp(72px, 21cqw, 88px); }
-  &.mk-sf-b .sf-fig { font-size: clamp(5.6px, calc(2.6cqw - 1.9px), 9.2px); margin-left: calc((min(12.4em, 10em * var(--ar, 1.24)) - 12.4em) / 2); }
-  &.mk-sf-b .sf-id { --w: calc(100cqw - 136px - 12.4 * clamp(5.6px, calc(2.6cqw - 1.9px), 9.2px)); }
-  &.mk-sf-p .sf-id { --w: calc(100cqw - 136px - clamp(72px, 21cqw, 88px)); }
+  &.mk-sf-p .sf-fig { width: var(--pw); }
+  /* Būtne: a share of the card's width, and every pixel of height down to the capsules (9px under the top to 4px over
+     them: 89px); --pw / --ph its box, the picture stands in it at the bottom, its own shape (--ar) sets its width */
+  &.mk-sf-b { --pw: clamp(72px, 27cqw, 118px); --ph: min(89px, calc(var(--pw) * .86)); }
+  &.mk-sf-p { --pw: clamp(66px, 26cqw, 82px); }
+  &.mk-sf-b .sf-fig { margin-left: calc((min(var(--pw), var(--ph) * var(--ar, 1.24)) - var(--pw)) / 2); }
+  &.mk-sf-b .sf-id { --w: calc(100cqw - 128px - clamp(72px, 27cqw, 118px)); }
+  &.mk-sf-p .sf-id { --w: calc(100cqw - 128px - clamp(66px, 26cqw, 82px)); }
   &.mk-sf-g .sf-id { --w: calc(100cqw - 112px - 178px); }
   &:is(.mk-sf-b, .mk-sf-p, .mk-sf-g) .sf-id { --fs: clamp(15px, calc(var(--w) / (var(--sf-n, 8) * .64)), 34px); }
   &:is(.mk-sf-b, .mk-sf-p, .mk-sf-g) .sf-id b { font-size: var(--sf-fs, var(--fs)); }
-  &:is(.mk-sf-b, .mk-sf-p, .mk-sf-g) .sf-id i { font-size: var(--sf-fs2, clamp(14px, min(calc(var(--w) / (var(--sf-m, 9) * .6)), calc(var(--fs) * .66)), 22px)); }
+  &:is(.mk-sf-b, .mk-sf-p, .mk-sf-g) .sf-id i { font-size: var(--sf-fs2, clamp(14px, min(calc(var(--w) / (var(--sf-m, 9) * .6)), calc(var(--fs) * .8)), 26px)); }
   & .sf-pl { position: absolute; left: 14px; top: 102px; display: flex; align-items: center; gap: 5px; }
+  /* Būtne and Dzīvnieks: the row runs to the card's edge and ends with the − / +; a row too full closes up (mk-side-faces.js) */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl { right: 8px; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl > * { flex: none; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl > .sf-adj { margin-left: auto; margin-right: max(0px, calc(var(--pw) / 2 - 6.2em)); }   /* centred under the figure (6.2em: half the pair) */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight { gap: 4px; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight .sf-chip { padding: 0 6px; font-size: 13.5px; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight2 .sf-chip { padding: 0 5px; font-size: 12.5px; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight2 .sf-sh::before { display: none; }
   & .sf-pl .sf-chip { height: 25px; padding: 0 10px; font-size: 14.5px; }
   & .sf-seg { display: inline-flex; height: 25px; overflow: hidden; border-radius: 13px; color: #0b0d12; font-size: 14.5px; font-weight: 800; }
   & .sf-seg span { display: flex; align-items: center; padding: 0 6px; }
@@ -90,19 +102,38 @@
   /* the person's own correction: green when it takes fatigue off, red when it adds */
   & .sf-ad { margin-left: .5em; padding: .22em .5em; border-radius: 1em; background: color-mix(in srgb, #42d991 26%, #0b0d12); color: #7df0b8; font-size: .92em; font-style: normal; font-weight: 800; line-height: 1; }
   & .sf-ad[data-s="p"] { background: color-mix(in srgb, #ff5c70 28%, #0b0d12); color: #ff9aa6; }
-  & .sf-nc { display: grid; grid-template-columns: auto auto; column-gap: .55em; align-items: center; min-width: 0; height: 2.36em; padding: 0 .9em 0 .7em; border-radius: 1.2em; background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .16); }
-  & .sf-nc::before { content: ""; grid-row: 1 / 3; width: 1.35em; height: 1.35em; background: rgba(255, 255, 255, .66); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6h14a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 20H5a1.5 1.5 0 0 1-1.5-1.5v-11A1.5 1.5 0 0 1 5 6ZM3.5 10.5h17M8 3.5v4M16 3.5v4'/%3E%3C/svg%3E") center / contain no-repeat; }
-  & .sf-nc small { align-self: end; color: rgba(255, 255, 255, .66); font-size: .74em; font-weight: 600; line-height: 1.05; }
-  & .sf-nc b { align-self: start; font-size: 1.04em; font-weight: 700; line-height: 1.15; }
-  & .sf-nc i { margin-left: .5em; padding-left: .5em; border-left: 1.5px solid rgba(255, 255, 255, .22); color: rgba(255, 255, 255, .66); font-weight: 500; }
+  /* Nākamā (the user's own picture of it): a capsule tinted in the card's colour with a light top edge, the calendar in
+     its own rounded tile, "Nākamā" small and quiet over the date in large bold type, then a thin divider and the shift's
+     length, both in the middle of the capsule's height (the user's second picture; the length without a pill, as they chose). The length goes where the row has no room for it (mk-side-faces.js). */
+  & .sf-nc {
+    display: grid; grid-template-columns: auto auto auto auto; grid-template-rows: auto auto; column-gap: .42em; row-gap: .06em; align-content: center;
+    min-width: 0; height: 2.36em; padding: 0 .4em 0 .26em; border-radius: 1.2em;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--c) 17%, #121017), color-mix(in srgb, var(--c) 8%, #0b0d12));
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 30%, rgba(255, 255, 255, .1)), inset 0 1px 0 color-mix(in srgb, var(--c) 45%, rgba(255, 255, 255, .3));
+  }
+  & .sf-nc::before {
+    content: ""; grid-row: 1 / 3; align-self: center; width: 1.62em; height: 1.62em; border-radius: .48em;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6h14a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 20H5a1.5 1.5 0 0 1-1.5-1.5v-11A1.5 1.5 0 0 1 5 6ZM3.5 10.5h17M8 3.5v4M16 3.5v4'/%3E%3C/svg%3E") center / 62% no-repeat, color-mix(in srgb, var(--c) 24%, rgba(255, 255, 255, .08));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+  }
+  & .sf-nc small { grid-column: 2; grid-row: 1; align-self: end; color: color-mix(in srgb, var(--c) 28%, rgba(255, 255, 255, .72)); font-size: .78em; font-weight: 600; line-height: 1; }
+  & .sf-nc b { grid-column: 2; grid-row: 2; align-self: start; font-size: 1.08em; font-weight: 700; line-height: 1.05; white-space: nowrap; }
+  & .sf-nc .sf-nd { grid-column: 3; grid-row: 1 / 3; align-self: center; margin-left: .2em; width: 1.5px; height: 1.75em; border-radius: 1px; background: color-mix(in srgb, var(--c) 45%, rgba(255, 255, 255, .3)); }
+  & .sf-nc i { grid-column: 4; grid-row: 1 / 3; align-self: center; margin-left: .1em; color: rgba(255, 255, 255, .86); font-size: 1em; font-style: normal; font-weight: 700; line-height: 1; }   /* plain, no pill: the user's choice */
+  & .sf-nc:not(:has(i)) { padding-right: .9em; }
+  /* it fills the rest of the row (its right edge is the ticks'), its content in the middle */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-nc { flex: 1 1 auto; justify-content: safe center; }   /* "safe": too wide never spills to the left, where nobody would measure it */
+  /* a row with less room: the gaps a little closer; with none, without the length */
+  & .sf-rc.sf-rc-tight .sf-nc { column-gap: .3em; padding-right: .7em; }
+  & .sf-rc.sf-rc-short .sf-nc :is(.sf-nd, i) { display: none; }
+  & .sf-rc.sf-rc-short .sf-nc { padding-right: .9em; }
   /* a three-figure number or a correction takes the room of the next shift's length; both together, a step smaller type */
-  & .sf-rc:has(.sf-ad, .sf-num[data-n="3"]) .sf-nc i { display: none; }
   & .sf-rc:has(.sf-ad):has(.sf-num[data-n="3"]) { font-size: clamp(10px, 3.4cqw, 15px); }
   /* Under the figure: − in green (less tired) and + in red (more tired), the person's own correction to the
      number: two glossy capsules, as wide together as the figure, clear of it and of the rows below. Their size
      and place follow the figure's (the same font-size expression). */
   & .sf-adj { --e: clamp(5.6px, calc(2.6cqw - 1.9px), 9.2px); position: absolute; z-index: 1; display: flex; gap: .6em; font-size: var(--e); }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-adj { position: relative; }   /* under the figure, in its column */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj { position: relative; }   /* in the row of capsules */
   & .sf-adj button {
     --k: #ff5c70;
     position: relative; width: calc(var(--e) * 5.9); height: max(calc(var(--e) * 2.5), 19px); padding: 0; border: 0; border-radius: 99px; cursor: pointer;
@@ -123,7 +154,10 @@
   & .sf-adj button:active:not(:disabled) { scale: .92; }
   /* the shift's fatigue: a thin strip along the bottom */
   & .sf-tk { position: absolute; left: 14px; right: 14px; bottom: 9px; display: flex; align-items: flex-end; justify-content: space-between; height: 17px; }
-  & .sf-tk i { position: relative; flex: 0 1 12px; min-width: 4px; height: calc(5px + var(--h) * 12px); border-radius: 6px; background: var(--c); }
+  /* Būtne and Dzīvnieks: the ticks take the room left under the Nogurums / Nākamā row (it starts at 132px and is 2.36 of
+     its font tall; the "now" mark and air above it keep 16px), 16 to 26px */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-tk { bottom: 7px; height: clamp(14px, calc(53px - 2.36 * clamp(11px, 3.75cqw, 16.4px)), 26px); }
+  & .sf-tk i { position: relative; flex: 0 1 12px; min-width: 4px; height: calc(30% + var(--h) * 70%); border-radius: 6px; background: var(--c); }
   & .sf-tk .t0 { opacity: .5; }
   & .sf-tk .t2 { box-shadow: 0 0 0 1.5px #fff; }
   /* the caffeine at the strip's right end; the strip makes room for it */
@@ -139,8 +173,8 @@
   }
   /* Būtne's is drawn in its figure: the picture stands centred at the bottom, its width (--ar, the kind's shape) tells
      where its left edge is, so the button is as close to every kind */
-  &.mk-sf-b .sf-pet > .sf-pick { font-size: inherit; left: calc((100% - min(100%, 10em * var(--ar, 1.1))) / 2 - 4px); top: -5px; }   /* a button's own font-size would skew the em */
-  &.mk-sf-p .sf-pick { right: calc(8px + clamp(72px, 21cqw, 88px) - 22px); }
+  &.mk-sf-b .sf-pet > .sf-pick { left: calc((100% - min(100%, var(--ph) * var(--ar, 1.1))) / 2 - 4px); top: -5px; }
+  &.mk-sf-p .sf-pick { right: calc(8px + clamp(66px, 26cqw, 82px) - 22px); }
   & .sf-pick::before { content: ""; position: absolute; inset: 20%; background: color-mix(in srgb, var(--c) 72%, #fff); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M5.3 5.3l2.8 2.8M15.9 15.9l2.8 2.8M5.3 18.7l2.8-2.8M15.9 8.1l2.8-2.8'/%3E%3C/svg%3E") center / contain no-repeat; }
   & .sf-pick::after { content: ""; position: absolute; inset: -5px; }   /* small to the eye, a fair place to hit */
   &:hover .sf-pick, & .sf-pick:focus-visible { opacity: 1; }
@@ -149,7 +183,7 @@
   /* Būtne is a rendered picture (assets/butnes, scripts/blender/rg_mascot.py), measured in em: one font-size scales
      it with the card. It stands under the card's top edge with air above it; its two buttons stand under it with
      air between. The kind is the person's, the expression and the colour are the fatigue's; here it only breathes. */
-  &.mk-sf-b .sf-pet { position: relative; width: 12.4em; height: 10em; font-size: clamp(5.6px, calc(2.6cqw - 1.9px), 9.2px); cursor: pointer; }
+  &.mk-sf-b .sf-pet { position: relative; width: var(--pw); height: var(--ph); font-size: clamp(5.6px, calc(2.6cqw - 1.9px), 9.2px); cursor: pointer; }
   &.mk-sf-b .sf-pet > * { position: absolute; }
   &.mk-sf-b .gs { left: 2em; right: 2em; bottom: -.2em; height: 1.3em; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 30%, transparent), transparent); }
   &.mk-sf-b .ps { inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 100%; -webkit-user-drag: none; user-select: none; }
@@ -166,7 +200,7 @@
   &.mk-sf-p .sf-spr.up { transform-origin: 50% 100%; animation: mk-sf-perk .75s ease-in-out var(--sf-late, 0ms) both; }
   /* Dzīvnieks: one frame of the pet's sheet shows through the box (a frame is 192 x 208); the strip steps sideways
      (transform only). The box follows the card's width and stands under the card's top edge, its buttons under it. */
-  &.mk-sf-p .sf-spr { --sw: clamp(72px, 21cqw, 88px); position: relative; width: var(--sw); height: calc(var(--sw) * 1.0833); overflow: hidden; }
+  &.mk-sf-p .sf-spr { --sw: var(--pw); position: relative; width: var(--sw); height: calc(var(--sw) * 1.0833); overflow: hidden; }
   &.mk-sf-p .sf-spr i { position: absolute; left: 0; top: 0; width: 800%; height: 900%; background-size: 100% 100%; translate: 0 calc(var(--row) * -100% / 9); }
   /* like Būtne's breath, the pet moves only while its card is pointed at; at rest it holds the first frame of its pose */
   &.mk-sf-p:hover .sf-spr i { animation: mk-sf-sprite var(--t) steps(var(--n)) infinite; }
@@ -193,7 +227,6 @@
     & .sf-pl .sf-chip, & .sf-seg { height: 24px; }
     & .sf-pl .sf-chip { padding: 0 9px; font-size: 14px; }
     & .sf-seg { font-size: 14px; }
-    & .sf-nc i { display: none; }
     & .sf-rc { gap: 5px; }
     & .sf-tk i { flex-basis: 8px; }
   }

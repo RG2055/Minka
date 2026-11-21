@@ -164,10 +164,11 @@
   function sketch(d, figure) {
     var ticks = d.ticks.map(function (t) { return '<i class="t' + t[0] + '" style="--c:' + esc(t[1]) + ';--h:' + t[2] + '"></i>'; }).join('');
     // the top is one grid (the sheet): the avatar's column, the name over the surname, the figure over its buttons
-    return '<div class="sf-top"' + (d.ar ? ' style="--ar:' + d.ar + '"' : '') + '><i class="sf-av" aria-hidden="true"></i><div class="sf-nm"><div class="sf-id">' + name(d) + '</div></div><div class="sf-fig">' + figure + adjust(d) + '</div></div>'
-      + '<div class="sf-pl">' + chip(d) + count(d) + kinds(d) + '</div>'
+    return '<div class="sf-top"' + (d.ar ? ' style="--ar:' + d.ar + '"' : '') + '><i class="sf-av" aria-hidden="true"></i><div class="sf-nm"><div class="sf-id">' + name(d) + '</div></div><div class="sf-fig">' + figure + '</div></div>'
+      // the − / + at the end of the row of capsules: the figure keeps the whole height above it
+      + '<div class="sf-pl">' + chip(d) + count(d) + kinds(d) + adjust(d) + '</div>'
       + '<div class="sf-rc"><div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + '</div>'
-      + (d.next ? '<div class="sf-nc"><small>Nākamā</small><b>' + esc(d.next) + (d.nextH ? '<i>' + esc(d.nextH) + '</i>' : '') + '</b></div>' : '') + '</div>'
+      + (d.next ? '<div class="sf-nc"><small>Nākamā</small><b>' + esc(d.next) + '</b>' + (d.nextH ? '<span class="sf-nd"></span><i>' + esc(d.nextH) + '</i>' : '') + '</div>' : '') + '</div>'
       + (ticks ? '<div class="sf-tk" title="Nogurums šajā maiņā">' + ticks + '</div>' : '') + caf(d)
       // the faces' button in the figure's empty top left corner (Būtne draws it with its picture, which knows its edge)
       + (figure.indexOf('sf-pick') < 0 ? PICK : '');
@@ -209,16 +210,39 @@
   // stops at the cap below. Measured, not guessed: --sf-fs / --sf-fs2 on its .sf-id (the sheet guesses until then).
   // The surname stays under two thirds of the name.
   function fitNames() {
+    // a row of four capsules and the − / + does not fit a narrow card: the capsules close up a little (.sf-tight), and
+    // on the narrowest the shift's clock goes too (.sf-tight2). Measured by where the buttons land: past the row's end,
+    // or onto the last capsule.
+    // the next shift's length is shown where the Nogurums / Nākamā row has room for it
+    [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-rc'), function (rc) {
+      var nc = rc.querySelector('.sf-nc');
+      rc.classList.remove('sf-rc-tight', 'sf-rc-short');
+      if (!nc || !nc.querySelector('i')) return;
+      // the length's right edge stays 4px (on the screen) inside the capsule, and the capsule inside the row
+      function over() { var i = nc.querySelector('i').getBoundingClientRect(), n = nc.getBoundingClientRect(); return nc.scrollWidth > nc.clientWidth + 1 || i.right > n.right - 4 || n.right > rc.getBoundingClientRect().right + 1; }
+      if (over()) { rc.classList.add('sf-rc-tight'); if (over()) rc.classList.add('sf-rc-short'); }
+    });
+    [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-pl'), function (pl) {
+      var adj = pl.querySelector(':scope > .sf-adj');
+      pl.classList.remove('sf-tight', 'sf-tight2');
+      if (!adj) return;
+      function over() {
+        var a = adj.getBoundingClientRect(), last = adj.previousElementSibling;
+        return a.right > pl.getBoundingClientRect().right + 1 || (last && last.getBoundingClientRect().right > a.left - 3);
+      }
+      if (over()) { pl.classList.add('sf-tight'); if (over()) pl.classList.add('sf-tight2'); }
+    });
     [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf .sf-id'), function (e) {
       // in the faces' grid the room is the cell between the avatar and the figure, less the least air on each side
       var cell = e.parentElement.classList.contains('sf-nm') ? e.parentElement : null;
-      var b = e.querySelector('b'), i = e.querySelector('i'), room = cell ? cell.clientWidth - 24 : e.clientWidth, card = e.closest('.mk-side-card');
+      var b = e.querySelector('b'), i = e.querySelector('i'), room = cell ? cell.clientWidth - 16 : e.clientWidth, card = e.closest('.mk-side-card');
       if (!room || !b || !b.scrollWidth) return;
       // at most 23px on the screen, whatever the column's zoom, so both columns read alike; and at most 40px of the
       // card's own, which still leaves air above the row of capsules
       var cap = Math.min(40, Math.round(23 / (parseFloat(getComputedStyle(card).zoom) || 1)));
-      var f1 = Math.max(11, Math.min(cap, Math.floor(room / b.scrollWidth * parseFloat(getComputedStyle(b).fontSize) * .97)));
-      var f2 = Math.max(10, Math.min(26, Math.floor(f1 * .66), i && i.scrollWidth ? Math.floor(room / i.scrollWidth * parseFloat(getComputedStyle(i).fontSize) * .97) : 99));
+      var fs = parseFloat(getComputedStyle(b).fontSize), f1 = Math.max(11, Math.min(cap, Math.floor(room / b.scrollWidth * fs * .97)));
+      // (a figure that gave way to a long name was tried and turned down: every card's figure is the same size)
+      var f2 = Math.max(10, Math.min(30, Math.floor(f1 * .8), i && i.scrollWidth ? Math.floor(room / i.scrollWidth * parseFloat(getComputedStyle(i).fontSize) * .97) : 99));
       if (e.style.getPropertyValue('--sf-fs') !== f1 + 'px') e.style.setProperty('--sf-fs', f1 + 'px');
       if (e.style.getPropertyValue('--sf-fs2') !== f2 + 'px') e.style.setProperty('--sf-fs2', f2 + 'px');
     });
