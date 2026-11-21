@@ -1,0 +1,7 @@
+{
+  "note": "More pets for the side cards' face Dzīvnieks, beside the cats of codex-cats.json: [id, sprite version] pairs from codex-pets.net's public collections (bears-pandas, capybaras), read 2026-11-21. A pet's files are https://codex-pets.net/assets/pets/v/<version>/<id>/{poster,spritesheet}.webp.",
+  "groups": [
+    { "title": "Lāči un pandas", "pets": [["baobao", "1778123224869"], ["bubu", "1777725215096"], ["captain-barto-bear", "1777735751291"], ["dudu-bubu", "1777743958792"], ["kumamon", "1778048570685"], ["kungfu-panda", "1778126173912"], ["neon-red-panda", "1777720011134"], ["pan-chan", "1777724133890"], ["panda", "1778057425748"], ["panda-delegate", "1778154059562"], ["polaris", "1777721204423"], ["rilakkuma", "1777992626355"], ["rusty", "1777720068012"], ["yier", "1777725299703"], ["monty", "1778211708944"], ["teddy", "1790151237015"], ["rilakkumaa", "1779222420088"], ["bamboo-steward", "1779433561057"], ["chibi-rilakkuma", "1784506438124"], ["joker-bear-z-kzhang", "1782131646120"]] },
+    { "title": "Kapibaras", "pets": [["capybara-lulu", "1780951401811"], ["melon-capybara", "1780057343203"], ["shuitun-lulu", "1782373277271"]] }
+  ]
+}

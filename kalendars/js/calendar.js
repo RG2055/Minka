@@ -3369,7 +3369,7 @@ function filterFullList(btn) {
   // means the ticks, unless it lands on a control of its own (the emoji).
   document.addEventListener('click', function(e) {
     const t = e.target;
-    let hit = t && t.closest && t.closest('.mk-side-card :is(.mk-side-ticks, .mk-side-fatigue)');
+    let hit = t && t.closest && t.closest('.mk-side-card :is(.mk-side-ticks, .mk-side-fatigue, .mk-sf)');
     if (!hit && t && t.closest && t.closest('.mk-side-card') && !t.closest('button, a, input, select, textarea, [data-mk-emoji-click], .mk-emoji-side')) {
       const ticks = t.closest('.mk-side-card').querySelector(':scope > .mk-side-ticks');
       const r = ticks && ticks.getBoundingClientRect();
@@ -3622,13 +3622,17 @@ function filterFullList(btn) {
       const types = meta.types || { day: 0, night: 0, h24: 0 };
       const split = [['day', 'D', '#3f9bff'], ['night', 'N', '#23cdcf'], ['h24', '24h', '#f5b73f']]
         .filter(([key]) => types[key] > 0)
-        .map(([key, label, color]) => `<i style="flex:${types[key]} 1 0;background:${color}" title="${label === 'D' ? 'Diena' : label === 'N' ? 'Nakts' : '24h'}: ${types[key]}"><b>${types[key]}</b><span>${label}</span></i>`)
+        // data-w: the kind in a whole word, shown instead of the letter where there is room for it (the desktop's cards)
+        .map(([key, label, color]) => `<i style="flex:${types[key]} 1 0;background:${color}" title="${label === 'D' ? 'Diena' : label === 'N' ? 'Nakts' : '24h'}: ${types[key]}"><b>${types[key]}</b><span data-w="${key === 'day' ? (types[key] === 1 ? 'diena' : 'dienas') : key === 'night' ? (types[key] === 1 ? 'nakts' : 'naktis') : (types[key] === 1 ? 'diennakts' : 'diennaktis')}">${label}</span></i>`)
         .join('');
-      monthHtml = `<div class="mk-side-nfoot-row"><dt>Maiņas ${SIDE_MONTH_LOCATIVE[selectedMonth - 1]}</dt><dd><span>${meta.done}\u202F/\u202F${meta.total}</span>${remaining > 0 ? ` <em>(vēl ${remaining})</em>` : ''}</dd></div>`;
+      monthHtml = `<div class="mk-side-nfoot-row mk-side-month"><dt>Maiņas ${SIDE_MONTH_LOCATIVE[selectedMonth - 1]}</dt><dd><span>${meta.done}\u202F/\u202F${meta.total}</span>${remaining > 0 ? ` <em>(vēl ${remaining})</em>` : ''}</dd></div>`;
       // The bar takes the place of the footer's dashed divider.
       if (split) splitHtml = `<div class="mk-side-nfoot-row mk-side-nfoot-row--split"><span class="mk-nfoot-split">${split}</span></div>`;
     }
-    return nextHtml || monthHtml ? `<dl class="mk-side-nfoot${splitHtml ? ' mk-side-nfoot--split' : ''}">${splitHtml}${nextHtml}${monthHtml}</dl>` : '';
+    // Caffeine in the body, for a person whose coffee was logged on this device (window.__minkaSideCaf fills it;
+    // the same model as the coffee menu's curve). Empty and hidden for everyone else.
+    const cafHtml = '<div class="mk-side-nfoot-row mk-side-caf" hidden><dt>Kofeīns organismā</dt><dd></dd></div>';
+    return nextHtml || monthHtml ? `<dl class="mk-side-nfoot${splitHtml ? ' mk-side-nfoot--split' : ''}">${splitHtml}${nextHtml}${monthHtml}${cafHtml}</dl>` : '';
   }
 
   /* Today's fatigue on the side card: its own row of ticks (nothing laid
@@ -3743,6 +3747,65 @@ function filterFullList(btn) {
     const phase = cur < 0 ? 'before' : cur >= SIDE_TICKS ? 'after' : 'on';
     return `<button type="button" class="mk-side-ticks" data-tick-key="${mkEscAttr(entry.key)}"${stale ? ' data-stale="1"' : ''} data-phase="${phase}" style="--now:${at}" aria-label="Nogurums šajā maiņā: atvērt" title="Nogurums šajā maiņā">${html}</button>`;
   }
+  /* The side cards' faces (js/page/mk-side-faces.js and its sheet, fetched on the first need: a card that has a
+     face, or a press on a card's plus). With a card: open the picker for it; without: repaint the chosen faces. */
+  const SIDE_FACES_V = '20261122sz5';
+  let sideFacesLoad = 0, sideFacesCard = null;
+  function sideFaces(card) {
+    if (window.MkSideFaces) return card ? window.MkSideFaces.open(card) : window.MkSideFaces.sync();
+    if (!card && !document.querySelector('.mk-side-card[data-sf]')) return;
+    if (card) sideFacesCard = card;
+    if (sideFacesLoad) return;
+    sideFacesLoad = 1;
+    const css = document.createElement('link'), js = document.createElement('script');
+    css.rel = 'stylesheet'; css.href = 'css/page/mk-side-faces.css?v=' + SIDE_FACES_V;
+    js.src = 'js/page/mk-side-faces.js?v=' + SIDE_FACES_V;
+    js.onload = () => { if (!window.MkSideFaces) return; window.MkSideFaces.sync(); if (sideFacesCard && sideFacesCard.isConnected) window.MkSideFaces.open(sideFacesCard); sideFacesCard = null; };
+    // without the faces' files the cards go back to the classic content, which needs nothing more
+    js.onerror = () => { sideFacesOff = true; document.querySelectorAll('.mk-side-card[data-sf]').forEach(c => { delete c.dataset.sf; delete c.dataset.sfp; }); };
+    document.head.appendChild(css); document.head.appendChild(js);
+  }
+  // A person's face from their look: ["p-aju", "p", "aju"], or null for the classic card ("k"). Būtne ("b") is
+  // everyone's face until they choose another. Only on the desktop's RG cards (never /rad or the phone), and not
+  // while the radio is open: there the cards are low strips with their own layout.
+  const SIDE_FACE_DEFAULT = ['b', 'b'];
+  let sideFacesOff = false;
+  function sideFaceOf(name) {
+    if (sideFacesOff || document.documentElement.matches('.mk-mobile-shell, .mk-side-plain, .minka-rad, .host-radio-open')) return null;
+    const skin = window.mkGetWorkerSkin ? window.mkGetWorkerSkin(name) : null, sf = (skin && skin.sf) || '';
+    return sf === 'k' ? null : /^([bgp])(?:-([a-z0-9-]{1,40}))?$/.exec(sf) || SIDE_FACE_DEFAULT;
+  }
+  // With a person's key (minka-skins.js, when their look changed): their card takes the face of the look first.
+  // Without one (the radio opened or closed): every card does.
+  const sideManual = new Map();   // each person's correction to their fatigue as last drawn (their look's "fa" part)
+  window.__minkaSideFaces = key => {
+    if (key && window.mkGetAllSkins) {
+      // a changed correction moves the person's number everywhere it is shown: draw the panels, the list and the bars again
+      const fa = ((window.mkGetAllSkins()[key] || {}).fa) || '';
+      if ((sideManual.get(key) || '') !== fa) {
+        sideManual.set(key, fa);
+        try { window.__fatigue && window.__fatigue.clearCache(); } catch (_e) {}   // the correction runs through the model: its numbers and curves change
+        setTimeout(() => {
+          try { g_updatePanelsForDate(); } catch (_e) {}
+          try { g_updateList(); } catch (_e) {}
+          try { window.__refreshFatigueBars && window.__refreshFatigueBars(); } catch (_e) {}
+        }, 60);
+      }
+    }
+    if (window.mkAppearanceIdentity) document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card[data-worker]:has(> .mk-side-plus)').forEach(card => {
+      if (key && window.mkAppearanceIdentity(card.dataset.worker) !== key) return;
+      const face = sideFaceOf(card.dataset.worker);
+      if (face) card.dataset.sf = face[1]; else delete card.dataset.sf;
+      if (face && face[2]) card.dataset.sfp = face[2]; else delete card.dataset.sfp;
+    });
+    sideFaces();
+  };
+  document.addEventListener('click', e => {
+    const plus = e.target && e.target.closest && e.target.closest('.mk-side-plus');
+    if (!plus) return;
+    e.preventDefault(); e.stopPropagation();
+    sideFaces(plus.closest('.mk-side-card'));
+  });
   // Moves "now" along without redrawing anything: two class flips per card.
   function sideTicksAdvance() {
     clearTimeout(sideTickTimer); sideTickTimer = 0;
@@ -3762,6 +3825,7 @@ function filterFullList(btn) {
       if (now < entry.end && boundary > now) next = Math.min(next, boundary);
     });
     if (next < Infinity) sideTickTimer = setTimeout(sideTicksAdvance, Math.min(next - now + 500, 3600e3));
+    sideFaces();
   }
   const sideTickPending = new Set();
   function scheduleSideTicks(container, options) {
@@ -3917,10 +3981,15 @@ function filterFullList(btn) {
         } catch (_e) {}
       }
 
+      // The person's own face for the side card (the look's "sf" part; js/page/mk-side-faces.js draws it).
+      const sideSf = options.isToday ? sideFaceOf(workerName) : null;
+      // A card with a face is laid out as today's card (mk-has-ticks) from its first frame: the ticks themselves come a
+      // few frames later, one card at a time, and until then the classic content showed under the face at another size.
+      const sideFace = sideSf ? ` data-sf="${sideSf[1]}"${sideSf[2] ? ` data-sfp="${sideSf[2]}"` : ''}` : '';
       const card = (fatigue, ticks) => {
         const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
         return `
-        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}${ticks ? ' mk-has-ticks' : ''}" style="${sideVars}" data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}" data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
+        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}${ticks || sideSf ? ' mk-has-ticks' : ''}" style="${sideVars}" data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}"${sideFace} data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
           <div class="mk-side-card-main">
             <div class="mk-side-icon-rail">
               ${personEmoji ? `<span class="mk-emoji-side" data-mk-emoji-click="1">${mkEscAttr(personEmoji)}</span>` : ''}
@@ -3942,7 +4011,7 @@ function filterFullList(btn) {
           </div>
           ${ticks}
           ${footer}
-          
+          ${options.isToday ? '<button type="button" class="mk-side-plus" aria-label="Mainīt kartītes skatu" title="Mainīt skatu"></button>' : ''}
         </article>`;
       };
       return { name: workerName, fatigue, hit, ticks, html: card(fatigue, ticks), core: card(fatigue, ''), shape: card(SIDE_NO_FATIGUE, '') };
@@ -3950,6 +4019,8 @@ function filterFullList(btn) {
     const keys = activeDateStr + '|' + !!options.isToday + '|' + items.map(item => item.name).join('\n');
     if (container.__mkSideKeys === keys && items.length && patchSideCards(container, items)) {
       scheduleSideTicks(container, options);
+      if (window.__minkaSideCaf) window.__minkaSideCaf();
+      sideFaces();
       return;
     }
     container.innerHTML = items.length ? items.map(item => item.html).join('') : '<span class="mk-duty-empty">ATPŪTA</span>';
@@ -3960,6 +4031,8 @@ function filterFullList(btn) {
       el.__mkSideShape = items[i].shape;
     });
     scheduleSideTicks(container, options);
+    if (window.__minkaSideCaf) window.__minkaSideCaf();
+    sideFaces();
   }
 
   /* /rad left column: residents are many (duties + rotation, up to ~15 on a
@@ -7170,7 +7243,13 @@ function filterFullList(btn) {
       const a = coffeeAura(name);
       window.MkCoffeeFx.aura(card, a ? a.src : '', (window.MkCoffeeGold && window.MkCoffeeGold.today(name)) || '', a ? a.mg : 0);   // '', 'gold' or 'diamond'
     }
-    window.__minkaCoffeeAuraRefresh = () => document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => updateCoffeeAura(card, card.getAttribute('data-worker') || ''));
+    // The side cards say the same number in a small capsule with a cup: "142 mg", only where there is caffeine to speak of.
+    window.__minkaSideCaf = () => document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card[data-worker] .mk-side-caf').forEach(row => {
+      const a = coffeeAura(row.closest('.mk-side-card').getAttribute('data-worker') || ''), mg = a ? String(Math.round(a.mg)) : '';
+      if (row.hidden !== !a) row.hidden = !a;
+      if (row.dataset.mg !== mg) { row.dataset.mg = mg; row.lastElementChild.innerHTML = a ? '<b>' + mg + '</b><small>mg</small>' : ''; }
+    });
+    window.__minkaCoffeeAuraRefresh = () => { document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => updateCoffeeAura(card, card.getAttribute('data-worker') || '')); window.__minkaSideCaf(); if (window.__minkaSideFaces) window.__minkaSideFaces(); };
     window.__minkaCoffeeEq = coffeeEq;
     // drinks per kind on the shown duty day, while it is the running one (js/page/coffee-gold.js)
     window.__minkaCoffeeTodayDrinks = name => {
@@ -9343,6 +9422,7 @@ window.__minkaHostLayout = function(data, applyHost) {
   var root = document.documentElement;
   var changed = root.classList.contains('host-radio-open') !== !!data.radioVisible;
   root.classList.toggle('host-radio-open', !!data.radioVisible);
+  if (changed && window.__minkaSideFaces) { try { window.__minkaSideFaces(); } catch (_e) {} }
   // Only the roster reads these. A custom property changed on :root is
   // inherited by everything, so it used to cost a style pass over the whole
   // document (the closed night overlay included) each time the radio moved.

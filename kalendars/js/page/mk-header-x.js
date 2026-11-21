@@ -40,6 +40,7 @@
   /* ── Ikonas (viena līnija, 24 px režģis, apaļi gali) ─────────────────── */
   var PATHS = {
     search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+    grid: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.8v1.9M12 19.3v1.9M5.5 5.5l1.3 1.3M17.2 17.2l1.3 1.3M2.8 12h1.9M19.3 12h1.9M5.5 18.5l1.3-1.3M17.2 6.8l1.3-1.3"/>',
     moon: '<path d="M19.5 14.6A7.8 7.8 0 1 1 9.4 4.5a6.3 6.3 0 0 0 10.1 10.1Z"/>',
     arrive: '<path d="M14 4h3.5A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5H14"/><path d="M4 12h11m-4-4 4 4-4 4"/>',
@@ -148,7 +149,7 @@
       +           icon('search') + '<span class="hx-search-ph">Meklēt RG…</span>'
       +           '<kbd class="hx-kbd">' + (isMac ? '⌘' : 'Ctrl') + ' K</kbd></button>'
       +         '<span class="hx-searchbox-sep" aria-hidden="true"></span>'
-      +         '<button type="button" class="hx-tools" data-menu="tools" aria-haspopup="menu" aria-expanded="false" title="Tālruņi, maiņu joslas, nakts sadalījums, izskats">'
+      +         '<button type="button" class="hx-tools" data-menu="tools" aria-haspopup="menu" aria-expanded="false" title="Rīki">'
       +           icon('tune') + '<span>Rīki</span></button>'
       +       '</div>'
       +       '<div class="hx-status" role="group" aria-label="Laikapstākļi, mēness un atbalsts">'
@@ -372,6 +373,7 @@
     var ds = activeDate(), d = parseDMY(ds);
     if (!d) return;
     paintCalMonth();
+    paintMoon();
     var today = shiftToday(), isToday = ds === today;
     if (els.dateNum.textContent !== ds) els.dateNum.textContent = ds;
     els.dateWd.textContent = cap(CORE.WEEKDAYS[d.getDay()]);
@@ -770,8 +772,12 @@
     var toNew = Math.round(((cycle - day) % cycle + cycle) % cycle);
     function when(n) { return n === 0 ? 'šodien' : n === 1 ? 'rīt' : 'pēc ' + n + ' ' + (n % 10 === 1 && n % 100 !== 11 ? 'dienas' : 'dienām'); }
     var sel = parseDMY(activeDate());
+    // the tiles draw the phase (paintMoon): the window shows the same moon, not a second icon
+    var lit = moonLit(m);
+    var pic = tiles.on ? '<svg class="hx-moonpic" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21"/><path d="' + lit[0] + '" transform="' + lit[1] + '"/></svg>'
+      : '<img src="assets/weather-icons/' + MOON_ASSETS[m.index] + '.svg" width="56" height="56" alt="" aria-hidden="true">';
     return '<div class="hx-pop-head"><span class="hx-pop-eyebrow">Mēness ' + esc(sel ? sel.getDate() + '. ' + CORE.MONTH_GEN[sel.getMonth()].replace(/a$/, 'ā').replace(/ļa$/, 'lī') : '') + '</span></div>'
-      + '<div class="hx-moon-now"><img src="assets/weather-icons/' + MOON_ASSETS[m.index] + '.svg" width="56" height="56" alt="" aria-hidden="true">'
+      + '<div class="hx-moon-now">' + pic
       + '<div><b>' + esc(cap(m.name)) + '</b><span>Apgaismots ' + esc(m.illum) + '%</span></div></div>'
       + '<dl class="hx-wx-facts"><div><dt>Pilnmēness</dt><dd>' + when(toFull) + '</dd></div><div><dt>Jauns mēness</dt><dd>' + when(toNew) + '</dd></div></dl>';
   }
@@ -836,57 +842,21 @@
 
   /* ── Rīki: iepriekšējās četras bezvārda ikonas dienu joslā, tagad ar
      nosaukumiem, paskaidrojumu un slēdža stāvokli, blakus meklēšanai. ── */
-  function toolState() {
-    var today = activeDate() === shiftToday();
-    var wrapP = $('shift-progress-wrap'), nsBtn = $('ns-bar-toggle');
-    var nsAvail = today && !!nsBtn && !nsBtn.hidden;
-    return { today: today, lanes: !!wrapP && !wrapP.classList.contains('lanes-collapsed'), nsAvail: nsAvail, ns: nsAvail && nsBtn.classList.contains('is-on') };
-  }
+  // Four things, each a picture and one word. (The lanes and night-split switches were here: nobody used them.)
   function toolsHtml() {
-    var t = toolState();
-    function item(id, ic, title, sub, trail, disabled) {
-      return '<button type="button" class="hx-mi' + (disabled ? ' is-disabled' : '') + '" role="menuitem" data-tool="' + id + '"' + (disabled ? ' aria-disabled="true"' : '') + '>'
-        + '<span class="hx-mi-ic">' + icon(ic) + '</span><span class="hx-mi-main"><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span>' + (trail || '') + '</button>';
+    function item(id, ic, title) {
+      return '<button type="button" class="hx-mi" role="menuitem" data-tool="' + id + '"><span class="hx-mi-ic">' + icon(ic) + '</span><b>' + title + '</b></button>';
     }
-    function sw(on) { return '<span class="hx-switch' + (on ? ' is-on' : '') + '" aria-hidden="true"><i></i></span>'; }
-    var chev = icon('chevR', 'hx-mi-chev');
-    return '<div class="hx-menu" role="menu" aria-label="Rīki">'
-      + item('phones', 'phone', 'Tālruņu saraksts', 'Visi numuri pa nodaļām, ar meklēšanu', chev)
-      + item('lanes', 'lanes', 'Katra maiņa savā joslā', t.today ? 'Laika lineālā zem galvenes' : 'Pieejams tikai šodienai', sw(t.lanes), !t.today)
-      + (IS_RAD ? '' : item('ns', 'moon', 'Nakts sadalījums lineālā', t.nsAvail ? 'Kurš guļ kurā laikā, uz laika joslas' : (t.today ? 'Šodienai nakts plāna vēl nav' : 'Pieejams tikai šodienai'), sw(t.ns), !t.nsAvail))
-      + item('cal', 'calendar', 'Izvēlēties datumu', 'Pāriet uz jebkuru dienu', chev)
-      + item('look', 'palette', 'Galvenes izskats', 'Izkārtojums, fons, krāsas, progresa josla', chev)
-      + profilesHtml()
-      + '<div class="hx-mi-keys" role="note"><b>Taustiņi</b>'
-      +   '<span><kbd>←</kbd><kbd>→</kbd> iepriekšējā, nākamā diena</span>'
-      +   '<span><kbd>T</kbd> šodiena</span>'
-      +   '<span><kbd>' + (isMac ? '⌘' : 'Ctrl') + '</kbd><kbd>K</kbd> meklēt</span></div>'
-      + '</div>';
-  }
-  // Tiles: the profile is changed right here (the full editor is in "Galvenes izskats").
-  function profilesHtml() {
-    var api = window.MinkaHeaderAppearance, cur = api && api.snapshot().profile;
-    if (!tiles.on || !api) return '';
-    return '<div class="hx-mi-prof" role="group" aria-label="Flīžu profils"><b>Flīžu profils</b>'
-      + [['full', 'Pilnā'], ['duty', 'Dežūra'], ['calm', 'Mierīgā'], ['own', 'Mana']].map(function (p) {
-        return '<button type="button" class="hx-prof" data-profile="' + p[0] + '" aria-pressed="' + (p[0] === cur) + '">' + p[1] + '</button>';
-      }).join('') + '<button type="button" class="hx-prof hx-prof-edit" data-tool="edit-tiles">Rediģēt flīzes</button></div>';
+    return '<div class="hx-menu" role="menu" aria-label="Rīki">' + item('phones', 'phone', 'Tālruņi') + item('cal', 'calendar', 'Datums')
+      + (root.dataset.headerLayout === 'tiles' ? item('widgets', 'grid', 'Logrīki') : '') + item('look', 'palette', 'Izskats') + '</div>';
   }
   function runTool(id) {
-    if (id === 'lanes' || id === 'ns') {
-      var b = $(id === 'lanes' ? 'lanes-mini-toggle' : 'ns-bar-toggle');
-      if (b) b.click();
-      // The switch slides to the new state in place (no re-render).
-      var t = toolState(), el = pop && pop.querySelector('[data-tool="' + id + '"] .hx-switch');
-      if (el) el.classList.toggle('is-on', id === 'lanes' ? t.lanes : t.ns);
-      return;
-    }
     var from = els.tools;
     closePop();
     if (id === 'phones') openPhones(from);
     else if (id === 'cal') openDate(from);
     else if (id === 'look') openLook(from);
-    else if (id === 'edit-tiles') enterEdit();
+    else if (id === 'widgets') openWidgets();
   }
 
   /* ── Datuma izvēle: M3 kalendārs ─────────────────────────────────────────
@@ -1063,9 +1033,12 @@
     closePop();
     closeSearch(false);
     closeDate(false);
-    var b = $('headerAppearanceBtn');
-    if (!b) return;
-    b.click();
+    var api = window.MinkaHeaderAppearance;
+    if (!api) return;
+    // its styles load with the first opening (js/header-appearance.js), so it is placed once it is open
+    api.open().then(function () { placeLook(anchor); });
+  }
+  function placeLook(anchor) {
     var d = $('headerAppearance');
     if (!d || !d.open) return;
     var from = anchor && anchor.isConnected ? anchor : els.tools;
@@ -1398,7 +1371,7 @@
      virs tā (fixed, z 9999). Kamēr kāds logs ir redzams, slānis paceļas virs
      kaķa; kad logs aizvērts, viss ir kā bija. */
   function layerSync() {
-    var up = (pop && !pop.hidden) || (pal && !pal.hidden) || (ph.el && !ph.el.hidden) || (dp.el && !dp.el.hidden) || (edit && edit.on);
+    var up = (pop && !pop.hidden) || (pal && !pal.hidden) || (ph.el && !ph.el.hidden) || (dp.el && !dp.el.hidden) || (top && top.classList.contains('hxt-edit'));
     root.classList.toggle('hx-layer-up', !!up);
   }
 
@@ -1414,12 +1387,6 @@
     $('minkaBarWrap').appendChild(pop);
     pop.addEventListener('pointerenter', function () { clearTimeout(popCloseT); });
     pop.addEventListener('click', function (e) {
-      var prof = e.target.closest('[data-profile]');
-      if (prof && window.MinkaHeaderAppearance) {
-        window.MinkaHeaderAppearance.set({ profile: prof.dataset.profile });
-        Array.prototype.forEach.call(pop.querySelectorAll('[data-profile]'), function (b) { b.setAttribute('aria-pressed', String(b === prof)); });
-        return;
-      }
       var mi = e.target.closest('[data-tool]');
       if (mi && mi.getAttribute('aria-disabled') !== 'true') runTool(mi.dataset.tool);
     });
@@ -2053,7 +2020,7 @@
       if (dp.el && !dp.el.hidden && !dp.el.__closing) dpRender();
     });
   });
-  window.addEventListener('minka:weather', function () { if (popKind === 'weather') fillPop('weather'); });
+  window.addEventListener('minka:weather', function () { if (popKind === 'weather') fillPop('weather'); if (wmod.api) wmod.api.paint(); });
   document.addEventListener('minka:storeReady', function () { peopleCache = null; adopt(); renderDate(); });
   window.addEventListener('minka:auto-day-rollover', renderDate);
 
@@ -2066,7 +2033,7 @@
      status row), and the shift has a tile (.hx-shift): the clock, the time left, and a wave that rises
      with the part of the shift that has gone. Nothing loops: the tile is repainted once a minute, and
      the wave slides one period then. */
-  var tiles = { on: false, wx: null, shift: null, timer: 0 };
+  var tiles = { on: false, wx: null, shift: null, moonPic: null, timer: 0 };
   function shiftSpan() {
     var d = parseDMY(shiftToday()) || new Date();
     d.setHours(8, 0, 0, 0);
@@ -2097,10 +2064,29 @@
       el.classList.add('is-tick');
     }
   }
+  /* The moon in the weather tile is a drawing of its phase, not an icon: the lit part is as wide as the moon
+     is lit, on the right while it grows and on the left while it wanes (as seen from Latvia). */
+  function paintMoon() {
+    var pic = tiles.moonPic, m = typeof window.currentMoon === 'function' ? window.currentMoon() : null;
+    if (!pic) return;
+    var lit = moonLit(m);
+    pic.lastChild.setAttribute('d', lit[0]);
+    pic.lastChild.setAttribute('transform', lit[1]);
+    els.moon.title = m ? cap(m.name) + ', apgaismots ' + m.illum + ' %' : 'Mēness';
+  }
+  // [path, transform] of the lit part in a 48 x 48 box (the disc: r 21 at 24, 24)
+  function moonLit(m) {
+    var f = m ? Math.max(0, Math.min(1, (+m.illum || 0) / 100)) : 0;
+    // the right half-disc, then the terminator back up: bulging right for a crescent, left for a gibbous moon
+    return [f > .005 ? 'M24 3A21 21 0 0 1 24 45A' + (21 * Math.abs(1 - 2 * f)).toFixed(2) + ' 21 0 0 ' + (f > .5 ? 1 : 0) + ' 24 3Z' : '',
+      m && (+m.dayOfCycle || 0) > 14.77 ? 'translate(48 0) scale(-1 1)' : ''];
+  }
   function shiftTick() {
     clearTimeout(tiles.timer);
     if (!tiles.on) return;
     paintShift(true);
+    paintMoon();
+    if (wmod.api) wmod.api.paint();
     tiles.timer = setTimeout(shiftTick, 60000 - Date.now() % 60000 + 250);
   }
   function arrangeTiles() {
@@ -2122,13 +2108,17 @@
         tiles.wx.setAttribute('aria-label', 'Laikapstākļi un mēness');
         center.appendChild(tiles.shift);
         center.appendChild(tiles.wx);
+        els.moon.insertAdjacentHTML('afterbegin', '<svg class="hx-moonpic" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21"/><path/></svg>');
+        tiles.moonPic = els.moon.firstElementChild;
       }
       tiles.wx.appendChild(els.weather);
       tiles.wx.appendChild(els.moon);
       paintShift(false);
+      paintMoon();
       tiles.timer = setTimeout(shiftTick, 60000 - Date.now() % 60000 + 250);
     } else {
       clearTimeout(tiles.timer);
+      if (wmod.api) wmod.api.exit();
       if (status) { status.insertBefore(els.moon, status.firstChild); status.insertBefore(els.weather, els.moon); }
       top.classList.remove('hxt-s', 'hxt-ts');
       top.style.removeProperty('--hxt-z');
@@ -2143,8 +2133,9 @@
      (.hxt-ts: icons only), then loses the weather, then the news; narrower still, every tile turns compact
      (.hxt-s), and under that the whole row is scaled down to fit.
      [selector, least width, least width compact (0: not shown compact)], as the CSS sizes them. */
-  var TILE = { rg: ['.hx-wing-rg', 232, 172], date: ['.hx-dateblock', 250, 190], shift: ['.hx-shift', 132, 116], wx: ['.hx-wx', 92, 80],
+  var TILE = { rg: ['.hx-wing-rg', 232, 172], date: ['.hx-dateblock', 250, 190], shift: ['.hx-shift', 132, 116], wx: ['.hx-wx', 108, 84],
     news: ['.hx-row-feed', 236, 0], tools: ['.hx-row-tools', 126, 92], rd: ['.hx-wing-rd', 224, 172] };
+  var CORE_TILES = Object.keys(TILE);
   // A day change touches the facts several times in one task: the row is measured once, at the task's end
   // (still before the frame is painted).
   var fitQueued = false;
@@ -2156,8 +2147,11 @@
   function fitTiles() {
     var wrap = $('minkaBarWrap');
     if (!tiles.on || !top || !wrap) return;
-    var want = String(root.dataset.headerTiles || '').split(' ').filter(function (id) { return TILE[id]; });
-    if (!want.length) want = Object.keys(TILE);
+    var asked = String(root.dataset.headerTiles || '').split(' ').filter(Boolean);
+    // an extra widget in the profile: its module is fetched once, and the row is fitted again when it is in
+    if (asked.some(function (id) { return !TILE[id]; })) needWidgets(function () { fitTiles(); ['rg', 'rd'].forEach(renderWing); });
+    var want = asked.filter(function (id) { return TILE[id]; });
+    if (!want.length) want = CORE_TILES.slice();
     var room = wrap.clientWidth - 16;   // the block's 3 px insets and 5 px side padding
     // The date tile asks for the room its longest line needs, so the day's fact, the name days and the
     // birthday are read whole (460 px at most): the date with its label, the weekday with the fact, the names.
@@ -2174,6 +2168,8 @@
       }, 0) + 6 * (list.length - 1);
     }
     var list = want.slice();
+    // extra widgets give way first, the last one first
+    for (var x = list.length - 1; x >= 0 && need(list, 1) > room; x--) if (TILE[list[x]][3]) list.splice(x, 1);
     if (need(list, 1) > room) smallTools = true;
     function drop(id) { if (need(list, 1) > room) list = list.filter(function (t) { return t !== id; }); }
     drop('wx');
@@ -2197,137 +2193,47 @@
     top.classList.toggle('hxt-ts', smallTools && !compact);
     if (zoom < 1) top.style.setProperty('--hxt-z', zoom.toFixed(3)); else top.style.removeProperty('--hxt-z');
   }
-  new MutationObserver(function () { arrangeTiles(); fitTiles(); ['rg', 'rd'].forEach(renderWing); if (edit.on) { if (tiles.on) syncEdit(); else exitEdit(); } })
+  new MutationObserver(function () { arrangeTiles(); fitTiles(); ['rg', 'rd'].forEach(renderWing); if (wmod.api) { wmod.api.paint(); wmod.api.sync(); } })
     .observe(root, { attributes: true, attributeFilter: ['data-header-layout', 'data-header-tiles'] });
 
-  /* ── Flīžu rediģēšana pašā galvenē ───────────────────────────────────────
-     Rīki → "Rediģēt flīzes" (or the button in Galvenes izskats). Every tile but the tools gets a "−" to take
-     it out, a tile is dragged to a new place, and a bar under the header offers the tiles that are out,
-     the ready profiles and "Gatavs". A change makes the profile the user's own ("Mana"). The same can be done
-     with the keyboard in Galvenes izskats (checkboxes and arrows); here Tab reaches the "−" and the bar, Esc ends. */
-  var edit = { on: false, bar: null, drag: null };
-  var TILE_NAME = { date: 'Datums', shift: 'Maiņas laiks', wx: 'Laikapstākļi', news: 'Ziņas', tools: 'Rīki', rd: 'Radiologi' };
-  function tileName(id) { return id === 'rg' ? ((window.__mkLeftRole && window.__mkLeftRole.many) || 'Radiogrāferi') : TILE_NAME[id]; }
-  function tileEl(id) { return top.querySelector(TILE[id][0]); }
-  function tileId(el) { return Object.keys(TILE).filter(function (id) { return el.matches(TILE[id][0]); })[0]; }
-  function wantTiles() { return String(root.dataset.headerTiles || '').split(' ').filter(function (id) { return TILE[id]; }); }
-  // the tiles in the row now, left to right (a narrow window may have left some of the profile's out)
-  function shownTiles() {
-    return Object.keys(TILE).filter(function (id) { var el = tileEl(id); return el && !el.hasAttribute('data-hxt-off'); })
-      .sort(function (a, b) { return (+tileEl(a).style.order || 0) - (+tileEl(b).style.order || 0); });
+  /* Extra widgets, the widget picker and editing in the header live in js/page/mk-header-widgets.js with
+     css/page/mk-header-widgets.css. They are fetched only when a profile uses an extra widget or the picker is
+     opened, so the page's own start does not pay for them. The module hands itself over with _w.register. */
+  var WV = '20261121w3';
+  var wmod = { state: 0, api: null, queue: [] };   // state: 0 not asked, 1 on its way, 2 in
+  function needWidgets(cb) {
+    if (wmod.state === 2) { if (cb) cb(); return; }
+    if (cb) wmod.queue.push(cb);
+    if (wmod.state) return;
+    wmod.state = 1;
+    var left = 2;
+    function arrived() {
+      if (--left) return;
+      wmod.state = wmod.api ? 2 : 0;   // a failed fetch may be tried again
+      var q = wmod.queue; wmod.queue = [];
+      if (wmod.api) q.forEach(function (f) { f(); });
+    }
+    var css = doc.createElement('link'), js = doc.createElement('script');
+    css.rel = 'stylesheet'; css.href = 'css/page/mk-header-widgets.css?v=' + WV;
+    js.src = 'js/page/mk-header-widgets.js?v=' + WV;
+    css.onload = css.onerror = js.onload = js.onerror = arrived;
+    doc.head.appendChild(css); doc.head.appendChild(js);
   }
-  function saveTiles(list) { if (window.MinkaHeaderAppearance) window.MinkaHeaderAppearance.set({ profile: 'own', ownTiles: list }); }
-  function syncEdit() {
-    if (!edit.on) return;
-    Array.prototype.forEach.call(top.querySelectorAll('.hxt-rm'), function (b) { b.remove(); });
-    shownTiles().forEach(function (id, i, all) {
-      if (id === 'tools') return;
-      var b = doc.createElement('button');
-      b.type = 'button'; b.className = 'hxt-rm'; b.dataset.rm = id;
-      if (i === all.length - 1) b.setAttribute('data-last', '');
-      b.setAttribute('aria-label', 'Noņemt flīzi: ' + tileName(id)); b.title = 'Noņemt';
-      tileEl(id).appendChild(b);
+  function registerWidgets(api) {
+    Object.keys(api.defs).forEach(function (id) {
+      var el = doc.createElement('div');
+      el.className = 'hx-w hx-w-' + id;
+      el.innerHTML = api.defs[id].html;
+      // out of the row until the profile asks for it (fitTiles): the picker opening must change nothing
+      el.setAttribute('data-hxt-off', '');
+      center.appendChild(el);
+      TILE[id] = ['.hx-w-' + id, api.defs[id].w, 0, 1];   // [3]: an extra widget
     });
-    var want = wantTiles(), out = Object.keys(TILE).filter(function (id) { return want.indexOf(id) < 0; });
-    var api = window.MinkaHeaderAppearance, cur = api ? api.snapshot().profile : '';
-    edit.bar.innerHTML = '<span class="hxt-bar-group"><b>Pievienot</b>'
-      + (out.length ? out.map(function (id) { return '<button type="button" class="hxt-add" data-add="' + id + '">' + esc(tileName(id)) + '</button>'; }).join('')
-        : '<span class="hxt-bar-note">Visas flīzes ir joslā</span>') + '</span>'
-      + '<span class="hxt-bar-group"><b>Profils</b>' + [['full', 'Pilnā'], ['duty', 'Dežūra'], ['calm', 'Mierīgā'], ['own', 'Mana']].map(function (p) {
-        return '<button type="button" class="hxt-prof" data-profile="' + p[0] + '" aria-pressed="' + (p[0] === cur) + '">' + p[1] + '</button>';
-      }).join('') + '</span>'
-      + '<span class="hxt-bar-note">Velc flīzi, lai pārvietotu</span><button type="button" class="hxt-done">Gatavs</button>';
+    wmod.api = api;
+    fitTiles();
+    api.paint();
   }
-  function enterEdit() {
-    if (edit.on || !tiles.on || !top) return;
-    closePop(); closeSearch(false); closeDate(false);
-    edit.on = true;
-    top.classList.add('hxt-edit');
-    edit.bar = doc.createElement('div');
-    edit.bar.id = 'hxEditBar';
-    edit.bar.setAttribute('role', 'toolbar');
-    edit.bar.setAttribute('aria-label', 'Flīžu rediģēšana');
-    $('minkaBarWrap').appendChild(edit.bar);
-    edit.bar.addEventListener('click', function (e) {
-      var b = e.target.closest('button');
-      if (!b) return;
-      if (b.dataset.add) saveTiles(wantTiles().concat(b.dataset.add));
-      else if (b.dataset.profile && window.MinkaHeaderAppearance) window.MinkaHeaderAppearance.set({ profile: b.dataset.profile });
-      else if (b.classList.contains('hxt-done')) exitEdit();
-    });
-    syncEdit();
-    layerSync();
-    var done = edit.bar.querySelector('.hxt-done');
-    if (done) done.focus({ preventScroll: true });
-  }
-  function exitEdit() {
-    if (!edit.on) return;
-    edit.on = false; edit.drag = null;
-    top.classList.remove('hxt-edit');
-    Array.prototype.forEach.call(top.querySelectorAll('.hxt-rm'), function (b) { b.remove(); });
-    if (edit.bar) edit.bar.remove();
-    edit.bar = null;
-    layerSync();
-    if (els.tools) els.tools.focus({ preventScroll: true });
-  }
-  // Dragging a tile: it follows the pointer, and a neighbour whose middle it passes steps to the other side.
-  function editZoom() { return parseFloat(top.style.getPropertyValue('--hxt-z')) || 1; }
-  function dragDown(e) {
-    if (!edit.on || e.button > 0) return;
-    var rm = e.target.closest('.hxt-rm');
-    if (rm) { e.preventDefault(); saveTiles(wantTiles().filter(function (id) { return id !== rm.dataset.rm; })); return; }
-    var el = e.target.closest('.hx-wing, .hx-dateblock, .hx-shift, .hx-wx, .hx-row-feed, .hx-row-tools');
-    if (!el || !top.contains(el)) return;
-    e.preventDefault();
-    edit.drag = { el: el, id: tileId(el), x0: e.clientX, order: shownTiles(), moved: false, pid: e.pointerId };
-    try { el.setPointerCapture(e.pointerId); } catch (_e) {}
-    el.classList.add('is-drag');
-  }
-  function dragMove(e) {
-    var g = edit.drag;
-    if (!g || e.pointerId !== g.pid) return;
-    var z = editZoom(), dx = (e.clientX - g.x0) / z;
-    g.el.style.translate = dx + 'px 0';
-    var r = g.el.getBoundingClientRect(), mid = (r.left + r.right) / 2, at = g.order.indexOf(g.id);
-    var next = g.order[at + 1] && tileEl(g.order[at + 1]).getBoundingClientRect(), prev = g.order[at - 1] && tileEl(g.order[at - 1]).getBoundingClientRect();
-    var to = next && mid > (next.left + next.right) / 2 ? at + 1 : prev && mid < (prev.left + prev.right) / 2 ? at - 1 : at;
-    if (to === at) return;
-    var other = tileEl(g.order[to]), was = other.getBoundingClientRect().left, base = r.left - dx * z;
-    g.order.splice(to, 0, g.order.splice(at, 1)[0]);
-    g.order.forEach(function (id, i) { tileEl(id).style.order = String(i); });
-    g.moved = true;
-    // the dragged tile's own place moved under it: keep it under the pointer
-    g.x0 += g.el.getBoundingClientRect().left - dx * z - base;
-    g.el.style.translate = (e.clientX - g.x0) / z + 'px 0';
-    var now = other.getBoundingClientRect().left;
-    if (other.animate && root.dataset.motion !== 'reduced') other.animate([{ translate: (was - now) / z + 'px 0' }, { translate: '0 0' }], { duration: 240, easing: 'cubic-bezier(.2, 0, 0, 1)' });
-  }
-  function dragUp(e) {
-    var g = edit.drag;
-    if (!g || e.pointerId !== g.pid) return;
-    edit.drag = null;
-    var from = g.el.style.translate || '0 0';
-    g.el.style.translate = '';
-    g.el.classList.remove('is-drag');
-    if (g.el.animate && root.dataset.motion !== 'reduced') g.el.animate([{ translate: from }, { translate: '0 0' }], { duration: 240, easing: 'cubic-bezier(.2, 0, 0, 1)' });
-    if (!g.moved) return;
-    // the profile's tiles a narrow window left out keep their places among the ones that were moved
-    var queue = g.order.slice();
-    saveTiles(wantTiles().map(function (id) { return g.order.indexOf(id) < 0 ? id : queue.shift(); }));
-  }
-  doc.addEventListener('pointerdown', function (e) { if (edit.on && top && top.contains(e.target)) dragDown(e); }, true);
-  doc.addEventListener('pointermove', dragMove, true);
-  doc.addEventListener('pointerup', dragUp, true);
-  doc.addEventListener('pointercancel', dragUp, true);
-  // while editing, a click inside a tile does nothing of its own (no popovers, no day changes)
-  doc.addEventListener('click', function (e) {
-    if (!edit.on || !top || !top.contains(e.target)) return;
-    var rm = e.target.closest('.hxt-rm');
-    e.preventDefault(); e.stopPropagation();
-    // a "−" pressed with the keyboard (the pointer's press was already taken in dragDown)
-    if (rm && e.detail === 0) saveTiles(wantTiles().filter(function (id) { return id !== rm.dataset.rm; }));
-  }, true);
-  doc.addEventListener('keydown', function (e) { if (edit.on && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); exitEdit(); } }, true);
+  function openWidgets() { if (tiles.on) needWidgets(function () { wmod.api.enter(); }); }
 
   var started = false;
   function start() {
@@ -2351,7 +2257,12 @@
     if (Date.now() - bmcCheckedAt >= 36e5) setTimeout(function () { idle(function () { loadBmc(); }); }, 8000);
   }
   window.MkHeaderX = { openSearch: openSearch, closeSearch: closeSearch, goToday: goToday,
-    openMobile: function () { if (els.mobile) openPop('mobile', els.mobile, true); }, editTiles: enterEdit };
+    openMobile: function () { if (els.mobile) openPop('mobile', els.mobile, true); }, editTiles: openWidgets,
+    // for js/page/mk-header-widgets.js
+    _w: { register: registerWidgets, TILE: TILE, core: CORE_TILES, fit: fitTiles, layerSync: layerSync, esc: esc, cap: cap, pad: pad, icon: icon, wimg: wimg,
+      shiftSpan: shiftSpan, leftText: leftText,
+      top: function () { return top; }, toolsBtn: function () { return els.tools; },
+      closeAll: function () { closePop(); closeSearch(false); closeDate(false); } } };
   // A click outside the calendar frame (the shell's dock, its edges) closes the
   // header windows too, the same as a click anywhere else in the calendar.
   try {

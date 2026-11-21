@@ -488,7 +488,28 @@
     const total=counts.reduce((a,b)=>a+b,0)+4;
     return {plans,weights:counts.map(n=>(n+1)/total)};
   }
+  /* A person's own correction ("I am more, or less, tired than the schedule says"): their look's "fa" part, the
+     points and the minute of their first press (minka-skins.js), so everyone sees it on every device. It is their
+     own judgement, so it never runs out: from that minute on every moment is that much higher or lower, and the whole
+     model goes with it, the number, its level, the day, week and month curves, the ticks, the forecast and the
+     month's figures; the duties after it add their fatigue on top as always. The time before it stays as computed.
+     A later press changes the points and keeps the first minute; back to 0 removes it. */
+  function manualOf(workerName){
+    const skin=typeof window.mkGetWorkerSkin==='function'?window.mkGetWorkerSkin(workerName):null;
+    const m=skin&&/^(-?\d{1,2}),(\d{7,9})$/.exec(skin.fa||'');
+    return m&&+m[1]?[Math.max(-30,Math.min(30,+m[1])),+m[2]*60000]:null;
+  }
+  function manualAt(m,t){ return m&&+t>=m[1]-15*60000?m[0]:0; }
+  function manualKey(workerName){const m=manualOf(workerName);return m?m.join(','):'';}
   function sleepTimeline(history,workerName,now,overrides,scenario){
+    const model=sleepTimelineModel(history,workerName,now,overrides,scenario),m=manualOf(workerName);
+    if(!m)return model;
+    return {...model,manual:m,at(t){
+      const v=model.at(t),d=manualAt(m,t);
+      return d?{...v,modelScore:v.score,score:Math.max(0,Math.min(100,Math.round(v.score+d)))}:v;
+    }};
+  }
+  function sleepTimelineModel(history,workerName,now,overrides,scenario){
     const settings={...sleepAssumptions(workerName),...overrides};
     const work=mergeWorkWindows(history);
     const start=new Date(Math.min(+(work[0]?.start||now),+now));start.setDate(start.getDate()-21);start.setHours(7,0,0,0);
@@ -503,7 +524,7 @@
     // Explicit sleep overrides continue to select a single reproducible scenario.
     if(recoveryEnsemble){
       const variants=[{home:6,nap:2},{home:7,nap:3},{home:8,nap:4}].map((v,recoveryVariant)=>
-        sleepTimeline(history,workerName,now,{...settings,recoveryVariant,recoveryHomeHours:v.home,recoveryHours:v.nap},scenario));
+        sleepTimelineModel(history,workerName,now,{...settings,recoveryVariant,recoveryHomeHours:v.home,recoveryHours:v.nap},scenario));
       const result={...variants[1],at(t){
         const values=variants.map(v=>v.at(t));
         const mean=key=>values.reduce((sum,v)=>sum+v[key],0)/values.length;
@@ -515,7 +536,7 @@
     }
     const inferred=settings.habitVariant===undefined?habitHistory(history,workerName):null;
     if(inferred){
-      const variants=inferred.weights.map((weight,habitVariant)=>({weight,model:sleepTimeline(history,workerName,now,{...settings,habitVariant,habitPlans:inferred.plans},scenario)}));
+      const variants=inferred.weights.map((weight,habitVariant)=>({weight,model:sleepTimelineModel(history,workerName,now,{...settings,habitVariant,habitPlans:inferred.plans},scenario)}));
       const exemplar=variants[0].model;
       // Plan end times once, not per sample (month curves sample hundreds of times).
       const planEnds=Object.keys(inferred.plans).map(date=>+getShiftStartEnd(history.find(e=>e.dateStr===date)).end);
@@ -687,7 +708,7 @@
   }
   function scoreAt(workerName,now,overrides){
     syncFatigueCache();
-    const key=workerName+'|'+(+now);
+    const key=workerName+'|'+(+now)+'|'+manualKey(workerName);
     if(!overrides&&sampleCache.has(key))return sampleCache.get(key);
     const load=sleepTimeline(gatherWorkerHistory(workerName),workerName,now,overrides).at(+now);
     const score=components(load,now).score;
@@ -699,7 +720,7 @@
   // One timeline per person (the card's own, when the schedule reaches past
   // the month), so the month costs a few hundred cheap samples.
   function seriesKey(workerName,year,month,stepHours){
-    return workerName+'|'+(+new Date(year,month-1,1))+'|'+stepHours+'|'+new Date().toDateString()+'|'+(new Date().getHours()>=8);
+    return workerName+'|'+(+new Date(year,month-1,1))+'|'+stepHours+'|'+new Date().toDateString()+'|'+(new Date().getHours()>=8)+'|'+manualKey(workerName);
   }
   function isMonthSeriesReady(workerName,year,month,stepHours=1){
     syncFatigueCache();
@@ -1007,7 +1028,16 @@
   // `dateStr` evaluates the person as of another day than the one on screen.
   // The calendar uses it to warm the cache for the neighbouring days in idle
   // time, so stepping to them does not pay for the sleep model in the click.
+  // The person's correction now, in points (the card's badge and its − / + start from it).
+  function manualShift(workerName) { return Math.round(manualAt(manualOf(workerName), Date.now())); }
+  // The model already carries the correction (sleepTimeline); on the live view the result also says how much of it
+  // there is and what the schedule alone would give (modelScore).
   function calculateFatigue(workerName, dateStr) {
+    const result = modelFatigue(workerName, dateStr), shift = result && result.viewMode === 'today' ? manualShift(workerName) : 0;
+    if (!shift) return result;
+    return Object.assign({}, result, { modelScore: Math.max(0, Math.min(100, result.score - shift)), manual: shift });
+  }
+  function modelFatigue(workerName, dateStr) {
     syncFatigueCache();
     const requestedDateStr = (dateStr ? normalizeDateStr(dateStr) : '') || _getSelectedDateStr() || '';
     // A past or future view below replaces `now` with a time simulated from the
@@ -1030,7 +1060,7 @@
     const timeBucket = isLiveView
       ? Math.floor(clock.getTime() / 30000)
       : todayStr;
-    const cacheKey = [String(workerName || '').trim(), requestedDateStr, timeBucket].join('|');
+    const cacheKey = [String(workerName || '').trim(), requestedDateStr, timeBucket, manualKey(workerName)].join('|');
     if (resultCache.has(cacheKey)) return resultCache.get(cacheKey);
     const history = gatherWorkerHistory(workerName);
     if (!history.length) return null;
@@ -1809,7 +1839,7 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshNightFatigue(); });
   window.addEventListener('storage', e => { if (!e.key || e.key === 'minkaNightSplitByDateV1') refreshNightFatigue(); });
 
-  window.__fatigue = { setCurveRange, calculateFatigue, gatherWorkerHistory, getPresentation, scoreAt, monthSeries, monthSummary, monthCurveHtml, isMonthSeriesReady, FATIGUE_LEVELS, forecast, nightScenarios, compareRecovery, compareLight, modelParameters: window.MinkaSleepModel.parameters, sleepAssumptions, savedNightWindow, clearCache: clearFatigueCache };
+  window.__fatigue = { setCurveRange, calculateFatigue, gatherWorkerHistory, getPresentation, scoreAt, monthSeries, monthSummary, monthCurveHtml, isMonthSeriesReady, FATIGUE_LEVELS, forecast, nightScenarios, compareRecovery, compareLight, modelParameters: window.MinkaSleepModel.parameters, sleepAssumptions, savedNightWindow, clearCache: clearFatigueCache, manualShift };
   window.__fatigueRenderModal = renderModalFatigue;
   window.__minkaFatigueReady = true;
   document.dispatchEvent(new CustomEvent('minka:fatigue-ready'));

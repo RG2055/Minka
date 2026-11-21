@@ -234,7 +234,7 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
   container: mk-side-duty / size;
   --mk-side-n: 1;
   /* pilnas kartītes augstums (mērīts) + 1 px rezerve noapaļošanai */
-  --mk-side-nat: 212px;
+  --mk-side-nat: 210px;
   padding-bottom: 8px !important;
   -webkit-mask-image: linear-gradient(#000, #000 calc(100% - 8px), transparent) !important;
           mask-image: linear-gradient(#000, #000 calc(100% - 8px), transparent) !important;
@@ -667,46 +667,6 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
   z-index: 1 !important;
 }
 
-/* Vārds, uzvārds un stundas kā tonēts stikls (kā laikapstākļu "24 °C"):
-   burti caurspīdīgi tonēti kartītes akcenta krāsā ar gaišu augšu un gaišu
-   malu. Tikai gradients un kontūra: bez filtriem un izplūšanas. */
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks .duty-name {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  background-image: linear-gradient(180deg,
-    rgba(255, 255, 255, .92) 0%,
-    color-mix(in srgb, var(--mk-side-glass-accent, #e7d34b) 30%, rgba(255, 255, 255, .62)) 48%,
-    color-mix(in srgb, var(--mk-side-glass-accent, #e7d34b) 55%, rgba(255, 255, 255, .22)) 100%) !important;
-  -webkit-background-clip: text !important;
-          background-clip: text !important;
-  -webkit-text-stroke: .6px rgba(255, 255, 255, .62) !important;
-  text-shadow: none !important;
-}
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks .duty-surname {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  background-image: linear-gradient(180deg,
-    rgba(255, 255, 255, .9) 0%,
-    color-mix(in srgb, var(--mk-side-glass-accent, #e7d34b) 55%, rgba(255, 255, 255, .55)) 100%) !important;
-  -webkit-background-clip: text !important;
-          background-clip: text !important;
-  -webkit-text-stroke: .3px rgba(255, 255, 255, .45) !important;
-  text-shadow: none !important;
-}
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks .mk-side-shift-chip {
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  background-color: transparent !important;
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, .95), color-mix(in srgb, var(--mk-shift-c) 55%, rgba(255, 255, 255, .4))),
-    linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .02)),
-    linear-gradient(color-mix(in srgb, var(--mk-shift-c) 16%, transparent), color-mix(in srgb, var(--mk-shift-c) 16%, transparent)) !important;
-  -webkit-background-clip: text, border-box, border-box !important;
-          background-clip: text, border-box, border-box !important;
-  -webkit-text-stroke: .4px rgba(255, 255, 255, .55) !important;
-  border: 1px solid color-mix(in srgb, var(--mk-shift-c) 45%, rgba(255, 255, 255, .3)) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22) !important;
-}
 /* Kur vilnis iet aiz galvas, tas ir tumšāks: gluda pāreja no apakšas uz
    augšu (bez līnijas). Galva (vārds, gredzens) un emoji paliek virs tā. */
 html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks > .mk-side-ticks {
@@ -734,41 +694,10 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
   border-color: var(--mk-side-fat-color, #42d991) transparent transparent !important;
 }
 
-/* Kājene labi salasāma arī samazinātā kartītē: lielāki, gaišāki uzraksti un
-   vērtības, lielākas ikonas, biezāka mēneša josla ar lielākiem skaitļiem. */
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) {
-  grid-template-columns: 20px minmax(0, max-content) !important;
-  column-gap: 6px !important;
-}
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split)::before {
-  width: 20px !important;
-  height: 20px !important;
-}
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dt {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: rgba(255, 255, 255, .78) !important;
-  -webkit-text-fill-color: rgba(255, 255, 255, .78) !important;
-}
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dd {
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
-}
+/* The footer's sizes are set in the tile-language block at the end of this file; only the accent of "(vēl N)" stays here. */
 html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dd em {
   color: var(--mk-side-glass-accent, #e7d34b) !important;
   -webkit-text-fill-color: var(--mk-side-glass-accent, #e7d34b) !important;
-}
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks .mk-nfoot-split {
-  height: 16px !important;
-  border-radius: 6px !important;
-}
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks .mk-nfoot-split i b {
-  font-size: 13px !important;
-}
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks .mk-nfoot-split i span {
-  font-size: 11px !important;
 }
 
 /* Kolonnā mazāk tukšas vietas: šaurākas atstarpes starp kartītēm, mazāka
@@ -860,4 +789,150 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
 html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-next-container, #radiologists-next-container).mk-next-shift-card > .mk-next-shift-crew {
   order: 3 !important;
   flex: 1 0 100% !important;
+}
+
+/* ── 2026-11: the cards as widgets ───────────────────────────────────────────
+   After the widget kit the user chose as the model, kept clean: one calm surface in the fatigue colour over
+   the whole card (two soft lights, no shapes behind the content), and colour only where it says something:
+   the fatigue number and its ring in the fatigue colour, the caffeine in a capsule of the coffee menu's orange, the hours' capsule and the month's bar in the colour
+   of the kind of shift (day blue, night teal, 24 h amber), the ticks by their level. The emoji stands free,
+   the name is white, the bottom holds values only, and the next shift says "Nākamā". Same size as before.
+   The look is shared by the cards of every day; the sizes are apart: today's cards (.mk-has-ticks, zoomed to
+   fit, with ticks and a bottom) and the smaller cards of the other days.
+   Nested rules: this block is for the desktop only, where the other features used here (round(), :has,
+   @property) already need a current browser. */
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card:is(.mk-has-ticks, :not(.mk-has-ticks)) {
+  --hair: calc(1px / var(--mk-side-z, 1));
+  --c: var(--mk-side-fat-color, #42d991);
+  --base: #0d1219;
+  border: 0 !important;
+  background-color: var(--base) !important;
+  background-image:
+    radial-gradient(120% 130% at 0% 0%, color-mix(in srgb, var(--c) 34%, transparent), transparent 70%),
+    radial-gradient(110% 120% at 100% 100%, color-mix(in srgb, var(--c) 24%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--c) 17%, var(--base)), color-mix(in srgb, var(--c) 11%, var(--base))) !important;
+  box-shadow: inset 0 0 0 var(--hair) color-mix(in srgb, var(--c) 30%, rgba(255, 255, 255, .1)) !important;
+  & .duty-name, & .duty-surname { background-image: none !important; -webkit-text-stroke: 0 !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .4) !important; }
+  & .duty-name { color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 700 !important; }
+  & .duty-surname { color: rgba(255, 255, 255, .74) !important; -webkit-text-fill-color: rgba(255, 255, 255, .74) !important; }
+  /* the hours: a solid capsule in the colour of the kind of shift, as in the month's bar */
+  & .mk-side-shift-chip {
+    color: #0b0d12 !important;
+    -webkit-text-fill-color: #0b0d12 !important;
+    background: var(--mk-shift-c, #f5b73f) !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-weight: 800 !important;
+  }
+  & .mk-side-shift-chip:has(> .sun-icon) { --mk-shift-c: #3f9bff; }
+  & .mk-side-shift-chip:has(> .moon-icon) { --mk-shift-c: #23cdcf; }
+  & .mk-side-shift-chip > .shift-icon-side { display: none !important; }
+  /* the ring: a dark disc, the arc and the number in the fatigue colour, the level under it in white */
+  & .mk-side-ring { background: rgba(6, 9, 14, .62) !important; }
+  & .mk-side-ring::after { background: conic-gradient(var(--c) clamp(2%, var(--mk-side-fat, 0%), 100%), rgba(255, 255, 255, .14) 0) !important; }
+  & .mk-side-ring > .mk-side-score { --n: color-mix(in srgb, var(--c) 84%, #fff); color: var(--n) !important; -webkit-text-fill-color: var(--n) !important; font-variant-numeric: tabular-nums; text-shadow: none !important; }
+  & .mk-side-ring small { font-weight: 600 !important; color: rgba(255, 255, 255, .86) !important; -webkit-text-fill-color: rgba(255, 255, 255, .86) !important; }
+  /* the other days' cards: the same look at their own size */
+  &:not(.mk-has-ticks) {
+    & .mk-side-ring::after { -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 4.5px), #000 calc(100% - 4px)) !important; mask: radial-gradient(closest-side, transparent calc(100% - 4.5px), #000 calc(100% - 4px)) !important; }
+    & .mk-side-ring small { margin-top: 2px !important; font-size: 9px !important; }
+  }
+  /* today's cards */
+  &.mk-has-ticks {
+  border-radius: 26px !important;
+  & .mk-side-card-body { padding-right: 90px !important; }
+  & .mk-side-card-body > .mk-side-fatigue { width: 84px !important; min-width: 84px !important; top: -6px !important; }
+  & .mk-side-ring { width: 80px !important; height: 80px !important; }
+  & .mk-side-ring::after {
+    -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 5.5px), #000 calc(100% - 5px)) !important;
+            mask: radial-gradient(closest-side, transparent calc(100% - 5.5px), #000 calc(100% - 5px)) !important;
+  }
+  & .mk-side-ring > .mk-side-score { font-size: 31px !important; letter-spacing: -.02em !important; }
+  /* with the radio open the card is a low strip and the ring is 38 px: the number in its size, on one line */
+  html.host-radio-open & .mk-side-ring > .mk-side-score { font-size: 15px !important; letter-spacing: 0 !important; white-space: nowrap !important; }
+  html.host-radio-open & .mk-side-ring small { display: none !important; }   /* no room for the level's word: the colour says it */
+  & .mk-side-ring small { margin-top: 4px !important; font-size: 10px !important; }
+  /* the ticks stand in their own row, under the head: nothing behind the name or the ring, nothing faded */
+  & > .mk-side-ticks { height: 42px !important; margin-top: 0 !important; padding-top: 0 !important; -webkit-mask-image: none !important; mask-image: none !important; }
+  & > .mk-side-ticks > i { height: calc(5px + var(--hr, var(--h, .3)) * 30px) !important; }
+  /* The bottom, values only. Row one: the month's bar and how many of its shifts are done. Row two: the next
+     shift, and at its right end the caffeine. Kept clear of the card's rounded corners. */
+  & > .mk-side-nfoot { grid-template-columns: minmax(0, 1fr) auto !important; column-gap: 10px !important; row-gap: 5px !important; padding: 5px 9px 0 !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row--split { grid-column: 1 !important; grid-row: 1 !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) { grid-row: 2 !important; grid-column: 1 !important; grid-template-columns: 24px minmax(0, max-content) !important; grid-template-areas: "icon value" !important; grid-template-rows: auto !important; column-gap: 7px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) + .mk-side-nfoot-row { margin-left: 0 !important; padding-left: 0 !important; border-left: 0 !important; }
+  /* the month's count stands at the end of its bar, without an icon */
+  & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-month:not(.mk-side-nfoot-row--split) { grid-row: 1 !important; grid-column: 2 !important; grid-template-columns: max-content !important; grid-template-areas: "value" !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-month:not(.mk-side-nfoot-row--split)::before { content: none !important; }
+  /* the caffeine: at the right end of the second row, over both columns, so the bar is as wide on every card */
+  & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-caf:not(.mk-side-nfoot-row--split) { grid-column: 1 / -1 !important; justify-self: end !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-caf[hidden] { display: none !important; }
+  /* a solid capsule in the coffee menu's orange, like the hours' capsule: a cup, the number, the unit */
+  & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-caf:not(.mk-side-nfoot-row--split) { grid-template-columns: 19px max-content !important; column-gap: 5px !important; align-items: center !important; height: 27px !important; margin-block: -2px !important; padding: 0 9px 0 7px !important; border-radius: 9px !important; background: #ffb77c !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-caf:not(.mk-side-nfoot-row--split)::before {
+    width: 19px !important; height: 19px !important; background: #0b0d12 !important;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9h11v5.5a4.5 4.5 0 0 1-4.5 4.5h-2A4.5 4.5 0 0 1 5 14.5V9ZM16 10.5h1.2a2.3 2.3 0 0 1 0 4.6H16M8.5 3.5c-.6.8-.6 1.7 0 2.5M12 3.5c-.6.8-.6 1.7 0 2.5'/%3E%3C/svg%3E") !important;
+  }
+  & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-caf:not(.mk-side-nfoot-row--split) > dd { font-size: 18px !important; font-weight: 800 !important; color: #0b0d12 !important; -webkit-text-fill-color: #0b0d12 !important; text-shadow: none !important; }
+  & .mk-side-caf small { margin-left: 3px; font-size: 13px; font-weight: 700; }
+  /* the next shift is named by a word, not by an icon; its hours go when the card is too narrow for them */
+  & > .mk-side-nfoot { container: mk-side-foot / inline-size; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split):not(.mk-side-month):not(.mk-side-caf) { grid-column: 1 / -1 !important; justify-self: start !important; grid-template-columns: max-content minmax(0, max-content) !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split):not(.mk-side-month):not(.mk-side-caf)::before { content: "Nākamā" !important; width: auto !important; height: auto !important; background: none !important; -webkit-mask: none !important; mask: none !important; align-self: baseline !important; font-size: 15px !important; font-weight: 600 !important; color: rgba(255, 255, 255, .78) !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split):not(.mk-side-month):not(.mk-side-caf) > dd { align-self: baseline !important; }
+  /* the names of the values: read out, not shown */
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dt { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dd { font-size: 21px !important; font-weight: 700 !important; line-height: 1.1 !important; letter-spacing: -.01em !important; color: #fff !important; -webkit-text-fill-color: #fff !important; text-shadow: 0 1px 2px rgba(0, 0, 0, .4) !important; }
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dd em { display: none !important; }
+  /* the hours of the next shift: part of the value, a step quieter than the date and the time */
+  & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dd > span:nth-child(3) { font-weight: 500 !important; color: rgba(255, 255, 255, .8) !important; -webkit-text-fill-color: rgba(255, 255, 255, .8) !important; }
+  /* the month's bar: each kind of shift in its own colour (set inline by calendar.js), its name in a word */
+  & .mk-nfoot-split { height: 20px !important; border-radius: 10px !important; }
+  & .mk-nfoot-split i :is(b, span) { color: #0b0d12 !important; -webkit-text-fill-color: #0b0d12 !important; text-shadow: none !important; }
+  & .mk-nfoot-split i b { font-size: 15px !important; font-weight: 800 !important; }
+  & .mk-nfoot-split i span { font-size: 0 !important; }
+  & .mk-nfoot-split i span::after { content: attr(data-w); margin-left: 4px; font-size: 13px; font-weight: 600; }
+  /* A card that wears a face (data-sf from calendar.js; drawn by mk-side-faces.js over the card, see its sheet):
+     black at once, its classic content out of sight except the emoji, which stays as it is. Here and not in the
+     faces' own sheet, which loads a moment later: Būtne is the default face, so the classic card must not flash. */
+  &[data-sf] { height: 208px !important; align-content: start !important; background: #000 !important; box-shadow: inset 0 0 0 var(--hair) color-mix(in srgb, var(--c) 52%, rgba(255, 255, 255, .14)), inset 0 0 22px color-mix(in srgb, var(--c) 13%, transparent) !important; }
+  &[data-sf] > :is(.mk-side-ticks, .mk-side-nfoot) { display: none !important; }
+  &[data-sf] .mk-side-card-body { visibility: hidden !important; }
+  &[data-sf] > .mk-side-card-main { position: relative !important; z-index: 2 !important; pointer-events: none !important; }
+  &[data-sf] .mk-side-icon-rail { pointer-events: auto !important; }
+  /* The plus in the corner (shown when the card is pointed at): the picker of the card's faces (mk-side-faces.js).
+     It stays inside the card: the card and the column both clip what sticks out. "clip", not "hidden", so a
+     focus can never scroll the card's content sideways. */
+  overflow: clip !important;
+  & > .mk-side-plus { position: absolute; z-index: 4; top: calc(7px / var(--mk-side-z, 1)); right: calc(7px / var(--mk-side-z, 1)); width: calc(16px / var(--mk-side-z, 1)); height: calc(16px / var(--mk-side-z, 1)); padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--mk-side-fat-color, #96969c) 30%, rgba(8, 9, 12, .78)); opacity: 0; cursor: pointer; transition: opacity .12s; }
+  /* a round button with rays (the user's own picture of it), not a plus; tinted in the card's fatigue colour, clear
+     of the card's edge */
+  & > .mk-side-plus::before { content: ""; position: absolute; inset: 20%; background: color-mix(in srgb, var(--mk-side-fat-color, #fff) 72%, #fff); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M5.3 5.3l2.8 2.8M15.9 15.9l2.8 2.8M5.3 18.7l2.8-2.8M15.9 8.1l2.8-2.8'/%3E%3C/svg%3E") center / contain no-repeat; }
+  & > .mk-side-plus::after { content: ""; position: absolute; inset: -22%; }   /* small to the eye, a fair place to hit */
+  &:hover > .mk-side-plus, & > .mk-side-plus:focus-visible { opacity: 1; }
+  html.host-radio-open & > .mk-side-plus { display: none !important; }   /* the strips have no faces to choose */
+  /* On Būtne and Dzīvnieks the top right is the figure's: their face draws its own button in the figure's free corner
+     (mk-side-faces.css .sf-pick). Kept in the DOM for the picker's toggling, out of sight. */
+  &:is([data-sf="b"], [data-sf="p"]) > .mk-side-plus { display: none !important; }
+  /* On a large monitor the card is drawn larger, so it is narrower in its own pixels: a smaller ring leaves
+     the name its room, and the bottom row is a step smaller and without the next shift's length. */
+  & > .mk-side-card-main { container: mk-side-main / inline-size; }
+  @container mk-side-main (width < 372px) {
+    & .mk-side-card-body { padding-right: 76px !important; }
+    & .mk-side-card-body > .mk-side-fatigue { width: 70px !important; min-width: 70px !important; }
+    & .mk-side-ring { width: 68px !important; height: 68px !important; }
+    & .mk-side-ring > .mk-side-score { font-size: 26px !important; }
+    & .mk-side-ring small { margin-top: 2px !important; font-size: 9.5px !important; }
+  }
+  @container mk-side-foot (width < 372px) {
+    & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dd { font-size: 17px !important; }
+    & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split) > dd > span:nth-child(3) { display: none !important; }
+    & > .mk-side-nfoot > .mk-side-nfoot-row:not(.mk-side-nfoot-row--split):not(.mk-side-month):not(.mk-side-caf)::before { font-size: 12.5px !important; }
+    & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-caf:not(.mk-side-nfoot-row--split) { height: 23px !important; padding: 0 7px 0 5px !important; }
+    & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-caf:not(.mk-side-nfoot-row--split) > dd { font-size: 15px !important; }
+    & .mk-side-caf small { font-size: 11.5px; }
+    & > .mk-side-nfoot > .mk-side-nfoot-row.mk-side-month:not(.mk-side-nfoot-row--split) > dd { font-size: 19px !important; }
+  }
+}
 }

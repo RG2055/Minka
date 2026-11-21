@@ -1,0 +1,143 @@
+/* Galvene X, tile layout: the extra widgets, the widget picker and editing in the header
+   (js/page/mk-header-widgets.js). Fetched with that module, not with the page. */
+
+/* ── the extra widgets ── */
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop .hx-w { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; padding: 0 12px; color: #ffffff; }
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop .hx-w .hxw-in { width: 100%; }
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop :is(.hx-w-clock, .hx-w-ring) { flex-basis: 92px; }
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop .hx-w-wind { flex-basis: 104px; }
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop :is(.hx-w-dots, .hx-w-sun) { flex-basis: 132px; }
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop .hx-w-month { flex-basis: 144px; }
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop :is(.hx-w-year, .hx-w-hours) { flex-basis: 158px; }
+.hxw-in { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+.hxw-cap { display: flex; justify-content: space-between; gap: 8px; width: 100%; font-size: 11.5px; line-height: 14px; color: var(--hxt-2, rgba(235, 238, 245, .64)); white-space: nowrap; }
+.hxw-cap b { font-weight: 600; color: #ffffff; font-variant-numeric: tabular-nums; }
+/* dots: one for an hour of the shift, a day of the month, a week of the year */
+.hxw-dots { display: grid; gap: 3px; }
+.hxw-dots i { aspect-ratio: 1; border-radius: 50%; background: rgba(255, 255, 255, .16); }
+.hxw-dots i.on { background: #ffffff; }
+.hxw-dots i.now { background: rgba(255, 255, 255, .55); }
+.hxw-d8 { grid-template-columns: repeat(8, 10px); gap: 4px; }
+.hxw-d11 { grid-template-columns: repeat(11, 8px); }
+.hxw-d13 { grid-template-columns: repeat(13, 7px); }
+.hxw-clock { display: block; width: 62px; height: 62px; fill: none; stroke-linecap: round; }
+.hxw-clock .f { fill: rgba(255, 255, 255, .06); stroke: rgba(255, 255, 255, .16); stroke-width: 1.2; }
+.hxw-clock .t { stroke: rgba(255, 255, 255, .34); stroke-width: 1.4; }
+.hxw-clock .t.b { stroke: rgba(255, 255, 255, .8); stroke-width: 2; }
+.hxw-clock .h { stroke: #ffffff; stroke-width: 3.2; }
+.hxw-clock .m { stroke: #6ec1ee; stroke-width: 2.2; }
+.hxw-clock .p { fill: #ffffff; stroke: none; }
+.hxw-ring { display: block; width: 62px; height: 62px; fill: none; stroke-width: 6; }
+.hxw-ring .bg { stroke: rgba(255, 255, 255, .13); }
+.hxw-ring .fg { stroke: #3aa3d8; stroke-linecap: round; }
+.hxw-ring-n { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; text-align: center; font-size: 17px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.hxw-sun { display: block; width: 104px; height: 36px; fill: none; }
+.hxw-sun .arc { stroke: rgba(255, 255, 255, .34); stroke-width: 1.4; stroke-dasharray: 2 3; }
+.hxw-sun .hz { stroke: rgba(255, 255, 255, .18); stroke-width: 1; }
+.hxw-sun .s { fill: #ffd37f; }
+.hxw-sun .s.is-down { fill: rgba(255, 255, 255, .3); }
+.hxw-hours { display: flex; gap: 12px; }
+.hxw-hours > span { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.hxw-hours small { font-size: 11px; line-height: 13px; color: var(--hxt-2, rgba(235, 238, 245, .64)); font-variant-numeric: tabular-nums; }
+.hxw-hours b { font-size: 13px; font-weight: 600; line-height: 15px; }
+.hxw-hours img { display: block; }
+.hxw-big { font-size: 23px; font-weight: 700; line-height: 26px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.hxw-big small { font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--hxt-2, rgba(235, 238, 245, .64)); }
+.hxw-sub { font-size: 11.5px; line-height: 14px; color: var(--hxt-2, rgba(235, 238, 245, .64)); white-space: nowrap; }
+.hx-w-wind .hxw-in { gap: 1px; }
+
+/* ── editing in the header: a "−" on each tile's corner, a tile is dragged to its place ── */
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop.hxt-edit :is(.hx-wing, .hx-dateblock, .hx-shift, .hx-wx, .hx-row-feed, .hx-row-tools, .hx-w) { overflow: visible; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop.hxt-edit :is(.hx-wing, .hx-dateblock, .hx-shift, .hx-wx, .hx-row-feed, .hx-row-tools, .hx-w) > :not(.hxt-rm) { pointer-events: none; }
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop.hxt-edit :is(.hx-wing, .hx-dateblock, .hx-shift, .hx-wx, .hx-row-feed, .hx-row-tools, .hx-w).is-drag {
+  z-index: 5;
+  cursor: grabbing;
+  scale: 1.035;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2), 0 14px 30px rgba(0, 0, 0, .45);
+}
+:root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop.hxt-edit :is(.hx-wing, .hx-dateblock, .hx-shift, .hx-wx, .hx-row-feed, .hx-row-tools, .hx-w) { transition: scale 180ms cubic-bezier(.2, 0, 0, 1), box-shadow 180ms cubic-bezier(.2, 0, 0, 1); }
+.hxt-rm {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  z-index: 6;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: #ff453a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+  cursor: pointer;
+}
+/* the last tile's badge stays inside the header's rounded corner */
+.hxt-rm[data-last] { right: 3px; }
+.hxt-rm::before { content: ""; position: absolute; left: 6px; right: 6px; top: 10px; height: 2px; border-radius: 1px; background: #ffffff; }
+.hxt-rm:hover { background: #ff6258; }
+.hxt-rm:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { :root[data-header-layout="tiles"].mk-hx:not(.mk-mobile-shell) #hxTop.hxt-edit :is(.hx-wing, .hx-dateblock, .hx-shift, .hx-wx, .hx-row-feed, .hx-row-tools, .hx-w) { transition: none; } }
+
+
+/* ── the picker: every widget as a small picture; a press puts it in the row or takes it out ── */
+#hxEditBar {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 12px;
+  right: 12px;
+  z-index: 40;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  margin: 0 auto;
+  padding: 12px 14px 14px;
+  border-radius: 24px;
+  background: var(--hx-pop-bg);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .28), 0 1px 0 rgba(255, 255, 255, .7) inset;
+  color: var(--hx-pop-text);
+  font-size: 12.5px;
+}
+#hxEditBar button { border: 0; font: inherit; cursor: pointer; }
+#hxEditBar button:focus-visible { outline: 2px solid var(--hx-pop-accent); outline-offset: 2px; }
+.hxp-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.hxp-head > b { font-size: 15px; font-weight: 700; }
+.hxp-profs { display: flex; gap: 4px; margin-left: auto; }
+.hxp-profs button, #hxEditBar .hxt-done { height: 30px; padding: 0 12px; border-radius: 15px; background: var(--hx-pop-raised); color: var(--hx-pop-text); font-weight: 600; }
+.hxp-profs button[aria-pressed="true"], #hxEditBar .hxt-done { background: var(--hx-pop-accent); color: #ffffff; }
+#hxEditBar .hxt-done { padding: 0 16px; font-weight: 650; }
+.hxp-grid { display: grid; grid-template-columns: repeat(8, 92px); gap: 10px 8px; }
+.hxp-it { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0; background: none; color: inherit; }
+.hxp-pv {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 60px;
+  border-radius: 16px;
+  background: #151a22;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+  color: #ffffff;
+  overflow: hidden;
+  transition: opacity 150ms ease, box-shadow 150ms ease;
+}
+.hxp-it[aria-pressed="false"] .hxp-pv { opacity: .5; }
+.hxp-it[aria-pressed="false"]:hover .hxp-pv { opacity: .8; }
+.hxp-it[aria-pressed="true"] .hxp-pv { box-shadow: 0 0 0 2px var(--hx-pop-accent); }
+/* in the row: a tick on the picture's corner */
+.hxp-it[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--hx-pop-accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 9.3 2.6 2.6L13 6.5'/%3E%3C/svg%3E") center / 18px no-repeat;
+}
+.hxp-it:disabled { cursor: default; }
+/* chosen, but the row is full: an amber mark instead of the tick */
+.hxp-it[data-full] .hxp-pv { box-shadow: 0 0 0 2px #e0962a; opacity: .7; }
+.hxp-it[data-full]::after { background: #e0962a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M9 4.8v5M9 12.8v.4'/%3E%3C/svg%3E") center / 18px no-repeat; }
+.hxp-full { margin: -4px 0 10px; font-size: 12px; font-weight: 600; color: #8a5200; }
+.hxp-nm { max-width: 92px; overflow: hidden; font-size: 11.5px; font-weight: 600; line-height: 14px; white-space: nowrap; text-overflow: ellipsis; }
+.hxp-live { display: grid; place-items: center; width: max-content; zoom: .6; }
+.hxp-ic .hx-ic { width: 24px; height: 24px; }
+@media (max-width: 900px) { .hxp-grid { grid-template-columns: repeat(auto-fill, 92px); } .hxp-head { flex-wrap: wrap; } }

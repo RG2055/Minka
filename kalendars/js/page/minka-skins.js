@@ -1306,8 +1306,10 @@ function normName(n) {
       if (normName(c.getAttribute('data-worker') || c.getAttribute('data-next-worker')) !== k) return;
       window.mkApplySkinToEl(c, skin);
     });
+    // the side card's face (the look's "sf" part) is put on the card and drawn by calendar.js and mk-side-faces.js
+    if (window.__minkaSideFaces) window.__minkaSideFaces(k);
   }
-  function hasAny(sk) { return !!(sk && (sk.t || sk.num || sk.txt || sk.em != null || sk.emn != null || sk.es || sk.te || sk.nf || sk.ez || sk.fx || sk.face || sk.bed || sk.bp || sk.bq)); }
+  function hasAny(sk) { return !!(sk && (sk.t || sk.num || sk.txt || sk.em != null || sk.emn != null || sk.es || sk.te || sk.nf || sk.ez || sk.fx || sk.face || sk.bed || sk.bp || sk.bq || sk.sf || sk.fa)); }
   function storeSkinLocal(name, skin) {
     cloudRevision++;
     localEdited = true;
@@ -1420,6 +1422,8 @@ function normName(n) {
       if (/^[a-z]{2,12}$/.test(String(sk.bed || ''))) p.push('bd:' + sk.bed);
       if (/^\d{1,2}$/.test(String(sk.bp || ''))) p.push('bp:' + sk.bp);
       if (/^\d{1,2}$/.test(String(sk.bq || ''))) p.push('bq:' + sk.bq);
+      if (/^[a-z](-[a-z0-9-]{1,40})?$/.test(String(sk.sf || ''))) p.push('sf:' + sk.sf);
+      if (/^-?\d{1,2},\d{7,9}$/.test(String(sk.fa || ''))) p.push('fa:' + sk.fa);   // the person's own correction to their fatigue (fatigue.js manualShift)   // the side card's face, with its pet (mk-side-faces.js)
       if (sk.face && window.MinkaCardFaceModel) p.push('wf:' + window.MinkaCardFaceModel.pack(sk.face));
     }
     if (window.MinkaCardAddons && typeof window.MinkaCardAddons.get === 'function') {
@@ -1460,6 +1464,8 @@ function normName(n) {
       else if (part.indexOf('bd:') === 0) { if (/^[a-z]{2,12}$/.test(part.slice(3))) sk.bed = part.slice(3); }
       else if (part.indexOf('bp:') === 0) { if (/^\d{1,2}$/.test(part.slice(3))) sk.bp = part.slice(3); }
       else if (part.indexOf('bq:') === 0) { if (/^\d{1,2}$/.test(part.slice(3))) sk.bq = part.slice(3); }
+      else if (part.indexOf('sf:') === 0) { if (/^[a-z](-[a-z0-9-]{1,40})?$/.test(part.slice(3))) sk.sf = part.slice(3); }
+      else if (part.indexOf('fa:') === 0) { if (/^-?\d{1,2},\d{7,9}$/.test(part.slice(3))) sk.fa = part.slice(3); }
       else if (part.indexOf('wf:') === 0 && window.MinkaCardFaceModel) { sk.face = window.MinkaCardFaceModel.unpack(part.slice(3)); }
       else if (part === 'av:1') { addonVersion = 1; }
       else if (part.indexOf('ad:') === 0) {
@@ -1511,7 +1517,7 @@ function normName(n) {
       // look: send it again without that part, so everything else still syncs.
       .then(function(r) {
         if (r.ok || r.status !== 400 || !packed) return r;
-        var lean = packed.split(';').filter(function(x) { return !/^(fp|tm|bd|bp|bq):/.test(x); });
+        var lean = packed.split(';').filter(function(x) { return !/^(fp|tm|bd|bp|bq|sf|fa):/.test(x); });
         var firstAd = lean.findIndex(function(x) { return x.indexOf('ad:') === 0; });
         var single = lean.filter(function(x, i) { return x.indexOf('ad:') !== 0 || i === firstAd; });
         // Older API: first without the new parts, then with the first decoration only.
@@ -1630,6 +1636,12 @@ function normName(n) {
       });
       Object.keys(localAddons).forEach(function(key) {
         if (!addonAuthority[key] && !cloudAddons[key]) cloudAddons[key] = localAddons[key];
+      });
+      // A side-card face chosen on this device stays while the cloud's copy has none (an API that does not
+      // store "sf:" yet drops it); the classic one is saved as "k", so going back to it still travels.
+      Object.keys(previous).forEach(function(key) {
+        var sf = previous[key] && previous[key].sf;
+        if (sf && !(all[key] && all[key].sf)) (all[key] = all[key] || {}).sf = sf;
       });
       var changed = Object.keys(Object.assign({}, previous, all)).filter(function(key) {
         return JSON.stringify(previous[key] || null) !== JSON.stringify(all[key] || null);

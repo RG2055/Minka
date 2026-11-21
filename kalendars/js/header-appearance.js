@@ -14,13 +14,15 @@
   const layouts = ['classic', 'tiles'];
   // Tiles: which ones stand in the row and in what order. Three ready profiles and the user's own;
   // the tools tile is in every one (the way back to this panel is in it).
-  const tileIds = ['rg', 'date', 'shift', 'wx', 'news', 'tools', 'rd'];
-  const tileProfiles = { full: tileIds, duty: ['rg', 'rd', 'shift', 'date', 'tools'], calm: ['date', 'shift', 'wx', 'news', 'tools'] };
+  // the first seven are the header's own tiles; the rest are extra widgets (js/page/mk-header-widgets.js)
+  const tileIds = ['rg', 'date', 'shift', 'wx', 'news', 'tools', 'rd', 'clock', 'dots', 'ring', 'month', 'year', 'sun', 'hours', 'wind'];
+  const coreTiles = tileIds.slice(0, 7);
+  const tileProfiles = { full: coreTiles, duty: ['rg', 'rd', 'shift', 'date', 'tools'], calm: ['date', 'shift', 'wx', 'news', 'tools'] };
   function ownTiles(list) {
-    const out = (Array.isArray(list) ? list : tileIds).filter((t, i, a) => tileIds.includes(t) && a.indexOf(t) === i);
+    const out = (Array.isArray(list) ? list : coreTiles).filter((t, i, a) => tileIds.includes(t) && a.indexOf(t) === i);
     return out.includes('tools') ? out : out.concat('tools');
   }
-  function tilesFor(s) { return s.profile === 'own' ? s.ownTiles : tileProfiles[s.profile] || tileIds; }
+  function tilesFor(s) { return s.profile === 'own' ? s.ownTiles : tileProfiles[s.profile] || coreTiles; }
   const dockIconSets = ['pixel', 'm3', 'line', 'dither'];
   const dockTints = ['color', 'white', 'accent', 'muted'];
   const dockBars = ['default', 'dark', 'dots', 'fade', 'grid', 'kapas', 'tors', 'signals', 'rezgis'];
@@ -246,84 +248,63 @@
     }
     function syncControls() {
       if (!dialog) return;
-      dialog.querySelectorAll('[data-skin]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.skin === state.skin)));
-      dialog.querySelectorAll('[data-background]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.background === state.background)));
-      const rotate = dialog.querySelector('[data-rotate]'); if (rotate) rotate.hidden = state.background !== 'mix';
-      dialog.querySelector('#hsBackgroundHint').textContent = state.background === 'mix'
-        ? 'Nejauši no kolekcijas — gaišie attēli rītā un dienā, siltie vakarā, tumšie naktī; Rīga arī piedalās. Mainās ik pēc 25 minūtēm un pēc Rīgas laika.'
-        : 'Rīts, diena, vakars un nakts mainās automātiski pēc Rīgas laika.';
-      dialog.querySelectorAll('[data-palette]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.palette === state.palette)));
-      dialog.querySelectorAll('[data-progress]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.progress === state.progress)));
-      dialog.querySelectorAll('[data-layout]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === state.layout)));
-      dialog.querySelector('.hs-tiles').hidden = state.layout !== 'tiles';
-      dialog.querySelectorAll('[data-profile]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.profile === state.profile)));
-      const own = dialog.querySelector('.hs-own');
-      own.hidden = state.profile !== 'own';
-      if (!own.hidden) {
-        // shown tiles in their order, then the ones that are off
-        const names = { rg: (host.__mkLeftRole && host.__mkLeftRole.many) || 'Radiogrāferi', date: 'Datums', shift: 'Maiņas laiks', wx: 'Laikapstākļi', news: 'Ziņas', tools: 'Rīki', rd: 'Radiologi' };
-        const shown = state.ownTiles, rows = shown.concat(tileIds.filter(t => !shown.includes(t)));
-        own.querySelector('.hs-own-list').innerHTML = rows.map(t => { const at = shown.indexOf(t), on = at >= 0;
-          return '<div class="hs-own-row' + (on ? '' : ' is-off') + '"><label><input type="checkbox" data-tile="' + t + '"' + (on ? ' checked' : '') + (t === 'tools' ? ' disabled' : '') + '><span>' + names[t] + '</span></label>' +
-            '<button type="button" data-move="-1" data-tile="' + t + '" aria-label="Pārvietot pa kreisi: ' + names[t] + '"' + (at > 0 ? '' : ' disabled') + '>←</button>' +
-            '<button type="button" data-move="1" data-tile="' + t + '" aria-label="Pārvietot pa labi: ' + names[t] + '"' + (on && at < shown.length - 1 ? '' : ' disabled') + '>→</button></div>'; }).join('');
-      }
-      dialog.querySelectorAll('[data-dock-icons]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockIcons === state.dockIcons)));
-      dialog.querySelectorAll('[data-dock-bar]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockBar === state.dockBar)));
-      dialog.querySelectorAll('[data-dock-tint]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dockTint === state.dockTint)));
-      const tintRow = dialog.querySelector('.hs-dock-tints'), tintNote = dialog.querySelector('.hs-dock-tint-note');
-      if (tintRow) { const locked = state.dockIcons === 'pixel'; tintRow.classList.toggle('is-locked', locked); tintRow.setAttribute('aria-disabled', String(locked)); if (tintNote) tintNote.hidden = !locked; }
+      const press = (key, value) => dialog.querySelectorAll('[data-' + key.replace(/[A-Z]/g, c => '-' + c.toLowerCase()) + ']').forEach(b => b.setAttribute('aria-pressed', String(b.dataset[key] === value)));
+      ['layout', 'skin', 'background', 'palette', 'progress', 'dockIcons', 'dockBar', 'dockTint'].forEach(key => press(key, state[key]));
+      dialog.querySelector('[data-rotate]').hidden = state.background !== 'mix';
+      dialog.querySelector('[data-widgets]').hidden = state.layout !== 'tiles';
+      // pixel icons carry their own colours: the colour row is dimmed and does nothing
+      const tintRow = dialog.querySelector('.hs-dock-tints'), locked = state.dockIcons === 'pixel';
+      tintRow.classList.toggle('is-locked', locked); tintRow.setAttribute('aria-disabled', String(locked));
       dialog.style.setProperty('--dock-accent', lastDockAccent);
       dialog.querySelector('#hsDaily').checked = state.daily;
       dialog.querySelector('#hsMotion').checked = state.motion;
-      dialog.querySelector('#hsStatus').textContent = saveOK ? 'Saglabāts šajā pārlūkā' : 'Izvēle darbojas, bet pārlūks neļauj to saglabāt.';
-      dialog.querySelector('#hsPaletteHint').textContent = root.dataset.headerColorSource === 'album'
-        ? 'Radio atvērts: krāsa seko albumam. Izvēlētā palete atgriezīsies, aizverot radio.'
-        : state.palette === 'radio' && !getRadio()
-        ? 'Radio nav atvērts šajā skatā — pagaidām krāsa seko panorāmai.'
-        : state.skin === 'panorama' ? 'Panorāmā palete maina izvēlētās dienas akcentu. Material skinos — visu galveni.'
-        : 'No panorāmas: krāsa seko diennakts attēlam. Izvēloties paleti, tā paliek nemainīga.';
+      dialog.querySelector('#hsStatus').textContent = saveOK ? '' : 'Pārlūks neļauj saglabāt izvēli.';
+    }
+    // The panel's own styles load with its first opening, not with the page (css/page/mk-header-settings.css).
+    let cssReady = null;
+    function settingsCss() {
+      return cssReady || (cssReady = new Promise(done => {
+        const link = doc.createElement('link');
+        link.rel = 'stylesheet'; link.href = 'css/page/mk-header-settings.css?v=20261121s1';
+        link.onload = link.onerror = done;
+        doc.head.appendChild(link);
+      }));
     }
     function open() {
-      if (!dialog) buildDialog();
-      if (dialog.open) return;
-      opener = doc.activeElement;
-      paint(); dialog.showModal();
-      doc.getElementById('headerAppearanceBtn')?.setAttribute('aria-expanded', 'true');
+      return settingsCss().then(() => {
+        if (!dialog) buildDialog();
+        if (dialog.open) return;
+        opener = doc.activeElement;
+        paint(); dialog.showModal();
+        doc.getElementById('headerAppearanceBtn')?.setAttribute('aria-expanded', 'true');
+      });
     }
+    /* One row per thing to choose, a word on the left and the choices as pictures or short words on the right:
+       no descriptions to read. A picture's name is its tooltip and its accessible name. */
     function buildDialog() {
       dialog = doc.createElement('dialog'); dialog.id = 'headerAppearance';
       dialog.setAttribute('aria-labelledby', 'hsTitle');
-      dialog.innerHTML = '<div class="hs-heading"><div><span class="hs-eyebrow">Izskats</span><h2 id="hsTitle">Galvene</h2></div><button type="button" data-close aria-label="Aizvērt galvenes izskatu">×</button></div>' +
-        '<p class="hs-intro">Izkārtojums, noskaņa un krāsas.</p>' +
-        '<h3>Izkārtojums</h3><div class="hs-backgrounds hs-layouts" role="group" aria-label="Galvenes izkārtojums"><button type="button" data-layout="classic" aria-pressed="false">Klasiskais</button><button type="button" data-layout="tiles" aria-pressed="false">Flīzes</button></div>' +
-        '<div class="hs-tiles" hidden><h4 class="hs-sub">Profils</h4><div class="hs-backgrounds hs-profiles" role="group" aria-label="Flīžu profils">' +
-        [['full', 'Pilnā'], ['duty', 'Dežūra'], ['calm', 'Mierīgā'], ['own', 'Mana']].map(([key, label]) => '<button type="button" data-profile="' + key + '" aria-pressed="false">' + label + '</button>').join('') + '</div>' +
-        '<div class="hs-own" hidden><p class="hs-hint">Ieslēdz flīzes, kuras gribi redzēt, un sakārto tās ar bultiņām.</p><div class="hs-own-list"></div></div>' +
-        '<div class="hs-backgrounds hs-edit-row"><button type="button" data-edit-tiles>Rediģēt pašā galvenē</button></div></div>' +
-        '<div class="hs-skins" role="group" aria-label="Galvenes skins">' +
-        [['panorama', 'Panorāma', 'Tavs pašreizējais skats'], ['hybrid', 'Panorāma + Material', 'Panorāmas fons, maigas pogas']].map(([key, title, detail]) =>
-          '<button type="button" data-skin="' + key + '" aria-pressed="false"><span class="hs-preview hs-preview-' + key + '" aria-hidden="true"><i></i><i></i><i></i><b></b><em></em></span><span class="hs-choice-title">' + title + '</span><small>' + detail + '</small></button>').join('') + '</div>' +
-        '<h3>Panorāma</h3><div class="hs-backgrounds" role="group" aria-label="Panorāma"><button type="button" data-background="riga" aria-pressed="false">Rīga</button><button type="button" data-background="mix" aria-pressed="false">Kolekcija</button><button type="button" data-rotate class="hs-rotate" hidden>Cits attēls</button></div><p id="hsBackgroundHint" class="hs-hint"></p>' +
-        '<h3>Progresa josla</h3><div class="hs-pack hs-progress" role="group" aria-label="Progresa josla">' +
-        [['classic', 'Klasiskā'], ['m3', 'M3 vilnis'], ['cat', 'Skrienošs kaķis'], ['pixel', 'Pikseļi'], ['dither', 'Dither'], ['ekg', 'EKG']].map(([key, label]) =>
-          '<button type="button" data-progress="' + key + '" aria-pressed="false"><span class="hs-pp hs-pp-' + key + '" aria-hidden="true"><i></i></span>' + label + '</button>').join('') + '</div>' +
-        '<h3>Apakšējā josla</h3><div class="hs-pack hs-dock-icons" role="group" aria-label="Apakšējās joslas ikonas">' +
-        [['pixel', 'Pikseļu'], ['m3', 'M3'], ['line', 'Līnijas'], ['dither', 'Dither']].map(([key, label]) =>
-          '<button type="button" data-dock-icons="' + key + '" aria-pressed="false"><span class="hs-di hs-di-' + key + '" aria-hidden="true"><i></i><i></i><i></i></span>' + label + '</button>').join('') + '</div>' +
-        '<h4 class="hs-sub">Ikonu krāsa</h4><div class="hs-backgrounds hs-dock-tints" role="group" aria-label="Ikonu krāsa">' +
-        [['color', 'Krāsainas'], ['white', 'Baltas'], ['accent', 'Akcents'], ['muted', 'Klusinātas']].map(([key, label]) =>
-          '<button type="button" data-dock-tint="' + key + '" aria-pressed="false"><i class="hs-tint hs-tint-' + key + '" aria-hidden="true"></i>' + label + '</button>').join('') + '</div>' +
-        '<p class="hs-hint hs-dock-tint-note" hidden>Pikseļu ikonām krāsas ir zīmētas iekšā — izvēlies M3, Līnijas vai Dither, lai mainītu krāsu.</p>' +
-        '<h4 class="hs-sub">Fons</h4><div class="hs-pack hs-dock-bars" role="group" aria-label="Apakšējās joslas fons">' +
-        [['default', 'Parasts'], ['dark', 'Tumšs'], ['dots', 'Punkti'], ['fade', 'Pāreja'], ['grid', 'Tīkls'], ['kapas', 'Kāpas'], ['tors', 'Tors'], ['signals', 'Signāls'], ['rezgis', 'Režģis']].map(([key, label]) =>
-          '<button type="button" data-dock-bar="' + key + '" aria-pressed="false"><span class="hs-db hs-db-' + key + '" aria-hidden="true"></span>' + label + '</button>').join('') + '</div>' +
-        '<h3>Krāsas</h3><div class="hs-palettes" role="group" aria-label="Galvenes palete">' +
-        [['scene', 'No panorāmas'], ['olive', 'Olīva'], ['mint', 'Piparmētra'], ['peach', 'Persiks'], ['rose', 'Roze'], ['lilac', 'Ceriņi'], ['blue', 'Zils'], ['radio', 'Sekot radio']].map(([key, label]) =>
-          '<button type="button" data-palette="' + key + '" aria-pressed="false"><i aria-hidden="true" style="--swatch:' + (seeds[key] || '#ded3b5') + '"></i>' + label + '</button>').join('') + '</div>' +
-        '<p id="hsPaletteHint" class="hs-hint"></p><div class="hs-options"><label><span>Jauns skins katru dienu<small>Mainās, pirmoreiz atverot vai atgriežoties jaunā dienā.</small></span><input id="hsDaily" type="checkbox"></label>' +
-        '<label><span>Maigas pārejas<small>Datuma izvēlei un vadības pogām.</small></span><input id="hsMotion" type="checkbox"></label></div>' +
-        '<div class="hs-footer"><button type="button" data-shuffle>Sajaukt tagad</button><button type="button" data-reset>Sākotnējais skats</button></div><p id="hsStatus" role="status"></p>';
+      const row = (label, body) => '<div class="hs-row"><span class="hs-k">' + label + '</span><div class="hs-v">' + body + '</div></div>';
+      const words = (attr, items) => '<div class="hs-backgrounds" role="group">' + items.map(([key, label]) =>
+        '<button type="button" data-' + attr + '="' + key + '" aria-pressed="false">' + label + '</button>').join('') + '</div>';
+      const pictures = (attr, cls, items, inner) => '<div class="' + cls + '" role="group">' + items.map(([key, label]) =>
+        '<button type="button" data-' + attr + '="' + key + '" aria-pressed="false" aria-label="' + label + '" title="' + label + '">' + inner(key) + '</button>').join('') + '</div>';
+      dialog.innerHTML = '<div class="hs-heading"><h2 id="hsTitle">Izskats</h2><button type="button" data-close aria-label="Aizvērt">×</button></div>' +
+        row('Izkārtojums', words('layout', [['tiles', 'Flīzes'], ['classic', 'Klasiskais']]) + '<button type="button" data-widgets class="hs-link">Logrīki</button>') +
+        row('Stils', words('skin', [['panorama', 'Panorāma'], ['hybrid', 'Material']])) +
+        row('Fons', words('background', [['riga', 'Rīga'], ['mix', 'Kolekcija']]) + '<button type="button" data-rotate class="hs-link" hidden>Cits attēls</button>') +
+        row('Krāsa', pictures('palette', 'hs-palettes', [['scene', 'No panorāmas'], ['olive', 'Olīva'], ['mint', 'Piparmētra'], ['peach', 'Persiks'], ['rose', 'Roze'], ['lilac', 'Ceriņi'], ['blue', 'Zils'], ['radio', 'Sekot radio']],
+          key => '<i aria-hidden="true" class="hs-sw-' + key + '" style="--swatch:' + (seeds[key] || '#ded3b5') + '"></i>')) +
+        row('Laika josla', pictures('progress', 'hs-pack hs-progress', [['classic', 'Klasiskā'], ['m3', 'Vilnis'], ['cat', 'Skrienošs kaķis'], ['pixel', 'Pikseļi'], ['dither', 'Dither'], ['ekg', 'EKG']],
+          key => '<span class="hs-pp hs-pp-' + key + '" aria-hidden="true"><i></i></span>')) +
+        row('Doka ikonas', pictures('dock-icons', 'hs-pack hs-dock-icons', [['pixel', 'Pikseļu'], ['m3', 'M3'], ['line', 'Līnijas'], ['dither', 'Dither']],
+          key => '<span class="hs-di hs-di-' + key + '" aria-hidden="true"><i></i><i></i><i></i></span>') +
+          pictures('dock-tint', 'hs-dock-tints', [['color', 'Krāsainas'], ['white', 'Baltas'], ['accent', 'Akcents'], ['muted', 'Klusinātas']],
+            key => '<i class="hs-tint hs-tint-' + key + '" aria-hidden="true"></i>')) +
+        row('Doka fons', pictures('dock-bar', 'hs-pack hs-dock-bars', [['default', 'Parasts'], ['dark', 'Tumšs'], ['dots', 'Punkti'], ['fade', 'Pāreja'], ['grid', 'Tīkls'], ['kapas', 'Kāpas'], ['tors', 'Tors'], ['signals', 'Signāls'], ['rezgis', 'Režģis']],
+          key => '<span class="hs-db hs-db-' + key + '" aria-hidden="true"></span>')) +
+        '<div class="hs-options"><label><span>Katru dienu cits</span><input id="hsDaily" type="checkbox"></label><label><span>Kustība</span><input id="hsMotion" type="checkbox"></label></div>' +
+        '<div class="hs-footer"><button type="button" data-shuffle>Sajaukt</button><button type="button" data-reset>Atiestatīt</button></div><p id="hsStatus" role="status"></p>';
       doc.body.appendChild(dialog);
       dialog.addEventListener('click', e => {
         const b = e.target.closest('button');
@@ -335,15 +316,7 @@
         else if (b.hasAttribute('data-rotate')) host.MinkaHeaderScenic?.rotate?.();
         else if (b.dataset.progress) set({ progress: b.dataset.progress });
         else if (b.dataset.layout) set({ layout: b.dataset.layout });
-        else if (b.dataset.profile) set({ profile: b.dataset.profile });
-        else if (b.hasAttribute('data-edit-tiles')) { dialog.close(); host.MkHeaderX?.editTiles?.(); }
-        else if (b.dataset.move) {
-          const list = state.ownTiles.slice(), at = list.indexOf(b.dataset.tile), to = at + Number(b.dataset.move);
-          if (at >= 0 && to >= 0 && to < list.length) { list.splice(to, 0, list.splice(at, 1)[0]); set({ ownTiles: list }); }
-          // the row moved: the same arrow keeps the focus, so it can be pressed again
-          const again = dialog.querySelector('[data-move="' + b.dataset.move + '"][data-tile="' + b.dataset.tile + '"]');
-          if (again) (again.disabled ? dialog.querySelector('[data-move][data-tile="' + b.dataset.tile + '"]:not(:disabled)') || again : again).focus();
-        }
+        else if (b.hasAttribute('data-widgets')) { dialog.close(); host.MkHeaderX?.editTiles?.(); }
         else if (b.dataset.dockIcons) set({ dockIcons: b.dataset.dockIcons });
         else if (b.dataset.dockBar) set({ dockBar: b.dataset.dockBar });
         else if (b.dataset.dockTint) { if (state.dockIcons !== 'pixel') set({ dockTint: b.dataset.dockTint }); }
@@ -353,11 +326,6 @@
       dialog.addEventListener('change', e => {
         if (e.target.id === 'hsDaily') set({ daily: e.target.checked, day: dayKey() });
         if (e.target.id === 'hsMotion') set({ motion: e.target.checked });
-        if (e.target.dataset.tile) {
-          const t = e.target.dataset.tile;
-          set({ ownTiles: e.target.checked ? state.ownTiles.concat(t) : state.ownTiles.filter(x => x !== t) });
-          dialog.querySelector('input[data-tile="' + t + '"]')?.focus();
-        }
       });
       dialog.addEventListener('close', () => {
         if (opener?.isConnected) opener.focus({ preventScroll: true });
@@ -457,7 +425,7 @@
     });
     reduced.addEventListener('change', schedule);
     // This event-driven bridge is also usable by a future profile adapter.
-    host.MinkaHeaderAppearance = { open, close: () => dialog?.close(), snapshot: () => ({ ...state }), set,
+    host.MinkaHeaderAppearance = { open, close: () => dialog?.close(), snapshot: () => ({ ...state }), set, tileIds,
       shuffle: () => { state = shuffle(state); persist(); } };
     function installHeaderButton() {
       const actions = doc.getElementById('mkRailActions') || header.querySelector('.mk-date-controls');
