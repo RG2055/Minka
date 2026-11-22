@@ -43,7 +43,7 @@
   // the shared pieces (after the user's own sketch of the card: round capsules, a clock in the shift's one, a
   // calendar before the next shift)
   var KIND = { diena: 'D', dienas: 'D', nakts: 'N', naktis: 'N', diennakts: '24h', diennaktis: '24h' };
-  function chip(d) { return d.chip ? '<span class="sf-chip sf-sh" data-k="' + d.kind + '">' + esc(d.chip) + '</span>' : ''; }
+  function chip(d) { return d.chip ? '<span class="sf-chip sf-sh" data-k="' + d.kind + '"><span class="sf-ct">' + esc(d.chip) + '</span></span>' : ''; }
   function name(d) { return '<b>' + esc(d.first) + '</b>' + (d.last ? '<i>' + esc(d.last) + '</i>' : ''); }
   // the name beside the emoji: first name, surname, then the shift's capsule (and, where a face asks, the caffeine after it)
   function who(d, withCaf) { return '<div class="sf-id">' + name(d) + '<span class="sf-tags">' + chip(d) + (withCaf ? caf(d) : '') + '</span></div>'; }
@@ -53,6 +53,24 @@
   // the month's capsules: done/all on a dark one, then its shifts by kind in the kinds' colours (1×D, 8×N, 5×24h)
   function count(d) { return /^\d+\/\d+$/.test(d.count) ? '<span class="sf-chip sf-cp" title="Mēneša maiņas: izdarītas ' + esc(d.count.replace('/', ' no ')) + '">' + esc(d.count) + '</span>' : ''; }
   function kinds(d) { return d.kinds.map(function (k) { return KIND[k[2]] ? '<span class="sf-chip" style="background:' + esc(k[1]) + '">' + k[0] + '×' + KIND[k[2]] + '</span>' : ''; }).join(''); }
+  /* Būtne and Dzīvnieks (the user's picture): three capsules as tall as the Nogurums row, each a small word over its
+     value with an icon: "Šodien 12 h" (the shift's colour), "Mēnesī 2 / 4", "Maiņas 4 × N" (the kind's colour; several
+     kinds sit side by side in their own colours on the month's capsule). Plain spans inside: the name's b / i rules
+     must not reach them. */
+  function hrs(v) { return String(v || '').replace(/(\d)\s*h$/i, '$1\u2009h'); }
+  function two(cls, label, value, extra) {
+    return '<span class="sf-chip sf-two ' + cls + '"' + (extra || '') + '><span class="sf-ct"><span class="sf-cl">' + label + '</span><span class="sf-cv">' + value + '</span></span></span>';
+  }
+  function stats(d, part) {
+    var ks = d.kinds.filter(function (k) { return KIND[k[2]]; }), one = ks.length === 1;
+    if (part === 'kinds') return ks.length ? two(one ? 'sf-kd' : 'sf-kd sf-kds', 'Maiņas', ks.map(function (k) {
+        return '<span class="sf-kv"' + (one ? '' : ' style="color:' + esc(k[1]) + '"') + '>' + k[0] + '\u2009×\u2009' + KIND[k[2]] + '</span>';
+      }).join(''), one ? ' style="--kb:' + esc(ks[0][1]) + '"' : '') : '';
+    // today's hours glow (the user: "it must burn nicely"): a still glow in the sheet, no moving sparks over the text
+    return (d.chip ? two('sf-sh', 'Šodien', esc(hrs(d.chip)), ' data-k="' + d.kind + '"') : '')
+      + (/^\d+\/\d+$/.test(d.count) ? two('sf-cp', 'Mēnesī', esc(d.count.replace('/', '\u2009/\u2009')), ' title="Mēneša maiņas: izdarītas ' + esc(d.count.replace('/', ' no ')) + '"') : '')
+      ;
+  }
   function month(d) { var m = count(d) + kinds(d); return m ? '<div class="sf-mo">' + m + '</div>' : ''; }
 
   /* Spīdums: the colour glows up from the bottom; a large ring is the fatigue gauge with the number in it, and a
@@ -166,9 +184,10 @@
     // the top is one grid (the sheet): the avatar's column, the name over the surname, the figure over its buttons
     return '<div class="sf-top"' + (d.ar ? ' style="--ar:' + d.ar + '"' : '') + '><i class="sf-av" aria-hidden="true"></i><div class="sf-nm"><div class="sf-id">' + name(d) + '</div></div><div class="sf-fig">' + figure + '</div></div>'
       // the − / + at the end of the row of capsules: the figure keeps the whole height above it
-      + '<div class="sf-pl">' + chip(d) + count(d) + kinds(d) + adjust(d) + '</div>'
-      + '<div class="sf-rc"><div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + '</div>'
-      + (d.next ? '<div class="sf-nc"><small>Nākamā</small><b>' + esc(d.next) + '</b>' + (d.nextH ? '<span class="sf-nd"></span><i>' + esc(d.nextH) + '</i>' : '') + '</div>' : '') + '</div>'
+      // In the order one looks (the user): first what is now, today's hours, the month and the fatigue with its − / +
+      // under the creature; then the month's shifts and the next one.
+      + '<div class="sf-pl">' + stats(d) + '<div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
+      + '<div class="sf-rc">' + stats(d, 'kinds') + (d.next ? '<div class="sf-nc"><small>Nākamā</small><b>' + esc(d.next) + '</b>' + (d.nextH ? '<span class="sf-nd"></span><i>' + esc(hrs(d.nextH)) + '</i>' : '') + '</div>' : '') + '</div>'
       + (ticks ? '<div class="sf-tk" title="Nogurums šajā maiņā">' + ticks + '</div>' : '') + caf(d)
       // the faces' button in the figure's empty top left corner (Būtne draws it with its picture, which knows its edge)
       + (figure.indexOf('sf-pick') < 0 ? PICK : '');
@@ -216,21 +235,22 @@
     // the next shift's length is shown where the Nogurums / Nākamā row has room for it
     [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-rc'), function (rc) {
       var nc = rc.querySelector('.sf-nc');
-      rc.classList.remove('sf-rc-tight', 'sf-rc-short');
-      if (!nc || !nc.querySelector('i')) return;
-      // the length's right edge stays 4px (on the screen) inside the capsule, and the capsule inside the row
-      function over() { var i = nc.querySelector('i').getBoundingClientRect(), n = nc.getBoundingClientRect(); return nc.scrollWidth > nc.clientWidth + 1 || i.right > n.right - 4 || n.right > rc.getBoundingClientRect().right + 1; }
-      if (over()) { rc.classList.add('sf-rc-tight'); if (over()) rc.classList.add('sf-rc-short'); }
+      rc.classList.remove('sf-rc-tight', 'sf-rc-short', 'sf-rc-lean');
+      if (!nc) return;
+      // the length's text (not its padded box) stays 4px inside the capsule, and the row inside the card
+      function over() {
+        var h = nc.querySelector('i'), n = nc.getBoundingClientRect(), g = document.createRange();
+        if (h && h.getClientRects().length) { g.selectNodeContents(h); if (g.getBoundingClientRect().right > n.right - 4) return true; }
+        return nc.scrollWidth > nc.clientWidth + 1 || n.right > rc.getBoundingClientRect().right + 1;
+      }
+      ['sf-rc-tight', 'sf-rc-short', 'sf-rc-lean'].some(function (c) { if (!over()) return true; rc.classList.add(c); });
     });
     [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-pl'), function (pl) {
-      var adj = pl.querySelector(':scope > .sf-adj');
-      pl.classList.remove('sf-tight', 'sf-tight2');
-      if (!adj) return;
-      function over() {
-        var a = adj.getBoundingClientRect(), last = adj.previousElementSibling;
-        return a.right > pl.getBoundingClientRect().right + 1 || (last && last.getBoundingClientRect().right > a.left - 3);
-      }
-      if (over()) { pl.classList.add('sf-tight'); if (over()) pl.classList.add('sf-tight2'); }
+      var last = pl.lastElementChild;
+      pl.classList.remove('sf-tight', 'sf-tight2', 'sf-tight3', 'sf-tight4');
+      if (!last) return;
+      function over() { return last.getBoundingClientRect().right > pl.getBoundingClientRect().right + 1; }
+      ['sf-tight', 'sf-tight2', 'sf-tight3', 'sf-tight4'].some(function (c) { if (!over()) return true; pl.classList.add(c); });
     });
     [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf .sf-id'), function (e) {
       // in the faces' grid the room is the cell between the avatar and the figure, less the least air on each side

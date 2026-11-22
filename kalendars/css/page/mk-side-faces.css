@@ -25,6 +25,9 @@
   & .sf-tags { display: flex; align-items: center; gap: 7px; margin-top: 5px; }
   & .sf-chip { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 11px; border-radius: 13px; background: #f5b73f; color: #0b0d12; font-size: 15.5px; font-weight: 800; }
   & .sf-sh { background: var(--k); }
+  /* The text's box is trimmed to its capitals, so "centred" means the capitals' middle on the icon's and the capsule's
+     middle, whatever the font's own spacing above and below (it differs between Windows and Mac) */
+  & :is(.sf-chip > .sf-ct, .sf-nc > i) { text-box: trim-both cap alphabetic; }
   & .sf-sh::before { content: ""; width: 17px; height: 17px; margin-left: -3px; background: #0b0d12; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 7.5V12l3 2'/%3E%3C/svg%3E") center / contain no-repeat; }
   & .sf-cp { background: color-mix(in srgb, var(--k) 30%, #0c1117); color: #fff; font-variant-numeric: tabular-nums; }
   & .sf-caf { display: inline-flex; align-items: center; gap: 3px; height: 26px; padding: 0 11px 0 8px; border-radius: 13px; background: #ffb77c; color: #0b0d12; }
@@ -83,12 +86,35 @@
   & .sf-pl { position: absolute; left: 14px; top: 102px; display: flex; align-items: center; gap: 5px; }
   /* Būtne and Dzīvnieks: the row runs to the card's edge and ends with the − / +; a row too full closes up (mk-side-faces.js) */
   &:is(.mk-sf-b, .mk-sf-p) .sf-pl { right: 8px; }
+  /* the two rows of capsules share one size (--rf); 15.5px at most, so both rows and the ticks fit the 208px card */
+  &:is(.mk-sf-b, .mk-sf-p) { --rf: clamp(11px, 3.75cqw, 15.5px); }
+  /* first row: today, the month, the fatigue at the right end (under the creature); second: the shifts, Nākamā */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl { top: 101px; height: calc(2.36 * var(--rf)); font-size: var(--rf); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-rc { top: calc(106px + 2.36 * var(--rf)); height: calc(2.36 * var(--rf)); font-size: var(--rf); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl > .sf-fat { margin-left: auto; }
+  &:is(.mk-sf-b, .mk-sf-p) :is(.sf-pl, .sf-rc) > .sf-two {
+    height: 100%; gap: .42em; padding: 0 .8em 0 .6em; border-radius: 1.18em; font-size: var(--rf); font-weight: 800;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22);
+  }
+  & .sf-two > .sf-ct { display: flex; flex-direction: column; align-items: flex-start; gap: .12em; }
+  & .sf-two .sf-cl { font-size: .66em; font-weight: 600; line-height: 1; opacity: .82; }
+  & .sf-two .sf-cv { display: flex; gap: .42em; font-size: 1.04em; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two::before { content: ""; flex: none; width: 1.32em; height: 1.32em; margin: 0; background: currentColor; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-cp::before { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6h14a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 20H5a1.5 1.5 0 0 1-1.5-1.5v-11A1.5 1.5 0 0 1 5 6ZM3.5 10.5h17M8 3.5v4M16 3.5v4M9 15l2 2 4-4'/%3E%3C/svg%3E") center / contain no-repeat; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-kd::before { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5 21 8l-9 4.5L3 8ZM3 12l9 4.5 9-4.5M3 16l9 4.5 9-4.5'/%3E%3C/svg%3E") center / contain no-repeat; }
+  & .sf-two.sf-kd { background: var(--kb, #5fd3c6); color: #0b0d12; }
+  & .sf-two.sf-kds { background: color-mix(in srgb, var(--k) 30%, #0c1117); color: #fff; }
+  & .sf-two.sf-kds .sf-kv { filter: brightness(1.25); }
   &:is(.mk-sf-b, .mk-sf-p) .sf-pl > * { flex: none; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-pl > .sf-adj { margin-left: auto; margin-right: max(0px, calc(var(--pw) / 2 - 6.2em)); }   /* centred under the figure (6.2em: half the pair) */
+  /* a row too full: the capsules close up, then get a little smaller, then lose their icons, then smaller still */
   &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight { gap: 4px; }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight .sf-chip { padding: 0 6px; font-size: 13.5px; }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight2 .sf-chip { padding: 0 5px; font-size: 12.5px; }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight2 .sf-sh::before { display: none; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight > .sf-two { gap: .3em; padding: 0 .55em 0 .45em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight2 > .sf-two { font-size: calc(var(--rf) * .88); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight3 > .sf-two { padding: 0 .55em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight3 > .sf-two::before { display: none; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight4 { gap: 3px; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight4 > .sf-two { font-size: calc(var(--rf) * .78); padding: 0 .45em; }
   & .sf-pl .sf-chip { height: 25px; padding: 0 10px; font-size: 14.5px; }
   & .sf-seg { display: inline-flex; height: 25px; overflow: hidden; border-radius: 13px; color: #0b0d12; font-size: 14.5px; font-weight: 800; }
   & .sf-seg span { display: flex; align-items: center; padding: 0 6px; }
@@ -106,8 +132,8 @@
      its own rounded tile, "Nākamā" small and quiet over the date in large bold type, then a thin divider and the shift's
      length, both in the middle of the capsule's height (the user's second picture; the length without a pill, as they chose). The length goes where the row has no room for it (mk-side-faces.js). */
   & .sf-nc {
-    display: grid; grid-template-columns: auto auto auto auto; grid-template-rows: auto auto; column-gap: .42em; row-gap: .06em; align-content: center;
-    min-width: 0; height: 2.36em; padding: 0 .4em 0 .26em; border-radius: 1.2em;
+    display: grid; grid-template-columns: auto auto auto minmax(max-content, 1fr); grid-template-rows: auto auto; column-gap: .42em; row-gap: .06em; align-content: center;
+    min-width: 0; height: 2.36em; padding: 0 0 0 .26em; border-radius: 1.2em;
     background: linear-gradient(180deg, color-mix(in srgb, var(--c) 17%, #121017), color-mix(in srgb, var(--c) 8%, #0b0d12));
     box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 30%, rgba(255, 255, 255, .1)), inset 0 1px 0 color-mix(in srgb, var(--c) 45%, rgba(255, 255, 255, .3));
   }
@@ -119,14 +145,17 @@
   & .sf-nc small { grid-column: 2; grid-row: 1; align-self: end; color: color-mix(in srgb, var(--c) 28%, rgba(255, 255, 255, .72)); font-size: .78em; font-weight: 600; line-height: 1; }
   & .sf-nc b { grid-column: 2; grid-row: 2; align-self: start; font-size: 1.08em; font-weight: 700; line-height: 1.05; white-space: nowrap; }
   & .sf-nc .sf-nd { grid-column: 3; grid-row: 1 / 3; align-self: center; margin-left: .2em; width: 1.5px; height: 1.75em; border-radius: 1px; background: color-mix(in srgb, var(--c) 45%, rgba(255, 255, 255, .3)); }
-  & .sf-nc i { grid-column: 4; grid-row: 1 / 3; align-self: center; margin-left: .1em; color: rgba(255, 255, 255, .86); font-size: 1em; font-style: normal; font-weight: 700; line-height: 1; }   /* plain, no pill: the user's choice */
-  & .sf-nc:not(:has(i)) { padding-right: .9em; }
-  /* it fills the rest of the row (its right edge is the ticks'), its content in the middle */
-  &:is(.mk-sf-b, .mk-sf-p) .sf-nc { flex: 1 1 auto; justify-content: safe center; }   /* "safe": too wide never spills to the left, where nobody would measure it */
+  /* the length: in the middle of its own part, between the divider and the capsule's right end (the user's red line);
+     its padding is the least air on each side */
+  & .sf-nc i { grid-column: 4; grid-row: 1 / 3; align-self: center; justify-self: center; padding: 0 .55em 0 .2em; color: rgba(255, 255, 255, .86); font-size: 1em; font-style: normal; font-weight: 700; line-height: 1; }
+  /* without the length: icon and date in the middle of the capsule */
+  & :is(.sf-nc:not(:has(i)), .sf-rc.sf-rc-short .sf-nc) { grid-template-columns: auto auto; justify-content: center; padding-right: .9em; }
+  /* it fills the rest of the row (its right edge is the ticks'); the room it gains goes to the length's part */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-nc { flex: 1 1 auto; }
   /* a row with less room: the gaps a little closer; with none, without the length */
-  & .sf-rc.sf-rc-tight .sf-nc { column-gap: .3em; padding-right: .7em; }
+  & .sf-rc.sf-rc-tight .sf-nc { column-gap: .3em; }
+  & .sf-rc.sf-rc-tight .sf-nc i { padding: 0 .42em 0 .1em; }
   & .sf-rc.sf-rc-short .sf-nc :is(.sf-nd, i) { display: none; }
-  & .sf-rc.sf-rc-short .sf-nc { padding-right: .9em; }
   /* a three-figure number or a correction takes the room of the next shift's length; both together, a step smaller type */
   & .sf-rc:has(.sf-ad):has(.sf-num[data-n="3"]) { font-size: clamp(10px, 3.4cqw, 15px); }
   /* Under the figure: − in green (less tired) and + in red (more tired), the person's own correction to the
@@ -156,7 +185,8 @@
   & .sf-tk { position: absolute; left: 14px; right: 14px; bottom: 9px; display: flex; align-items: flex-end; justify-content: space-between; height: 17px; }
   /* Būtne and Dzīvnieks: the ticks take the room left under the Nogurums / Nākamā row (it starts at 132px and is 2.36 of
      its font tall; the "now" mark and air above it keep 16px), 16 to 26px */
-  &:is(.mk-sf-b, .mk-sf-p) .sf-tk { bottom: 7px; height: clamp(14px, calc(53px - 2.36 * clamp(11px, 3.75cqw, 16.4px)), 26px); }
+  /* the ticks take what is left under the second row, the "now" mark keeps 8px over them */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-tk { bottom: 7px; height: clamp(11px, calc(85px - 4.72 * var(--rf)), 26px); }
   & .sf-tk i { position: relative; flex: 0 1 12px; min-width: 4px; height: calc(30% + var(--h) * 70%); border-radius: 6px; background: var(--c); }
   & .sf-tk .t0 { opacity: .5; }
   & .sf-tk .t2 { box-shadow: 0 0 0 1.5px #fff; }
@@ -241,6 +271,114 @@
     & .sf-seg span:first-child { padding-left: 7px; }
     & .sf-seg span:last-child { padding-right: 7px; }
   }
+
+  /* ── Material 3 Expressive (Būtne and Dzīvnieks) ───────────────────────────────────────────────────────────────
+     Six tactics, kept to this card: shape tension (rounded-square stat tiles with round icon wells, pill buttons in a
+     connected group, a pill for the hero number, a large-radius capsule for Nākamā), tonal containers as in M3's dark
+     scheme (a colour's container is its tone over the surface, its text the colour lifted to light), emphasized type
+     for values (heavy, tight) over quiet labels, and spring motion only where a hand acts (the − / +).
+     Spring: the app's own token (--mk-ease-spring, ~1% overshoot) on size and shape; colours ease without bounce. */
+  &:is(.mk-sf-b, .mk-sf-p) {
+    --m3-surface-high: color-mix(in srgb, var(--c) 9%, #1d1f24);
+    --m3-outline: color-mix(in srgb, var(--c) 24%, rgba(255, 255, 255, .12));
+    --m3-spring: var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1));
+  }
+  /* stat tiles: Large shape (a rounded square, not a pill), tonal, an icon in a filled round well */
+  &:is(.mk-sf-b, .mk-sf-p) :is(.sf-pl, .sf-rc) > .sf-two {
+    --tone: var(--kb, var(--k, #5fd3c6));
+    gap: .46em; padding: 0 .78em 0 .34em; border-radius: .72em;
+    background: color-mix(in srgb, var(--tone) 22%, #15171b); color: color-mix(in srgb, var(--tone) 34%, #fff);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 30%, transparent);
+  }
+  &:is(.mk-sf-b, .mk-sf-p) :is(.sf-pl, .sf-rc) > .sf-two.sf-cp { --tone: color-mix(in srgb, var(--c) 55%, #9aa3ad); }
+  &:is(.mk-sf-b, .mk-sf-p) :is(.sf-pl, .sf-rc) > .sf-two.sf-kds { --tone: color-mix(in srgb, var(--c) 45%, #9aa3ad); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two::before {
+    width: 1.66em; height: 1.66em; border-radius: 50%;
+    background: var(--ico) center / 58% no-repeat, var(--tone); mask: none;
+  }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-sh { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0d12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-cp { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0d12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6h14a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 20H5a1.5 1.5 0 0 1-1.5-1.5v-11A1.5 1.5 0 0 1 5 6ZM3.5 10.5h17M8 3.5v4M16 3.5v4M9 15l2 2 4-4'/%3E%3C/svg%3E"); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-kd { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0d12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5 21 8l-9 4.5L3 8ZM3 12l9 4.5 9-4.5M3 16l9 4.5 9-4.5'/%3E%3C/svg%3E"); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two .sf-cl { font-weight: 600; letter-spacing: .02em; opacity: .74; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two .sf-cv { font-weight: 800; letter-spacing: -.01em; color: #fff; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-kds .sf-kv { filter: none; color: inherit; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl.sf-tight3 > .sf-two { padding: 0 .6em; }
+  /* Nogurums: the hero, a full pill on the fatigue's tonal container, the number emphasized in its colour */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat {
+    border-radius: 99px; background: color-mix(in srgb, var(--c) 20%, #15171b); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 34%, transparent);
+  }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat span { border-right-color: color-mix(in srgb, var(--c) 40%, transparent); color: color-mix(in srgb, var(--c) 22%, #fff); font-weight: 600; letter-spacing: .01em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat .sf-num { color: color-mix(in srgb, var(--c) 78%, #fff); font-weight: 900; letter-spacing: -.035em; }
+  /* Nākamā: a surface container, Large-increased radius (not a pill: the hero stays the only pill in its row) */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-nc { border-radius: .86em; background: var(--m3-surface-high); box-shadow: inset 0 0 0 1px var(--m3-outline); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-nc::before { border-radius: 50%; background-color: color-mix(in srgb, var(--c) 26%, #2a2d33); box-shadow: none; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-nc small { color: rgba(255, 255, 255, .66); letter-spacing: .02em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-nc b { font-weight: 800; letter-spacing: -.005em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-nc .sf-nd { background: var(--m3-outline); }
+  /* − / +: a connected button group. Outer corners round, inner corners small with a 2px seam; a press squishes the
+     pressed button wider (its neighbour gives way) and squares its inner corners, on the spring; colours ease. */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj { gap: 2px; width: calc(var(--e) * 11.8 + 2px); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button {
+    flex: 1 1 0; width: auto; min-width: 0; border-radius: 99px;
+    transition: flex-grow var(--mk-dur-spring-fast, 420ms) var(--m3-spring), border-radius var(--mk-dur-spring-fast, 420ms) var(--m3-spring), background-color 160ms ease-out, scale 0s;
+  }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button[data-d="-5"] { border-radius: 99px .42em .42em 99px; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button[data-d="5"] { border-radius: .42em 99px 99px .42em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button:active:not(:disabled) { flex-grow: 1.3; scale: 1; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button[data-d="-5"]:active:not(:disabled) { border-radius: 99px .2em .2em 99px; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button[data-d="5"]:active:not(:disabled) { border-radius: .2em 99px 99px .2em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .26), rgba(255, 255, 255, .04) 52%, rgba(0, 0, 0, .12)), color-mix(in srgb, var(--k) 42%, #121418);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 -1px 1px rgba(0, 0, 0, .35), 0 1px 3px color-mix(in srgb, var(--k) 35%, transparent);
+  }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button::before { --s: color-mix(in srgb, var(--k) 30%, #fff); filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .35)); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-adj button:hover:not(:disabled) { background: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, .08) 52%, rgba(0, 0, 0, .1)), color-mix(in srgb, var(--k) 52%, #121418); }
+  @media (prefers-reduced-motion: reduce) { &:is(.mk-sf-b, .mk-sf-p) .sf-adj button { transition: background-color 120ms; } }
+  /* … and they sit at the end of the Nogurums pill, its own controls: the group is the pill's height less a hair,
+     its outer end rounded with the pill */
+  /* Nogurums: one line, the word small and quiet, the bolt and the number big (the hero), the − / + at its end */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat { flex: none; gap: .34em; padding: 0 .22em 0 .78em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > span { margin: 0; padding: 0; border: 0; font-size: .68em; line-height: 1; opacity: .88; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-num { font-size: 1.86em; line-height: 1; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-ad { margin: 0; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj { --e: 1em; position: static; flex: none; width: 4.6em; height: 1.9em; margin-left: .1em; font-size: 1em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button { height: 100%; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button::before { --g: calc(var(--rf) * .78); --t: max(2px, calc(var(--rf) * .17)); }   /* not em: the button's own font-size is 0 */
+  /* the number's bolt (the user: "an arrow like energy", as on the mood card): drawn in the number's own colour */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat .sf-num { display: inline-flex; align-items: center; gap: .04em; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat .sf-num::before {
+    content: ""; flex: none; width: .5em; height: .74em; margin-right: .02em; background: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M9 0 0 11.5h5.6L4.4 20 14 8.2H8.2Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  /* today's tile burns: its colour stronger and a still glow around it (no animation, nothing over the text) */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-pl > .sf-two.sf-sh {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 46%, #1b1d22), color-mix(in srgb, var(--tone) 30%, #121418));
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--tone) 40%, rgba(255, 255, 255, .35)), inset 0 0 0 1px color-mix(in srgb, var(--tone) 55%, transparent), 0 0 .9em color-mix(in srgb, var(--tone) 45%, transparent);
+  }
+  /* Nogurums as an M3 stepper (the user's picture): (−) ⚡12 (+). No capsule around it; the − a dark tonal circle, the +
+     a light filled one, both in the card's fatigue colour, the number between them big with its bolt. The buttons are
+     taken out of their wrapper (display: contents) so the three line up; the word "Nogurums" stays as the tooltip. */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat { gap: .42em; padding: 0; background: none; box-shadow: none; height: 100%; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > span { display: none; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj { display: contents; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-num { order: 1; color: color-mix(in srgb, var(--c) 42%, #fff); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-ad { order: 2; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button,
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button:is([data-d="-5"], [data-d="5"]) {
+    flex: none; width: calc(2.36 * var(--rf)); height: calc(2.36 * var(--rf)); border-radius: 50%; box-shadow: none;
+    transition: scale var(--mk-dur-spring-fast, 420ms) var(--m3-spring), border-radius var(--mk-dur-spring-fast, 420ms) var(--m3-spring), background-color 140ms ease-out;
+  }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="-5"] { order: 0; background: color-mix(in srgb, var(--c) 28%, #1b1d22); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="5"] { order: 3; background: color-mix(in srgb, var(--c) 45%, #fff); box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button::before { --g: calc(var(--rf) * .86); --t: max(2px, calc(var(--rf) * .16)); filter: none; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="-5"]::before { --s: color-mix(in srgb, var(--c) 55%, #fff); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="5"]::before { --s: color-mix(in srgb, var(--c) 30%, #0b0d12); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="-5"]:hover:not(:disabled) { background: color-mix(in srgb, var(--c) 38%, #1b1d22); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="5"]:hover:not(:disabled) { background: color-mix(in srgb, var(--c) 35%, #fff); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button:active:not(:disabled) { scale: .86; border-radius: 34%; transition-duration: 160ms; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button:disabled { opacity: .35; }
+  /* a row with no room left: Nākamā without its icon */
+  & .sf-rc.sf-rc-lean .sf-nc::before { display: none; }
 }
 @keyframes mk-sf-sprite { to { transform: translateX(calc(var(--n) * -12.5%)); } }
 /* a breath you can see: about 3-4px on a 45px creature (the first one, 3%, moved 1.5px and nobody saw it) */
