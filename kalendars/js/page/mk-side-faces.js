@@ -113,6 +113,13 @@
   var DRINKS = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'dynamit', 'kongstrong', 'cupcoffee', 'mycoffee'];
   // where the drink's picture lies on each kind's picture: left, top, width, in % of it (scripts/build-butnes.py prints them)
   var KIND_DZ = { pufs: [65.76, 53.08, 15.49], astonis: [65.59, 53.29, 15.32], lacis: [65.18, 55.56, 14.92], zakis: [65.68, 60.82, 15.41], antenas: [65.85, 61.11, 15.57], cekuls: [65.85, 61.54, 15.57], mizi: [65.59, 56.49, 15.32], lumo: [65.68, 59.23, 15.41], koro: [65.59, 56.88, 15.32], aksi: [65.1, 53.61, 14.84], asns: [65.68, 61.8, 15.41], pele: [65.76, 58.11, 15.49] };
+  // The film of taking the drink (scripts/build-butnes.py writes these): the kinds that have one for every step, the
+  // drinks that have one, where the drink's film lies on each kind's picture (left, top, width in %), its shape.
+  var KIND_FILM = {  };
+  var DRINK_FILM = {  };
+  var KIND_DZF = { aksi: [44.1, 53.26, 38.89], antenas: [43.81, 60.83, 40.8], asns: [43.87, 61.52, 40.36], astonis: [43.91, 52.94, 40.14], cekuls: [43.81, 61.25, 40.8], koro: [43.91, 56.56, 40.14], lacis: [44.07, 55.23, 39.09], lumo: [43.87, 58.93, 40.36], mizi: [43.91, 56.17, 40.14], pele: [43.84, 57.8, 40.58], pufs: [43.84, 52.74, 40.58], zakis: [43.87, 60.53, 40.36] };
+  var DZF_AR = 1.273;
+  var FILM_FRAMES = 38, FILM_MS = 3040;
   function held(d, kind) { return d.cf && KIND_DZ[kind] && DRINKS.indexOf(d.cf.src) >= 0 ? d.cf : null; }
   function step(d) { return { low: 'low', mid: 'mid', high: 'high' }[d.level] || (d.score > 85 ? 'exh' : 'crit'); }
   function petSrc(kind, d) {
@@ -233,15 +240,55 @@
     layer.className = 'mk-sf mk-sf-' + id;
     layer.dataset.level = d.level;
     layer.setAttribute('aria-label', d.first + ': nogurums ' + d.score + ', ' + d.label + '. Atvērt');
+    var seen = layer.querySelector('.sf-pet .pi'), was = seen && seen.complete && seen.naturalWidth ? seen.getAttribute('src') : '';
     layer.innerHTML = DRAW[id](d);
+    carry(layer, was);
     var mv = settle[card.dataset.worker || ''], fig = mv && performance.now() - mv[1] < 1000 && layer.querySelector('.sf-pet, .sf-spr');
     if (mv && !fig) delete settle[card.dataset.worker || ''];
     // the same movement, carried on from where it is: a second drawing must not start it again
     if (fig) { fig.style.setProperty('--sf-late', -Math.round(performance.now() - mv[1]) + 'ms'); fig.classList.add(mv[0]); }
   }
+  /* A creature's picture changes (another step of fatigue, a drink taken or put away): the picture that was there
+     stays until the new one can be drawn, and then the new one comes in over it in a fifth of a second: the creature
+     is never missing while a file arrives, and one picture does not jump to the next. Only between two pictures of
+     the same kind: they are the same size and stand in the same place. With reduced motion the change is at once. */
+  function carry(layer, was) {
+    var pi = layer.querySelector('.sf-pet .pi');
+    if (!pi || !was) return;
+    var now = pi.getAttribute('src'), kind = function (u) { return u.split('/').pop().split('-')[0]; };
+    if (was === now || kind(was) !== kind(now)) return;
+    var ps = pi.parentNode, pd = ps.querySelector('.pd'), still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    ps.style.background = 'url("' + was + '") 50% 100% / 100% 100% no-repeat';
+    pi.style.opacity = '0';
+    if (pd) pd.style.opacity = '0';
+    function shown() {
+      if (!pi.isConnected) return;
+      pi.style.opacity = ''; if (pd) pd.style.opacity = '';
+      if (still || !pi.animate) { ps.style.background = ''; return; }
+      var fade = pi.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' });
+      if (pd) pd.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease-out' });
+      fade.onfinish = fade.oncancel = function () { ps.style.background = ''; };
+    }
+    if (pi.complete && pi.naturalWidth) shown();
+    else { pi.addEventListener('load', shown, { once: true }); pi.addEventListener('error', function () { pi.style.opacity = ''; if (pd) pd.style.opacity = ''; ps.style.background = ''; }, { once: true }); }
+  }
+  /* And the pictures a card may need next are fetched ahead, once, when the page is idle: for each creature on
+     the screen the one where it holds a drink (its step of fatigue now), and the drinks themselves (33 small files). */
+  var warmed = {}, warmTimer = 0;
+  function warm() {
+    warmTimer = 0;
+    var urls = [];
+    DRINKS.forEach(function (s) { ['low', 'crit', 'exh'].forEach(function (p) { urls.push('assets/butnes/dz-' + s + '-' + p + '.webp'); }); });
+    document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card[data-sf="b"]').forEach(function (card) {
+      var d = read(card), k = petKind(d);
+      if (KIND_DZ[k]) urls.push('assets/butnes/' + k + '-hold-' + step(d) + '.webp', petSrc(k, { level: d.level, score: d.score }));
+    });
+    urls.forEach(function (u) { if (!warmed[u]) { (warmed[u] = new Image()).src = u; } });   // kept: a picture let go may have to be read again
+  }
   function sync() {
     document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card:is([data-sf], :has(> .mk-sf))').forEach(paint);
     fitNames();
+    if (!warmTimer) warmTimer = setTimeout(function () { (window.requestIdleCallback || setTimeout)(warm); }, 1200);
   }
   // Each name as large as its own room allows, the whole of it, never cut: a long name comes out smaller, a short one
   // stops at the cap below. Measured, not guessed: --sf-fs / --sf-fs2 on its .sf-id (the sheet guesses until then).
@@ -357,10 +404,38 @@
      nodes of their own that remove themselves. Nothing with reduced motion, and nothing moves between drinks. */
   var DRINK = { monster: 'buzz', monsterultra: 'buzz', redbull: 'buzz', dynamit: 'buzz', brite: 'fizz', kongstrong: 'flex' };
   var MOVES = ['sip', 'buzz', 'fizz', 'flex', 'up', 'dn'];
+  /* The film: the creature notices the drink, takes it, drinks, lowers it, waves once, and is left holding it. Two
+     strips of frames played together, once (the creature's for its step of fatigue; the drink's, cut by the paws,
+     over it); the card's own two pictures are hidden meanwhile and are what the last frame shows. Until both strips
+     are loaded the card shows the creature as it was before the drink, so the film starts from what was there. */
+  function film(card, fig, source) {
+    var d = read(card), k = petKind(d), ps = fig.querySelector('.ps'), pi = ps && ps.querySelector('.pi'), at = KIND_DZF[k];
+    if (!pi || !KIND_FILM[k] || !DRINK_FILM[source] || !at || !held(d, k)) return false;
+    var st = step(d), urls = ['assets/butnes/' + k + '-film-' + st + '.webp', 'assets/butnes/dzf-' + source + '-' + (st === 'exh' || st === 'crit' ? st : 'low') + '.webp'];
+    var after = pi.getAttribute('src'), left = 2;
+    fig.classList.add('pre');   // the drink is not in its paw yet
+    pi.src = petSrc(k, { level: d.level, score: d.score });
+    function play() {
+      if (--left || !fig.isConnected) return;
+      var a = document.createElement('i'), b = document.createElement('i');
+      a.className = 'pf'; a.style.backgroundImage = 'url(' + urls[0] + ')';
+      b.className = 'pf pfd'; b.style.cssText = 'background-image:url(' + urls[1] + ');left:' + at[0] + '%;top:' + at[1] + '%;width:' + at[2] + '%;aspect-ratio:' + DZF_AR;
+      ps.appendChild(a); ps.appendChild(b);
+      fig.classList.add('film');
+      a.addEventListener('animationend', function () {
+        pi.src = after;
+        fig.classList.remove('film', 'pre');
+        a.remove(); b.remove();
+      }, { once: true });
+    }
+    urls.forEach(function (u) { var im = new Image(); im.onload = play; im.onerror = function () { pi.src = after; fig.classList.remove('pre'); }; im.src = u; });
+    return true;
+  }
   window.__minkaSideFaceDrink = function (card, source) {
     var layer = card && card.querySelector(':scope > .mk-sf'), fig = layer && layer.querySelector('.sf-pet, .sf-spr');
     if (!fig || !fig.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     var how = DRINK[source] || 'sip', r = (fig.querySelector('.ps') || fig).getBoundingClientRect();
+    if (film(card, fig, source)) return;
     settle[card.dataset.worker || ''] = [how, performance.now()];
     MOVES.forEach(function (c) { fig.classList.remove(c); });
     void fig.offsetWidth;   // the same move twice in a row starts again
@@ -386,7 +461,8 @@
     settle[worker] = [+b.dataset.d > 0 ? 'dn' : 'up', performance.now()];
     // the points change, the minute of the first press stays: the whole time since then carries the person's judgement
     var was = /^-?\d{1,2},(\d{7,9})$/.exec(((window.mkGetWorkerSkin && window.mkGetWorkerSkin(worker)) || {}).fa || '');
-    window.mkPatchWorkerSkin(worker, { fa: n ? n + ',' + (was ? was[1] : Math.floor(Date.now() / 60000)) : null });
+    // sent at once, as a logged drink is: the other computers have it at their next look (they look every 30 s)
+    window.mkPatchWorkerSkin(worker, { fa: n ? n + ',' + (was ? was[1] : Math.floor(Date.now() / 60000)) : null }, 1);
     fly(b, worker, +b.dataset.d);
   }, true);
 

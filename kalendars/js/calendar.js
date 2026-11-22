@@ -3756,7 +3756,7 @@ function filterFullList(btn) {
   }
   /* The side cards' faces (js/page/mk-side-faces.js and its sheet, fetched on the first need: a card that has a
      face, or a press on a card's plus). With a card: open the picker for it; without: repaint the chosen faces. */
-  const SIDE_FACES_V = '20261122tf7';
+  const SIDE_FACES_V = '20261122tf9';
   let sideFacesLoad = 0, sideFacesCard = null;
   function sideFaces(card) {
     if (window.MkSideFaces) return card ? window.MkSideFaces.open(card) : window.MkSideFaces.sync();
@@ -3792,6 +3792,12 @@ function filterFullList(btn) {
       if ((sideManual.get(key) || '') !== fa) {
         sideManual.set(key, fa);
         try { window.__fatigue && window.__fatigue.clearCache(); } catch (_e) {}   // the correction runs through the model: its numbers and curves change
+        // the person's own card answers the press at once (as a logged drink does): its number, colour and creature
+        // now; the panels, the list and the bars, which take longer, a moment later
+        document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card[data-worker]').forEach(card => {
+          if (window.mkAppearanceIdentity && window.mkAppearanceIdentity(card.dataset.worker) !== key) return;
+          try { patchSideFatigue(card, getSideFatigue(card.dataset.worker)); } catch (_e) {}
+        });
         setTimeout(() => {
           try { g_updatePanelsForDate(); } catch (_e) {}
           try { g_updateList(); } catch (_e) {}
@@ -3892,6 +3898,18 @@ function filterFullList(btn) {
      must not rebuild the cards: that restarted the emoji, the ring and the
      decorations of every card, the radiologists' too. Unchanged cards stay as
      they are; where only the fatigue moved, it is written in place. */
+  // A drink logged or taken away (here or on another device, when it arrives): the side cards follow at once: the
+  // drink in the creature's paw, the caffeine mark, the number.
+  document.addEventListener('minka:coffee-changed', () => {
+    let moved = false;
+    document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card[data-worker]').forEach(card => {
+      let now = null;
+      try { now = getSideFatigue(card.dataset.worker); } catch (_e) { return; }
+      if ((now.caf ? sideCafAttr(now.caf) : '') === (card.dataset.cf || '') && String(now.score) === card.dataset.fatScore) return;
+      patchSideFatigue(card, now); moved = true;
+    });
+    if (moved) window.__minkaSideFaces?.();
+  });
   // the drink in the person's hands now: "source,points,mg" (js/page/mk-side-faces.js stands it by the creature)
   const sideCafAttr = caf => caf.src + ',' + caf.pts + ',' + caf.mg;
   const SIDE_NO_FATIGUE = { score: 0, key: '', label: '', color: '', contextLabel: '' };

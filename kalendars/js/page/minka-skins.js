@@ -1505,14 +1505,16 @@ function normName(n) {
       return Promise.resolve();
     }
     if (!window.MinkaApi || !window.MinkaApi.apiFetch) { warnLocalOnly(); return; }
-    var revision = ++cloudRevision;
+    var revision = ++cloudRevision, chainKey = normName(name);
     cloudWrites++;
     var packed = packSkin(sk, name) || null, sent = packed;
     function post(value, worker) { sent = value; return window.MinkaApi.apiFetch('/api/skins', { method: 'POST', json: { worker: worker || cloudWorkerName(name), skin: value, mediaSession: window.MinkaCardLock ? window.MinkaCardLock.token() : undefined } }); }
     // The same person saved under an older spelling of the name (one identity, normName):
     // that copy gets the same look, else its old decoration comes back on the next pull.
     var aliases = (cloudKeys[normName(name)] || []).filter(function(k) { return k !== cloudWorkerName(name); });
-    return post(packed)
+    // One person's saves reach the server in the order they were made: each waits for the one before it (quick presses
+    // on the fatigue correction are sent at once, and a later one must not arrive first).
+    var run = (cloudChain[chainKey] || Promise.resolve()).then(function() { return post(packed); })
       // An API that does not know the lens position yet (fp:) refuses the whole
       // look: send it again without that part, so everything else still syncs.
       .then(function(r) {
@@ -1535,15 +1537,18 @@ function normName(n) {
         if (r.status === 423) { if (window.MinkaCardLock) window.MinkaCardLock.refused(name); scheduleCloudPull(800, 0); return; }
         if (!r.ok) throw 0; if (!silent && revision===cloudRevision && typeof _mkToast === 'function') _mkToast('Izskats saglabāts — redzēs visi', 'ok'); })
       .catch(warnLocalOnly)
-      .finally(function(){ cloudWrites--; });
+      .finally(function(){ cloudWrites--; if (cloudChain[chainKey] === run) delete cloudChain[chainKey]; });
+    cloudChain[chainKey] = run;
+    return run;
   }
+  var cloudChain = {};
   /* One or two fields of a person's look changed outside the editor (the Nakts
      bed picker): merged into the saved look, synced, and every card and bed of
      that person repainted. A null value removes the field. */
-  window.mkPatchWorkerSkin = function(name, patch) {
+  window.mkPatchWorkerSkin = function(name, patch, wait) {   // wait: ms before it is sent (800: a run of changes is one save; the fatigue correction asks for 1)
     var cur = window.mkGetWorkerSkin(name), next = cur ? JSON.parse(JSON.stringify(cur)) : {};
     Object.keys(patch || {}).forEach(function(k) { if (patch[k] == null || patch[k] === '') delete next[k]; else next[k] = patch[k]; });
-    setSkin(name, hasAny(next) ? next : null, 800);
+    setSkin(name, hasAny(next) ? next : null, wait || 800);
     var k2 = normName(name);
     document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .ns-room-bed[data-worker], #nsPanel .nsc-full-card[data-worker]').forEach(function(c) {
       if (normName(c.getAttribute('data-worker')) === k2) window.mkApplySkinToEl(c, hasAny(next) ? next : null);

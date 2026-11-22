@@ -49,7 +49,7 @@ kinds = sorted({os.path.basename(f).split('-')[0] for f in files} - {'dz'})
 kinds = [k for k in kinds if sum(1 for f in files if os.path.basename(f).startswith(k + '-')) == 2 * len(STEPS)]   # only kinds that are whole
 assert kinds, 'no renders in ' + SRC
 os.makedirs(OUT, exist_ok=True)
-total, pad, ar, boxes = 0, 4, {}, {}
+total, pad, ar, boxes, kbox = 0, 4, {}, {}, {}
 
 # the drinks: one box for all of them
 drinks = sorted(f for f in files if os.path.basename(f).startswith('dz-') and f.endswith('-f37.png'))
@@ -76,6 +76,7 @@ for kind in kinds:
         name = '%s-%s.webp' % (kind, STEPS[step]) if frame == 'f00' else '%s-hold-%s.webp' % (kind, step)
         total += webp(f, box, 256, os.path.join(OUT, name))
     ar[kind] = round(w / h, 2)
+    kbox[kind] = (box, side)
     if dbox:
         boxes[kind] = [round((dbox[0] - box[0]) / w * 100, 2), round((dbox[1] + down - box[1]) / h * 100, 2), round((dbox[2] - dbox[0]) / w * 100, 2)]
     print('butnes: %-8s crop %s of %d, aspect %.2f (w/h)' % (kind, box, side, w / h))
@@ -87,16 +88,86 @@ print('butnes: %d pictures of %d kinds, %d drink pictures, %d KB in all' % (sum(
 print('KIND_AR = { ' + ', '.join('%s: %s' % (k, ('%.2f' % ar[k]).lstrip('0') if ar[k] < 1 else '%.2f' % ar[k]) for k in ar) + ' };')
 print('KIND_DZ = { ' + ', '.join('%s: [%s]' % (k, ', '.join(str(v) for v in boxes[k])) for k in boxes) + ' };')
 
+# The films (rg_master.py --scene drink --layer body / drink -> scripts/blender/rg-mascot-film): a kind's 38 frames
+# of one step, each cut by the kind's own box, side by side in one strip (<kind>-film-<step>.webp, 128 px a frame);
+# and the drink's frames, cut by one box of their own, in a strip of the same count (dzf-<drink>-<pose>.webp), with
+# the place of that box on each kind's picture (KIND_DZF). The card plays both strips together, once.
+FILM, FRAMES, FW = os.path.join(ROOT, 'scripts', 'blender', 'rg-mascot-film'), 38, 128
+film_kinds, film_drinks, dzf, dzf_ar = {}, {}, {}, 1.0
+
+
+def film_frames(stem):
+    fs = [os.path.join(FILM, '%s-f%02d.png' % (stem, i)) for i in range(FRAMES)]
+    return [f if os.path.exists(f) and os.path.getsize(f) > 1000 else None for f in fs]
+
+
+def strip(frames, box, fw, out):
+    fh = round(fw * (box[3] - box[1]) / (box[2] - box[0]))
+    sheet = Image.new('RGBA', (fw * len(frames), fh))
+    for i, f in enumerate(frames):
+        if f:
+            sheet.paste(Image.open(f).convert('RGBA').crop(box).resize((fw, fh), Image.LANCZOS), (i * fw, 0))
+    tmp = out + '.png'
+    sheet.save(tmp)
+    subprocess.run(['cwebp', '-quiet', '-q', '80', '-alpha_q', '85', '-m', '6', tmp, '-o', out], check=True)
+    os.remove(tmp)
+    return os.path.getsize(out)
+
+
+if os.path.isdir(FILM):
+    ftotal = 0
+    for kind in kinds:
+        box, side = kbox[kind]
+        for step in STEPS:
+            fr = film_frames('%s-%s' % (kind, step))
+            if all(fr):
+                k = Image.open(fr[0]).size[0] / side   # the film is rendered smaller than the stills
+                fbox = tuple(round(v * k) for v in box)
+                ftotal += strip(fr, fbox, FW, os.path.join(OUT, '%s-film-%s.webp' % (kind, step)))
+                film_kinds.setdefault(kind, []).append(step)
+    part = bool(os.environ.get('BUTNES_PARTIAL'))   # for trying a film out before all of it is rendered
+    film_kinds = {k: 1 for k, v in film_kinds.items() if part or len(v) == len(STEPS)}   # a kind's film is offered when every step has one
+    sets = {}
+    for f in glob.glob(os.path.join(FILM, 'dz-*-f[0-9][0-9].png')):
+        if os.path.getsize(f) > 1000:
+            _, drink, pose, _ = os.path.basename(f)[:-4].split('-')
+            sets.setdefault((drink, pose), []).append(f)
+    fbox_d = None
+    for fs in sets.values():
+        for f in fs:
+            fbox_d = union(fbox_d, bbox(f))
+    if fbox_d and 'pufs' in kbox:
+        fbox_d = (max(0, fbox_d[0] - 2), max(0, fbox_d[1] - 2), fbox_d[2] + 2, fbox_d[3] + 2)
+        fside = Image.open(next(iter(sets.values()))[0]).size[0]
+        k = fside / kbox['pufs'][1]
+        scale = FW / ((kbox['pufs'][0][2] - kbox['pufs'][0][0]) * k)   # the drink's frames at the creature's own scale
+        dzf_ar = round((fbox_d[2] - fbox_d[0]) / (fbox_d[3] - fbox_d[1]), 3)
+        for (drink, pose), fs in sorted(sets.items()):
+            fr = film_frames('dz-%s-%s' % (drink, pose))
+            if all(fr[3:]):   # the drink is not there in the first three frames
+                ftotal += strip(fr, fbox_d, round((fbox_d[2] - fbox_d[0]) * scale), os.path.join(OUT, 'dzf-%s-%s.webp' % (drink, pose)))
+                film_drinks.setdefault(drink, []).append(pose)
+        film_drinks = {d: 1 for d, v in film_drinks.items() if part or len(v) == 3}
+        for kind in kinds:
+            box, side = kbox[kind]
+            b = tuple(v * k for v in box)
+            down = RISE.get(kind, 0.0) * fside / ORTHO
+            dzf[kind] = [round((fbox_d[0] - b[0]) / (b[2] - b[0]) * 100, 2), round((fbox_d[1] + down - b[1]) / (b[3] - b[1]) * 100, 2), round((fbox_d[2] - fbox_d[0]) / (b[2] - b[0]) * 100, 2)]
+    print('butnes: films of %d kinds, of %d drinks, %d KB in all' % (len(film_kinds), len(film_drinks), ftotal // 1024))
+
 if '--write' in sys.argv:
     js = os.path.join(ROOT, 'kalendars', 'js', 'page', 'mk-side-faces.js')
     src = open(js, encoding='utf-8').read()
-    for name, new, fmt in (('KIND_AR', ar, lambda v: ('%.2f' % v).lstrip('0') if v < 1 else '%.2f' % v), ('KIND_DZ', boxes, lambda v: '[' + ', '.join(str(x) for x in v) + ']')):
+    arr = lambda v: '[' + ', '.join(str(x) for x in v) + ']'
+    for name, new, fmt, keep in (('KIND_AR', ar, lambda v: ('%.2f' % v).lstrip('0') if v < 1 else '%.2f' % v, True), ('KIND_DZ', boxes, arr, True),
+                                 ('KIND_DZF', dzf, arr, False), ('KIND_FILM', film_kinds, str, False), ('DRINK_FILM', film_drinks, str, False)):
         m = re.search(r'var %s = \{(.*?)\};' % name, src)
-        old = dict(re.findall(r'(\w+): (\[[^\]]*\]|[0-9.]+)', m.group(1)))
+        old = dict(re.findall(r'(\w+): (\[[^\]]*\]|[0-9.]+)', m.group(1))) if keep else {}
         old.update({k: fmt(v) for k, v in new.items()})
         src = src[:m.start()] + 'var %s = { %s };' % (name, ', '.join('%s: %s' % kv for kv in old.items())) + src[m.end():]
+    src = re.sub(r'var DZF_AR = [0-9.]+;', 'var DZF_AR = %s;' % dzf_ar, src)
     open(js, 'w', encoding='utf-8').write(src)
-    print('butnes: wrote KIND_AR and KIND_DZ into', os.path.relpath(js, ROOT))
+    print('butnes: wrote the kinds\' shapes, drink places and films into', os.path.relpath(js, ROOT))
 
 if '--sheet' in sys.argv:   # every kind in a row: its five faces, then the five held ones with a drink on; for looking them over
     cols = [(e, None) for e in STEPS.values()] + [('hold-' + s, s) for s in STEPS]
