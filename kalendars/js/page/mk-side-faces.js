@@ -251,6 +251,14 @@
       if (!last) return;
       function over() { return last.getBoundingClientRect().right > pl.getBoundingClientRect().right + 1; }
       ['sf-tight', 'sf-tight2', 'sf-tight3', 'sf-tight4'].some(function (c) { if (!over()) return true; pl.classList.add(c); });
+      // the creature stands centred over its − N +: both end at the card's right edge, the stepper is the wider, so
+      // the figure steps left by the difference (before the names, which take the room that is left)
+      var fig = pl.parentElement.querySelector('.sf-fig'), img = fig && fig.querySelector('.sf-pet .ps, .sf-spr'), bs = pl.querySelectorAll('.sf-fat button');
+      if (!img || bs.length < 2) return;
+      fig.style.removeProperty('margin-right');
+      var z = parseFloat(getComputedStyle(pl.closest('.mk-side-card')).zoom) || 1, ir = img.getBoundingClientRect(),
+        dx = (ir.left + ir.right) / 2 - (bs[0].getBoundingClientRect().left + bs[bs.length - 1].getBoundingClientRect().right) / 2;
+      if (dx > .5) fig.style.marginRight = Math.round(dx / z * 10) / 10 + 'px';
     });
     [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf .sf-id'), function (e) {
       // in the faces' grid the room is the cell between the avatar and the figure, less the least air on each side
