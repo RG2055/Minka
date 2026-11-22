@@ -36,7 +36,8 @@
       // the month's shifts by kind: [how many, colour, the kind's word]
       kinds: split ? [].map.call(split.children, function (i) { var w = i.querySelector('[data-w]'); return [parseFloat(i.style.flexGrow) || 1, i.style.backgroundColor, w ? w.dataset.w : '']; }) : [],
       count: tx('.mk-side-month dd span').replace(/\s/g, ''), caf: caf ? caf.dataset.mg || '' : '',
-      adj: manual(card.dataset.worker || '')
+      adj: manual(card.dataset.worker || ''),
+      cf: (function (m) { return m ? { src: m[1], pts: +m[2], mg: +m[3] } : null; })(/^([a-z]{2,20}),(\d{1,2}),(\d{1,4})$/.exec(card.dataset.cf || ''))
     };
   }
 
@@ -90,22 +91,39 @@
   // Būtne: a rendered plush creature (assets/butnes, scripts/blender/rg_mascot.py). Its kind is the person's own:
   // the one they chose (their look's "sf:b-<kind>", so it follows them to every device), or until then one drawn by
   // lot from their name. Its expression follows the fatigue.
-  var KINDS = ['pufs', 'astonis', 'lacis', 'zakis', 'antenas', 'cekuls'];
+  // LOT: the six the lot draws from (unchanged, so nobody's creature swaps under them); the other six are chosen
+  // by hand. All twelve are one family (scripts/blender/rg_master.py): the body takes the fatigue's colour, the
+  // cheeks, the inside of the ears and what each wears on its head are its own and stay.
+  var LOT = ['pufs', 'astonis', 'lacis', 'zakis', 'antenas', 'cekuls'];
+  var ALL_KINDS = LOT.concat(['mizi', 'lumo', 'koro', 'aksi', 'asns', 'pele']);
   // each kind's picture's width to height (scripts/build-butnes.py prints them): the button finds the picture's edge
-  var KIND_AR = { pufs: 1.15, astonis: .94, lacis: 1.16, zakis: 1.12, antenas: .99, cekuls: 1.07 };
-  var KIND_NAMES = { pufs: 'Pūka', astonis: 'Astoņkājis', lacis: 'Lācis', zakis: 'Zaķis', antenas: 'Antenas', cekuls: 'Cekuls' };
+  var KIND_AR = { pufs: 1.26, astonis: 1.29, lacis: 1.25, zakis: 1.07, antenas: 1.02, cekuls: 1.03, mizi: 1.21, lumo: 1.11, koro: 1.20, aksi: 1.32, asns: 1.05, pele: 1.15 };
+  var KINDS = ALL_KINDS.filter(function (k) { return KIND_AR[k]; });   // a kind is offered once its pictures are there
+  var KIND_NAMES = { pufs: 'Pūka', astonis: 'Astoņkājis', lacis: 'Lācis', zakis: 'Zaķis', antenas: 'Antenas', cekuls: 'Cekuls', mizi: 'Kaķis', lumo: 'Garausis', koro: 'Radziņš', aksi: 'Aksolotls', asns: 'Lapiņas', pele: 'Pele' };
   function kindOf(name) {
     for (var h = 0, i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-    return KINDS[h % KINDS.length];
+    return LOT[h % LOT.length];
   }
   var PICK = '<button type="button" class="sf-pick" aria-label="Mainīt kartītes skatu" title="Mainīt skatu"></button>';
   function petKind(d) { return KINDS.indexOf(d.sfp) >= 0 ? d.sfp : kindOf(d.who); }
+  // A drink in its paw (the card's data-cf: calendar.js __minkaCaffeineNow), for as long as the caffeine works: the
+  // creature's picture is then the one where it holds something (<kind>-hold-<step>), and the drink itself is laid
+  // over it (dz-<drink>-<pose>: rendered alone, already cut by the paw in front of it). Another drink logged is
+  // another picture on top; when the caffeine is gone the card is drawn without both.
+  var DRINKS = ['philips', 'lofbergs', 'narvesen', 'monster', 'monsterultra', 'redbull', 'brite', 'dynamit', 'kongstrong', 'cupcoffee', 'mycoffee'];
+  // where the drink's picture lies on each kind's picture: left, top, width, in % of it (scripts/build-butnes.py prints them)
+  var KIND_DZ = { pufs: [65.76, 53.08, 15.49], astonis: [65.59, 53.29, 15.32], lacis: [65.18, 55.56, 14.92], zakis: [65.68, 60.82, 15.41], antenas: [65.85, 61.11, 15.57], cekuls: [65.85, 61.54, 15.57], mizi: [65.59, 56.49, 15.32], lumo: [65.68, 59.23, 15.41], koro: [65.59, 56.88, 15.32], aksi: [65.1, 53.61, 14.84], asns: [65.68, 61.8, 15.41], pele: [65.76, 58.11, 15.49] };
+  function held(d, kind) { return d.cf && KIND_DZ[kind] && DRINKS.indexOf(d.cf.src) >= 0 ? d.cf : null; }
+  function step(d) { return { low: 'low', mid: 'mid', high: 'high' }[d.level] || (d.score > 85 ? 'exh' : 'crit'); }
   function petSrc(kind, d) {
+    if (held(d, kind)) return 'assets/butnes/' + kind + '-hold-' + step(d) + '.webp';
     return 'assets/butnes/' + kind + '-' + ({ low: 'happy', mid: 'normal', high: 'tired' }[d.level] || (d.score > 85 ? 'exhausted' : 'very-tired')) + '.webp';
   }
   function pet(d) {
-    var k = petKind(d);
-    return '<div class="sf-pet" data-l="' + esc(d.level || 'mid') + '" style="--ar:' + KIND_AR[k] + '"><i class="gs" aria-hidden="true"></i><img class="ps" src="' + petSrc(k, d) + '" alt="" draggable="false">' + PICK + '</div>';
+    var k = petKind(d), cf = held(d, k), at = KIND_DZ[k], st = step(d);
+    return '<div class="sf-pet" data-l="' + esc(d.level || 'mid') + '" style="--ar:' + KIND_AR[k] + '"><i class="gs" aria-hidden="true"></i><span class="ps"><img class="pi" src="' + petSrc(k, d) + '" alt="" draggable="false">'
+      + (cf && at ? '<img class="pd" src="assets/butnes/dz-' + cf.src + '-' + (st === 'exh' || st === 'crit' ? st : 'low') + '.webp" alt="" draggable="false" style="left:' + at[0] + '%;top:' + at[1] + '%;width:' + at[2] + '%">' : '')
+      + '</span>' + (cf ? '<i class="sf-cf" title="Kofeīns: ' + cf.mg + ' mg organismā' + (cf.pts ? ', nogurums uz laiku −' + cf.pts : '') + '">' + (cf.pts ? '<b>−' + cf.pts + '</b>' : '') + '</i>' : '') + PICK + '</div>';
   }
   // a press on the creature: it squashes and springs back (and the press does not open the card)
   document.addEventListener('click', function (e) {
@@ -332,6 +350,33 @@
     return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāks nogurums" title="Jūtos mazāk noguris: −5.' + tip + '"' + (d.adj <= -30 ? ' disabled' : '') + '>−</button>'
       + '<button type="button" data-d="5" aria-label="Lielāks nogurums" title="Jūtos vairāk noguris: +5.' + tip + '"' + (d.adj >= 30 ? ' disabled' : '') + '>+</button></div>';
   }
+  /* A drink (calendar.js playCoffeeAddedEffect). The latest drink is in the creature's paw for as long as its
+     caffeine works (pet() above). When it is added, the creature takes a sip and answers in the drink's own way. sip (every coffee): it leans back, content, and steam goes up; buzz (the energy drinks): it
+     shivers and hops; fizz (Brite): bubbles, a squash and a bounce; flex (Kong Strong): it swells with strength.
+     One movement of under a second, carried over a redrawn card like a correction's (settle); the specks are
+     nodes of their own that remove themselves. Nothing with reduced motion, and nothing moves between drinks. */
+  var DRINK = { monster: 'buzz', monsterultra: 'buzz', redbull: 'buzz', dynamit: 'buzz', brite: 'fizz', kongstrong: 'flex' };
+  var MOVES = ['sip', 'buzz', 'fizz', 'flex', 'up', 'dn'];
+  window.__minkaSideFaceDrink = function (card, source) {
+    var layer = card && card.querySelector(':scope > .mk-sf'), fig = layer && layer.querySelector('.sf-pet, .sf-spr');
+    if (!fig || !fig.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    var how = DRINK[source] || 'sip', r = (fig.querySelector('.ps') || fig).getBoundingClientRect();
+    settle[card.dataset.worker || ''] = [how, performance.now()];
+    MOVES.forEach(function (c) { fig.classList.remove(c); });
+    void fig.offsetWidth;   // the same move twice in a row starts again
+    fig.style.setProperty('--sf-late', '0ms');
+    fig.classList.add(how);
+    if (how === 'flex') return;
+    var size = Math.max(14, r.height * .38), x = r.left + r.width / 2, y = r.bottom - size * .9;
+    for (var i = 0; i < 3; i++) {   // steam, sparks or bubbles, up from the drink in its paws
+      var d = how === 'sip' ? 3 : 4, dx = (i - 1) * size * .30 + (Math.random() - .5) * 3, up = size * (how === 'buzz' ? .8 : 1) + Math.random() * 6;
+      var bit = speck('left:' + (x - d / 2) + 'px;top:' + y + 'px;width:' + d + 'px;height:' + (how === 'sip' ? d * 2.6 : d) + 'px;border-radius:' + d + 'px;'
+        + (how === 'fizz' ? 'border:1.5px solid #c4f07a' : 'background:' + (how === 'buzz' ? '#ffe14a' : 'rgba(255,255,255,.75)')));
+      gone(bit.animate([{ transform: 'translate(0,0) scale(.6)', opacity: 0 }, { opacity: 1, offset: .25 },
+        { transform: 'translate(' + (how === 'buzz' ? dx * 2.4 : dx).toFixed(1) + 'px,' + (-up).toFixed(1) + 'px) scale(' + (how === 'fizz' ? 1.5 : 1) + ')', opacity: 0 }],
+        { duration: 620, delay: 300 + i * 90, easing: 'ease-out', fill: 'backwards' }), bit);
+    }
+  };
   document.addEventListener('click', function (e) {
     var b = e.target && e.target.closest && e.target.closest('.mk-sf .sf-adj button'), card = b && b.closest('.mk-side-card');
     if (!card) return;
@@ -367,7 +412,7 @@
       var d = read(card), mine = petKind(d);
       box.hidden = false;
       box.innerHTML = '<div class="sfp-grid sfp-kinds">' + KINDS.map(function (k) {
-        return '<button type="button" data-kind="' + k + '" aria-pressed="' + (k === mine) + '" title="' + KIND_NAMES[k] + '"><img src="' + petSrc(k, d) + '" alt="' + KIND_NAMES[k] + '" draggable="false"></button>';
+        return '<button type="button" data-kind="' + k + '" aria-pressed="' + (k === mine) + '" title="' + KIND_NAMES[k] + '"><img src="' + petSrc(k, { level: d.level, score: d.score }) + '" alt="' + KIND_NAMES[k] + '" draggable="false"></button>';
       }).join('') + '</div>';
       place();
       return;

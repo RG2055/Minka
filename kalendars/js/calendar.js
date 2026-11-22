@@ -3563,11 +3563,18 @@ function filterFullList(btn) {
     try {
       if (window.__fatigue) result = window.__fatigue.calculateFatigue(workerName);
     } catch (_e) {}
-    const score = result && Number.isFinite(result.score)
+    // Coffee helps, for a while: caffeine lowers sleepiness and raises alertness for some hours, and pays back none
+    // of the tiredness itself. So the model's own number stays as it is everywhere else, and what the side card
+    // shows now is lowered by the caffeine still in the body (__minkaCaffeineNow below: 15 points at most, gone as
+    // the caffeine goes). Where the fatigue is so high that this does not change its level, the card stays as red
+    // and its creature as tired as before, drink or no drink. caf rides along for the card.
+    let caf = null;
+    try { caf = window.__minkaCaffeineNow?.(workerName) || null; } catch (_e) {}
+    const score = Math.max(0, (result && Number.isFinite(result.score)
       ? Math.max(0, Math.min(100, Math.round(result.score)))
-      : 0;
+      : 0) - (caf ? caf.pts : 0));
     if (window.__fatigue && typeof window.__fatigue.getPresentation === 'function') {
-      return {...window.__fatigue.getPresentation(score), contextLabel: result?.contextLabel || 'Tagad'};
+      return {...window.__fatigue.getPresentation(score), contextLabel: result?.contextLabel || 'Tagad', caf};
     }
     if (score > 70) return { score, key: 'crit', label: 'Kritisks', color: '#ff5c70' };
     if (score > 45) return { score, key: 'high', label: 'Augsts', color: '#ff9f43' };
@@ -3749,7 +3756,7 @@ function filterFullList(btn) {
   }
   /* The side cards' faces (js/page/mk-side-faces.js and its sheet, fetched on the first need: a card that has a
      face, or a press on a card's plus). With a card: open the picker for it; without: repaint the chosen faces. */
-  const SIDE_FACES_V = '20261122tf4';
+  const SIDE_FACES_V = '20261122tf7';
   let sideFacesLoad = 0, sideFacesCard = null;
   function sideFaces(card) {
     if (window.MkSideFaces) return card ? window.MkSideFaces.open(card) : window.MkSideFaces.sync();
@@ -3885,11 +3892,14 @@ function filterFullList(btn) {
      must not rebuild the cards: that restarted the emoji, the ring and the
      decorations of every card, the radiologists' too. Unchanged cards stay as
      they are; where only the fatigue moved, it is written in place. */
+  // the drink in the person's hands now: "source,points,mg" (js/page/mk-side-faces.js stands it by the creature)
+  const sideCafAttr = caf => caf.src + ',' + caf.pts + ',' + caf.mg;
   const SIDE_NO_FATIGUE = { score: 0, key: '', label: '', color: '', contextLabel: '' };
   function patchSideFatigue(el, fatigue) {
     el.style.setProperty('--mk-side-fat', fatigue.score + '%');
     el.style.setProperty('--mk-side-fat-color', fatigue.color);
     el.dataset.fatScore = String(fatigue.score);
+    if (fatigue.caf) el.dataset.cf = sideCafAttr(fatigue.caf); else delete el.dataset.cf;
     el.dataset.fatLabel = fatigue.label || '';
     el.dataset.fatigue = fatigue.key;
     const ring = el.querySelector('.mk-side-ring');
@@ -3989,7 +3999,7 @@ function filterFullList(btn) {
       const card = (fatigue, ticks) => {
         const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
         return `
-        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}${ticks || sideSf ? ' mk-has-ticks' : ''}" style="${sideVars}" data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}"${sideFace} data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
+        <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}${ticks || sideSf ? ' mk-has-ticks' : ''}" style="${sideVars}"${fatigue.caf ? ` data-cf="${mkEscAttr(sideCafAttr(fatigue.caf))}"` : ''} data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}"${sideFace} data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
           <div class="mk-side-card-main">
             <div class="mk-side-icon-rail">
               ${personEmoji ? `<span class="mk-emoji-side" data-mk-emoji-click="1">${mkEscAttr(personEmoji)}</span>` : ''}
@@ -6818,7 +6828,26 @@ function filterFullList(btn) {
       window.MinkaEmojiParticles?.haptic('light');
       return true;
     }
-    function playCoffeeAddedEffect(card, drink) {
+    // Caffeine now, for the side card (getSideFatigue): the latest drink, the mg still in the body (the menu's own
+    // curve: rising over the first hour, going with the 5-hour half-life) and what that takes off the shown fatigue:
+    // a point for every 14 mg, 15 at most (a cup peaks near 5, a large energy drink near 10). Known from the drink
+    // on, for an hour at least, and for as long as 15 mg are left.
+    window.__minkaCoffeeIcon = coffeeIcon;
+    window.__minkaCaffeineNow = function (name) {
+      const drinks = coffeeTimedDrinks(name).drinks;
+      if (!drinks.length) return null;
+      const now = Date.now(), last = drinks.reduce((a, b) => b.at > a.at ? b : a), mg = caffeineAt(drinks, now);
+      if (mg < 15 && now - last.at > 3600000) return null;
+      return { src: last.src, mg: Math.round(mg), pts: Math.min(15, Math.round(mg / 14)) };
+    };
+    function playCoffeeAddedEffect(card, drink, name) {
+      // the person's side card, if they are on duty: the drink is in its creature's paw from now on, and the creature
+      // takes its first sip (js/page/mk-side-faces.js)
+      const sides = drink && name ? [...document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card')].filter(c => c.dataset.worker === name) : [];
+      if (sides.length) {
+        try { const now = getSideFatigue(name); sides.forEach(c => patchSideFatigue(c, now)); window.__minkaSideFaces?.(); } catch (_e) {}
+        sides.forEach(c => window.__minkaSideFaceDrink?.(c, cleanCoffeeSource(drink)));
+      }
       // The coffee was added to this worker, so the visual must originate from
       // that worker's card (not from the temporary picker UI).
       const source = (card && card.querySelector('.mk-coffee-mid')) || card;
@@ -7084,7 +7113,7 @@ function filterFullList(btn) {
           // (skips the free Philips machine and per-size Narvesen).
           if (selected !== 'philips' && selected !== 'narvesen') saveCoffeePriceOverride(selected, priceCents);
           addCoffeeEntry(name, card, { source: selected, size: selected === 'narvesen' ? size : '', priceCents });
-          playCoffeeAddedEffect(card, selected);
+          playCoffeeAddedEffect(card, selected, name);
           // on the person's own card the drink is scanned and poured in (js/page/coffee-fx.js); about one in
           // fifteen is a golden can (js/page/coffee-gold.js)
           window.MkCoffeeFx?.pour?.(card, selected, (coffeeAura(name) || {}).mg);

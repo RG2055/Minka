@@ -15,6 +15,7 @@
   /* The shared pieces (the capsules and the calendar follow the user's own sketch). --k is the colour of the
      kind of today's shift. 112 px from the left is where the emoji's column ends. */
   --k: #f5b73f;
+  --sf-cup: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2.5 5.5h9v4.6a3.2 3.2 0 0 1-3.2 3.2H5.7a3.2 3.2 0 0 1-3.2-3.2zM11.5 6.6h1.3a1.7 1.7 0 0 1 0 3.4h-1.3z'/%3E%3Cpath d='M5.2 1.6c0 1 1 1.1 1 2.1M8.2 1.6c0 1 1 1.1 1 2.1' fill='none' stroke='%23000' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E");   /* a cup, steaming: caffeine at work */
   &:has(.sf-sh[data-k="d"]) { --k: #3f9bff; }
   &:has(.sf-sh[data-k="n"]) { --k: #23cdcf; }
   & .sf-num { color: color-mix(in srgb, var(--c) 88%, #fff); font-size: 80px; font-weight: 800; line-height: .82; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
@@ -216,7 +217,15 @@
   &.mk-sf-b .sf-pet { position: relative; width: var(--pw); height: var(--ph); font-size: clamp(5.6px, calc(2.6cqw - 1.9px), 9.2px); cursor: pointer; }
   &.mk-sf-b .sf-pet > * { position: absolute; }
   &.mk-sf-b .gs { left: 2em; right: 2em; bottom: -.2em; height: 1.3em; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 30%, transparent), transparent); }
-  &.mk-sf-b .ps { inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 100%; -webkit-user-drag: none; user-select: none; }
+  /* .ps is the picture's own box (the kind's shape, standing at the bottom, centred): the creature in it (.pi), and
+     over it the drink it holds (.pd, placed in % of the picture by mk-side-faces.js). What moves, moves .ps: both go. */
+  &.mk-sf-b .ps { left: 50%; bottom: 0; translate: -50% 0; height: min(100%, calc(var(--pw) / var(--ar, 1.2))); aspect-ratio: var(--ar, 1.2); transform-origin: 50% 100%; }
+  &.mk-sf-b .pi { display: block; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; }
+  &.mk-sf-b .pd { position: absolute; height: auto; pointer-events: none; -webkit-user-drag: none; user-select: none; }
+  /* caffeine at work: a small cup in the figure's corner, and beside it what it takes off the fatigue for now */
+  &.mk-sf-b .sf-cf { right: -2px; top: -3px; display: flex; align-items: center; gap: .2em; height: 1.5em; padding: 0 .36em; border-radius: 1em; background: color-mix(in srgb, var(--c) 24%, #15171b); color: color-mix(in srgb, var(--c) 38%, #fff); font-size: calc(var(--rf) * .66); font-style: normal; pointer-events: auto; }
+  &.mk-sf-b .sf-cf::before { content: ''; width: 1em; height: 1em; background: currentColor; -webkit-mask: var(--sf-cup) center / contain no-repeat; mask: var(--sf-cup) center / contain no-repeat; }
+  &.mk-sf-b .sf-cf > b { font-weight: 800; line-height: 1; white-space: nowrap; }
   /* it breathes only while the card is pointed at: standing still costs a weak computer nothing (the user's choice) */
   &.mk-sf-b:hover .ps { animation: mk-sf-breathe 3s ease-in-out infinite; }
   &.mk-sf-b:hover [data-l="low"] .ps { animation-name: mk-sf-hop; animation-duration: 2.2s; }   /* rested: a little hop in its breath */
@@ -228,6 +237,11 @@
   &.mk-sf-b .sf-pet.up .ps { animation: mk-sf-perk .75s ease-in-out var(--sf-late, 0ms) both; }
   &.mk-sf-p .sf-spr.dn { transform-origin: 50% 100%; animation: mk-sf-sink .75s ease-in-out var(--sf-late, 0ms) both; }
   &.mk-sf-p .sf-spr.up { transform-origin: 50% 100%; animation: mk-sf-perk .75s ease-in-out var(--sf-late, 0ms) both; }
+  /* a drink (mk-side-faces.js __minkaSideFaceDrink): a sip, then the drink's own answer; once, under a second */
+  &.mk-sf-b .sf-pet:is(.sip, .buzz, .fizz, .flex) .ps, &.mk-sf-p .sf-spr:is(.sip, .buzz, .fizz, .flex) { transform-origin: 50% 100%; animation: mk-sf-sip .94s ease-in-out var(--sf-late, 0ms) both; }
+  &.mk-sf-b .sf-pet.buzz .ps, &.mk-sf-p .sf-spr.buzz { animation-name: mk-sf-buzz; }
+  &.mk-sf-b .sf-pet.fizz .ps, &.mk-sf-p .sf-spr.fizz { animation-name: mk-sf-fizz; }
+  &.mk-sf-b .sf-pet.flex .ps, &.mk-sf-p .sf-spr.flex { animation-name: mk-sf-flex; }
   /* Dzīvnieks: one frame of the pet's sheet shows through the box (a frame is 192 x 208); the strip steps sideways
      (transform only). The box follows the card's width and stands under the card's top edge, its buttons under it. */
   &.mk-sf-p .sf-spr { --sw: var(--pw); position: relative; width: var(--sw); height: calc(var(--sw) * 1.0833); overflow: hidden; }
@@ -389,6 +403,11 @@
    (the figure stands 9px under it: 4% of its height is 3.5-4px) */
 @keyframes mk-sf-sink { 0%, 100% { transform: none; } 45% { transform: scale(1.08, .9); } 75% { transform: scale(.99, 1.01); } }
 @keyframes mk-sf-perk { 0%, 100% { transform: none; } 25% { transform: scale(1.05, .95); } 55% { transform: translateY(-4%) scale(.97, 1.03); } 82% { transform: scale(1.02, .98); } }
+/* a drink. Every one starts with the sip (the head goes back); none rises more than 4% (the card's top is 9px away) */
+@keyframes mk-sf-sip { 0%, 100% { transform: none; } 28%, 58% { transform: rotate(-7deg) scale(1.02, .98); } 80% { transform: rotate(3deg) scale(1.04, .96); } }
+@keyframes mk-sf-buzz { 0%, 100% { transform: none; } 24%, 40% { transform: rotate(-7deg); } 48%, 60%, 72% { transform: translateX(-3%); } 54%, 66% { transform: translateX(3%); } 86% { transform: translateY(-3%) scale(.97, 1.03); } }
+@keyframes mk-sf-fizz { 0%, 100% { transform: none; } 24%, 42% { transform: rotate(-7deg); } 56% { transform: scale(1.1, .88); } 72% { transform: translateY(-3%) scale(.96, 1.04); } 88% { transform: scale(1.04, .96); } }
+@keyframes mk-sf-flex { 0%, 100% { transform: none; } 24%, 40% { transform: rotate(-7deg); } 56%, 78% { transform: scale(1.09, 1.04); } }
 @media (prefers-reduced-motion: reduce) { .mk-sf * { animation: none !important; } }
 
 /* the picker: the faces in a list; with Dzīvnieks chosen, the pets beside it */
@@ -409,7 +428,7 @@
   & .sfp-tabs button { height: 30px; padding: 0 11px; border-radius: 15px; background: rgba(255, 255, 255, .08); font-size: 13px; white-space: nowrap; }
   & .sfp-tabs button[aria-pressed="true"] { background: #fff; color: #0b0d12; }
   & .sfp-grid { display: grid; grid-template-columns: repeat(4, 66px); grid-auto-rows: 66px; gap: 6px; height: 210px; align-content: start; }
-  & .sfp-kinds { grid-template-columns: repeat(3, 76px); grid-auto-rows: 70px; height: auto; }   /* Būtne's six kinds */
+  & .sfp-kinds { grid-template-columns: repeat(4, 72px); grid-auto-rows: 66px; height: auto; }   /* Būtne's kinds */
   & .sfp-grid button { padding: 3px; border-radius: 14px; background: rgba(255, 255, 255, .06); }
   & .sfp-grid button:hover { background: rgba(255, 255, 255, .14); }
   & .sfp-grid button[aria-pressed="true"] { background: rgba(255, 255, 255, .2); box-shadow: inset 0 0 0 2px #fff; }
