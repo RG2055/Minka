@@ -893,11 +893,24 @@
   var MX_BELOW = 209;                    // stage under the face centre: ring front, curve, marks (the month strip now sits under the faces, the mood's name in the heading)
   // Their coffee: up to three moons on the upper right of the bubble, each
   // the calendar's own icon for that drink, with a count above one.
-  function mxMoons(person, sources, size) {
+  function mxMoons(person, sources, size, side) {
     person.querySelectorAll('.rg-mood-moon').forEach(function (m) { m.remove(); });
     var list = (sources || []).filter(function (s) { return Number(s.count) > 0; }).slice(0, 3);
+    if (side != null) {   // B: every kind drunk as its own icon in a tidy stack beside the bubble (towards the middle), its count
+      // as a big tinted number only when more than one of that kind (the user: two Dynamit: "2" by it; one Löfbergs: just it)
+      var kinds = (sources || []).filter(function (s) { return Number(s.count) > 0; }).sort(function (a, b) { return b.count - a.count; }).slice(0, 3);
+      if (!kinds.length) return;
+      var mark = document.createElement('span');
+      mark.className = 'rg-mood-moon mb-cups mb-cups-' + kinds.length + (side ? ' is-right' : '');
+      mark.setAttribute('aria-hidden', 'true');
+      mark.innerHTML = kinds.map(function (k) { return '<i>' + moodSourceIcon(k.key) + (k.count > 1 ? '<b>' + k.count + '</b>' : '') + '</i>'; }).join('');
+      person.appendChild(mark);
+      return;
+    }
     list.forEach(function (source, j) {
-      var a = (-62 + j * 36) * Math.PI / 180, r = size / 2 + 10;
+      // B (side 0 left, 1 right): down the bubble's side towards the middle, clear of the words above (the user)
+      var deg = side == null ? -62 + j * 36 : side ? 180 + (j - (list.length - 1) / 2) * 38 : (j - (list.length - 1) / 2) * 38;
+      var a = deg * Math.PI / 180, r = size / 2 + 10;
       var moon = document.createElement('span');
       moon.className = 'rg-mood-moon';
       moon.style.setProperty('--mx-mx', (Math.cos(a) * r).toFixed(1) + 'px');
@@ -984,18 +997,22 @@
     // stage's top) down to just above the curve's numbers; a column that would not fit gets smaller glass, never
     // glass over glass (the user: four a side overlapped)
     // radiographers on the left, radiologists on the right, as their walls stand (the user: no mixing)
-    var topE = 84 - MX_FACE_Y, botE = d / 2 + 56;
+    var topE = 84 - MX_FACE_Y, botE = d / 2 + 50;
     var isRd = function (p) { return p.classList.contains('is-rd'); };
+    var card = people[0] && people[0].closest('.rg-feedback-card');
+    var chip = !!(card && card.querySelector('.rg-mood-side--right.is-mounted'));   // the shift's coffee chip, top right
     [people.filter(function (p) { return !isRd(p); }), people.filter(isRd)].forEach(function (side, s) {
+      var top = chip ? 106 - MX_FACE_Y : topE;   // both columns from one height: under the shift's coffee line when it shows
       var k = side.length, rows = k, size = big;
-      if (rows > 1) size = Math.min(big, (botE - topE - (rows - 1) * 6) / rows);
-      var gap = rows > 1 ? Math.min(size + 16, (botE - topE - size) / (rows - 1)) : 0, mid = (topE + botE) / 2;
-      var x = (W / 2 - 10 - size / 2) * (s ? 1 : -1);
+      if (rows > 1) size = Math.min(big, (botE - top - (rows - 1) * 6) / rows);
+      var gap = rows > 1 ? Math.min(size + 16, (botE - top - size) / (rows - 1)) : 0, mid = (top + botE) / 2;
+      var x = (W / 2 - 6 - size / 2) * (s ? 1 : -1);
       side.forEach(function (person, r) {
         var y = mid + (r - (rows - 1) / 2) * gap;
         person.style.setProperty('--rg-person-size', size.toFixed(1) + 'px');
         person.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
         person.style.opacity = '';
+        mxMoons(person, person.__mxCoffee, size, s);
       });
     });
   }
@@ -1707,6 +1724,7 @@
         item.style.setProperty('--rg-person-fatigue-rgb', moodFatigueRgb(person.fatigue));
         item.style.setProperty('--rg-person-fatigue-level', fatigueLevel.toFixed(1) + '%');
         item.style.setProperty('--rg-person-liquid-rgb', moodPersonLiquidRgb(person.fatigue));
+        item.style.setProperty('--mb-pf', fatigueLevel.toFixed(0));   // B: the ring round the person, as the side card's line
       }
       var glass = document.createElement('span');
       glass.className = 'rg-mood-person-glass';
@@ -1949,6 +1967,7 @@
   }
   function jarSettle() { for (var k = 0; k < 420; k++) jarStep(); jar.bodies.forEach(function (b) { b.vx = b.vy = 0; }); }
   function mxJarSync(refs, stats) {
+    if (MB) { if (jar.cv) { jar.cv.remove(); jar.cv = null; } return; }   // B: no marbles over the face (the cups are by each person and in the shift's line)
     if (!jarCanvas(refs)) return;
     var day = shiftDayKey(), items = jarItems(stats), r = jarRadius(items.length);
     var instant = day !== jar.day || document.documentElement.dataset.motion === 'reduced' || document.hidden;
@@ -2041,7 +2060,11 @@
       if (num) num.textContent = String(stats.total === null ? 0 : stats.total);
       coffee.classList.toggle('is-on', (stats.total || 0) > 0);
       var rightSide = coffee.closest('.rg-mood-side');   // shown only once a coffee is logged on the shift (the user)
-      if (rightSide) rightSide.classList.toggle('is-mounted', (stats.total || 0) > 0);
+      if (rightSide) {
+        var chipWas = rightSide.classList.contains('is-mounted');
+        rightSide.classList.toggle('is-mounted', (stats.total || 0) > 0);
+        if (MB && chipWas !== rightSide.classList.contains('is-mounted') && refs.ring) placeMoodStaff(refs.ring);   // B: the right column makes room for it
+      }
     }
     var fatigue = refs.chips.fatigue;
     if (fatigue) {
@@ -2054,14 +2077,11 @@
         fatigue.style.setProperty('--rg-fat-ink', moodFatigueInk(stats.fatigue));
         refs.stage.style.setProperty('--rg-fatigue-wash', moodFatigueColor(stats.fatigue));
         refs.stage.style.setProperty('--rg-fatigue-alpha', (.12 + Math.min(100, stats.fatigue) * .0022).toFixed(3));
-        var mbCard = MB && refs.stage.closest('.rg-feedback-card');
-        if (mbCard) {   // Noskaņa B: the card's accent and the bubble's ring
-          mbCard.style.setProperty('--mb-acc', mbAccent(stats.fatigue));
-          mbCard.style.setProperty('--mb-fat', String(Math.max(0, Math.min(100, stats.fatigue))));
-        }
+        mbFatigue(refs, stats.fatigue);
       } else {
         refs.stage.style.removeProperty('--rg-fatigue-wash');
         refs.stage.style.removeProperty('--rg-fatigue-alpha');
+        mbFatigue(refs, null);
       }
     }
   }
@@ -2657,6 +2677,20 @@
     if (next <= now) next.setDate(next.getDate() + 1);
     clearTimeout(mbDayT);
     mbDayT = setTimeout(mbDayNight, next - now);
+  }
+  /* Noskaņa B: the card's accent and the bubble's ring from the fatigue. Another day: the ring stands at its
+     value at once (the user: it slid while the day came in); within a day a change glides. No value: empty. */
+  function mbFatigue(refs, fatigue) {
+    var card = MB && refs.stage && refs.stage.closest('.rg-feedback-card');
+    if (!card) return;
+    var day = String(window.__activeDateStr || '');
+    if (card.__mbDay !== day) {
+      card.__mbDay = day;
+      card.classList.add('mb-jump');
+      requestAnimationFrame(function () { requestAnimationFrame(function () { card.classList.remove('mb-jump'); }); });
+    }
+    card.style.setProperty('--mb-acc', mbAccent(fatigue || 0));
+    card.style.setProperty('--mb-fat', String(fatigue == null ? 0 : Math.max(0, Math.min(100, fatigue))));
   }
   // the accent of the whole card: green while rested, orange tired, red very tired (the fatigue pill's own bands)
   function mbAccent(score) { return score > 70 ? '#ff6b5f' : score > 20 ? '#f7a43a' : '#3ad07a'; }

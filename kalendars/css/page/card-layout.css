@@ -44,7 +44,7 @@
 .mk-cl-q:focus-visible, .mk-cl-more:focus-visible { outline: 2px solid var(--mk-cl-accent); outline-offset: 2px; }
 /* "Konfektes": only the gold sweet, glowing: a still glow under it, a halo that breathes and two
    sparks that twinkle in turn (opacity and transform only, on the compositor; none with reduced
-   motion). Pressed: the game is in the mood's place, the segment lit like the layout shown now. */
+   motion), three times now and then, not without end (it kept every frame busy). Pressed: the game is in the mood's place, the segment lit like the layout shown now. */
 .mk-cl-candy {
   display: inline-grid; place-items: center; width: 44px; height: 32px; margin-left: 2px; padding: 0; border: 0; border-radius: 10px;
   position: relative; isolation: isolate; cursor: pointer; background: transparent;
@@ -55,22 +55,24 @@
 .mk-cl-candy-halo {
   position: absolute; z-index: -1; left: 50%; top: 50%; width: 46px; height: 34px; margin: -17px 0 0 -23px; border-radius: 50%; pointer-events: none;
   background: radial-gradient(closest-side, rgba(255, 206, 70, .55), rgba(255, 170, 30, .18) 60%, transparent);
-  opacity: .45; animation: mk-cl-candy-glow 3.2s ease-in-out infinite;
+  opacity: .7;   /* at rest: a still glow; it breathes only while .mk-cl-candy-live (card-layout.js candyTwinkle) */
 }
+.mk-cl-candy-live .mk-cl-candy-halo { animation: mk-cl-candy-glow 3.2s ease-in-out 3; }
 .mk-cl-candy-spark {
   position: absolute; width: 7px; height: 7px; pointer-events: none; background: #fff8d6;
   clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
-  opacity: 0; transform: scale(.2); animation: mk-cl-candy-spark 3.2s ease-in-out infinite;
+  opacity: 0; transform: scale(.2);
 }
+.mk-cl-candy-live .mk-cl-candy-spark { animation: mk-cl-candy-spark 3.2s ease-in-out 3; }
 .mk-cl-candy-spark:nth-of-type(2) { left: 9px; top: 3px; }
 .mk-cl-candy-spark:nth-of-type(3) { right: 7px; bottom: 4px; width: 5px; height: 5px; animation-delay: 1.6s; }
-@keyframes mk-cl-candy-glow { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@keyframes mk-cl-candy-glow { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
 @keyframes mk-cl-candy-spark { 0%, 40%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); } 18% { opacity: 1; transform: scale(1) rotate(45deg); } }
 .mk-cl-candy:hover { background: rgba(255, 196, 64, .14); }
 .mk-cl-candy[aria-pressed="true"] { background: rgba(255, 196, 64, .24); box-shadow: inset 0 0 0 1px rgba(255, 210, 90, .45); }
 .mk-cl-candy:active { scale: .92; transition-duration: 140ms, 140ms; }
 .mk-cl-candy:focus-visible { outline: 2px solid #ffd664; outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .mk-cl-candy-halo, .mk-cl-candy-spark { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .mk-cl-candy-live .mk-cl-candy-halo, .mk-cl-candy-live .mk-cl-candy-spark { animation: none; } }
 
 /* A slider being dragged: the cards and the mood card follow at once, without the spring's
    overshoot (which made everything bounce on every step). */

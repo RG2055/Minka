@@ -280,6 +280,7 @@
     var W = size ? size.W : plot.clientWidth, H = size ? size.H : plot.clientHeight;
     if (W < 120 || H < 200) return null;
     var faceY = mx.faceY || 132, ground = H - (mx.groundGap || 24), amp = 66;   // low enough that the coffee over the points stays clear of the ring
+    if (MB) { ground += 8; amp = 46; }   // B: flatter and lower, close over the rating row (the user: less empty room there), bigger marks
     return { W: W, H: H, cx: W / 2, faceY: faceY, faceR: (mx.faceD || 124) / 2,
       ground: ground, amp: amp, left: 14, right: W - 14, chartTop: ground - 4 - amp, chartBottom: ground - 14 };
   }
@@ -686,12 +687,12 @@
       // the dither fill below, then the line: a dark edge so it reads on the
       // bright clouds, a soft wide halo (a plain wider stroke) and the line itself
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      var acc = MB && getComputedStyle(card).getPropertyValue('--mb-acc').trim();
+      var acc = MB && card.style.getPropertyValue('--mb-acc').trim();
       if (!acc) ditherFill(ctx, line, dpr);
       trace(ctx);
       ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = acc ? 5 : 4.2; ctx.stroke();
       if (!acc) { ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke(); }
-      ctx.strokeStyle = acc || '#8fdcff'; ctx.lineWidth = acc ? 2.6 : 2; ctx.stroke();
+      ctx.strokeStyle = acc || '#8fdcff'; ctx.lineWidth = acc ? 3 : 2; ctx.stroke();
       ctx.restore();
     }
     // The sky's characters fill down to this curve: move their border too.
@@ -699,8 +700,12 @@
     skyRegion();
     pts.forEach(function (p) {
       var sel = p.row.day === m.selected;
+      if (!p.row.mood && MB && scape.line) {   // B: a day without a rating is a quiet grey dot on the line
+        var gy = curveYAt(scape.line, p.x);
+        if (gy != null) { ctx.fillStyle = '#c3cad6'; ctx.beginPath(); ctx.arc(p.x, gy, 3.4, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#0c0d11'; ctx.lineWidth = 1.5; ctx.stroke(); }
+      }
       if (!p.row.mood) return;
-      var r = 3.2 + Math.min(4, p.row.mood.total / 3);
+      var r = dotR(p.row);
       ctx.fillStyle = moodFor(p.row.mood.score).color;
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#0c0d11'; ctx.lineWidth = 1.5; ctx.stroke();
@@ -722,8 +727,8 @@
       // the day's own emoji, else the face of the team's rating, so each rated point says what it was
       var emoji = p.own ? p.own.emoji : p.row.mood ? FACES[moodFor(p.row.mood.score).key][0] : '';
       if (!emoji) return;
-      var below = p.row.mood ? 3.2 + Math.min(4, p.row.mood.total / 3) : 2;   // right under its point
-      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + 9).toFixed(1) + 'px">' + esc(emoji) + '</i>';
+      var below = p.row.mood ? dotR(p.row) : 2;   // right under its point
+      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + (MB ? 11.5 : 9)).toFixed(1) + 'px">' + esc(emoji) + '</i>';
     });
     marks.innerHTML = html;
   }
@@ -777,6 +782,8 @@
   // the cup (stacked, narrow enough for the 14 days), with a dark rim so they read on
   // the bright characters too. A day without a vote sits where the curve
   // passes its date.
+  // a rated day's dot: larger with more votes (B: larger altogether, read from across the room)
+  function dotR(row) { return row.mood ? (MB ? 4.6 : 3.2) + Math.min(MB ? 2.4 : 4, row.mood.total / 3) : (MB ? 3.4 : 1); }
   function drawCoffee(ctx, pts, geo, line) {
     var cups = coffeeByDay(pts.map(function (p) { return p.row.day; }));
     if (!Object.keys(cups).length || typeof Path2D !== 'function') return;
@@ -785,23 +792,23 @@
       body: new Path2D('M2.6 5.6h11v7.6a3.6 3.6 0 0 1-3.6 3.6H6.2a3.6 3.6 0 0 1-3.6-3.6V5.6Z'),
       handle: new Path2D('M14.2 7.6h1.1a2.6 2.6 0 0 1 0 5.2h-1.1')
     };
-    var k = 9 / 20;
+    var k = (MB ? 12.5 : 9) / 20;   // B: the cup and its number a third bigger
     ctx.save();
-    ctx.font = '800 9.5px Inter, system-ui, sans-serif';
+    ctx.font = MB ? "800 13.5px 'Geist Sans', Inter, system-ui, sans-serif" : '800 9.5px Inter, system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     ctx.lineJoin = 'round';
     pts.forEach(function (p) {
       var n = cups[p.row.day];
       if (!n) return;
-      var y = p.row.mood ? p.y : curveYAt(line, p.x), r = p.row.mood ? 3.2 + Math.min(4, p.row.mood.total / 3) : 1;
+      var y = p.row.mood ? p.y : curveYAt(line, p.x), r = dotR(p.row);
       if (y == null) y = p.y;
       // where the curve climbs steeply past its day, sit over the higher side
       // of it, so the line never runs through the cup or the number
       [-6, 6].forEach(function (dx) { var side = curveYAt(line, p.x + dx); if (side != null && side - 2 < y - r) { y = side - 2; r = 0; } });
-      var cupTop = y - r - 10.6;                             // the cup just over the point (its body ends 3 px above)
+      var cupTop = y - r - 3 - 16.8 * k;                     // the cup just over the point (its body ends 3 px above)
       ctx.save();
-      ctx.translate(p.x - 4.3, cupTop);
+      ctx.translate(p.x - 9.6 * k, cupTop);
       ctx.scale(k, k);
       ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(4,7,14,.9)';
       ctx.stroke(CUP.body); ctx.stroke(CUP.handle);
@@ -810,7 +817,7 @@
       ctx.lineWidth = 1.9;
       ctx.stroke(CUP.handle);
       ctx.restore();
-      var base = cupTop + 0.5;                               // the number over the cup
+      var base = cupTop + 5.6 * k - 2;                       // the number over the cup
       ctx.lineWidth = 3;
       ctx.strokeStyle = 'rgba(4,7,14,.9)';
       ctx.strokeText(String(n), p.x, base);
@@ -865,7 +872,7 @@
       + '|' + m.rows.map(function (r) { return owns[r.day] && owns[r.day].emoji || ''; }).join(',')
       + '|' + m.rows.map(function (r) { return r.mood ? r.mood.score.toFixed(3) + ':' + r.mood.total : '-'; }).join(',')
       + '|' + JSON.stringify(coffeeByDay(m.rows.map(function (r) { return r.day; })))
-      + (MB ? '|' + getComputedStyle(card).getPropertyValue('--mb-acc') : '');   // the curve's colour follows the fatigue
+      + (MB ? '|' + card.style.getPropertyValue('--mb-acc') : '');   // the curve's colour follows the fatigue
     scape.m = m;
     scape.geo = geo;
     loadSky();

@@ -26,14 +26,22 @@
     { opacity:.88, transform:'scale(1.06)' }
   ];
   function reducedMotion(){ try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(_e){ return false; } }
-  function step(now){
+  /* Thinned (2026-11-24, measured: at night this was most of the idle app's work, a restyle of 254 animations 7.5
+     times a second): every other tick moves half the stars, the halves in turn, so a star is moved about twice a
+     second. Its drift is under 0.3 px a second and its twinkle takes 6 to 13 s: the steps cannot be seen. The first
+     call (startStars) places them all. */
+  var tickNo=0;
+  function step(now, all){
     if(document.hidden) return;
     var t=(now||performance.now())-t0;
-    for(var i=0;i<anims.length;i++) anims[i].currentTime=t;
+    if(all===true){ for(var i=0;i<anims.length;i++) anims[i].currentTime=t; return; }
+    tickNo++;
+    if(tickNo & 1) return;
+    for(var k=(tickNo & 2) ? 0 : 2; k<anims.length; k+=4){ anims[k].currentTime=t; anims[k+1].currentTime=t; }   // a star's two (drift, twinkle) are neighbours
   }
   function startStars(){
     if(offTick || localTimer || !anims.length) return;
-    step();
+    step(0, true);
     if(reducedMotion()) return;                               // one still pose
     var M=window.MinkaMotion;
     if(M && M.onSlowTick) offTick=M.onSlowTick(step);

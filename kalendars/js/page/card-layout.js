@@ -255,6 +255,20 @@
   // the game in the mood's place, and back to the mood again
   var candyBtn = bar.querySelector('.mk-cl-candy');
   candyBtn.addEventListener('click', function () { setCenter(centerNow() === 'candy' ? 'mood' : 'candy'); });
+  // The sweet twinkles now and then, not all the time (running without end it cost more than the whole mood card
+  // while the app idled): three breaths when the bar appears, when another day is opened and under the pointer;
+  // the CSS animation itself is as it was (card-layout.css), only its class comes and goes. No timer.
+  // (restarted without asking for a layout: the class goes now and comes back in the next frame)
+  var candyRaf = 0;
+  function candyTwinkle() {
+    candyBtn.classList.remove('mk-cl-candy-live');
+    cancelAnimationFrame(candyRaf);
+    candyRaf = requestAnimationFrame(function () { candyBtn.classList.add('mk-cl-candy-live'); });
+  }
+  candyBtn.addEventListener('animationend', function (e) { if (e.animationName === 'mk-cl-candy-glow') candyBtn.classList.remove('mk-cl-candy-live'); });
+  candyBtn.addEventListener('pointerenter', candyTwinkle);
+  window.addEventListener('daySelected', candyTwinkle);
+  candyTwinkle();
   var RECENT = KEY + 'recent', OWN = KEY + 'own';
   function lastOwn() { try { return ownLayout(JSON.parse(localStorage.getItem(OWN) || 'null') || own); } catch (_e) { return ownLayout(own); } }
   function recent() {

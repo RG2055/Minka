@@ -34,14 +34,14 @@
     mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(180deg, transparent 0, #000 9%, #000 78%, transparent 100%);
     mask-composite: intersect;
     background:
-      radial-gradient(70% 34% at 0% 100%, rgba(255, 122, 64, .34), transparent 72%),
-      radial-gradient(46% 22% at 54% 4%, rgba(255, 214, 120, .2), transparent 72%),
-      linear-gradient(170deg, #1c6fd1 0%, #134c9c 26%, #0c2c62 56%, #081732 100%);
+      radial-gradient(70% 34% at 0% 100%, rgba(255, 122, 64, .12), transparent 72%),
+      radial-gradient(46% 22% at 60% 4%, rgba(255, 214, 120, .1), transparent 72%),
+      linear-gradient(175deg, #142338 0%, #0f1a2b 34%, #0a111d 68%, #070b14 100%);   /* subtle (the user): a hint of blue on the page's own dark */
   }
   :root.mk-mx.mk-mb[data-mb-sky="night"] #grafiks-list .rg-feedback-card > .mb-scene {
     background:
-      radial-gradient(40% 18% at 64% 5%, rgba(235, 240, 255, .14), transparent 72%),
-      linear-gradient(175deg, #0d1a44 0%, #0a1434 40%, #070d22 72%, #050913 100%);
+      radial-gradient(40% 18% at 64% 5%, rgba(235, 240, 255, .07), transparent 72%),
+      linear-gradient(175deg, #10172a 0%, #0c1222 40%, #090d18 72%, #060910 100%);
   }
   .mb-scene > .mb-wave {
     position: absolute;
@@ -50,13 +50,13 @@
     bottom: -32%;
     height: 58%;
     border-radius: 50%;
-    background: linear-gradient(180deg, rgba(30, 74, 150, 0) 0%, rgba(30, 74, 150, .5) 16%, rgba(8, 18, 40, 0) 72%);
+    background: linear-gradient(180deg, rgba(60, 90, 140, 0) 0%, rgba(60, 90, 140, .16) 16%, rgba(8, 18, 40, 0) 72%);
     rotate: -4deg;
   }
-  :root[data-mb-sky="night"] .mb-scene > .mb-wave { background: linear-gradient(180deg, rgba(52, 86, 214, 0) 0%, rgba(52, 86, 214, .38) 16%, rgba(8, 14, 34, 0) 72%); rotate: 5deg; }
+  :root[data-mb-sky="night"] .mb-scene > .mb-wave { background: linear-gradient(180deg, rgba(70, 92, 160, 0) 0%, rgba(70, 92, 160, .14) 16%, rgba(8, 14, 34, 0) 72%); rotate: 5deg; }
   .mb-scene > img { position: absolute; display: block; pointer-events: none; user-select: none; }
   .mb-scene > .mb-sun { left: 63%; top: 2px; width: 58px; height: 58px; translate: -50% 0; }
-  .mb-scene > .mb-moon { left: 60%; top: 10px; width: 46px; height: 46px; translate: -50% 0; filter: saturate(.3) brightness(1.18); rotate: -18deg; }
+  .mb-scene > .mb-moon { left: 60%; top: 10px; width: 46px; height: 46px; translate: -50% 0; filter: saturate(.3) brightness(1.18); }   /* not turned: a turned picture is resampled soft */
   .mb-scene > .mb-stars {
     position: absolute;
     inset: 0 0 40% 0;
@@ -78,7 +78,7 @@
   :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card :is(.rg-mood-stage, .rg-trend, .rg-trend-plot) { background: none !important; box-shadow: none !important; }
 
   /* --- the fatigue: the big number, top left --- */
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--left { top: 10px !important; left: 14px !important; align-items: flex-start !important; gap: 4px !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--left { top: 10px !important; left: 8px !important; align-items: flex-start !important; gap: 4px !important; }
   :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--fatigue {
     height: auto !important;
     padding: 0 !important;
@@ -123,7 +123,7 @@
   /* --- the month, top right, stacked; the shift's coffee a yellow chip under it --- */
   :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top {
     left: auto !important;
-    right: 12px !important;
+    right: 8px !important;
     top: 10px !important;
     translate: none !important;
     height: auto !important;
@@ -176,27 +176,31 @@
     font-style: normal !important;
     vertical-align: .2em;
   }
+  /* the shift's coffee: a line under "Nogurums" (the two things about this shift together, the month on the right):
+     a cup, the number big in coffee's warm tint, the word; only when a coffee is logged */
   :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--right {
-    top: 88px !important;
-    right: 12px !important;
+    top: 80px !important;
+    left: 8px !important;
+    right: auto !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 5px !important;
   }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--right .rg-mood-side-label { order: -1; color: rgba(236, 242, 250, .58) !important; -webkit-text-fill-color: rgba(236, 242, 250, .58) !important; font: 600 11px/1 'Geist Sans', system-ui, sans-serif !important; text-shadow: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--right .rg-mood-side-label { order: 1; margin: 0 !important; color: rgba(236, 242, 250, .66) !important; -webkit-text-fill-color: rgba(236, 242, 250, .66) !important; font: 600 12px/1 'Geist Sans', system-ui, sans-serif !important; text-shadow: none !important; }
   :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee {
-    height: 22px !important;
-    padding: 0 7px !important;
+    height: 20px !important;
+    padding: 0 !important;
     gap: 4px !important;
     border: 0 !important;
-    border-radius: 7px !important;
-    background: #ffe14d !important;
+    border-radius: 6px !important;
+    background: none !important;
     box-shadow: none !important;
-    color: #2b2500 !important;
-    -webkit-text-fill-color: #2b2500 !important;
+    color: #ffc46b !important;
+    -webkit-text-fill-color: #ffc46b !important;
   }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee b { font: 800 14px/1 'Geist Sans', system-ui, sans-serif !important; color: #2b2500 !important; -webkit-text-fill-color: #2b2500 !important; text-shadow: none !important; }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee svg { width: 14px !important; height: 14px !important; color: #2b2500 !important; fill: currentColor; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee b { font: 800 18px/1 'Geist Sans', system-ui, sans-serif !important; font-variant-numeric: tabular-nums !important; color: #ffc46b !important; -webkit-text-fill-color: #ffc46b !important; text-shadow: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee svg { width: 13px !important; height: 13px !important; color: #ffc46b !important; fill: currentColor; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee:focus-visible { outline: 2px solid var(--mx-focus) !important; outline-offset: 2px !important; }
 
   /* --- the ring round the bubble: the fatigue, in its colour --- */
   .rg-mood-blob-wrap > .mb-ring {
@@ -204,15 +208,17 @@
     left: 50%;
     top: 50%;
     z-index: 1;
-    width: 122%;
-    height: 122%;
+    width: 116%;
+    height: 116%;
     translate: -50% -50%;
     rotate: -90deg;
     overflow: visible;
     pointer-events: none;
   }
   .mb-ring circle { fill: none; stroke: rgba(236, 242, 250, .12); stroke-width: 2.6; }
-  .mb-ring circle.mb-ring-on { stroke: var(--mb-acc, #3ad07a); stroke-linecap: round; stroke-dasharray: calc(var(--mb-fat, 0) * 1) 100; transition: stroke-dasharray .6s cubic-bezier(.2, .9, .25, 1); }
+  .mb-ring circle.mb-ring-on { stroke: var(--mb-acc, #3ad07a); stroke-linecap: round; stroke-dasharray: calc(var(--mb-fat, 0) * 1) 100; transition: stroke-dasharray .6s cubic-bezier(.2, .9, .25, 1), stroke .6s ease; }
+  /* another day: straight to its value (mood-feedback.js mbFatigue) */
+  .rg-feedback-card.mb-jump .mb-ring circle.mb-ring-on { transition: none !important; }
 
   /* --- the bubble's liquid as water (the user: more real, as in games, no load): light just under the surface,
      deeper and darker below, a bright line at the surface; all still --- */
@@ -228,7 +234,54 @@
     background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, .8), currentColor 52%, transparent 78%) !important;
   }
 
-  /* --- the colleagues: white letters on the glass (the liquid stays) --- */
+  /* --- a colleague's drinks: each kind's own icon in a stack beside the bubble on the middle's side, the count of
+     a kind big in coffee's warm tint when more than one (mood-feedback.js mxMoons); one kind is larger, three smaller,
+     the stack never taller than the bubble --- */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person > .rg-mood-moon.mb-cups {
+    --k: 15px;
+    left: calc(100% + 4px) !important;
+    right: auto !important;
+    top: 50% !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1px !important;
+    transform: translateY(-50%) !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person > .rg-mood-moon.mb-cups-1 { --k: 19px; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person > .rg-mood-moon.mb-cups-3 { --k: 13px; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person > .rg-mood-moon.mb-cups.is-right { left: auto !important; right: calc(100% + 4px) !important; align-items: flex-end !important; }
+  .rg-mood-moon.mb-cups > i { display: flex; align-items: center; gap: 2px; height: var(--k); font-style: normal; }
+  .rg-mood-moon.mb-cups.is-right > i { flex-direction: row-reverse; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-moon.mb-cups > i > :is(svg, img) { width: var(--k) !important; height: var(--k) !important; flex: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-moon.mb-cups > i > b {
+    color: #ffc46b !important;
+    -webkit-text-fill-color: #ffc46b !important;
+    font: 800 calc(var(--k) * .95)/1 'Geist Sans', system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+    text-shadow: none !important;
+  }
+  /* the big bubble's liquid stays under the face's chin (the ring and the number say how much): under half its old rise */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-liquid--coffee { height: calc(var(--rg-coffee-fill) * .45) !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-liquid--fatigue { bottom: calc(var(--rg-coffee-fill) * .45) !important; height: calc(var(--rg-fatigue-fill) * .45) !important; }
+
+  /* --- the colleagues without glass (the user), in the side cards' own principle: the emoji or the initials on a
+     flat dark disc, and round it a line that fills with that person's fatigue in its colour (green, yellow,
+     red), from the top, clockwise; a faint track under it. One conic gradient cut to a ring, drawn once --- */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass { background: rgba(255, 255, 255, .06) !important; box-shadow: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass::after { display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-liquid-vessel { display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass::before {
+    inset: -1px !important;
+    height: auto !important;
+    border-radius: 50% !important;
+    background: conic-gradient(rgb(var(--rg-person-fatigue-rgb, 120, 130, 145)) calc(var(--mb-pf, 0) * 1%), rgba(236, 242, 250, .3) 0) !important;   /* the track plain to see: the whole circle reads, so the emoji reads as in its middle */
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.2px), #000 calc(100% - 2.6px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3.2px), #000 calc(100% - 2.6px));
+  }
+
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-emoji { transform: none !important; }   /* (it sat 1 px up for the glass) */
+
+  /* --- the colleagues: white letters on the disc --- */
   :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person.is-initials .rg-mood-person-emoji {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
@@ -255,18 +308,6 @@
       linear-gradient(#eef3fa, #eef3fa) center / 2.6px 100% no-repeat;
     border-radius: 2px;
   }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-own::after {
-    content: '' !important;
-    position: absolute !important;
-    left: 50% !important;
-    top: 50% !important;
-    z-index: 1 !important;
-    width: calc(var(--mx-tap) * 1.18) !important;
-    height: calc(var(--mx-tap) * 1.18) !important;
-    translate: -50% -50% !important;
-    background: url('../../assets/mood-glass-premium.webp?v=20260820b') center / contain no-repeat !important;
-    pointer-events: none !important;
-  }
   /* the speech bubble filling most of the glass, its short tail tucked under the corner, all inside the round */
   :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon {
     width: calc(var(--mx-tap, 36px) * .8) !important;
@@ -292,30 +333,28 @@
     height: 5px;
     background: radial-gradient(circle, #0d1b33 0 1.8px, transparent 2.2px) 0 50% / 5.5px 5px repeat-x;
   }
-  /* the five ratings in softly tinted glass, lit from inside, its edge a shade deeper (the user: as a soft lit
-     pill; pink for the best, through rose and coral, to red for the worst) */
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="excellent"] { --mb-tint: 255, 150, 205; }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="good"] { --mb-tint: 255, 145, 180; }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="ok"] { --mb-tint: 255, 136, 150; }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="bad"] { --mb-tint: 255, 110, 112; }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="terrible"] { --mb-tint: 242, 72, 72; }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse]::before {
-    background:
-      radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .18), transparent 52%),
-      radial-gradient(circle, rgba(var(--mb-tint), .22) 30%, rgba(var(--mb-tint), .58) 100%) !important;
-    box-shadow: inset 0 0 0 1px rgba(var(--mb-tint), .75), inset 0 0 10px rgba(var(--mb-tint), .45) !important;
+  /* The bottom row (the user): no glass and nothing behind them: the faces large, a plain plus, the drawn chat
+     bubble with its count, the palette. The chosen face has a ring in the card's accent; the other faces step
+     back a little once one is chosen. */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card :is(.rg-pulse-tap, .rg-pulse-write--comment)::after { content: none !important; display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card :is(.rg-pulse-tap:not(.rg-pulse-own), .rg-pulse-write--comment)::before {
+    width: calc(var(--mx-tap) * 1.06) !important;
+    height: calc(var(--mx-tap) * 1.06) !important;
+    background: none !important;   /* nothing behind them (the user) */
+    box-shadow: none !important;
   }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse]:not([aria-disabled="true"]):hover::before {
-    background:
-      radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .22), transparent 52%),
-      radial-gradient(circle, rgba(var(--mb-tint), .3) 30%, rgba(var(--mb-tint), .7) 100%) !important;
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card :is(.rg-pulse-tap:not(.rg-pulse-own), .rg-pulse-write--comment):not([aria-disabled="true"]):hover::before { background: none !important; box-shadow: none !important; }   /* no disc under the pointer either (the user): the lift says it */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child { width: calc(var(--mx-tap) * 1.06) !important; height: calc(var(--mx-tap) * 1.06) !important; flex-basis: calc(var(--mx-tap) * 1.06) !important; border-radius: 50% !important; background: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child::before { width: 19px; height: 19px; background: linear-gradient(#eef3fa, #eef3fa) center / 100% 3px no-repeat, linear-gradient(#eef3fa, #eef3fa) center / 3px 100% no-repeat; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap:not(.rg-pulse-own) > span:first-child { font-size: calc(var(--mx-tap) * .84) !important; line-height: 1 !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-taps:has(.rg-pulse-tap.is-selected) .rg-pulse-tap[data-rg-pulse]:not(.is-selected):not(:hover) > span:first-child { opacity: .55; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected::before { background: none !important; box-shadow: 0 0 0 2px var(--mb-acc) !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon {
+    width: calc(var(--mx-tap, 36px) * .92) !important;
+    height: calc(var(--mx-tap, 36px) * .78) !important;
+    padding: 0 0 calc(var(--mx-tap, 36px) * .19) !important;
   }
-  /* the selected face: its own tint stronger and a ring in the card's accent, as the band's chosen face */
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected::before { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .3), 0 0 0 2px var(--mb-acc) !important; }
-  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse].is-selected::before {
-    background:
-      radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .22), transparent 52%),
-      radial-gradient(circle, rgba(var(--mb-tint), .34) 30%, rgba(var(--mb-tint), .75) 100%) !important;
-    box-shadow: inset 0 0 0 1.5px rgba(var(--mb-tint), .8), 0 0 0 2px var(--mb-acc) !important;
-  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon::before { font-size: 12px; }
+  /* the curve's faces a size up, as its numbers (mood-trend.js) */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-scape-own { font-size: 19px; }
 }

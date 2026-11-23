@@ -335,49 +335,62 @@
   // stops at the cap below. Measured, not guessed: --sf-fs / --sf-fs2 on its .sf-id (the sheet guesses until then).
   // The surname stays under two thirds of the name.
   function fitNames() {
-    [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-ring'), function (r) {
-      // the stepper is centred on the creature; on a narrow card it would reach the ring: moved in by as much
-      var f = r.parentElement.querySelector('.sf-pl > .sf-fat'), z = parseFloat(getComputedStyle(r.parentElement.parentElement).zoom) || 1;
-      if (!f) return;
-      f.style.removeProperty('margin-right');
-      var over = f.getBoundingClientRect().right - (r.parentElement.getBoundingClientRect().right - 13 * z);
-      if (over > 0) f.style.marginRight = (over / z).toFixed(1) + 'px';
-    });
+    /* Measured in passes over all the cards: every write, then every read, then the writes that follow from them. A
+       write and a read card by card made the browser lay the whole page out again for each (22 times in one day
+       switch, most of its time); the cards do not move each other, so the results are the same. */
+    var rings = [].slice.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-ring'));
+    var zs = rings.map(function (r) { return parseFloat(getComputedStyle(r.parentElement.parentElement).zoom) || 1; });
+    // the stepper is centred on the creature; on a narrow card it would reach the ring: moved in by as much
+    var fats = rings.map(function (r) { return r.parentElement.querySelector('.sf-pl > .sf-fat'); });
+    fats.forEach(function (f) { if (f) f.style.removeProperty('margin-right'); });
+    var overs = rings.map(function (r, i) { return fats[i] ? fats[i].getBoundingClientRect().right - (r.parentElement.getBoundingClientRect().right - 13 * zs[i]) : 0; });
+    fats.forEach(function (f, i) { if (f && overs[i] > 0) f.style.marginRight = (overs[i] / zs[i]).toFixed(1) + 'px'; });
     /* Band: today's hours and the next shift as large as their places let them (the user: on a crowded column the
        card is small, the text came out small with it). The hours reach to the creature, the next shift to the
-       stepper; each no taller than its row, and at most 26 / 18px on the screen. Sizes in the card's own px. */
-    [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-ring'), function (r) {
-      var L = r.parentElement, z = parseFloat(getComputedStyle(L.parentElement).zoom) || 1, img = L.querySelector('.sf-fig .ps, .sf-fig .sf-spr'), dn = L.querySelector('.sf-fat .sf-adj button');
-      [[L.querySelector('.sf-pl > .sf-bh'), img, 38, 26], [L.querySelector('.sf-rc > .sf-bn'), dn, 32, 18]].forEach(function (t) {
-        var el = t[0];
-        if (!el || !t[1]) return;
-        if (el.dataset.l && el.textContent !== el.dataset.l) el.textContent = el.dataset.l;   // the long day again, then fitted
-        el.style.removeProperty('width');
+       stepper; each no taller than its row, and at most 26 / 18px on the screen. Sizes in the card's own px.
+       The hours of every card first, then the next shifts (a card's hours may move its stepper). */
+    [0, 1].forEach(function (kind) {
+      var jobs = [];
+      rings.forEach(function (r, i) {
+        var L = r.parentElement;
+        var t = kind ? [L.querySelector('.sf-rc > .sf-bn'), L.querySelector('.sf-fat .sf-adj button'), 32, 18] : [L.querySelector('.sf-pl > .sf-bh'), L.querySelector('.sf-fig .ps, .sf-fig .sf-spr'), 38, 26];
+        if (t[0] && t[1]) jobs.push({ el: t[0], to: t[1], max: t[2], cap: t[3], z: zs[i] });
+      });
+      jobs.forEach(function (j) {
+        if (j.el.dataset.l && j.el.textContent !== j.el.dataset.l) j.el.textContent = j.el.dataset.l;   // the long day again, then fitted
+        j.el.style.removeProperty('width');
+      });
+      var fit = function (j) { var w = j.el.getBoundingClientRect().width, fs = parseFloat(getComputedStyle(j.el).fontSize); return w > 0 && j.room > 0 ? fs * j.room / w * .97 : 0; };
+      jobs.forEach(function (j) {
         // its place: from the row's start (the emoji's edge) to the creature or the stepper; the text centred in it
-        var room = t[1].getBoundingClientRect().left - 8 * z - el.parentElement.getBoundingClientRect().left;
-        var fit = function () { var w = el.getBoundingClientRect().width, fs = parseFloat(getComputedStyle(el).fontSize); return w > 0 && room > 0 ? fs * room / w * .97 : 0; };
-        var f = fit();
-        if (f && f * z < 12 && el.dataset.s && el.dataset.s !== el.textContent) { el.textContent = el.dataset.s; f = fit(); }   // too narrow for "29. nov.": "29.11."
+        j.room = j.to.getBoundingClientRect().left - 8 * j.z - j.el.parentElement.getBoundingClientRect().left;
+        j.f = fit(j);
+      });
+      var narrow = jobs.filter(function (j) { return j.f && j.f * j.z < 12 && j.el.dataset.s && j.el.dataset.s !== j.el.textContent; });   // too narrow for "29. nov.": "29.11."
+      narrow.forEach(function (j) { j.el.textContent = j.el.dataset.s; });
+      narrow.forEach(function (j) { j.f = fit(j); });
+      jobs.forEach(function (j) {
         // never past the stepper: below 12px on the screen only when even the short day needs it (10px at the least)
-        if (f) el.style.fontSize = Math.max(10 / z, Math.min(t[2], t[3] / z, f)).toFixed(1) + 'px';
-        if (room > 0) el.style.width = (room / z).toFixed(1) + 'px';
+        if (j.f) j.el.style.fontSize = Math.max(10 / j.z, Math.min(j.max, j.cap / j.z, j.f)).toFixed(1) + 'px';
+        if (j.room > 0) j.el.style.width = (j.room / j.z).toFixed(1) + 'px';
       });
     });
-    // a row of four capsules and the − / + does not fit a narrow card: the capsules close up a little (.sf-tight), and
-    // on the narrowest the shift's clock goes too (.sf-tight2). Measured by where the buttons land: past the row's end,
-    // or onto the last capsule.
-    // the next shift's length is shown where the Nogurums / Nākamā row has room for it
-    [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-rc'), function (rc) {
-      var nc = rc.querySelector('.sf-nc');
+    // the next shift's length is shown where the Nogurums / Nākamā row has room for it: the row closes up a step at a
+    // time (tight, short, lean) while the length's text (not its padded box) is not 4px inside the capsule, or the row
+    // not inside the card
+    var rcs = [].map.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-rc'), function (rc) {
       rc.classList.remove('sf-rc-tight', 'sf-rc-short', 'sf-rc-lean');
-      if (!nc) return;
-      // the length's text (not its padded box) stays 4px inside the capsule, and the row inside the card
-      function over() {
-        var h = nc.querySelector('i'), n = nc.getBoundingClientRect(), g = document.createRange();
-        if (h && h.getClientRects().length) { g.selectNodeContents(h); if (g.getBoundingClientRect().right > n.right - 4) return true; }
-        return nc.scrollWidth > nc.clientWidth + 1 || n.right > rc.getBoundingClientRect().right + 1;
-      }
-      ['sf-rc-tight', 'sf-rc-short', 'sf-rc-lean'].some(function (c) { if (!over()) return true; rc.classList.add(c); });
+      return { rc: rc, nc: rc.querySelector('.sf-nc') };
+    }).filter(function (x) { return x.nc; });
+    function rcOver(x) {
+      var nc = x.nc, h = nc.querySelector('i'), n = nc.getBoundingClientRect(), g = document.createRange();
+      if (h && h.getClientRects().length) { g.selectNodeContents(h); if (g.getBoundingClientRect().right > n.right - 4) return true; }
+      return nc.scrollWidth > nc.clientWidth + 1 || n.right > x.rc.getBoundingClientRect().right + 1;
+    }
+    ['sf-rc-tight', 'sf-rc-short', 'sf-rc-lean'].forEach(function (c) {
+      if (!rcs.length) return;
+      rcs = rcs.filter(rcOver);
+      rcs.forEach(function (x) { x.rc.classList.add(c); });
     });
     [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-pl'), function (pl) {
       var last = pl.lastElementChild;
@@ -437,6 +450,8 @@
       var f1 = Math.max(11, Math.floor(Math.min(one, x.own) / x.z * 4) / 4);   // quarter px: a resize moves it in small steps, not whole px
       if (x.e.style.getPropertyValue('--sf-fs') !== f1 + 'px') x.e.style.setProperty('--sf-fs', f1 + 'px');
       x.f1 = f1 * x.z;
+    });
+    ids.forEach(function (x) {   // (a pass of its own: all the names' sizes written, then all the surnames measured, one layout)
       // the surname, now that the first name has its size: beside the creature, or on over it while above the picture
       var i = x.e.querySelector('i'), wi = i && tw(i), img = x.img;
       if (!wi) { x.own2 = 99; return; }
