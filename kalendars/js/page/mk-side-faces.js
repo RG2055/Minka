@@ -242,7 +242,7 @@
      hours are left out of it. */
   var BAND = true;
   var MONTHS = ['janv', 'febr', 'marts', 'apr', 'maijs', 'jūn', 'jūl', 'aug', 'sept', 'okt', 'nov', 'dec'];
-  function when(next) {
+  function when(next, short) {   // short: a far day as 29.11. (for a narrow card)
     var m = /^(\d{1,2})\.\s*([a-zāčēģīķļņšūž]+)\.?\s+(\d{1,2}:\d{2})$/i.exec(next || '');
     if (!m) return next || '';
     var mi = MONTHS.indexOf(m[2].toLowerCase().replace(/\.$/, '')), now = new Date();
@@ -250,7 +250,7 @@
     var day = new Date(now.getFullYear(), mi, +m[1]);
     if (day < new Date(now.getFullYear(), now.getMonth(), now.getDate()) - 180 * 864e5) day.setFullYear(day.getFullYear() + 1);
     var n = Math.round((day - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
-    return (n === 0 ? 'šodien ' : n === 1 ? 'rīt ' : n === 2 ? 'parīt ' : m[1] + '. ' + m[2] + '. ') + m[3];
+    return (n === 0 ? 'šodien ' : n === 1 ? 'rīt ' : n === 2 ? 'parīt ' : short ? m[1] + '.' + (mi + 1) + '. ' : m[1] + '. ' + m[2] + '. ') + m[3];
   }
   function band(d) {
     var sc = Math.max(0, Math.min(100, +d.score || 0));
@@ -261,7 +261,7 @@
       return band(d) + '<div class="sf-top"' + (d.ar ? ' style="--ar:' + d.ar + '"' : '') + '><i class="sf-av" aria-hidden="true"></i><div class="sf-nm"><div class="sf-id">' + name(d) + '</div></div><div class="sf-fig">' + figure + '</div></div>'
         + '<div class="sf-pl">' + (d.chip ? '<span class="sf-bv sf-bh" title="Šodien">' + esc(hrs(d.chip)) + '</span>' : '')
         + '<div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + (d.cf && d.cf.pts ? ' (kofeīns uz laiku −' + d.cf.pts + ', ' + d.cf.mg + ' mg organismā)' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
-        + (d.next ? '<div class="sf-rc"><span class="sf-bv sf-bn" title="Nākamā maiņa: ' + esc(d.next) + '">' + esc(when(d.next)) + '</span></div>' : '')
+        + (d.next ? '<div class="sf-rc"><span class="sf-bv sf-bn" title="Nākamā maiņa: ' + esc(d.next) + '" data-l="' + esc(when(d.next)) + '" data-s="' + esc(when(d.next, true)) + '">' + esc(when(d.next)) + '</span></div>' : '')
         + caf(d) + (figure.indexOf('sf-pick') < 0 ? PICK : '');
     }
     var ticks = d.ticks.map(function (t) { return '<i class="t' + t[0] + '" style="--c:' + esc(t[1]) + ';--h:' + t[2] + '"></i>'; }).join('');
@@ -369,8 +369,16 @@
       [[L.querySelector('.sf-pl > .sf-bh'), img, 38, 26], [L.querySelector('.sf-rc > .sf-bn'), dn, 32, 18]].forEach(function (t) {
         var el = t[0];
         if (!el || !t[1]) return;
-        var w = el.getBoundingClientRect().width, fs = parseFloat(getComputedStyle(el).fontSize), room = t[1].getBoundingClientRect().left - 8 * z - el.getBoundingClientRect().left;
-        if (w > 0 && room > 0) el.style.fontSize = Math.max(12 / z, Math.min(t[2], t[3] / z, fs * room / w * .97)).toFixed(1) + 'px';
+        if (el.dataset.l && el.textContent !== el.dataset.l) el.textContent = el.dataset.l;   // the long day again, then fitted
+        el.style.removeProperty('width');
+        // its place: from the row's start (the emoji's edge) to the creature or the stepper; the text centred in it
+        var room = t[1].getBoundingClientRect().left - 8 * z - el.parentElement.getBoundingClientRect().left;
+        var fit = function () { var w = el.getBoundingClientRect().width, fs = parseFloat(getComputedStyle(el).fontSize); return w > 0 && room > 0 ? fs * room / w * .97 : 0; };
+        var f = fit();
+        if (f && f * z < 12 && el.dataset.s && el.dataset.s !== el.textContent) { el.textContent = el.dataset.s; f = fit(); }   // too narrow for "29. nov.": "29.11."
+        // never past the stepper: below 12px on the screen only when even the short day needs it (10px at the least)
+        if (f) el.style.fontSize = Math.max(10 / z, Math.min(t[2], t[3] / z, f)).toFixed(1) + 'px';
+        if (room > 0) el.style.width = (room / z).toFixed(1) + 'px';
       });
     });
     // a row of four capsules and the − / + does not fit a narrow card: the capsules close up a little (.sf-tight), and
@@ -431,7 +439,7 @@
       if (!room || !wb) return null;
       var fs = parseFloat(getComputedStyle(b).fontSize) * z, cap = band ? 34 : 23;
       var own = Math.min(room / wb * fs * .97, band ? 86 * z / 1.9 : 99);
-      var img = band && L.querySelector('.sf-fig .sf-pet, .sf-fig .sf-spr');   // the figure's box, the same for every kind: one name, one size
+      var img = null;   // (a name run on over the creature was tried; centred between the emoji and the creature it stays in its cell)
       if (img) {
         var br = b.getBoundingClientRect(), lr = L.getBoundingClientRect();
         var pk = L.querySelector(':scope > .sf-pick'), end = pk ? pk.getBoundingClientRect().left - 4 * z : lr.right - 18 * z;   // clear of the corner's button
@@ -469,9 +477,13 @@
   /* A window being resized: the fit runs at most every 120 ms while it moves (not every frame: the measuring
      loaded the computer), once more when it rests, and the texts glide between the fits (mk-side-faces.css),
      so they follow the window instead of jumping (the user). The ring is CSS: it follows by itself. */
+  var cols = function () { return document.querySelectorAll('#radiographers-duty, #radiologists-duty'); };
   function resized() {
+    // the texts glide only while the window moves (mk-side-faces.css .sf-resizing): a card drawn anew, after a
+    // fatigue press say, takes its sizes at once and does not grow into them
+    [].forEach.call(cols(), function (c) { c.classList.add('sf-resizing'); });
     clearTimeout(fitWait);
-    fitWait = setTimeout(fitNames, 130);   // the last word, when the window rests
+    fitWait = setTimeout(function () { fitNames(); setTimeout(function () { [].forEach.call(cols(), function (c) { c.classList.remove('sf-resizing'); }); }, 160); }, 130);   // the last word, when the window rests
     if (fitEase) return;
     fitNames();
     fitEase = setTimeout(function () { fitEase = 0; }, 120);

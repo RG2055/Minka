@@ -518,5 +518,21 @@
   & .sfp-nav button:hover:not(:disabled) { background: rgba(255, 255, 255, .08); }
   & .sfp-nav button:disabled { opacity: .28; cursor: default; }
 }
-/* the texts glide from one fit to the next while a window is resized (a card drawn anew starts at its size: no grow-in) */
-.mk-sf :is(.sf-id b, .sf-id i, .sf-bh, .sf-bn) { transition: font-size .12s linear; }
+/* the texts glide from one fit to the next while a window is resized, and only then (a card drawn anew starts at its size) */
+.sf-resizing > .mk-side-card > .mk-sf :is(.sf-id b, .sf-id i, .sf-bh, .sf-bn) { transition: font-size .12s linear; }
+/* Band: the face layer lets a press through where it has nothing of its own, so the person's big emoji under it
+   (mk-side-glass-v1.css) still opens the emoji picker; its own parts take their presses as before */
+.mk-sf:has(> .sf-ring) { pointer-events: none; }
+.mk-sf:has(> .sf-ring) :is(.sf-pet, .sf-spr, .sf-fat, .sf-pick, .sf-caf) { pointer-events: auto; }
+/* the emoji (or the initials) fills the left column at the card's middle: the name, today's hours and the next shift
+   all start right after it, in one column (the user's sketch) */
+.mk-sf:has(> .sf-ring) > .sf-top { grid-template-columns: 108px minmax(0, 1fr) auto; }
+.mk-sf.mk-sf.mk-sf:has(> .sf-ring) > :is(.sf-pl, .sf-rc) { left: 108px; }
+/* the name and surname, today's hours and the next shift centred between the emoji and the creature: the same room
+   on either side (the user); the rows' widths are set by mk-side-faces.js fitNames */
+.mk-sf.mk-sf:has(> .sf-ring) > .sf-top > .sf-nm { justify-content: center; padding: 3px 0 0; }
+.mk-sf.mk-sf:has(> .sf-ring) > .sf-top > .sf-nm > .sf-id { align-items: center; text-align: center; max-width: 100%; }
+.mk-sf.mk-sf:has(> .sf-ring) :is(.sf-bh, .sf-bn) { justify-content: center; }
+/* the number keeps the room of three digits: a press from 100 to 95 does not narrow the stepper, so the creature over
+   it and the names beside it stay where they are (the user: the text jumped at every press) */
+.mk-sf:has(> .sf-ring) .sf-fat > .sf-num { min-width: 3ch; text-align: center; }

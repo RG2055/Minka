@@ -3369,7 +3369,8 @@ function filterFullList(btn) {
   // means the ticks, unless it lands on a control of its own (the emoji).
   document.addEventListener('click', function(e) {
     const t = e.target;
-    if (t && t.closest && t.closest('.mk-side-card > .mk-sf')) return;   // the face's parts each do their own (creature, arrows, edit button); a press elsewhere on it opens nothing (the user)
+    const faced = t && t.closest && t.closest('.mk-side-card');
+    if (faced && faced.querySelector(':scope > .mk-sf > .sf-ring')) return;   // the face's parts each do their own (creature, arrows, edit button); a press elsewhere on it opens nothing (the user)
     let hit = t && t.closest && t.closest('.mk-side-card :is(.mk-side-ticks, .mk-side-fatigue)');
     if (!hit && t && t.closest && t.closest('.mk-side-card') && !t.closest('button, a, input, select, textarea, [data-mk-emoji-click], .mk-emoji-side')) {
       const ticks = t.closest('.mk-side-card').querySelector(':scope > .mk-side-ticks');
@@ -3757,7 +3758,7 @@ function filterFullList(btn) {
   }
   /* The side cards' faces (js/page/mk-side-faces.js and its sheet, fetched on the first need: a card that has a
      face, or a press on a card's plus). With a card: open the picker for it; without: repaint the chosen faces. */
-  const SIDE_FACES_V = '20261123nma';
+  const SIDE_FACES_V = '20261123em5';
   let sideFacesLoad = 0, sideFacesCard = null;
   function sideFaces(card) {
     if (window.MkSideFaces) return card ? window.MkSideFaces.open(card) : window.MkSideFaces.sync();

@@ -945,3 +945,34 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
   }
 }
 }
+
+/* Nogurumiņa kartītē (gredzens ap to) cilvēka emoji ir liels un aizpilda visu kreiso aili (lietotāja paraugs):
+   visā ailes platumā, vertikāli kartītes vidū, pilnībā kartītē, bez sava rāmja; teksts sākas uzreiz aiz tā.
+   Iniciāļi (kam emoji nav) pēc tā paša principa: lieli, ailes vidū. */
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks:has(> .mk-sf > .sf-ring) .mk-side-card-main > .mk-side-icon-rail {
+  position: absolute !important;
+  grid-area: auto !important;   /* placed against the whole card (its padding box), not its emoji cell */
+  left: 20px !important;   /* clear of the ring at the card's edge, as far in as the creature is from the other edge */
+  right: auto !important;
+  justify-self: start !important;   /* with both sides set it is centred in the card */
+  align-self: center !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  margin: auto 0 !important;
+  translate: none !important;
+  width: 88px !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 88px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 0 !important;
+}
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks:has(> .mk-sf > .sf-ring) .mk-side-icon-rail .mk-emoji-side {
+  zoom: 2.7;   /* 32px -> ~86px: the column's width */
+}
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks:has(> .mk-sf > .sf-ring) .mk-side-initials {
+  font-size: 50px !important;
+  line-height: 1 !important;
+  letter-spacing: -.02em !important;
+}
