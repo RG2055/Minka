@@ -8,7 +8,7 @@
    face. A press anywhere else on a face opens the person's fatigue, as the ring does. */
 (function () {
   'use strict';
-  var FACES = [['k', 'Klasiskais'], ['g', 'Spīdums'], ['b', 'Būtne'], ['p', 'Dzīvnieks']];
+  var FACES = [['k', 'Klasiskais'], ['g', 'Spīdums'], ['b', 'Nogurumiņš'], ['p', 'Dzīvnieks']];
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   /* The person's own correction to their fatigue (points; minka-skins.js keeps it in the look as "fa": points and
@@ -104,7 +104,7 @@
     for (var h = 0, i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
     return LOT[h % LOT.length];
   }
-  var PICK = '<button type="button" class="sf-pick" aria-label="Mainīt kartītes skatu" title="Mainīt skatu"></button>';
+  var PICK = '<button type="button" class="sf-pick" aria-label="Mainīt nogurumiņu vai kartītes skatu" title="Mainīt nogurumiņu"></button>';
   function petKind(d) { return KINDS.indexOf(d.sfp) >= 0 ? d.sfp : kindOf(d.who); }
   // A drink in its paw (the card's data-cf: calendar.js __minkaCaffeineNow), for as long as the caffeine works: the
   // creature's picture is then the one where it holds something (<kind>-hold-<step>), and the drink itself is laid
@@ -115,10 +115,10 @@
   var KIND_DZ = { pufs: [65.76, 53.08, 15.49], astonis: [65.59, 53.29, 15.32], lacis: [65.18, 55.56, 14.92], zakis: [65.68, 60.82, 15.41], antenas: [65.85, 61.11, 15.57], cekuls: [65.85, 61.54, 15.57], mizi: [65.59, 56.49, 15.32], lumo: [65.68, 59.23, 15.41], koro: [65.59, 56.88, 15.32], aksi: [65.1, 53.61, 14.84], asns: [65.68, 61.8, 15.41], pele: [65.76, 58.11, 15.49] };
   // The film of taking the drink (scripts/build-butnes.py writes these): the kinds that have one for every step, the
   // drinks that have one, where the drink's film lies on each kind's picture (left, top, width in %), its shape.
-  var KIND_FILM = {  };
-  var DRINK_FILM = {  };
-  var KIND_DZF = { aksi: [44.1, 53.26, 38.89], antenas: [43.81, 60.83, 40.8], asns: [43.87, 61.52, 40.36], astonis: [43.91, 52.94, 40.14], cekuls: [43.81, 61.25, 40.8], koro: [43.91, 56.56, 40.14], lacis: [44.07, 55.23, 39.09], lumo: [43.87, 58.93, 40.36], mizi: [43.91, 56.17, 40.14], pele: [43.84, 57.8, 40.58], pufs: [43.84, 52.74, 40.58], zakis: [43.87, 60.53, 40.36] };
-  var DZF_AR = 1.273;
+  var KIND_FILM = { aksi: 1, antenas: 1, asns: 1, astonis: 1, cekuls: 1, koro: 1, lacis: 1, lumo: 1, mizi: 1, pele: 1, pufs: 1, zakis: 1 };
+  var DRINK_FILM = { brite: 1, cupcoffee: 1, dynamit: 1, kongstrong: 1, lofbergs: 1, monster: 1, monsterultra: 1, mycoffee: 1, narvesen: 1, philips: 1, redbull: 1 };
+  var KIND_DZF = { aksi: [43.06, 53.26, 40.97], antenas: [42.71, 60.83, 42.99], asns: [42.79, 61.52, 42.52], astonis: [42.83, 52.94, 42.29], cekuls: [42.71, 61.25, 42.99], koro: [42.83, 56.56, 42.29], lacis: [43.02, 55.23, 41.19], lumo: [42.79, 58.93, 42.52], mizi: [42.83, 56.17, 42.29], pele: [42.75, 57.8, 42.75], pufs: [42.75, 52.74, 42.75], zakis: [42.79, 60.53, 42.52] };
+  var DZF_AR = 1.255;
   var FILM_FRAMES = 38, FILM_MS = 3040;
   function held(d, kind) { return d.cf && KIND_DZ[kind] && DRINKS.indexOf(d.cf.src) >= 0 ? d.cf : null; }
   function step(d) { return { low: 'low', mid: 'mid', high: 'high' }[d.level] || (d.score > 85 ? 'exh' : 'crit'); }
@@ -130,7 +130,7 @@
     var k = petKind(d), cf = held(d, k), at = KIND_DZ[k], st = step(d);
     return '<div class="sf-pet" data-l="' + esc(d.level || 'mid') + '" style="--ar:' + KIND_AR[k] + '"><i class="gs" aria-hidden="true"></i><span class="ps"><img class="pi" src="' + petSrc(k, d) + '" alt="" draggable="false">'
       + (cf && at ? '<img class="pd" src="assets/butnes/dz-' + cf.src + '-' + (st === 'exh' || st === 'crit' ? st : 'low') + '.webp" alt="" draggable="false" style="left:' + at[0] + '%;top:' + at[1] + '%;width:' + at[2] + '%">' : '')
-      + '</span>' + (cf ? '<i class="sf-cf" title="Kofeīns: ' + cf.mg + ' mg organismā' + (cf.pts ? ', nogurums uz laiku −' + cf.pts : '') + '">' + (cf.pts ? '<b>−' + cf.pts + '</b>' : '') + '</i>' : '') + PICK + '</div>';
+      + '</span>' + (BAND ? '' : PICK) + '</div>';   // Band: the button is the card's, in its corner (sketch)   // (a cup mark in the figure's corner was tried: the drink in the paw says it already)
   }
   // a press on the creature: it squashes and springs back (and the press does not open the card)
   document.addEventListener('click', function (e) {
@@ -138,6 +138,37 @@
     if (!pt || e.target.closest('.sf-pick')) return;   // the faces' button lives in the figure: its own handler
     e.preventDefault(); e.stopPropagation();
     pt.classList.remove('tap', 'up', 'dn'); void pt.offsetWidth; pt.classList.add('tap');
+  }, true);
+  /* a squeeze toy's short squeak with the squash: made on the press (no file), the sound card put to sleep after it,
+     so nothing runs while nobody presses */
+  var ac = null, acT = 0;
+  // one note: its pitch path (Hz at seconds), wave, loudness and length
+  function tone(path, type, vol, len) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === 'suspended') ac.resume();
+      var t = ac.currentTime + (ac.state === 'running' ? .002 : .02), o = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter();
+      o.type = type; f.type = 'lowpass'; f.frequency.value = 2600;
+      path.forEach(function (p, i) { if (i) o.frequency.exponentialRampToValueAtTime(p[0], t + p[1]); else o.frequency.setValueAtTime(p[0], t); });
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .005); g.gain.exponentialRampToValueAtTime(.001, t + len);
+      o.connect(f); f.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + len + .02);
+      clearTimeout(acT); acT = setTimeout(function () { if (ac) ac.suspend(); }, 20000);   // awake while pressed again soon (waking takes a moment), asleep after
+    } catch (_) {}
+  }
+  // the more tired the creature, the lower and slower its squeak (0 fresh: bright and quick; 100: a low, drawn-out one)
+  function squish(score) {
+    var u = Math.max(0, Math.min(100, score || 0)) / 100, k = (1 - .5 * u) * (.94 + Math.random() * .12), w = 1 + 1.6 * u;
+    tone([[420 * k, 0], [980 * k, .045 * w], [560 * k, .12 * w]], 'triangle', .16, .14 * w);
+  }
+  // the stepper's arrows: a short dry tick, up a step higher than down
+  function tick(up) { var f = up ? 1180 : 820; tone([[f, 0], [f * .9, .03]], 'sine', .12, .045); }
+  // the sounds go with the finger going down, not with the click's release: no lag behind the press
+  document.addEventListener('pointerdown', function (e) {
+    if (e.button || !e.target || !e.target.closest) return;
+    var b = e.target.closest('.mk-sf .sf-adj button');
+    if (b) { if (!b.disabled) tick(+b.dataset.d > 0); return; }
+    var pt = e.target.closest('.mk-sf .sf-pet');
+    if (pt && !e.target.closest('.sf-pick')) squish(+((pt.closest('.mk-side-card') || {}).dataset || {}).fatScore || 0);
   }, true);
 
   /* Dzīvnieks: one of the animated pets of codex-pets.net beside the number (sheets of 8 x 9 frames): the cats of
@@ -204,14 +235,42 @@
      the fatigue colour, the number the strong part) and the next shift; along the very bottom the shift's
      fatigue as a thin strip of ticks with no box around it (each as tall as the fatigue then, in its level's
      colour, the one now marked); the caffeine, when there is any, stands at the strip's right end. */
+  /* "Band" (the user, looking at a Xiaomi Band at the end of a 24-hour shift): few things, big, no boxes or borders.
+     The fatigue goes round the card as a thick ring (as a band shows its battery), the creature and the fatigue number
+     are the heroes, and under them only today's hours and when the next shift is, said so that it cannot be taken for
+     the time now ("rīt 08:00", not a bare clock). The month's count, the kinds of shifts and the strip of the shift's
+     hours are left out of it. */
+  var BAND = true;
+  var MONTHS = ['janv', 'febr', 'marts', 'apr', 'maijs', 'jūn', 'jūl', 'aug', 'sept', 'okt', 'nov', 'dec'];
+  function when(next) {
+    var m = /^(\d{1,2})\.\s*([a-zāčēģīķļņšūž]+)\.?\s+(\d{1,2}:\d{2})$/i.exec(next || '');
+    if (!m) return next || '';
+    var mi = MONTHS.indexOf(m[2].toLowerCase().replace(/\.$/, '')), now = new Date();
+    if (mi < 0) return next;
+    var day = new Date(now.getFullYear(), mi, +m[1]);
+    if (day < new Date(now.getFullYear(), now.getMonth(), now.getDate()) - 180 * 864e5) day.setFullYear(day.getFullYear() + 1);
+    var n = Math.round((day - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
+    return (n === 0 ? 'šodien ' : n === 1 ? 'rīt ' : n === 2 ? 'parīt ' : m[1] + '. ' + m[2] + '. ') + m[3];
+  }
+  function band(d) {
+    var sc = Math.max(0, Math.min(100, +d.score || 0));
+    return '<svg class="sf-ring" aria-hidden="true"><rect class="tr"/><rect class="pg" style="--sc:' + sc + '"/></svg>';   // its length and start: CSS (no measuring)
+  }
   function sketch(d, figure) {
+    if (BAND) {
+      return band(d) + '<div class="sf-top"' + (d.ar ? ' style="--ar:' + d.ar + '"' : '') + '><i class="sf-av" aria-hidden="true"></i><div class="sf-nm"><div class="sf-id">' + name(d) + '</div></div><div class="sf-fig">' + figure + '</div></div>'
+        + '<div class="sf-pl">' + (d.chip ? '<span class="sf-bv sf-bh" title="Šodien">' + esc(hrs(d.chip)) + '</span>' : '')
+        + '<div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + (d.cf && d.cf.pts ? ' (kofeīns uz laiku −' + d.cf.pts + ', ' + d.cf.mg + ' mg organismā)' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
+        + (d.next ? '<div class="sf-rc"><span class="sf-bv sf-bn" title="Nākamā maiņa: ' + esc(d.next) + '">' + esc(when(d.next)) + '</span></div>' : '')
+        + caf(d) + (figure.indexOf('sf-pick') < 0 ? PICK : '');
+    }
     var ticks = d.ticks.map(function (t) { return '<i class="t' + t[0] + '" style="--c:' + esc(t[1]) + ';--h:' + t[2] + '"></i>'; }).join('');
     // the top is one grid (the sheet): the avatar's column, the name over the surname, the figure over its buttons
     return '<div class="sf-top"' + (d.ar ? ' style="--ar:' + d.ar + '"' : '') + '><i class="sf-av" aria-hidden="true"></i><div class="sf-nm"><div class="sf-id">' + name(d) + '</div></div><div class="sf-fig">' + figure + '</div></div>'
       // the − / + at the end of the row of capsules: the figure keeps the whole height above it
       // In the order one looks (the user): first what is now, today's hours, the month and the fatigue with its − / +
       // under the creature; then the month's shifts and the next one.
-      + '<div class="sf-pl">' + stats(d) + '<div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
+      + '<div class="sf-pl">' + stats(d) + '<div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + (d.cf && d.cf.pts ? ' (kofeīns uz laiku −' + d.cf.pts + ', ' + d.cf.mg + ' mg organismā)' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
       + '<div class="sf-rc">' + stats(d, 'kinds') + (d.next ? '<div class="sf-nc"><small>Nākamā</small><b>' + esc(d.next) + '</b>' + (d.nextH ? '<span class="sf-nd"></span><i>' + esc(hrs(d.nextH)) + '</i>' : '') + '</div>' : '') + '</div>'
       + (ticks ? '<div class="sf-tk" title="Nogurums šajā maiņā">' + ticks + '</div>' : '') + caf(d)
       // the faces' button in the figure's empty top left corner (Būtne draws it with its picture, which knows its edge)
@@ -294,6 +353,26 @@
   // stops at the cap below. Measured, not guessed: --sf-fs / --sf-fs2 on its .sf-id (the sheet guesses until then).
   // The surname stays under two thirds of the name.
   function fitNames() {
+    [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-ring'), function (r) {
+      // the stepper is centred on the creature; on a narrow card it would reach the ring: moved in by as much
+      var f = r.parentElement.querySelector('.sf-pl > .sf-fat'), z = parseFloat(getComputedStyle(r.parentElement.parentElement).zoom) || 1;
+      if (!f) return;
+      f.style.removeProperty('margin-right');
+      var over = f.getBoundingClientRect().right - (r.parentElement.getBoundingClientRect().right - 13 * z);
+      if (over > 0) f.style.marginRight = (over / z).toFixed(1) + 'px';
+    });
+    /* Band: today's hours and the next shift as large as their places let them (the user: on a crowded column the
+       card is small, the text came out small with it). The hours reach to the creature, the next shift to the
+       stepper; each no taller than its row, and at most 26 / 18px on the screen. Sizes in the card's own px. */
+    [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-ring'), function (r) {
+      var L = r.parentElement, z = parseFloat(getComputedStyle(L.parentElement).zoom) || 1, img = L.querySelector('.sf-fig .ps, .sf-fig .sf-spr'), dn = L.querySelector('.sf-fat .sf-adj button');
+      [[L.querySelector('.sf-pl > .sf-bh'), img, 38, 26], [L.querySelector('.sf-rc > .sf-bn'), dn, 32, 18]].forEach(function (t) {
+        var el = t[0];
+        if (!el || !t[1]) return;
+        var w = el.getBoundingClientRect().width, fs = parseFloat(getComputedStyle(el).fontSize), room = t[1].getBoundingClientRect().left - 8 * z - el.getBoundingClientRect().left;
+        if (w > 0 && room > 0) el.style.fontSize = Math.max(12 / z, Math.min(t[2], t[3] / z, fs * room / w * .97)).toFixed(1) + 'px';
+      });
+    });
     // a row of four capsules and the − / + does not fit a narrow card: the capsules close up a little (.sf-tight), and
     // on the narrowest the shift's clock goes too (.sf-tight2). Measured by where the buttons land: past the row's end,
     // or onto the last capsule.
@@ -313,8 +392,19 @@
     [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf > .sf-pl'), function (pl) {
       var last = pl.lastElementChild;
       pl.classList.remove('sf-tight', 'sf-tight2', 'sf-tight3', 'sf-tight4');
-      if (!last) return;
-      function over() { return last.getBoundingClientRect().right > pl.getBoundingClientRect().right + 1; }
+      if (!last || pl.parentElement.querySelector(':scope > .sf-ring')) return;   // Band: one big value and the stepper, each in its own place: nothing to close up
+      var z = parseFloat(getComputedStyle(pl.closest('.mk-side-card')).zoom) || 1;   // the card's own px on the screen
+      function over() {
+        var end = Math.min(pl.getBoundingClientRect().right + z, pl.parentElement.getBoundingClientRect().right - (pl.parentElement.querySelector(':scope > .sf-ring') ? 14 : 5) * z);   // in the row, and clear of the card's edge (and of the fatigue ring)
+        if (last.getBoundingClientRect().right > end) return true;
+        var num = last.querySelector && last.querySelector('.sf-num'), bs = last.querySelectorAll ? last.querySelectorAll('.sf-adj button') : [];
+        if (!num || bs.length < 2) return false;
+        var g = document.createRange(); g.selectNodeContents(num);
+        // the arrow down stands left of the number, the arrow up right of it (and of the correction badge, if there is one)
+        var t = g.getBoundingClientRect(), down = bs[0].getBoundingClientRect(), up = bs[1].getBoundingClientRect(), ad = last.querySelector('.sf-ad');
+        var right = ad && ad.getClientRects().length ? ad.getBoundingClientRect().right : t.right;
+        return t.left < down.right + 2 * z || right > up.left - 2 * z;
+      }
       ['sf-tight', 'sf-tight2', 'sf-tight3', 'sf-tight4'].some(function (c) { if (!over()) return true; pl.classList.add(c); });
       // the creature stands centred over its − N +: both end at the card's right edge, the stepper is the wider, so
       // the figure steps left by the difference (before the names, which take the room that is left)
@@ -325,25 +415,63 @@
         dx = (ir.left + ir.right) / 2 - (bs[0].getBoundingClientRect().left + bs[bs.length - 1].getBoundingClientRect().right) / 2;
       if (dx > .5) fig.style.marginRight = Math.round(dx / z * 10) / 10 + 'px';
     });
-    [].forEach.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf .sf-id'), function (e) {
-      // in the faces' grid the room is the cell between the avatar and the figure, less the least air on each side
-      var cell = e.parentElement.classList.contains('sf-nm') ? e.parentElement : null;
-      var b = e.querySelector('b'), i = e.querySelector('i'), room = cell ? cell.clientWidth - 16 : e.clientWidth, card = e.closest('.mk-side-card');
-      if (!room || !b || !b.scrollWidth) return;
-      // at most 23px on the screen, whatever the column's zoom, so both columns read alike; and at most 40px of the
-      // card's own, which still leaves air above the row of capsules
-      var cap = Math.min(40, Math.round(23 / (parseFloat(getComputedStyle(card).zoom) || 1)));
-      var fs = parseFloat(getComputedStyle(b).fontSize), f1 = Math.max(11, Math.min(cap, Math.floor(room / b.scrollWidth * fs * .97)));
-      // (a figure that gave way to a long name was tried and turned down: every card's figure is the same size)
-      var f2 = Math.max(10, Math.min(30, Math.floor(f1 * .8), i && i.scrollWidth ? Math.floor(room / i.scrollWidth * parseFloat(getComputedStyle(i).fontSize) * .97) : 99));
-      if (e.style.getPropertyValue('--sf-fs') !== f1 + 'px') e.style.setProperty('--sf-fs', f1 + 'px');
-      if (e.style.getPropertyValue('--sf-fs2') !== f2 + 'px') e.style.setProperty('--sf-fs2', f2 + 'px');
+    /* The names: as large as each card lets them, and every card's at one size on the screen (the user: a
+       radiologist's name came out small beside the radiographers'; then: all of them too small for the room they
+       have). Each first name's own fit is measured two ways, the larger kept: in its cell beside the creature (its
+       height shared with the surname), or, in Band, on its own line over the creature (the creature stands on the
+       stepper, the room above it is the name's). All take the smallest fit among those that reach 17px on the
+       screen; a name that cannot reach it keeps its own, the others are not pulled down with it. Sizes set in each
+       card's own px (the columns are zoomed differently); surnames alike, a step smaller, always beside the creature. */
+    var rg = document.createRange();
+    function tw(el) { rg.selectNodeContents(el); return rg.getBoundingClientRect().width; }   // the text's own width on the screen
+    var ids = [].map.call(document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card > .mk-sf .sf-id'), function (e) {
+      var cell = e.parentElement.classList.contains('sf-nm') ? e.parentElement : null, L = e.closest('.mk-sf'), band = !!L.querySelector(':scope > .sf-ring');
+      var b = e.querySelector('b'), i = e.querySelector('i'), z = parseFloat(getComputedStyle(e.closest('.mk-side-card')).zoom) || 1;
+      var room = (cell ? cell.clientWidth - 16 : e.clientWidth) * z, wb = b && tw(b);
+      if (!room || !wb) return null;
+      var fs = parseFloat(getComputedStyle(b).fontSize) * z, cap = band ? 34 : 23;
+      var own = Math.min(room / wb * fs * .97, band ? 86 * z / 1.9 : 99);
+      var img = band && L.querySelector('.sf-fig .ps, .sf-fig .sf-spr');
+      if (img) {
+        var br = b.getBoundingClientRect(), lr = L.getBoundingClientRect();
+        var pk = L.querySelector(':scope > .sf-pick'), end = pk ? pk.getBoundingClientRect().left - 4 * z : lr.right - 18 * z;   // clear of the corner's button
+        own = Math.max(own, Math.min((end - br.left) / wb * fs * .97, (img.getBoundingClientRect().top - 3 * z - br.top) / 1.12));
+      }
+      return { e: e, z: z, own: Math.min(cap, own), room: room, img: img, right: L.getBoundingClientRect().right - 18 * z };
+    }).filter(Boolean);
+    var fit = ids.map(function (x) { return x.own; }).filter(function (v) { return v >= 17; });
+    var one = fit.length ? Math.min.apply(null, fit) : Math.max.apply(null, ids.map(function (x) { return x.own; }).concat(15));
+    ids.forEach(function (x) {
+      var f1 = Math.max(11, Math.floor(Math.min(one, x.own) / x.z * 4) / 4);   // quarter px: a resize moves it in small steps, not whole px
+      if (x.e.style.getPropertyValue('--sf-fs') !== f1 + 'px') x.e.style.setProperty('--sf-fs', f1 + 'px');
+      x.f1 = f1 * x.z;
+      // the surname, now that the first name has its size: beside the creature, or on over it while above the picture
+      var i = x.e.querySelector('i'), wi = i && tw(i), img = x.img;
+      if (!wi) { x.own2 = 99; return; }
+      var fs = parseFloat(getComputedStyle(i).fontSize) * x.z;
+      x.own2 = x.room / wi * fs * .97;
+      if (img) { var ir = i.getBoundingClientRect(); x.own2 = Math.max(x.own2, Math.min((x.right - ir.left) / wi * fs * .97, (img.getBoundingClientRect().top - 2 * x.z - ir.top) / 1.15)); }
+    });
+    var two = Math.max(12, Math.min.apply(null, [one * .78].concat(ids.map(function (x) { return x.own2; }).filter(function (v) { return v >= 12; }))));
+    ids.forEach(function (x) {
+      var f2 = Math.max(10, Math.floor(Math.min(two, x.own2, x.f1 * .78) / x.z * 4) / 4);   // the surname about three quarters of the name (the user's sketch)
+      if (x.e.style.getPropertyValue('--sf-fs2') !== f2 + 'px') x.e.style.setProperty('--sf-fs2', f2 + 'px');
     });
   }
   // a narrower window makes narrower cards, and the brand font may arrive after the first measure
-  var fitFrame = 0;
+  var fitFrame = 0, fitWait = 0, fitEase = 0;
   function fitSoon() { if (!fitFrame) fitFrame = requestAnimationFrame(function () { fitFrame = 0; fitNames(); }); }
-  if (window.ResizeObserver) { var ro = new ResizeObserver(fitSoon); ['radiographers-duty', 'radiologists-duty'].forEach(function (id) { var c = document.getElementById(id); if (c) ro.observe(c); }); }
+  /* A window being resized: the fit runs at most every 120 ms while it moves (not every frame: the measuring
+     loaded the computer), once more when it rests, and the texts glide between the fits (mk-side-faces.css),
+     so they follow the window instead of jumping (the user). The ring is CSS: it follows by itself. */
+  function resized() {
+    clearTimeout(fitWait);
+    fitWait = setTimeout(fitNames, 130);   // the last word, when the window rests
+    if (fitEase) return;
+    fitNames();
+    fitEase = setTimeout(function () { fitEase = 0; }, 120);
+  }
+  if (window.ResizeObserver) { var ro = new ResizeObserver(resized); ['radiographers-duty', 'radiologists-duty'].forEach(function (id) { var c = document.getElementById(id); if (c) ro.observe(c); }); }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSoon);
   document.addEventListener('keydown', function (e) {
     if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.classList && e.target.classList.contains('mk-sf')) { e.preventDefault(); e.target.click(); }
@@ -387,21 +515,21 @@
       gone(dot.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: 'translate(' + x.toFixed(1) + 'px,' + ((up ? -1 : 1) * (26 + Math.random() * 26)).toFixed(1) + 'px) scale(.4)', opacity: 0 }],
         { duration: 560 + Math.random() * 260, delay: Math.random() * 90, easing: up ? 'cubic-bezier(.2, .7, .3, 1)' : 'cubic-bezier(.5, 0, .9, .6)', fill: 'backwards' }), dot);
     }
-    num.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.22)', offset: .35 }, { transform: 'scale(1)' }], { duration: 460, easing: 'ease-out' });
+    num.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1)', offset: .35 }, { transform: 'scale(1)' }], { duration: 460, easing: 'ease-out' });   // small: it must not grow over the arrows
   }
   // worker -> ['up' | 'dn', when]: how the figure moves once after the correction that was just made. The card is
   // drawn twice after a press (the look at once, the new number a moment later), so the move is kept for a second.
   var settle = {};
   function adjust(d) {
     var tip = ' Paliek, līdz to maini; redz visi.';
-    return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāks nogurums" title="Jūtos mazāk noguris: −5.' + tip + '"' + (d.adj <= -30 ? ' disabled' : '') + '>−</button>'
-      + '<button type="button" data-d="5" aria-label="Lielāks nogurums" title="Jūtos vairāk noguris: +5.' + tip + '"' + (d.adj >= 30 ? ' disabled' : '') + '>+</button></div>';
+    return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāks nogurums" title="Jūtos mazāk noguris: −5.' + tip + '"' + (d.adj <= -30 ? ' disabled' : '') + '>↓</button>'
+      + '<button type="button" data-d="5" aria-label="Lielāks nogurums" title="Jūtos vairāk noguris: +5.' + tip + '"' + (d.adj >= 30 ? ' disabled' : '') + '>↑</button></div>';
   }
   /* A drink (calendar.js playCoffeeAddedEffect). The latest drink is in the creature's paw for as long as its
-     caffeine works (pet() above). When it is added, the creature takes a sip and answers in the drink's own way. sip (every coffee): it leans back, content, and steam goes up; buzz (the energy drinks): it
-     shivers and hops; fizz (Brite): bubbles, a squash and a bounce; flex (Kong Strong): it swells with strength.
-     One movement of under a second, carried over a redrawn card like a correction's (settle); the specks are
-     nodes of their own that remove themselves. Nothing with reduced motion, and nothing moves between drinks. */
+     caffeine works (pet() above). When it is added, the creature takes a sip and answers in the drink's own way. sip (every coffee): it leans back, content; buzz (the energy drinks): it
+     shivers and hops; fizz (Brite): a squash and a bounce; flex (Kong Strong): it swells with strength.
+     One movement of under a second, carried over a redrawn card like a correction's (settle). Nothing with reduced
+     motion, and nothing moves between drinks. */
   var DRINK = { monster: 'buzz', monsterultra: 'buzz', redbull: 'buzz', dynamit: 'buzz', brite: 'fizz', kongstrong: 'flex' };
   var MOVES = ['sip', 'buzz', 'fizz', 'flex', 'up', 'dn'];
   /* The film: the creature notices the drink, takes it, drinks, lowers it, waves once, and is left holding it. Two
@@ -431,6 +559,23 @@
     urls.forEach(function (u) { var im = new Image(); im.onload = play; im.onerror = function () { pi.src = after; fig.classList.remove('pre'); }; im.src = u; });
     return true;
   }
+  /* The drink's moment, as in the user's own picture of it: one thin line sweeps round the creature low down, in
+     front of it, and two small four-pointed stars come and go at its sides. Drawn once over the figure (not over the
+     name or the numbers), in the fatigue's colour lightened; no blur, no glow; the node removes itself. (Specks rising
+     by the mouth, and a spring with a ring round the drink, were tried before and turned down.) */
+  function swoosh(fig, card) {
+    var r = fig.getBoundingClientRect(), col = getComputedStyle(card).getPropertyValue('--mk-side-fat-color').trim() || '#fff';
+    var el = speck('left:' + (r.left - r.width * .08) + 'px;top:' + (r.top - r.height * .04) + 'px;width:' + r.width * 1.16 + 'px;height:' + r.height * 1.08 + 'px');
+    el.innerHTML = '<svg viewBox="0 0 116 100" width="100%" height="100%" style="display:block;overflow:visible" fill="none" stroke-linecap="round">'
+      + '<path d="M9 50C12 80 100 88 108 54" stroke="color-mix(in srgb, ' + col + ' 45%, #fff)" stroke-width="2.6" pathLength="100" stroke-dasharray="34 100" stroke-dashoffset="34"/>'
+      + '<path d="M15 12l2.4 6 6 2.4-6 2.4-2.4 6-2.4-6-6-2.4 6-2.4z" fill="#fff" style="transform-box:fill-box;transform-origin:50% 50%"/>'
+      + '<path d="M101 24l1.7 4.3 4.3 1.7-4.3 1.7-1.7 4.3-1.7-4.3-4.3-1.7 4.3-1.7z" fill="#fff" style="transform-box:fill-box;transform-origin:50% 50%"/></svg>';
+    var k = el.firstChild.children, star = [{ transform: 'scale(0) rotate(-40deg)', opacity: 0 }, { transform: 'scale(1) rotate(0deg)', opacity: 1, offset: .45 }, { transform: 'scale(0) rotate(40deg)', opacity: 0 }];
+    // a short stroke runs the length of the line, left to right, and thins out at its end
+    k[0].animate([{ strokeDashoffset: 34, opacity: 1 }, { strokeDashoffset: -66, opacity: 1, offset: .8 }, { strokeDashoffset: -100, opacity: 0 }], { duration: 620, easing: 'cubic-bezier(.3, .1, .3, 1)', fill: 'both' });
+    k[1].animate(star, { duration: 520, delay: 140, easing: 'ease-out', fill: 'both' });
+    gone(k[2].animate(star, { duration: 520, delay: 320, easing: 'ease-out', fill: 'both' }), el);
+  }
   window.__minkaSideFaceDrink = function (card, source) {
     var layer = card && card.querySelector(':scope > .mk-sf'), fig = layer && layer.querySelector('.sf-pet, .sf-spr');
     if (!fig || !fig.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
@@ -441,20 +586,11 @@
     void fig.offsetWidth;   // the same move twice in a row starts again
     fig.style.setProperty('--sf-late', '0ms');
     fig.classList.add(how);
-    if (how === 'flex') return;
-    var size = Math.max(14, r.height * .38), x = r.left + r.width / 2, y = r.bottom - size * .9;
-    for (var i = 0; i < 3; i++) {   // steam, sparks or bubbles, up from the drink in its paws
-      var d = how === 'sip' ? 3 : 4, dx = (i - 1) * size * .30 + (Math.random() - .5) * 3, up = size * (how === 'buzz' ? .8 : 1) + Math.random() * 6;
-      var bit = speck('left:' + (x - d / 2) + 'px;top:' + y + 'px;width:' + d + 'px;height:' + (how === 'sip' ? d * 2.6 : d) + 'px;border-radius:' + d + 'px;'
-        + (how === 'fizz' ? 'border:1.5px solid #c4f07a' : 'background:' + (how === 'buzz' ? '#ffe14a' : 'rgba(255,255,255,.75)')));
-      gone(bit.animate([{ transform: 'translate(0,0) scale(.6)', opacity: 0 }, { opacity: 1, offset: .25 },
-        { transform: 'translate(' + (how === 'buzz' ? dx * 2.4 : dx).toFixed(1) + 'px,' + (-up).toFixed(1) + 'px) scale(' + (how === 'fizz' ? 1.5 : 1) + ')', opacity: 0 }],
-        { duration: 620, delay: 300 + i * 90, easing: 'ease-out', fill: 'backwards' }), bit);
-    }
+    swoosh(fig, card);
   };
   document.addEventListener('click', function (e) {
     var b = e.target && e.target.closest && e.target.closest('.mk-sf .sf-adj button'), card = b && b.closest('.mk-side-card');
-    if (!card) return;
+    if (!card) { if (e.target && e.target.closest && e.target.closest('.mk-sf .sf-fat')) { e.preventDefault(); e.stopPropagation(); } return; }   // the stepper's number and gaps: its own, not the card's window
     e.preventDefault(); e.stopPropagation();   // not the card's own press (the person's window)
     if (b.disabled || !window.mkPatchWorkerSkin) return;
     var worker = card.dataset.worker || '', n = Math.max(-30, Math.min(30, manual(worker) + +b.dataset.d));

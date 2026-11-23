@@ -15,7 +15,6 @@
   /* The shared pieces (the capsules and the calendar follow the user's own sketch). --k is the colour of the
      kind of today's shift. 112 px from the left is where the emoji's column ends. */
   --k: #f5b73f;
-  --sf-cup: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2.5 5.5h9v4.6a3.2 3.2 0 0 1-3.2 3.2H5.7a3.2 3.2 0 0 1-3.2-3.2zM11.5 6.6h1.3a1.7 1.7 0 0 1 0 3.4h-1.3z'/%3E%3Cpath d='M5.2 1.6c0 1 1 1.1 1 2.1M8.2 1.6c0 1 1 1.1 1 2.1' fill='none' stroke='%23000' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E");   /* a cup, steaming: caffeine at work */
   &:has(.sf-sh[data-k="d"]) { --k: #3f9bff; }
   &:has(.sf-sh[data-k="n"]) { --k: #23cdcf; }
   & .sf-num { color: color-mix(in srgb, var(--c) 88%, #fff); font-size: 80px; font-weight: 800; line-height: .82; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
@@ -102,7 +101,7 @@
   & .sf-two .sf-cv { display: flex; gap: .42em; font-size: 1.04em; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-two::before { content: ""; flex: none; width: 1.32em; height: 1.32em; margin: 0; background: currentColor; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-cp::before { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6h14a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 20H5a1.5 1.5 0 0 1-1.5-1.5v-11A1.5 1.5 0 0 1 5 6ZM3.5 10.5h17M8 3.5v4M16 3.5v4M9 15l2 2 4-4'/%3E%3C/svg%3E") center / contain no-repeat; }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-kd::before { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5 21 8l-9 4.5L3 8ZM3 12l9 4.5 9-4.5M3 16l9 4.5 9-4.5'/%3E%3C/svg%3E") center / contain no-repeat; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-kd::before { mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='7.5' width='18' height='12.5' rx='2.5'/%3E%3Cpath d='M8.5 7.5V5.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2M3 13h18'/%3E%3C/svg%3E") center / contain no-repeat; }
   & .sf-two.sf-kd { background: var(--kb, #5fd3c6); color: #0b0d12; }
   & .sf-two.sf-kds { background: color-mix(in srgb, var(--k) 30%, #0c1117); color: #fff; }
   & .sf-two.sf-kds .sf-kv { filter: brightness(1.25); }
@@ -171,13 +170,17 @@
   }
   & .sf-adj button[data-d="-5"] { --k: #42d991; }
   & .sf-adj button:hover:not(:disabled) { background: color-mix(in srgb, var(--k) 36%, rgba(8, 9, 12, .6)); }
-  /* the − and + drawn, not typed: a font's minus is thin and small; these fill the button's height without growing it */
+  /* An arrow down (less tired) and an arrow up (more tired), drawn, not typed: they say the fatigue goes down or up,
+     which a − and + did not (the user). A line with an open head, as Material's arrow: a solid one with a wide head
+     read as a plus at this size. One shape, turned over for down. */
   & .sf-adj button::before {
-    --g: max(calc(var(--e) * 1.75), 13px); --t: max(calc(var(--e) * .44), 3px); --s: color-mix(in srgb, var(--k) 82%, #fff);
+    --g: max(calc(var(--e) * 1.75), 13px); --s: color-mix(in srgb, var(--k) 82%, #fff);
     content: ""; position: absolute; left: 50%; top: 50%; width: var(--g); height: var(--g); margin: calc(var(--g) / -2) 0 0 calc(var(--g) / -2);
-    background: linear-gradient(var(--s), var(--s)) center / 100% var(--t) no-repeat;
+    background: var(--s);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20.5V4.5M5 11.5l7-7 7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20.5V4.5M5 11.5l7-7 7 7'/%3E%3C/svg%3E") center / contain no-repeat;
   }
-  & .sf-adj button[data-d="5"]::before { background: linear-gradient(var(--s), var(--s)) center / 100% var(--t) no-repeat, linear-gradient(var(--s), var(--s)) center / var(--t) 100% no-repeat; }
+  & .sf-adj button[data-d="-5"]::before { rotate: 180deg; }
   & .sf-adj button::after { content: ""; position: absolute; inset: -4px; }   /* a larger place to hit */
   & .sf-adj button:disabled { opacity: .3; cursor: default; }
   & .sf-adj button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
@@ -198,17 +201,20 @@
   & .sf-tk:has(+ .sf-caf) { right: 104px; }
   /* The faces' button: in the figure's empty top left corner, small, tinted in the level's colour, shown when the card
      is pointed at. It reaches 4px out past the figure's left edge, into the gap before the name. */
+  /* The faces' button: an edit badge in the card's top right corner, inside the fatigue ring, shown when the card is
+     pointed at (the user: the old sun of rays read as "loading"; in the corner, not on the creature, only on hover).
+     The same size on the screen in every column (the card is zoomed by --mk-side-z). */
   & .sf-pick {
-    position: absolute; z-index: 2; top: 4px; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
-    background: color-mix(in srgb, var(--c) 30%, rgba(8, 9, 12, .78)); opacity: 0; transition: opacity .12s;
+    --s: max(22px, calc(19px / var(--mk-side-z, .68)));
+    position: absolute; z-index: 2; top: 4px; width: var(--s); height: var(--s); padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+    background: color-mix(in srgb, var(--c) 34%, #101216); opacity: 0; transition: opacity .12s, scale .12s;
   }
-  /* Būtne's is drawn in its figure: the picture stands centred at the bottom, its width (--ar, the kind's shape) tells
-     where its left edge is, so the button is as close to every kind */
-  &.mk-sf-b .sf-pet > .sf-pick { left: calc((100% - min(100%, var(--ph) * var(--ar, 1.1))) / 2 - 4px); top: -5px; }
   &.mk-sf-p .sf-pick { right: calc(8px + clamp(66px, 26cqw, 82px) - 22px); }
-  & .sf-pick::before { content: ""; position: absolute; inset: 20%; background: color-mix(in srgb, var(--c) 72%, #fff); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M5.3 5.3l2.8 2.8M15.9 15.9l2.8 2.8M5.3 18.7l2.8-2.8M15.9 8.1l2.8-2.8'/%3E%3C/svg%3E") center / contain no-repeat; }
-  & .sf-pick::after { content: ""; position: absolute; inset: -5px; }   /* small to the eye, a fair place to hit */
+  &:has(> .sf-ring) > .sf-pick { top: 17px; right: 17px; }
+  & .sf-pick::before { content: ""; position: absolute; inset: 24%; background: color-mix(in srgb, var(--c) 55%, #fff); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.5 4.5l4 4L8 20H4v-4z'/%3E%3Cpath d='M13 7l4 4'/%3E%3C/svg%3E") center / contain no-repeat; }
+  & .sf-pick::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; }   /* a fair place to hit */
   &:hover .sf-pick, & .sf-pick:focus-visible { opacity: 1; }
+  & .sf-pick:hover { scale: 1.08; }
   & .sf-pick:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   & .sf-tk .t2::before { content: ""; position: absolute; left: 50%; bottom: calc(100% + 3px); margin-left: -4px; border: 4px solid transparent; border-top: 5px solid #fff; border-bottom: 0; }
   /* Būtne is a rendered picture (assets/butnes, scripts/blender/rg_mascot.py), measured in em: one font-size scales
@@ -227,10 +233,6 @@
   &.mk-sf-b .pfd { inset: auto; height: auto; }
   &.mk-sf-b .sf-pet.pre .pd, &.mk-sf-b .sf-pet.film :is(.pi, .pd) { visibility: hidden; }
   &.mk-sf-b .sf-pet.film .pf { animation: mk-sf-film 3.04s steps(38, jump-none) 1 both; }
-  /* caffeine at work: a small cup in the figure's corner, and beside it what it takes off the fatigue for now */
-  &.mk-sf-b .sf-cf { right: -2px; top: -3px; display: flex; align-items: center; gap: .2em; height: 1.5em; padding: 0 .36em; border-radius: 1em; background: color-mix(in srgb, var(--c) 24%, #15171b); color: color-mix(in srgb, var(--c) 38%, #fff); font-size: calc(var(--rf) * .66); font-style: normal; pointer-events: auto; }
-  &.mk-sf-b .sf-cf::before { content: ''; width: 1em; height: 1em; background: currentColor; -webkit-mask: var(--sf-cup) center / contain no-repeat; mask: var(--sf-cup) center / contain no-repeat; }
-  &.mk-sf-b .sf-cf > b { font-weight: 800; line-height: 1; white-space: nowrap; }
   /* it breathes only while the card is pointed at: standing still costs a weak computer nothing (the user's choice) */
   &.mk-sf-b:hover .ps { animation: mk-sf-breathe 3s ease-in-out infinite; }
   &.mk-sf-b:hover [data-l="low"] .ps { animation-name: mk-sf-hop; animation-duration: 2.2s; }   /* rested: a little hop in its breath */
@@ -317,7 +319,7 @@
   }
   &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-sh { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0d12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
   &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-cp { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0d12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 6h14a1.5 1.5 0 0 1 1.5 1.5v11A1.5 1.5 0 0 1 19 20H5a1.5 1.5 0 0 1-1.5-1.5v-11A1.5 1.5 0 0 1 5 6ZM3.5 10.5h17M8 3.5v4M16 3.5v4M9 15l2 2 4-4'/%3E%3C/svg%3E"); }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-kd { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0d12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5 21 8l-9 4.5L3 8ZM3 12l9 4.5 9-4.5M3 16l9 4.5 9-4.5'/%3E%3C/svg%3E"); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-kd { --ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b0d12' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='7.5' width='18' height='12.5' rx='2.5'/%3E%3Cpath d='M8.5 7.5V5.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2M3 13h18'/%3E%3C/svg%3E"); }   /* a work bag: the shifts (a stack of layers, then tally marks, read as nothing this small) */
   &:is(.mk-sf-b, .mk-sf-p) .sf-two .sf-cl { font-weight: 600; letter-spacing: .02em; opacity: .74; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-two .sf-cv { font-weight: 800; letter-spacing: -.01em; color: #fff; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-two.sf-kds .sf-kv { filter: none; color: inherit; }
@@ -362,7 +364,7 @@
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-ad { margin: 0; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj { --e: 1em; position: static; flex: none; width: 4.6em; height: 1.9em; margin-left: .1em; font-size: 1em; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button { height: 100%; }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button::before { --g: calc(var(--rf) * .78); --t: max(2px, calc(var(--rf) * .17)); }   /* not em: the button's own font-size is 0 */
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button::before { --g: calc(var(--rf) * .82); }   /* not em: the button's own font-size is 0 */
   /* the number's bolt (the user: "an arrow like energy", as on the mood card): drawn in the number's own colour */
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat .sf-num { display: inline-flex; align-items: center; gap: .04em; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat .sf-num::before {
@@ -380,7 +382,7 @@
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat { gap: .42em; padding: 0; background: none; box-shadow: none; height: 100%; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > span { display: none; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj { display: contents; }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-num { order: 1; color: color-mix(in srgb, var(--c) 42%, #fff); }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-num { order: 1; flex: none; margin: 0 .14em; color: color-mix(in srgb, var(--c) 42%, #fff); }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-ad { order: 2; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button,
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button:is([data-d="-5"], [data-d="5"]) {
@@ -389,7 +391,7 @@
   }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="-5"] { order: 0; background: color-mix(in srgb, var(--c) 28%, #1b1d22); }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="5"] { order: 3; background: color-mix(in srgb, var(--c) 45%, #fff); box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
-  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button::before { --g: calc(var(--rf) * .86); --t: max(2px, calc(var(--rf) * .16)); filter: none; }
+  &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button::before { --g: calc(var(--rf) * 1.06); filter: none; }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="-5"]::before { --s: color-mix(in srgb, var(--c) 55%, #fff); }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="5"]::before { --s: color-mix(in srgb, var(--c) 30%, #0b0d12); }
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button[data-d="-5"]:hover:not(:disabled) { background: color-mix(in srgb, var(--c) 38%, #1b1d22); }
@@ -408,6 +410,76 @@
    (the figure stands 9px under it: 4% of its height is 3.5-4px) */
 @keyframes mk-sf-sink { 0%, 100% { transform: none; } 45% { transform: scale(1.08, .9); } 75% { transform: scale(.99, 1.01); } }
 @keyframes mk-sf-perk { 0%, 100% { transform: none; } 25% { transform: scale(1.05, .95); } 55% { transform: translateY(-4%) scale(.97, 1.03); } 82% { transform: scale(1.02, .98); } }
+/* Būtne and Dzīvnieks: the pieces platters of the card's own fatigue hue on its black (a card tinted all over was
+   turned down), white values and near-white labels on them, so they read at once. Measured (WCAG): white on a platter
+   9.6–13:1, the labels 7.4:1 at worst (yellow). Today's tile a step lighter. One hue, not each piece's own (no rainbow). */
+.mk-sf:is(.mk-sf-b, .mk-sf-p) {
+  --pn: color-mix(in srgb, var(--c) 28%, #08090b);
+  & :is(.sf-pl, .sf-rc) > .sf-two { --tone: color-mix(in srgb, var(--c) 70%, #fff); background: var(--pn); color: #fff; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent); }
+  & :is(.sf-pl, .sf-rc) > .sf-two.sf-sh { background: color-mix(in srgb, var(--c) 38%, #08090b); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--c) 75%, #fff); }
+  & :is(.sf-pl, .sf-rc) > .sf-two .sf-cl { color: rgba(255, 255, 255, .9); opacity: 1; font-size: .74em; font-weight: 700; letter-spacing: .01em; }
+  & .sf-nc { background: var(--pn); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent); color: #fff; }
+  & .sf-nc small { color: rgba(255, 255, 255, .9); opacity: 1; font-size: .82em; font-weight: 700; }
+  & .sf-nc .sf-nd { background: rgba(255, 255, 255, .3); }
+  & .sf-fat > .sf-num { color: #fff; }
+  & .sf-fat > .sf-adj button[data-d="-5"] { background: var(--pn); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent); }
+  & .sf-fat > .sf-adj button[data-d="-5"]::before { --s: #fff; }
+  & .sf-fat > .sf-adj button[data-d="5"] { background: color-mix(in srgb, var(--c) 22%, #fff); }
+  & .sf-fat > .sf-adj button[data-d="5"]::before { --s: color-mix(in srgb, var(--c) 40%, #08090b); }
+  & .sf-tk .t0 { opacity: .4; }
+}
+/* "Band" (mk-side-faces.js BAND): the fatigue as a thick ring round the card, from the top's middle (a band's
+   battery); the rest big and plain, no boxes, no borders. Sizes in the card's own px; the card is zoomed down in
+   its column, so what is 18px here reaches the eye at about 12. */
+.mk-sf:is(.mk-sf-b, .mk-sf-p) {
+  & > .sf-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  & > .sf-ring rect { x: 4.5px; y: 4.5px; width: calc(100% - 9px); height: calc(100% - 9px); rx: 21.5px; fill: none; stroke-width: 7px; }
+  & > .sf-ring .tr { stroke: color-mix(in srgb, var(--c) 16%, transparent); }
+  /* the score's part of the way round, from the top's middle: the rounded rectangle's length from the card's own size
+     (cqw / cqh of .mk-sf: 4 sides less the corners, plus the corners' circle, 2 x pi x 21.5px), nothing measured */
+  & > .sf-ring .pg {
+    --rw: calc(100cqw - 9px); --run: calc(2 * (var(--rw) + 100cqh - 9px) - 172px + 135.09px);
+    stroke: var(--c); stroke-linecap: round; stroke-dasharray: calc(var(--sc, 0) * var(--run) / 100) var(--run); stroke-dashoffset: calc(21.5px - var(--rw) / 2);
+  }
+  & > .sf-top { padding: 13px 16px 0 0; }
+  &:has(> .sf-ring) .sf-pl { left: 18px; right: 15px; top: 112px; height: 40px; gap: 10px; font-size: 18px; }
+  /* the creature larger, down to the second row; the stepper (↓ ⚡N ↑) under it in the second row, centred on it
+     (the user: the room under the stepper was empty) */
+  /* as large on the screen in both columns (76px wide there): the radiologists' column is zoomed less, so its cards'
+     own px are fewer, and a creature sized by the card took the name's room there */
+  &:is(.mk-sf-b, .mk-sf-p):has(> .sf-ring) { --pw: max(86px, min(42cqw, 150px, calc(76px / var(--mk-side-z, .68)))); --ph: min(140px, calc(var(--pw) * .86)); }
+  /* Dzīvnieks as large as Nogurumiņš (the user: the pet came out too small): its frame as tall as the creature's box,
+     standing on the stepper the same way */
+  &.mk-sf-p:has(> .sf-ring) .sf-spr { --sw: calc(var(--ph) / 1.0833); }
+  &.mk-sf-p:has(> .sf-ring) .sf-fig { width: auto; margin-top: calc(139px - var(--ph)); }
+  &:has(> .sf-ring) .sf-fat > .sf-ad { display: none; }   /* the hand's correction is in the number's tooltip: the stepper stays three things */
+  &:has(> .sf-ring) .sf-pl > .sf-fat { position: absolute; right: calc(1px + var(--pw) / 2); top: 44px; width: max-content; height: 32px; translate: 50% 0; gap: .3em; margin: 0; font-size: 16px; }   /* centred on the creature's middle, as wide as it needs */
+  &:has(> .sf-ring) .sf-pl > .sf-fat > .sf-adj button, &:has(> .sf-ring) .sf-pl > .sf-fat > .sf-adj button:is([data-d="-5"], [data-d="5"]) { width: 27px; height: 27px; }
+  &:has(> .sf-ring) .sf-pl > .sf-fat > .sf-adj button::before { --g: 17px; }
+  /* the narrowest cards: the hours and the stepper a step smaller, so the arrow up stays inside the ring */
+  &:has(> .sf-ring) .sf-pl.sf-tight { font-size: 16px; gap: 6px; }
+  &:has(> .sf-ring) .sf-pl.sf-tight .sf-fat { font-size: 16px; }
+  &:has(> .sf-ring) .sf-pl.sf-tight2 :is(.sf-fat, .sf-bh) { font-size: 14px; }
+  &:has(> .sf-ring) .sf-pl.sf-tight2 .sf-fat > .sf-adj button { width: 27px; height: 27px; }
+  &:has(> .sf-ring) .sf-rc { left: 18px; right: auto; top: 160px; height: 34px; font-size: 18px; }   /* as wide as its text: never over the stepper beside it */
+  &:has(> .sf-ring) .sf-pl { z-index: 1; }   /* the stepper hangs below its row, over the next shift's: its arrows take the press */
+  /* the creature stands on its stepper (the box's bottom 4px above it): the room above it is the first name's, which
+     may run on over it there (mk-side-faces.js fitNames sizes it to stay above the picture); the surname stays beside */
+  &.mk-sf-b:has(> .sf-ring) .sf-fig { margin-top: calc(139px - var(--ph)); }
+  &:has(> .sf-ring) .sf-nm { justify-content: flex-start; padding: 3px 0 0 2px; }
+  &:has(> .sf-ring) .sf-nm > .sf-id { max-width: 100%; }
+  &:has(> .sf-ring) .sf-nm > .sf-id > :is(b, i) { max-width: none; overflow: visible; }
+  & .sf-bv { display: inline-flex; align-items: center; gap: .36em; color: #fff; font-weight: 800; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  & .sf-bv::before { content: ""; flex: none; width: 1.05em; height: 1.05em; background: color-mix(in srgb, var(--c) 70%, #fff); -webkit-mask: var(--bi) center / contain no-repeat; mask: var(--bi) center / contain no-repeat; }
+  & .sf-bh { font-size: 1.5em; --bi: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='M12 7.5V12l3 2'/%3E%3C/svg%3E"); }
+  /* the next shift in a quieter white, behind an arrow: it is a time to come, not the time now */
+  & .sf-bn { font-size: 1.06em; color: rgba(255, 255, 255, .78); font-weight: 700; --bi: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h12M11 6l6 6-6 6M20 5v14'/%3E%3C/svg%3E"); }
+  &:has(> .sf-ring) .sf-fat { font-size: 18px; }
+  &:has(> .sf-ring) .sf-fat > .sf-num { font-size: 1.9em; }
+  &:has(> .sf-ring) .sf-fat > .sf-adj button, &:has(> .sf-ring) .sf-fat > .sf-adj button:is([data-d="-5"], [data-d="5"]) { width: 31px; height: 31px; box-shadow: none; }
+  &:has(> .sf-ring) .sf-fat > .sf-adj button::before { --g: 19px; }   /* px: the button's own font-size is 0 */
+  &:has(> .sf-ring) .sf-fat > .sf-adj button[data-d="-5"] { background: color-mix(in srgb, var(--c) 24%, #0d0f12); }
+}
 @keyframes mk-sf-film { from { background-position: 0 0; } to { background-position: 100% 0; } }
 /* a drink. Every one starts with the sip (the head goes back); none rises more than 4% (the card's top is 9px away) */
 @keyframes mk-sf-sip { 0%, 100% { transform: none; } 28%, 58% { transform: rotate(-7deg) scale(1.02, .98); } 80% { transform: rotate(3deg) scale(1.04, .96); } }
@@ -445,3 +517,5 @@
   & .sfp-nav button:hover:not(:disabled) { background: rgba(255, 255, 255, .08); }
   & .sfp-nav button:disabled { opacity: .28; cursor: default; }
 }
+/* the texts glide from one fit to the next while a window is resized (a card drawn anew starts at its size: no grow-in) */
+.mk-sf :is(.sf-id b, .sf-id i, .sf-bh, .sf-bn) { transition: font-size .12s linear; }

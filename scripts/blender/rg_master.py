@@ -20,6 +20,7 @@ import sys
 
 import bmesh
 import bpy
+import numpy as np
 from mathutils import Euler, Vector
 
 ARGS = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
@@ -273,22 +274,34 @@ def sculpt(e):
     bpy.ops.mesh.primitive_uv_sphere_add(segments=144 if SCENE else 192, ring_count=72 if SCENE else 96, radius=1)   # a film's frames are small: a lighter mesh
     body = bpy.context.object
     body.name = 'body'
-    for v in body.data.vertices:
-        way = v.co.normalized()
-        r = 2.3
-        while r > 0.05 and field(way * r, vols) < T:
-            r -= 0.02
-        lo, hi = r, r + 0.02
-        for _ in range(12):
-            mid = (lo + hi) / 2
-            if field(way * mid, vols) >= T:
-                lo = mid
-            else:
-                hi = mid
-        p = way * lo
-        if p.z < -0.66:   # it sits: soft and a little flat underneath
-            p.z = -0.66 - (-0.66 - p.z) * 0.45
-        v.co = p
+    # every vertex at once (numpy): the same search as one vertex at a time, a tenth of the wait
+    n = len(body.data.vertices)
+    co = np.empty(n * 3)
+    body.data.vertices.foreach_get('co', co)
+    way = co.reshape(n, 3)
+    way = way / np.linalg.norm(way, axis=1)[:, None]
+    C, R, W = np.array([tuple(c) for c, _, _ in vols]), np.array([r for _, r, _ in vols]), np.array([w for _, _, w in vols])
+
+    def at(rad):
+        d = (((way * rad[:, None])[:, None, :] - C[None]) / R[None]) ** 2
+        d = d.sum(-1)
+        return (np.where(d < 1, (1 - np.minimum(d, 1)) ** 3, 0.0) * W[None]).sum(-1)
+
+    r = np.full(n, 2.3)
+    while True:   # in along the ray, a step at a time, to the first place the sum reaches T
+        go = (r > 0.05) & (at(r) < T)
+        if not go.any():
+            break
+        r[go] -= 0.02
+    lo, hi = r.copy(), r + 0.02
+    for _ in range(12):
+        mid = (lo + hi) / 2
+        inside = at(mid) >= T
+        lo, hi = np.where(inside, mid, lo), np.where(inside, hi, mid)
+    p = way * lo[:, None]
+    p[:, 2] = np.where(p[:, 2] < -0.66, -0.66 - (-0.66 - p[:, 2]) * 0.45, p[:, 2])   # it sits: soft and a little flat underneath
+    body.data.vertices.foreach_set('co', p.ravel())
+    body.data.update()
     bpy.ops.object.shade_smooth()
     return body
 
@@ -469,7 +482,7 @@ def fur(obj, length, mat, mask=None, locks=0.5, sweep=0.5, sag=0.25, thick=0.002
     bpy.ops.object.select_all(action='DESELECT')
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.quick_fur(density=opt('--fur', 'HIGH'), length=length, radius=thick * (1.5 if opt('--fur') == 'MEDIUM' else 1), view_percentage=1.0, apply_hair_guides=True, use_noise=True, use_frizz=True)   # MEDIUM: fewer, thicker strands, for frames shown small
+    bpy.ops.object.quick_fur(density=opt('--fur', 'HIGH'), length=length, radius=thick * (1.5 if opt('--fur') == 'MEDIUM' else 1), view_percentage=0.01, apply_hair_guides=True, use_noise=True, use_frizz=True)   # MEDIUM: fewer, thicker strands, for frames shown small
     hair = (set(bpy.data.objects) - before).pop()
     hair.data.materials.clear()
     hair.data.materials.append(mat)
@@ -487,6 +500,10 @@ def fur(obj, length, mat, mask=None, locks=0.5, sweep=0.5, sag=0.25, thick=0.002
         names = [x.name for x in hair.modifiers]
         hair.modifiers.move(len(names) - 1, names.index('Interpolate Hair Curves') + 1)
     hair.modifiers.new('groom', 'NODES').node_group = groom_group(length, sweep, sag)
+    # While the scene is being put together nothing needs the fur grown; only the render does. Left on, every later
+    # step (each paw, each accent) waited for all the fur made so far to be grown again in full: four minutes a frame.
+    for m in hair.modifiers:
+        m.show_viewport = False
     return hair
 
 
