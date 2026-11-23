@@ -431,7 +431,7 @@
       if (!room || !wb) return null;
       var fs = parseFloat(getComputedStyle(b).fontSize) * z, cap = band ? 34 : 23;
       var own = Math.min(room / wb * fs * .97, band ? 86 * z / 1.9 : 99);
-      var img = band && L.querySelector('.sf-fig .ps, .sf-fig .sf-spr');
+      var img = band && L.querySelector('.sf-fig .sf-pet, .sf-fig .sf-spr');   // the figure's box, the same for every kind: one name, one size
       if (img) {
         var br = b.getBoundingClientRect(), lr = L.getBoundingClientRect();
         var pk = L.querySelector(':scope > .sf-pick'), end = pk ? pk.getBoundingClientRect().left - 4 * z : lr.right - 18 * z;   // clear of the corner's button
@@ -439,8 +439,10 @@
       }
       return { e: e, z: z, own: Math.min(cap, own), room: room, img: img, right: L.getBoundingClientRect().right - 18 * z };
     }).filter(Boolean);
-    var fit = ids.map(function (x) { return x.own; }).filter(function (v) { return v >= 17; });
-    var one = fit.length ? Math.min.apply(null, fit) : Math.max.apply(null, ids.map(function (x) { return x.own; }).concat(15));
+    // all at the smallest fit among those that reach 17px (or, in a small window where few do, the middle one's)
+    var ow = ids.map(function (x) { return x.own; }).sort(function (a, b) { return a - b; }), bar = Math.min(17, ow.length ? ow[Math.floor((ow.length - 1) / 2)] : 17);
+    var fit = ow.filter(function (v) { return v >= bar; });
+    var one = fit.length ? fit[0] : 15;
     ids.forEach(function (x) {
       var f1 = Math.max(11, Math.floor(Math.min(one, x.own) / x.z * 4) / 4);   // quarter px: a resize moves it in small steps, not whole px
       if (x.e.style.getPropertyValue('--sf-fs') !== f1 + 'px') x.e.style.setProperty('--sf-fs', f1 + 'px');
@@ -452,7 +454,10 @@
       x.own2 = x.room / wi * fs * .97;
       if (img) { var ir = i.getBoundingClientRect(); x.own2 = Math.max(x.own2, Math.min((x.right - ir.left) / wi * fs * .97, (img.getBoundingClientRect().top - 2 * x.z - ir.top) / 1.15)); }
     });
-    var two = Math.max(12, Math.min.apply(null, [one * .78].concat(ids.map(function (x) { return x.own2; }).filter(function (v) { return v >= 12; }))));
+    // surnames: the size most of them can take (the middle one's fit), not the longest's: a long surname alone keeps
+    // its own smaller fit (the user: all surnames came out small for one long one)
+    var o2 = ids.map(function (x) { return x.own2; }).sort(function (a, b) { return a - b; });
+    var two = Math.max(12, Math.min(one * .78, o2.length ? o2[Math.floor((o2.length - 1) / 2)] : 99));
     ids.forEach(function (x) {
       var f2 = Math.max(10, Math.floor(Math.min(two, x.own2, x.f1 * .78) / x.z * 4) / 4);   // the surname about three quarters of the name (the user's sketch)
       if (x.e.style.getPropertyValue('--sf-fs2') !== f2 + 'px') x.e.style.setProperty('--sf-fs2', f2 + 'px');

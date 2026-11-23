@@ -256,6 +256,12 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
   zoom: var(--mk-side-z);
   margin-bottom: 3px !important;
 }
+/* Nogurumiņa kartīte (gredzens ap to) vienmēr vienā formā, kā klēpjdatorā (lietotājs: lielā Windows monitorā
+   tā izpletās augstāka, iekšpuse kļuva šaura, uzvārdi un nākamā maiņa sīki): ne lielāka par .5, kolonnā zem
+   kartītēm paliek brīva vieta. */
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) > .mk-side-card.mk-has-ticks:has(> .mk-sf > .sf-ring) {
+  --mk-side-z: clamp(.45, (100cqh - (var(--mk-side-n) - 1) * 9px) / var(--mk-side-n) / var(--mk-side-nat), .5);
+}
 
 /* Galva: vārds (lielāks) ar maiņas stundām tieši aiz tā vienā rindā, zem
    tiem uzvārds, gredzens labajā pusē. Garš vārds saraujas tikai tik, cik

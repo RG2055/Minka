@@ -447,7 +447,7 @@
      (the user: the room under the stepper was empty) */
   /* as large on the screen in both columns (76px wide there): the radiologists' column is zoomed less, so its cards'
      own px are fewer, and a creature sized by the card took the name's room there */
-  &:is(.mk-sf-b, .mk-sf-p):has(> .sf-ring) { --pw: max(86px, min(42cqw, 150px, calc(76px / var(--mk-side-z, .68)))); --ph: min(140px, calc(var(--pw) * .86)); }
+  &:is(.mk-sf-b, .mk-sf-p):has(> .sf-ring) { --pw: max(86px, min(40cqw, 162px)); --ph: min(138px, calc(var(--pw) * .86)); }   /* one card shape everywhere (zoom at most .5): the creature from just under the ring down to its stepper (the user: no empty room above it) */
   /* Dzīvnieks as large as Nogurumiņš (the user: the pet came out too small): its frame as tall as the creature's box,
      standing on the stepper the same way */
   &.mk-sf-p:has(> .sf-ring) .sf-spr { --sw: calc(var(--ph) / 1.0833); }
@@ -462,7 +462,8 @@
   &:has(> .sf-ring) .sf-pl.sf-tight2 :is(.sf-fat, .sf-bh) { font-size: 14px; }
   &:has(> .sf-ring) .sf-pl.sf-tight2 .sf-fat > .sf-adj button { width: 27px; height: 27px; }
   &:has(> .sf-ring) .sf-rc { left: 18px; right: auto; top: 160px; height: 34px; font-size: 18px; }   /* as wide as its text: never over the stepper beside it */
-  &:has(> .sf-ring) .sf-pl { z-index: 1; }   /* the stepper hangs below its row, over the next shift's: its arrows take the press */
+  &:has(> .sf-ring) .sf-pl { z-index: 1; pointer-events: none; }   /* over the creature's lower part too: only the stepper in it takes a press (the user: the creature's mouth did not answer) */
+  &:has(> .sf-ring) .sf-pl > .sf-fat { pointer-events: auto; }   /* the stepper hangs below its row, over the next shift's: its arrows take the press */
   /* the creature stands on its stepper (the box's bottom 4px above it): the room above it is the first name's, which
      may run on over it there (mk-side-faces.js fitNames sizes it to stay above the picture); the surname stays beside */
   &.mk-sf-b:has(> .sf-ring) .sf-fig { margin-top: calc(139px - var(--ph)); }
