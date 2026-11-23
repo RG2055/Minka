@@ -3758,7 +3758,7 @@ function filterFullList(btn) {
   }
   /* The side cards' faces (js/page/mk-side-faces.js and its sheet, fetched on the first need: a card that has a
      face, or a press on a card's plus). With a card: open the picker for it; without: repaint the chosen faces. */
-  const SIDE_FACES_V = '20261123em5';
+  const SIDE_FACES_V = '20261123dn1';
   let sideFacesLoad = 0, sideFacesCard = null;
   function sideFaces(card) {
     if (window.MkSideFaces) return card ? window.MkSideFaces.open(card) : window.MkSideFaces.sync();
@@ -3782,7 +3782,7 @@ function filterFullList(btn) {
   function sideFaceOf(name) {
     if (sideFacesOff || document.documentElement.matches('.mk-mobile-shell, .mk-side-plain, .minka-rad, .host-radio-open')) return null;
     const skin = window.mkGetWorkerSkin ? window.mkGetWorkerSkin(name) : null, sf = (skin && skin.sf) || '';
-    return sf === 'k' ? null : /^([bgp])(?:-([a-z0-9-]{1,40}))?$/.exec(sf) || SIDE_FACE_DEFAULT;
+    return /^([bp])(?:-([a-z0-9-]{1,40}))?$/.exec(sf) || SIDE_FACE_DEFAULT;   // Klasiskais and Spīdums were taken out (the user): whoever had them gets Nogurumiņš
   }
   // With a person's key (minka-skins.js, when their look changed): their card takes the face of the look first.
   // Without one (the radio opened or closed): every card does.

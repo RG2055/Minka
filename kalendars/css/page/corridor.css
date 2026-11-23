@@ -6,7 +6,7 @@
 
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) {
   position: relative !important; display: block !important; padding: 0 !important; overflow: hidden auto !important;
-  perspective: 1300px; perspective-origin: 50% var(--cor-cy, 50%);
+  perspective: 1300px; perspective-origin: calc(50% + var(--cor-mx, 0px)) var(--cor-cy, 50%);   /* --cor-mx: the whole middle shifted (corridor.js) */
 }
 /* the corridor's end (corridor.js): room under the last row for the dock */
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list)::after {
@@ -18,13 +18,13 @@ html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .cards-divider { display: none !important; }
 /* each wall's small heading right above it (corridor.js places it) */
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .cards-section-label {
-  position: absolute !important; top: var(--ly, 0px) !important; left: calc(50% + var(--lx, 0px)) !important; right: auto !important;
+  position: absolute !important; top: var(--ly, 0px) !important; left: calc(50% + var(--cor-mx, 0px) + var(--lx, 0px)) !important; right: auto !important;
   width: max-content !important; min-height: 0 !important; height: auto !important; margin: 0 !important; padding: 0 !important; overflow: visible !important;
   transform: translateX(-50%); z-index: 30;
 }
 
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card:not(.rg-feedback-card) {
-  position: absolute !important; top: var(--cor-cy, 50%) !important; left: 50% !important;
+  position: absolute !important; top: var(--cor-cy, 50%) !important; left: calc(50% + var(--cor-mx, 0px)) !important;
   /* --cs-nat / --csk (corridor.js): a card smaller than 140 px is laid out at 140 and scaled down whole */
   width: var(--cs-nat, var(--cs, 180px)) !important; height: var(--cs-nat, var(--cs, 180px)) !important;
   min-width: 0 !important; max-width: none !important; min-height: 0 !important; max-height: none !important; aspect-ratio: 1 / 1 !important;
@@ -41,7 +41,7 @@ html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-
 html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.mk-mid-card.mk-cor-fresh { transition: none !important; }
 @layer mk-mx {
   html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.rg-feedback-card {
-    position: absolute !important; top: var(--cor-mcy, 50%) !important; left: 50% !important; margin: 0 !important;
+    position: absolute !important; top: var(--cor-mcy, 50%) !important; left: calc(50% + var(--cor-mx, 0px)) !important; margin: 0 !important;
     width: 326px !important; grid-row: auto !important; grid-column: auto !important; z-index: 20 !important;
     transform: translate(-50%, -50%) translateZ(0) !important;
   }

@@ -182,6 +182,21 @@
       if (!grow || !tooSmall || ms <= grow) break;
       ms = Math.max(grow, ms - 0.1); moodHalf = g.moodHalf * ms; gapIn = moodHalf + 16; walls = []; tooSmall = false;
     }
+    // Beside the mood card both walls stand as far from it, as drawn (the user: the gaps were uneven: a short
+    // wall was centred in its own room, far off, the other close by): the gap the tighter wall gets centred in
+    // its room, for both; what is left over goes to the outer side.
+    var shift = 0;
+    if (!noMood && walls.length === 2 && !tooSmall) {
+      var zin = function (wl) { return (wl.size / 2 - wl.span) * sin; };
+      var at = Math.min.apply(null, walls.map(function (wl) { return (wl.room.hi * P / (P - zin(wl)) + gapIn) / 2; }));
+      walls.forEach(function (wl) { wl.start = Math.max(wl.room.lo, Math.min(wl.room.hi, at * (P - zin(wl)) / P)); });
+      // ... and the three together (both walls and the mood card) in the middle of the list: the room the
+      // narrower wall leaves is shared by the two outer sides, not left empty on one (the user)
+      var spare = {};
+      walls.forEach(function (wl) { spare[wl.s] = edge - (wl.start + wl.span * cos) * P / (P - wl.size / 2 * sin); });
+      shift = Math.round((spare[1] - spare[-1]) / 2);
+    }
+    list.style.setProperty('--cor-mx', shift + 'px');
     if (window.MkCardLayout) window.MkCardLayout.moodScaleNow = ms;   // the game's box takes this width
     // The layout editor's card size slider ends where the cards stop growing in this window.
     if (window.MkCardLayout) {
@@ -229,7 +244,7 @@
         var czr = (along - span + size / 2) * sin, k = Math.min(P / (P - czr - 80), 1 + GAP * 0.6 / size), zHot = P - P / k;
         // it turns toward you only as far as its column's width (and half the gaps) allows
         var restW = size * cos * P / (P - czr), fit = (restW + GAP * 0.6) / (size * k), turn = fit >= 1 ? 0 : Math.acos(fit) * 180 / Math.PI;
-        var zIn = (size / 2 - span) * sin, innerB = start * P / (P - zIn), outerB = w / 2 - 6, half = size / 2 * k * Math.cos(turn * Math.PI / 180);
+        var zIn = (size / 2 - span) * sin, innerB = start * P / (P - zIn), outerB = w / 2 - 6 - s * shift, half = size / 2 * k * Math.cos(turn * Math.PI / 180);
         var lo = innerB + half, hi = outerB - half, d = s * parseFloat(card.style.getPropertyValue('--cx')) * P / (P - czr);   // from where it stands (Kolāža moves it)
         d = lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, d));
         card.style.setProperty('--cin', (s * (d * (P - zHot) / P) - parseFloat(card.style.getPropertyValue('--cx'))).toFixed(1) + 'px');

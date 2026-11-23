@@ -210,6 +210,16 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
     var on = q !== '0';
     try { on = on && (q === '1' || localStorage.getItem('mkMoodX') !== '0'); } catch (_s) {}
     if (on) root.classList.add('mk-mx');
+    // Noskaņa B (2026-11-23, the user): the same card, simpler and lighter, Xiaomi-band clear (a still day or
+    // night sky instead of the ASCII one, the colleagues still in two columns, a fatigue ring round the bubble).
+    // RG only (/rad keeps Noskaņa X). ?moodb=0 shows Noskaņa X again (remembered), ?moodb=1 back.
+    var qb = null;
+    try { qb = new URLSearchParams(location.search).get('moodb'); } catch (_q) {}
+    try { qb = qb || new URLSearchParams(parent.location.search).get('moodb'); } catch (_p) {}
+    try { if (qb === '0') localStorage.setItem('mkMoodB', '0'); else if (qb === '1') localStorage.removeItem('mkMoodB'); } catch (_w) {}
+    var b = on && window.MINKA_APP !== 'rad' && qb !== '0';
+    try { b = b && (qb === '1' || localStorage.getItem('mkMoodB') !== '0'); } catch (_s) {}
+    if (b) root.classList.add('mk-mb');
   } catch (_e) {}
 })();
 </script>
@@ -936,8 +946,8 @@ function _mkToast(msg, type) {
 <script src="js/page/minka-skins.js?v=20261122ss2"></script>
 <script src="js/page/card-lock.js?v=20261027pl5"></script>
 <script src="js/night-plan-history.js?v=20261022ot1"></script>
-<script src="js/page/mk-side-faces.js?v=20261123em5"></script>
-<script src="js/calendar.js?v=20261123em5"></script>
+<script src="js/page/mk-side-faces.js?v=20261123dn1"></script>
+<script src="js/calendar.js?v=20261123dn1"></script>
 <script src="js/page/coffee-fx.js?v=20261116gc7" defer></script>
 <script src="js/page/coffee-gold.js?v=20261116gc1" defer></script>
 <script src="js/depth-cards.js?v=20261022hv1" defer></script>
@@ -1712,8 +1722,8 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260926mg1">
 
-<script src="js/page/mood-feedback.js?v=20261115sw7"></script>
-<script src="js/page/mood-trend.js?v=20261109cl68" defer></script>
+<script src="js/page/mood-feedback.js?v=20261123mb11"></script>
+<script src="js/page/mood-trend.js?v=20261123mb1" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20261010cd1">
 
@@ -1786,8 +1796,8 @@ window.addEventListener('message', function(e) {
      animāciju un neviena mūžīgi dzīvojoša kompozitora slāņa. Tieši tāpēc arī
      mokapā šī pieeja saukta par "fake glass": izskatās pēc stikla, bet maksā
      tik, cik parasts fons. -->
-<link rel="stylesheet" id="mk-side-glass-v1" href="css/page/mk-side-glass-v1.css?v=20261123em5">
-<link rel="stylesheet" href="css/page/mk-side-faces.css?v=20261123em5">
+<link rel="stylesheet" id="mk-side-glass-v1" href="css/page/mk-side-glass-v1.css?v=20261123dn1">
+<link rel="stylesheet" href="css/page/mk-side-faces.css?v=20261123dn1">
 
 <!-- Header uz plata monitora.
 
@@ -2030,9 +2040,11 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <script src="js/page/mk-header-x.js?v=20261121wg4" defer></script>
 <!-- Noskaņa X: jaunais noskaņas bloks RG datorā (izslēdzams ar ?mood=0, sk. <head>). -->
 <link rel="stylesheet" id="mk-mood-x" href="css/page/mk-mood-x.css?v=20261022jr1">
-<link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261115s20">
+<!-- Noskaņa B: Noskaņa X vienkāršāk un vieglāk (html.mk-mb, sk. <head>). -->
+<link rel="stylesheet" id="mk-mood-b" href="css/page/mk-mood-b.css?v=20261123mb17">
+<link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261123mb2">
 <link rel="stylesheet" href="css/page/card-layout.css?v=20261116al1">
 <script src="js/page/card-layout.js?v=20261115s24" defer></script>
-<script src="js/page/corridor.js?v=20261115s20" defer></script>
+<script src="js/page/corridor.js?v=20261123mb2" defer></script>
 </body>
 </html>

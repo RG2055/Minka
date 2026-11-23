@@ -1,0 +1,321 @@
+/* Noskaņa B (2026-11-23): the Noskaņa X card simpler, clearer and lighter, as a watch face (the user: Xiaomi
+   Smart Band; after a 24-hour shift everything readable at a glance; the old charm kept: the glass, the 3D
+   faces, the colleagues' liquid, the faces on the curve). On with html.mk-mb (kalendars/index.html, RG only).
+   Same layer as mk-mood-x.css and loaded after it, one class more in every selector: these win.
+   - a still sky drawn once (gradients and two small pictures; no canvas, no blend modes, no blur): by day
+     the sun behind a cloud and a warm light low on the left, by night the moon and a few stars (data-mb-sky)
+   - the fatigue as the big number top left, the card's accent from it (--mb-acc: green, orange, red), and a
+     ring round the bubble that fills with it (--mb-fat)
+   - the month's numbers stacked top right, the shift's coffee a yellow chip under them, only when logged
+   - the colleagues still, in two columns (mood-feedback.js mbColumns); the bottom row all glass, the chat a
+     drawn speech bubble with its count inside */
+@layer mk-mx {
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card.card.mk-mid-card {
+    --mb-acc: #3ad07a;
+    position: relative !important;
+    isolation: isolate !important;
+    background: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+  }
+  /* --- the sky --- */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card > .mb-scene {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: -1 !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: hidden;
+    pointer-events: none;
+    /* no window (the user): the sky fades into the page at every edge, as the ASCII one did */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(180deg, transparent 0, #000 9%, #000 78%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(180deg, transparent 0, #000 9%, #000 78%, transparent 100%);
+    mask-composite: intersect;
+    background:
+      radial-gradient(70% 34% at 0% 100%, rgba(255, 122, 64, .34), transparent 72%),
+      radial-gradient(46% 22% at 54% 4%, rgba(255, 214, 120, .2), transparent 72%),
+      linear-gradient(170deg, #1c6fd1 0%, #134c9c 26%, #0c2c62 56%, #081732 100%);
+  }
+  :root.mk-mx.mk-mb[data-mb-sky="night"] #grafiks-list .rg-feedback-card > .mb-scene {
+    background:
+      radial-gradient(40% 18% at 64% 5%, rgba(235, 240, 255, .14), transparent 72%),
+      linear-gradient(175deg, #0d1a44 0%, #0a1434 40%, #070d22 72%, #050913 100%);
+  }
+  .mb-scene > .mb-wave {
+    position: absolute;
+    left: -20%;
+    right: -20%;
+    bottom: -32%;
+    height: 58%;
+    border-radius: 50%;
+    background: linear-gradient(180deg, rgba(30, 74, 150, 0) 0%, rgba(30, 74, 150, .5) 16%, rgba(8, 18, 40, 0) 72%);
+    rotate: -4deg;
+  }
+  :root[data-mb-sky="night"] .mb-scene > .mb-wave { background: linear-gradient(180deg, rgba(52, 86, 214, 0) 0%, rgba(52, 86, 214, .38) 16%, rgba(8, 14, 34, 0) 72%); rotate: 5deg; }
+  .mb-scene > img { position: absolute; display: block; pointer-events: none; user-select: none; }
+  .mb-scene > .mb-sun { left: 63%; top: 2px; width: 58px; height: 58px; translate: -50% 0; }
+  .mb-scene > .mb-moon { left: 60%; top: 10px; width: 46px; height: 46px; translate: -50% 0; filter: saturate(.3) brightness(1.18); rotate: -18deg; }
+  .mb-scene > .mb-stars {
+    position: absolute;
+    inset: 0 0 40% 0;
+    background:
+      radial-gradient(circle, #fff 0 1px, transparent 1.6px) 18% 22% / 4px 4px no-repeat,
+      radial-gradient(circle, #fff 0 1px, transparent 1.6px) 34% 8% / 4px 4px no-repeat,
+      radial-gradient(circle, #fff 0 1.2px, transparent 1.8px) 78% 30% / 4px 4px no-repeat,
+      radial-gradient(circle, #fff 0 .8px, transparent 1.4px) 88% 12% / 4px 4px no-repeat,
+      radial-gradient(circle, #fff 0 .8px, transparent 1.4px) 46% 34% / 4px 4px no-repeat,
+      radial-gradient(circle, #fff 0 1px, transparent 1.6px) 8% 58% / 4px 4px no-repeat,
+      radial-gradient(circle, #fff 0 .8px, transparent 1.4px) 94% 64% / 4px 4px no-repeat,
+      radial-gradient(circle, #fff 0 1px, transparent 1.6px) 70% 86% / 4px 4px no-repeat,
+      radial-gradient(circle, #fff 0 .8px, transparent 1.4px) 24% 92% / 4px 4px no-repeat;
+    opacity: .7;
+  }
+  :root[data-mb-sky="day"] .mb-scene > :is(.mb-moon, .mb-stars),
+  :root[data-mb-sky="night"] .mb-scene > .mb-sun { display: none; }
+  /* the old sky's wash round the face and the dark band of the stage: gone, the sky shows */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card :is(.rg-mood-stage, .rg-trend, .rg-trend-plot) { background: none !important; box-shadow: none !important; }
+
+  /* --- the fatigue: the big number, top left --- */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--left { top: 10px !important; left: 14px !important; align-items: flex-start !important; gap: 4px !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--fatigue {
+    height: auto !important;
+    padding: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--fatigue > svg { display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--fatigue b {
+    color: #f6f8fb !important;
+    -webkit-text-fill-color: #f6f8fb !important;
+    font: 800 50px/.88 'Geist Sans', system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+    letter-spacing: -.04em !important;
+    text-shadow: none !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--fatigue b small {
+    margin-left: 2px;
+    color: var(--mb-acc);
+    -webkit-text-fill-color: var(--mb-acc);
+    font: 700 22px/1 'Geist Sans', system-ui, sans-serif;
+    letter-spacing: 0;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--left .rg-mood-side-label {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    color: rgba(236, 242, 250, .66) !important;
+    -webkit-text-fill-color: rgba(236, 242, 250, .66) !important;
+    font: 600 12px/1 'Geist Sans', system-ui, sans-serif !important;
+    text-shadow: none !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--left .rg-mood-side-label::before {
+    content: '';
+    width: 11px;
+    height: 11px;
+    background: var(--mb-acc);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 2 4 14h6l-1 8 9-12h-6l1-8Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 2 4 14h6l-1 8 9-12h-6l1-8Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  /* --- the month, top right, stacked; the shift's coffee a yellow chip under it --- */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top {
+    left: auto !important;
+    right: 12px !important;
+    top: 10px !important;
+    translate: none !important;
+    height: auto !important;
+    max-width: 46% !important;
+    padding: 0 !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 2px !important;
+    background: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  /* nothing yet this month: no "Šomēnes" alone */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top:not(:has(.rg-month-item.is-on:not(.is-empty))) { display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-mt-cap { padding: 0 !important; color: rgba(236, 242, 250, .58) !important; font: 600 11px/1.2 'Geist Sans', system-ui, sans-serif !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item {
+    height: auto !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    border-radius: 6px !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item :is(b, small) {
+    color: #f6f8fb !important;
+    -webkit-text-fill-color: #f6f8fb !important;
+    font: 800 22px/1.05 'Geist Sans', system-ui, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+    text-shadow: none !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--radio b em { max-width: 132px !important; font-size: 15px !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--coffee b::after { font: 600 11px/1 'Geist Sans', system-ui, sans-serif; color: rgba(236, 242, 250, .58); margin-left: 3px; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-ico { width: 14px !important; height: 14px !important; }
+  /* the bolus: GE over Ph, a thin line between, the letters small and quiet */
+  /* the dock's bolus icon at the left of GE over Ph (mood-feedback.js monthIcons); the total itself not shown */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus { flex-direction: row !important; align-items: center !important; gap: 8px !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus b { display: inline-flex !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus b em { display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus .rg-month-ico { width: 24px !important; height: 24px !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus small { flex-direction: column !important; align-items: flex-end !important; gap: 3px !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-split { display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus small em { font-style: normal; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus small em + em { padding-top: 3px; border-top: 1px solid rgba(236, 242, 250, .2); }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--bolus small em i {
+    display: inline !important;
+    margin-right: 5px !important;
+    color: rgba(236, 242, 250, .58) !important;
+    -webkit-text-fill-color: rgba(236, 242, 250, .58) !important;
+    font: 600 12px/1 'Geist Sans', system-ui, sans-serif !important;
+    font-style: normal !important;
+    vertical-align: .2em;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--right {
+    top: 88px !important;
+    right: 12px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-side--right .rg-mood-side-label { order: -1; color: rgba(236, 242, 250, .58) !important; -webkit-text-fill-color: rgba(236, 242, 250, .58) !important; font: 600 11px/1 'Geist Sans', system-ui, sans-serif !important; text-shadow: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee {
+    height: 22px !important;
+    padding: 0 7px !important;
+    gap: 4px !important;
+    border: 0 !important;
+    border-radius: 7px !important;
+    background: #ffe14d !important;
+    box-shadow: none !important;
+    color: #2b2500 !important;
+    -webkit-text-fill-color: #2b2500 !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee b { font: 800 14px/1 'Geist Sans', system-ui, sans-serif !important; color: #2b2500 !important; -webkit-text-fill-color: #2b2500 !important; text-shadow: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-pill--coffee svg { width: 14px !important; height: 14px !important; color: #2b2500 !important; fill: currentColor; }
+
+  /* --- the ring round the bubble: the fatigue, in its colour --- */
+  .rg-mood-blob-wrap > .mb-ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    width: 122%;
+    height: 122%;
+    translate: -50% -50%;
+    rotate: -90deg;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .mb-ring circle { fill: none; stroke: rgba(236, 242, 250, .12); stroke-width: 2.6; }
+  .mb-ring circle.mb-ring-on { stroke: var(--mb-acc, #3ad07a); stroke-linecap: round; stroke-dasharray: calc(var(--mb-fat, 0) * 1) 100; transition: stroke-dasharray .6s cubic-bezier(.2, .9, .25, 1); }
+
+  /* --- the bubble's liquid as water (the user: more real, as in games, no load): light just under the surface,
+     deeper and darker below, a bright line at the surface; all still --- */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-liquid--fatigue {
+    background:
+      radial-gradient(70% 36% at 32% 6%, rgba(255, 255, 255, .3), transparent 62%),
+      linear-gradient(180deg, transparent 25%, rgba(0, 14, 30, .4) 100%),
+      linear-gradient(180deg, rgba(var(--rg-fatigue-liquid-rgb, 45, 212, 191), .44) 0%, rgba(var(--rg-fatigue-liquid-rgb, 45, 212, 191), .66) 100%) !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-liquid::before {
+    height: 4px !important;
+    opacity: .95 !important;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, .8), currentColor 52%, transparent 78%) !important;
+  }
+
+  /* --- the colleagues: white letters on the glass (the liquid stays) --- */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-mood-person.is-initials .rg-mood-person-emoji {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-family: 'Geist Sans', system-ui, sans-serif !important;
+    font-weight: 800 !important;
+    font-size: calc(var(--rg-person-size, 42px) * .34) !important;
+    letter-spacing: .02em !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .45) !important;
+  }
+
+  /* --- the bottom row: "Savs vērtējums" glass too, a plus in it; the chat a drawn speech bubble --- */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child { border: 0 !important; background: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-own .rg-pulse-own-icon { display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-own > span:first-child::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 15px;
+    height: 15px;
+    translate: -50% -50%;
+    background:
+      linear-gradient(#eef3fa, #eef3fa) center / 100% 2.6px no-repeat,
+      linear-gradient(#eef3fa, #eef3fa) center / 2.6px 100% no-repeat;
+    border-radius: 2px;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-own::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    z-index: 1 !important;
+    width: calc(var(--mx-tap) * 1.18) !important;
+    height: calc(var(--mx-tap) * 1.18) !important;
+    translate: -50% -50% !important;
+    background: url('../../assets/mood-glass-premium.webp?v=20260820b') center / contain no-repeat !important;
+    pointer-events: none !important;
+  }
+  /* the speech bubble filling most of the glass, its short tail tucked under the corner, all inside the round */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon {
+    width: calc(var(--mx-tap, 36px) * .8) !important;
+    min-width: 0 !important;
+    height: calc(var(--mx-tap, 36px) * .67) !important;
+    padding: 0 0 calc(var(--mx-tap, 36px) * .17) !important;
+    translate: 0 1px !important;
+    border-radius: 0 !important;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 30'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='1' stop-color='%23d6e4ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M8 1.5h20a6.5 6.5 0 0 1 6.5 6.5v8a6.5 6.5 0 0 1-6.5 6.5H15.5l-5.6 5.2c-.7.6-1.7.1-1.6-.8l.3-4.4H8A6.5 6.5 0 0 1 1.5 16V8A6.5 6.5 0 0 1 8 1.5Z' fill='url(%23g)'/%3E%3Cpath d='M8 3h20' stroke='%23fff' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat !important;
+    box-shadow: none !important;
+  }
+  /* the old icon's tail (a white triangle, mk-comment-bubble-v1.css): the drawn bubble has its own */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-write--comment .rg-comment-icon::after { content: none !important; display: none !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon::before {
+    color: #0d1b33;
+    -webkit-text-fill-color: #0d1b33;
+    font: 800 11px/1 'Geist Sans', system-ui, sans-serif;
+    letter-spacing: -.02em;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon:is(:not([data-total]), [data-total=""], [data-total="0"])::before {
+    content: '';
+    width: 16.5px;
+    height: 5px;
+    background: radial-gradient(circle, #0d1b33 0 1.8px, transparent 2.2px) 0 50% / 5.5px 5px repeat-x;
+  }
+  /* the five ratings in softly tinted glass, lit from inside, its edge a shade deeper (the user: as a soft lit
+     pill; pink for the best, through rose and coral, to red for the worst) */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="excellent"] { --mb-tint: 255, 150, 205; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="good"] { --mb-tint: 255, 145, 180; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="ok"] { --mb-tint: 255, 136, 150; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="bad"] { --mb-tint: 255, 110, 112; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse="terrible"] { --mb-tint: 242, 72, 72; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse]::before {
+    background:
+      radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .18), transparent 52%),
+      radial-gradient(circle, rgba(var(--mb-tint), .22) 30%, rgba(var(--mb-tint), .58) 100%) !important;
+    box-shadow: inset 0 0 0 1px rgba(var(--mb-tint), .75), inset 0 0 10px rgba(var(--mb-tint), .45) !important;
+  }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse]:not([aria-disabled="true"]):hover::before {
+    background:
+      radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .22), transparent 52%),
+      radial-gradient(circle, rgba(var(--mb-tint), .3) 30%, rgba(var(--mb-tint), .7) 100%) !important;
+  }
+  /* the selected face: its own tint stronger and a ring in the card's accent, as the band's chosen face */
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected::before { box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .3), 0 0 0 2px var(--mb-acc) !important; }
+  :root.mk-mx.mk-mb #grafiks-list .rg-feedback-card .rg-pulse-tap[data-rg-pulse].is-selected::before {
+    background:
+      radial-gradient(circle at 50% 40%, rgba(255, 255, 255, .22), transparent 52%),
+      radial-gradient(circle, rgba(var(--mb-tint), .34) 30%, rgba(var(--mb-tint), .75) 100%) !important;
+    box-shadow: inset 0 0 0 1.5px rgba(var(--mb-tint), .8), 0 0 0 2px var(--mb-acc) !important;
+  }
+}

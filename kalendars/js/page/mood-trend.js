@@ -213,6 +213,9 @@
      whose character changes, 24 times a second. Nothing runs off screen,
      in a hidden tab or for reduced motion. */
   var MX = document.documentElement.classList.contains('mk-mx');
+  // Noskaņa B (kalendars/index.html): a still sky in CSS instead of this ASCII one (nothing to build or step), and
+  // the curve in the fatigue's own colour (--mb-acc on the card, mood-feedback.js), without the dither under it.
+  var MB = MX && document.documentElement.classList.contains('mk-mb');
   var FACES = { excellent: ['😍', 'Lieliski'], good: ['🙂', 'Labi'], ok: ['😐', 'Normāli'], bad: ['😞', 'Slikti'], terrible: ['😠', 'Ļoti slikti'] };
   var WD = ['svētdiena', 'pirmdiena', 'otrdiena', 'trešdiena', 'ceturtdiena', 'piektdiena', 'sestdiena'];
   var MON = ['janvāris', 'februāris', 'marts', 'aprīlis', 'maijs', 'jūnijs', 'jūlijs', 'augusts', 'septembris', 'oktobris', 'novembris', 'decembris'];
@@ -314,7 +317,7 @@
     return c;
   }
   function loadSky() {
-    if (sky.state) return;
+    if (sky.state || MB) return;
     sky.state = 'loading';
     var img = new Image();
     img.decoding = 'async';
@@ -683,11 +686,12 @@
       // the dither fill below, then the line: a dark edge so it reads on the
       // bright clouds, a soft wide halo (a plain wider stroke) and the line itself
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ditherFill(ctx, line, dpr);
+      var acc = MB && getComputedStyle(card).getPropertyValue('--mb-acc').trim();
+      if (!acc) ditherFill(ctx, line, dpr);
       trace(ctx);
-      ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = 4.2; ctx.stroke();
-      ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke();
-      ctx.strokeStyle = '#8fdcff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = acc ? 5 : 4.2; ctx.stroke();
+      if (!acc) { ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke(); }
+      ctx.strokeStyle = acc || '#8fdcff'; ctx.lineWidth = acc ? 2.6 : 2; ctx.stroke();
       ctx.restore();
     }
     // The sky's characters fill down to this curve: move their border too.
@@ -860,7 +864,8 @@
     var sig = m.selected + '|' + m.live + '|' + [geo.W, geo.H, geo.faceY, geo.faceR, window.devicePixelRatio || 1].join(',')
       + '|' + m.rows.map(function (r) { return owns[r.day] && owns[r.day].emoji || ''; }).join(',')
       + '|' + m.rows.map(function (r) { return r.mood ? r.mood.score.toFixed(3) + ':' + r.mood.total : '-'; }).join(',')
-      + '|' + JSON.stringify(coffeeByDay(m.rows.map(function (r) { return r.day; })));
+      + '|' + JSON.stringify(coffeeByDay(m.rows.map(function (r) { return r.day; })))
+      + (MB ? '|' + getComputedStyle(card).getPropertyValue('--mb-acc') : '');   // the curve's colour follows the fatigue
     scape.m = m;
     scape.geo = geo;
     loadSky();

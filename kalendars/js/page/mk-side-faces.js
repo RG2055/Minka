@@ -8,7 +8,7 @@
    face. A press anywhere else on a face opens the person's fatigue, as the ring does. */
 (function () {
   'use strict';
-  var FACES = [['k', 'Klasiskais'], ['g', 'Spīdums'], ['b', 'Nogurumiņš'], ['p', 'Dzīvnieks']];
+  var FACES = [['b', 'Nogurumiņš'], ['p', 'Dzīvnieks']];   // (Klasiskais and Spīdums taken out: not wanted)
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   /* The person's own correction to their fatigue (points; minka-skins.js keeps it in the look as "fa": points and
@@ -44,16 +44,8 @@
   // the shared pieces (after the user's own sketch of the card: round capsules, a clock in the shift's one, a
   // calendar before the next shift)
   var KIND = { diena: 'D', dienas: 'D', nakts: 'N', naktis: 'N', diennakts: '24h', diennaktis: '24h' };
-  function chip(d) { return d.chip ? '<span class="sf-chip sf-sh" data-k="' + d.kind + '"><span class="sf-ct">' + esc(d.chip) + '</span></span>' : ''; }
   function name(d) { return '<b>' + esc(d.first) + '</b>' + (d.last ? '<i>' + esc(d.last) + '</i>' : ''); }
-  // the name beside the emoji: first name, surname, then the shift's capsule (and, where a face asks, the caffeine after it)
-  function who(d, withCaf) { return '<div class="sf-id">' + name(d) + '<span class="sf-tags">' + chip(d) + (withCaf ? caf(d) : '') + '</span></div>'; }
-  function numb(d) { return '<div class="sf-nb"><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div><span class="sf-lv">' + esc(d.label) + '</span></div>'; }
   function caf(d) { return d.caf ? '<span class="sf-caf"><b>' + esc(d.caf) + '</b><small>mg</small></span>' : ''; }
-  function next(d) { return d.next ? '<div class="sf-nx" title="Nākamā maiņa">' + esc(d.next) + '</div>' : ''; }
-  // the month's capsules: done/all on a dark one, then its shifts by kind in the kinds' colours (1×D, 8×N, 5×24h)
-  function count(d) { return /^\d+\/\d+$/.test(d.count) ? '<span class="sf-chip sf-cp" title="Mēneša maiņas: izdarītas ' + esc(d.count.replace('/', ' no ')) + '">' + esc(d.count) + '</span>' : ''; }
-  function kinds(d) { return d.kinds.map(function (k) { return KIND[k[2]] ? '<span class="sf-chip" style="background:' + esc(k[1]) + '">' + k[0] + '×' + KIND[k[2]] + '</span>' : ''; }).join(''); }
   /* Būtne and Dzīvnieks (the user's picture): three capsules as tall as the Nogurums row, each a small word over its
      value with an icon: "Šodien 12 h" (the shift's colour), "Mēnesī 2 / 4", "Maiņas 4 × N" (the kind's colour; several
      kinds sit side by side in their own colours on the month's capsule). Plain spans inside: the name's b / i rules
@@ -72,15 +64,7 @@
       + (/^\d+\/\d+$/.test(d.count) ? two('sf-cp', 'Mēnesī', esc(d.count.replace('/', '\u2009/\u2009')), ' title="Mēneša maiņas: izdarītas ' + esc(d.count.replace('/', ' no ')) + '"') : '')
       ;
   }
-  function month(d) { var m = count(d) + kinds(d); return m ? '<div class="sf-mo">' + m + '</div>' : ''; }
 
-  /* Spīdums: the colour glows up from the bottom; a large ring is the fatigue gauge with the number in it, and a
-     line shows how far the shift is. */
-  function ring(d) {
-    var f = Math.max(.02, Math.min(1, (+d.score || 0) / 100)), len = 2 * Math.PI * 43;
-    return '<div class="sf-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="r0" cx="50" cy="50" r="43"/><circle class="r1" cx="50" cy="50" r="43" stroke-dasharray="' + (len * f).toFixed(1) + ' ' + len.toFixed(1) + '" transform="rotate(-90 50 50)"/></svg>' + numb(d) + '</div>';
-  }
-  function line(d) { return '<div class="sf-line"><u style="width:' + (d.p * 100).toFixed(1) + '%"></u></div>'; }
   /* Būtne: a jelly creature in the fatigue colour, after the stress screen of a sports band and the user's brief:
      a slightly lopsided soft body with one highlight and a shadow on the ground, two glossy eyes and a small
      mouth. Its face and posture follow the fatigue: bright, open-mouthed and upright when rested; heavier
@@ -228,8 +212,7 @@
     spr.__t = setTimeout(function () { play(back); }, ACT.waving[2] * 2000);
   }, true);
 
-  /* Spīdums: the name, the surname and the shift's capsule beside the emoji, the number in the ring.
-     Būtne and Dzīvnieks follow the user's sketch and brief: the figure stays large on the right and nothing
+  /* Būtne and Dzīvnieks follow the user's sketch and brief: the figure stays large on the right and nothing
      lies over it; beside the emoji the name and the surname; under the emoji one row of capsules (the shift,
      the month's done/all, its kinds in the kinds' colours), then one row with the fatigue ("Nogurums | 22", in
      the fatigue colour, the number the strong part) and the next shift; along the very bottom the shift's
@@ -277,7 +260,6 @@
       + (figure.indexOf('sf-pick') < 0 ? PICK : '');
   }
   var DRAW = {
-    g: function (d) { return who(d, 1) + month(d) + line(d) + next(d) + ring(d); },
     b: function (d) { d.ar = KIND_AR[petKind(d)]; return sketch(d, pet(d)); },
     p: function (d) { return sketch(d, sprite(d)); }
   };
@@ -623,8 +605,6 @@
      the person's look (everyone sees it; a PIN-locked card refuses as it does for the look). With Dzīvnieks
      chosen, the pets open beside the list: their groups, twelve pictures a page (no scrolling), a press takes one. */
   var ICON = {
-    k: '<circle cx="34" cy="9" r="6" fill="none" stroke-width="2.4"/><path d="M4 18v4M9 16v6M14 17v5M19 15v7M24 18v4" stroke-width="2.6"/>',
-    g: '<path d="M4 21h18" stroke-width="2.4"/><circle cx="22" cy="21" r="2.6" stroke="none" fill="currentColor"/><circle cx="35" cy="13" r="7" fill="none" stroke-width="2.6"/><path d="M6 5v9" stroke-width="2.6"/><rect x="11" y="5" width="6" height="9" rx="3" fill="none" stroke-width="2.4"/>',
     b: '<path d="M10 23C10 10 16 4 22 4s12 6 12 19c0 3-24 3-24 0Z" fill="none" stroke-width="2.4"/><circle cx="18" cy="14" r="1.6" stroke="none" fill="currentColor"/><circle cx="26" cy="14" r="1.6" stroke="none" fill="currentColor"/>',
     p: '<path d="M11 23V11l-1-7 6 4h12l6-4-1 7v12Z" fill="none" stroke-width="2.4"/><circle cx="18" cy="15" r="1.6" stroke="none" fill="currentColor"/><circle cx="26" cy="15" r="1.6" stroke="none" fill="currentColor"/>'
   };
@@ -636,7 +616,7 @@
   }
   function petPanel() {
     if (!pick) return;
-    var box = pick.el.querySelector('.sfp-pets'), card = pick.card, on = (card.dataset.sf || 'k') === 'p';
+    var box = pick.el.querySelector('.sfp-pets'), card = pick.card, on = (card.dataset.sf || 'b') === 'p';
     if (card.dataset.sf === 'b') {
       var d = read(card), mine = petKind(d);
       box.hidden = false;
@@ -678,7 +658,7 @@
     var worker = card.dataset.worker || '';
     if (pick && pick.worker === worker) { close(); return; }
     close();
-    var el = document.createElement('div'), cur = card.dataset.sf || 'k';
+    var el = document.createElement('div'), cur = card.dataset.sf || 'b';
     el.id = 'mkSfPick'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Kartītes skats');
     el.innerHTML = '<div class="sfp-faces">' + FACES.map(function (f) {
       return '<button type="button" data-f="' + f[0] + '" aria-pressed="' + (f[0] === cur) + '"><svg viewBox="0 0 44 26" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[f[0]] + '</svg>' + f[1] + '</button>';

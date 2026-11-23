@@ -4,6 +4,8 @@
   // Noskaņa X (kalendars/index.html <head>): the redesigned card on the RG
   // desktop. Its styles are css/page/mk-mood-x.css, its curve mood-trend.js.
   var MX = document.documentElement.classList.contains('mk-mx');
+  // Noskaņa B (kalendars/index.html): the same card simpler and lighter, see mbEnhance, mbColumns, mk-mood-b.css.
+  var MB = MX && document.documentElement.classList.contains('mk-mb');
   // /rad keeps its own mood and comments in the browser too (same origin).
   var mkKey = (window.__mkKey || function (k) { return k; });
   var PULSE_KEY = mkKey('minkaShiftPulseV2');
@@ -556,7 +558,7 @@
     set('radio', n.top ? n.top.name : '', n.top ? 'biežākā stacija' : 'radio šomēnes', '', n.top ? 'Šomēnes biežāk skanēja ' + n.top.name + ' (' + n.top.days + ' dienas), kopā ' + n.stations + ' stacijas. Atvērt statistiku' : 'Radio šomēnes nav skanējis');
     // Bolus: GE against Philips as one split bar under the number.
     var share = n.bolus ? (n.ge / n.bolus).toFixed(3) : '0.5';
-    set('bolus', n.bolus, 'bolusa maiņas', n.bolus ? '<i class="rg-month-split" style="--ge:' + share + '" aria-hidden="true"></i><em>GE ' + n.ge + '</em><em>Ph ' + n.philips + '</em>' : '', 'Šomēnes ' + n.bolus + ' bolusa maiņas: GE ' + n.ge + ', Philips ' + n.philips + '. Atvērt statistiku');
+    set('bolus', n.bolus, 'bolusa maiņas', n.bolus ? '<i class="rg-month-split" style="--ge:' + share + '" aria-hidden="true"></i>' + (MB ? '<em><i>GE</i>' + n.ge + '</em><em><i>Ph</i>' + n.philips + '</em>' : '<em>GE ' + n.ge + '</em><em>Ph ' + n.philips + '</em>') : '', 'Šomēnes ' + n.bolus + ' bolusa maiņas: GE ' + n.ge + ', Philips ' + n.philips + '. Atvērt statistiku');
     monthRadioFetch(n.range);
     // Past days rarely change, but corrections from another device should
     // still arrive: one month request per page load, then every 15 minutes.
@@ -573,15 +575,18 @@
      radio emoji. */
   var monthIconSet = '';
   function monthIcons(row) {
-    var dock = '';
+    var dock = '', bolus = '';
     try { dock = window.parent && window.parent !== window && window.parent.__mkDockIcon ? window.parent.__mkDockIcon('radioIdleBtn') || window.parent.__mkDockIcon('radioToggle') : ''; } catch (_e) {}
-    var key = dock.length + ':' + dock.slice(-60);
+    try { bolus = MB && window.parent && window.parent !== window && window.parent.__mkDockIcon ? window.parent.__mkDockIcon('bolusDocBtn') : ''; } catch (_e) {}   // B: the dock's own bolus icon by GE and Ph (the user)
+    var key = dock.length + ':' + dock.slice(-60) + '|' + bolus.length;
     if (key === monthIconSet && row.querySelector('.rg-month-ico:not(:empty)')) return;
     monthIconSet = key;
     var cup = row.querySelector('.rg-month-item--coffee .rg-month-ico');
     if (cup) cup.innerHTML = moodPillCupSvg();
     var radio = row.querySelector('.rg-month-item--radio .rg-month-ico');
     if (radio) { radio.innerHTML = dock || '\ud83d\udcfb'; radio.classList.toggle('is-emoji', !dock); }
+    var bol = bolus && row.querySelector('.rg-month-item--bolus .rg-month-ico');
+    if (bol) bol.innerHTML = bolus;
   }
   function moodBlobMarkup() {
     var base = moodVisuals._none;
@@ -821,10 +826,10 @@
       progress = value / 35;
     } else if (value <= 65) {
       from = [45, 212, 191];
-      to = [139, 92, 246];
+      to = [96, 165, 250];   // blue, never violet (the user)
       progress = (value - 35) / 30;
     } else {
-      from = [139, 92, 246];
+      from = [96, 165, 250];
       to = [251, 113, 133];
       progress = (value - 65) / 35;
     }
@@ -967,6 +972,33 @@
     if (orbit.anims.length) orbitTick(performance.now());
     orbitListen();
   }
+  /* Noskaņa B: the colleagues still (the user: simpler, nothing turning), in two columns either side of the
+     bubble, radiographers left and radiologists right; a column starts under the big number and the month's numbers
+     (the user: nothing over anything) and ends a little under the bubble; more than four a side make two
+     columns there, the inner one half a step lower. No animation, no tick. d: the bubble's size. */
+  function mbColumns(people, W, big, d) {
+    orbit.anims.forEach(function (anim) { anim.cancel(); });
+    orbit.anims = [];
+    orbitListen();
+    // the room for a column, as edges from the face's centre: under the big number and the month (84 px from the
+    // stage's top) down to just above the curve's numbers; a column that would not fit gets smaller glass, never
+    // glass over glass (the user: four a side overlapped)
+    // radiographers on the left, radiologists on the right, as their walls stand (the user: no mixing)
+    var topE = 84 - MX_FACE_Y, botE = d / 2 + 56;
+    var isRd = function (p) { return p.classList.contains('is-rd'); };
+    [people.filter(function (p) { return !isRd(p); }), people.filter(isRd)].forEach(function (side, s) {
+      var k = side.length, rows = k, size = big;
+      if (rows > 1) size = Math.min(big, (botE - topE - (rows - 1) * 6) / rows);
+      var gap = rows > 1 ? Math.min(size + 16, (botE - topE - size) / (rows - 1)) : 0, mid = (topE + botE) / 2;
+      var x = (W / 2 - 10 - size / 2) * (s ? 1 : -1);
+      side.forEach(function (person, r) {
+        var y = mid + (r - (rows - 1) / 2) * gap;
+        person.style.setProperty('--rg-person-size', size.toFixed(1) + 'px');
+        person.style.transform = 'translate(-50%,-50%) translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+        person.style.opacity = '';
+      });
+    });
+  }
   function orbitHold(held) {
     if (orbit.held === held) return;
     orbit.held = held;
@@ -980,22 +1012,9 @@
   var mxRadio = { on: false, art: '', name: '', tint: '' };
   function mxRadioArt(url) { return url && /^(https?:|data:)/.test(url) && !/radio-default\.svg(\?|$)|DefaultTrack/.test(url) ? url : ''; }
   function mxRadioOrb(ring) {
+    // no station bubble among the colleagues any more (the user): the music shows as the dancers in the big one
     var orb = ring.querySelector('.rg-mood-radio-orb');
-    if (!mxRadio.on) { if (orb) orb.remove(); return; }
-    if (!orb) {
-      orb = document.createElement('button');
-      orb.type = 'button';
-      orb.className = 'rg-mood-person rg-mood-radio-orb';
-      orb.innerHTML = '<span class="rg-mood-person-glass"><img class="rg-mood-radio-art" alt="" decoding="async" hidden><span class="rg-mood-person-emoji">\ud83d\udcfb</span><canvas class="rg-mood-radio-spec" aria-hidden="true"></canvas></span>';
-      var img = orb.querySelector('img');
-      img.addEventListener('error', function () { img.hidden = true; img.removeAttribute('src'); orb.classList.add('is-solo'); });
-      ring.appendChild(orb);
-    }
-    orb.setAttribute('aria-label', 'Skan radio: ' + (mxRadio.name || 'radio') + '. Atvērt radio');
-    var art = orb.querySelector('.rg-mood-radio-art');
-    if (mxRadio.art) { if (art.getAttribute('src') !== mxRadio.art) art.src = mxRadio.art; art.hidden = false; }
-    else { art.hidden = true; art.removeAttribute('src'); }
-    orb.classList.toggle('is-solo', art.hidden);
+    if (orb) orb.remove();
   }
   /* The radio bubble's spectrum: five small bars, the bass in the middle and
      the higher notes out to both sides, in a low dome like the glass itself.
@@ -1269,8 +1288,9 @@
       person.style.setProperty('--rg-bubble-content-x', '1');
       mxMoons(person, person.__mxCoffee, big);
     });
+    if (MB) mbColumns(people, W, big, d);   // (first: it may make the glass smaller, and the letters follow its size)
     mxGlyphs(people);
-    orbitSpin(people, geo, big, small, phase, step);
+    if (!MB) orbitSpin(people, geo, big, small, phase, step);
     if (orbit.stage !== stage && typeof IntersectionObserver === 'function') {
       if (orbit.io) orbit.io.disconnect();
       orbit.stage = stage;
@@ -2020,8 +2040,8 @@
       var num = coffee.querySelector('[data-rg-coffee-num]');
       if (num) num.textContent = String(stats.total === null ? 0 : stats.total);
       coffee.classList.toggle('is-on', (stats.total || 0) > 0);
-      var rightSide = coffee.closest('.rg-mood-side');
-      if (rightSide) rightSide.classList.toggle('is-mounted', stats.total !== null);
+      var rightSide = coffee.closest('.rg-mood-side');   // shown only once a coffee is logged on the shift (the user)
+      if (rightSide) rightSide.classList.toggle('is-mounted', (stats.total || 0) > 0);
     }
     var fatigue = refs.chips.fatigue;
     if (fatigue) {
@@ -2029,11 +2049,16 @@
       fatigue.classList.add('rg-mood-side');
       if (stats.fatigue !== null) {
         var fnum = fatigue.querySelector('[data-rg-fatigue-num]');
-        if (fnum) fnum.textContent = stats.fatigue + '%';
+        if (fnum) { if (MB) fnum.innerHTML = stats.fatigue + '<small>%</small>'; else fnum.textContent = stats.fatigue + '%'; }   // B: the % smaller, in the accent
         fatigue.style.setProperty('--rg-fat', moodFatigueColor(stats.fatigue));
         fatigue.style.setProperty('--rg-fat-ink', moodFatigueInk(stats.fatigue));
         refs.stage.style.setProperty('--rg-fatigue-wash', moodFatigueColor(stats.fatigue));
         refs.stage.style.setProperty('--rg-fatigue-alpha', (.12 + Math.min(100, stats.fatigue) * .0022).toFixed(3));
+        var mbCard = MB && refs.stage.closest('.rg-feedback-card');
+        if (mbCard) {   // Noskaņa B: the card's accent and the bubble's ring
+          mbCard.style.setProperty('--mb-acc', mbAccent(stats.fatigue));
+          mbCard.style.setProperty('--mb-fat', String(Math.max(0, Math.min(100, stats.fatigue))));
+        }
       } else {
         refs.stage.style.removeProperty('--rg-fatigue-wash');
         refs.stage.style.removeProperty('--rg-fatigue-alpha');
@@ -2601,9 +2626,40 @@
       mxMonthTicker();
       card.classList.add('mx-month-sides');
     }
+    if (MB) mbEnhance(card);
     requestAnimationFrame(function () { mxCenterFaces(card); });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (card.isConnected) mxCenterFaces(card); });
   }
+  /* Noskaņa B: a still sky behind the card, drawn once by CSS (no canvas, nothing moving): by day the sun behind
+     a cloud and a warm light low in one corner, by night the moon and a few small stars (the user: as a watch face
+     that changes with the time). Day is 7:00 to 20:00; the switch is one timer, at the next sunrise or nightfall.
+     And a ring round the big bubble that fills with the fatigue, in its colour (paintMoodCoffee). */
+  var MB_SUN = 'assets/emoji3d/n6v-320.webp?v=20261010no5', MB_MOON = 'assets/emoji3d/n3q-320.webp?v=20261010no5';
+  function mbEnhance(card) {
+    var wrap = card.querySelector('.rg-mood-blob-wrap');
+    if (!card.querySelector('.mb-scene')) {
+      var scene = document.createElement('div');
+      scene.className = 'mb-scene';
+      scene.setAttribute('aria-hidden', 'true');
+      scene.innerHTML = '<i class="mb-wave"></i><img class="mb-sun" alt="" decoding="async" src="' + MB_SUN + '"><img class="mb-moon" alt="" decoding="async" src="' + MB_MOON + '"><i class="mb-stars"></i>';
+      card.insertBefore(scene, card.firstChild);
+    }
+    if (wrap && !wrap.querySelector('.mb-ring')) {
+      wrap.insertAdjacentHTML('afterbegin', '<svg class="mb-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47"/><circle class="mb-ring-on" cx="50" cy="50" r="47" pathLength="100"/></svg>');
+    }
+    mbDayNight();
+  }
+  var mbDayT = 0;
+  function mbDayNight() {
+    var now = new Date(), h = now.getHours(), day = h >= 7 && h < 20, next = new Date(now);
+    document.documentElement.dataset.mbSky = day ? 'day' : 'night';
+    next.setHours(day ? 20 : 7, 0, 5, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    clearTimeout(mbDayT);
+    mbDayT = setTimeout(mbDayNight, next - now);
+  }
+  // the accent of the whole card: green while rested, orange tired, red very tired (the fatigue pill's own bands)
+  function mbAccent(score) { return score > 70 ? '#ff6b5f' : score > 20 ? '#f7a43a' : '#3ad07a'; }
   /* The faces sit in round glass, so each is centred by its drawn picture,
      not by its letter box: an emoji font draws the glyph off the box's middle
      (and by a different amount in each font), which showed as a face pushed
@@ -3077,6 +3133,7 @@
   // there) and never on the paint call itself, which ran during the card's
   // first mount and forced a layout of the whole page (~25 ms at load).
   function mxPlaceMonth(card, measured) {
+    if (MB) return;   // Noskaņa B: the month's numbers stand in the top right corner (mk-mood-b.css)
     var top = card && card.querySelector('.mx-month-top');
     var left = card && card.querySelector('.rg-mood-side--left .rg-mood-pill'), right = card && card.querySelector('.rg-mood-side--right .rg-mood-pill');
     if (!top || !left || !right) return;
