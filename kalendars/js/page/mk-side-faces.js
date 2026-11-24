@@ -126,23 +126,49 @@
   /* a squeeze toy's short squeak with the squash: made on the press (no file), the sound card put to sleep after it,
      so nothing runs while nobody presses */
   var ac = null, acT = 0;
+  // the sound card, awake while pressed again soon (waking takes a moment), asleep 20 s after the last sound
+  function wake() {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+    clearTimeout(acT); acT = setTimeout(function () { if (ac) ac.suspend(); }, 20000);
+    return ac;
+  }
   // one note: its pitch path (Hz at seconds), wave, loudness and length
   function tone(path, type, vol, len) {
     try {
-      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-      if (ac.state === 'suspended') ac.resume();
+      wake();
       var t = ac.currentTime + (ac.state === 'running' ? .002 : .02), o = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter();
       o.type = type; f.type = 'lowpass'; f.frequency.value = 2600;
       path.forEach(function (p, i) { if (i) o.frequency.exponentialRampToValueAtTime(p[0], t + p[1]); else o.frequency.setValueAtTime(p[0], t); });
       g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .005); g.gain.exponentialRampToValueAtTime(.001, t + len);
       o.connect(f); f.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + len + .02);
-      clearTimeout(acT); acT = setTimeout(function () { if (ac) ac.suspend(); }, 20000);   // awake while pressed again soon (waking takes a moment), asleep after
     } catch (_) {}
   }
   // the more tired the creature, the lower and slower its squeak (0 fresh: bright and quick; 100: a low, drawn-out one)
   function squish(score) {
     var u = Math.max(0, Math.min(100, score || 0)) / 100, k = (1 - .5 * u) * (.94 + Math.random() * .12), w = 1 + 1.6 * u;
     tone([[420 * k, 0], [980 * k, .045 * w], [560 * k, .12 * w]], 'triangle', .16, .14 * w);
+  }
+  /* A press on the creature: it says the person's name in its own voice (page/mk-say-name.js, loaded on the
+     first press; the same law as the squeak: the more tired, the lower and slower). Until the voice is here,
+     and for a card with no name to say, the squeak. */
+  var SAY_SRC = 'js/page/mk-say-name.js?v=20261124sn4', sayLoad = 0;
+  function sayName(card, score) {
+    var el = card && card.querySelector('.duty-name'), name = el ? el.textContent.trim() : '';
+    if (!name) return false;
+    var seed = 0, who = card.dataset.worker || name;
+    for (var i = 0; i < who.length; i++) seed = (seed * 31 + who.charCodeAt(i)) % 9973;
+    var speak = function () { try { return window.MinkaSayName.say(wake(), name, { score: score, seed: seed }) > 0; } catch (_) { return false; } };
+    if (window.MinkaSayName) return speak();
+    if (sayLoad) return false;                       // still on its way: the squeak for now
+    sayLoad = 1;
+    try { wake(); } catch (_) {}                     // the press itself must wake the sound card
+    var sc = document.createElement('script');
+    sc.src = SAY_SRC;
+    sc.onload = function () { if (!speak()) squish(score); };
+    sc.onerror = function () { sayLoad = 0; squish(score); };
+    document.head.appendChild(sc);
+    return true;
   }
   // the stepper's arrows: a short dry tick, up a step higher than down
   function tick(up) { var f = up ? 1180 : 820; tone([[f, 0], [f * .9, .03]], 'sine', .12, .045); }
@@ -152,7 +178,7 @@
     var b = e.target.closest('.mk-sf .sf-adj button');
     if (b) { if (!b.disabled) tick(+b.dataset.d > 0); return; }
     var pt = e.target.closest('.mk-sf .sf-pet');
-    if (pt && !e.target.closest('.sf-pick')) squish(+((pt.closest('.mk-side-card') || {}).dataset || {}).fatScore || 0);
+    if (pt && !e.target.closest('.sf-pick')) { var card = pt.closest('.mk-side-card'), score = +((card || {}).dataset || {}).fatScore || 0; if (!sayName(card, score)) squish(score); }
   }, true);
 
   /* Dzīvnieks: one of the animated pets of codex-pets.net beside the number (sheets of 8 x 9 frames): the cats of
