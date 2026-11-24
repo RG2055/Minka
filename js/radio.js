@@ -497,7 +497,10 @@ function toggleMenu(forceOpen) {
             const search = el.querySelector('#stationPickerSearch');
             if (search) search.value = '';
         }
+        // Placed before it shows: tell the placement it is opening (the center dock widens the player for it).
+        el._mkWillOpen = true;
         positionStationPicker(el);
+        el._mkWillOpen = false;
     }
 
     // Kalendārs izgaist, kamēr saraksts ir atvērts; aizverot atgriežas (M3 kustība CSS).
@@ -591,12 +594,24 @@ function positionStationPicker(el) {
         // Both shells stay in the DOM once built: take the one for the current look, never the first in the page.
         const shellEl = rw.dataset.radioLayout === 'amp' ? rw.querySelector?.(':scope > .amp-shell') : rw.dataset.radioLayout === 'dither' ? rw.querySelector?.(':scope > .dth-shell') : null;
         const b = shellEl && shellEl.offsetWidth > 10 ? shellEl.getBoundingClientRect() : w;
-        const left = b.left, right = b.right;
+        let left = b.left, right = b.right;
         const c = document.getElementById('calendarEmbed').getBoundingClientRect();
         // The player rises to where the calendar starts; the list fills the room it leaves, right under it.
         const top = Math.max(6, c.top), lift = Math.max(200, Math.round(rw.offsetTop - top));
+        // In the center dock (js/radio-max.js) the player stands in the dock's row, narrow: with the list open it widens
+        // (index.html html.mk-cd-st) and the list ends above the dock's row, clear of the dock's two halves.
+        const root = document.documentElement, cdock = root.classList.contains('mk-cdock') && (el.style.display === 'grid' || el._mkWillOpen) && !el._mkClosing;
+        let height = lift;
+        if (cdock) {
+            const wide = Math.min(1140, window.innerWidth - 24), wl = Math.round((window.innerWidth - wide) / 2);
+            root.style.setProperty('--mkcd-st-left', wl + 'px'); root.style.setProperty('--mkcd-st-w', wide + 'px');
+            root.classList.add('mk-cd-st');
+            left = wl; right = wl + wide;
+            const dockTop = document.getElementById('bottomBtnBar')?.getBoundingClientRect().top || window.innerHeight;
+            height = Math.max(160, lift - (rw.offsetTop + rw.offsetHeight - (dockTop - 10)));
+        }
         // Under the lifted player itself: on short windows the lift (at least 200 px) is more than the room above it.
-        Object.assign(el.style, { left: left + 'px', width: (right - left) + 'px', top: (rw.offsetTop - lift + rw.offsetHeight) + 'px', height: lift + 'px', right: 'auto', bottom: 'auto' });
+        Object.assign(el.style, { left: left + 'px', width: (right - left) + 'px', top: (rw.offsetTop - lift + rw.offsetHeight) + 'px', height: height + 'px', right: 'auto', bottom: 'auto' });
         el._mkLift = lift;
         if (el.style.display === 'grid' && !el._mkClosing) rw.style.translate = `0 ${-lift}px`;
         return;

@@ -1190,7 +1190,16 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWind
 #rmx .rmx-art:has(img[src]:not([src=""])) svg{display:none}
 #rmx .rmx-lines{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
 #rmx .rmx-station{font:500 11.5px/15px var(--rmx-label);color:var(--rmx-sub);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);white-space:nowrap;overflow:hidden}
-#rmx .rmx-song{white-space:nowrap;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
+#rmx .rmx-song{white-space:nowrap;overflow:hidden}
+#rmx .rmx-song>i{display:inline-block;font-style:normal}
+/* Longer than its line, the song slides to its end and back while it plays (transform only) and rests at its start,
+   fading where it is cut, when paused; measured only when it or the width changes (js/radio-max.js). */
+#rmx .rmx-song.rmx-run{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
+#rmx .rmx-song.rmx-run>i{animation:rmxMarq var(--rmx-dur,12s) ease-in-out infinite paused}
+#rmx.rmx-playing .rmx-song.rmx-run>i{animation-play-state:running}
+html.mk-low-spec #rmx .rmx-song.rmx-run>i{animation-iteration-count:2}
+@keyframes rmxMarq{0%,15%{transform:none}50%,65%{transform:translateX(var(--rmx-shift,0px))}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){#rmx .rmx-song.rmx-run>i{animation:none}}
 #rmx .rmx-title{font-size:20px;line-height:26px;font-weight:var(--rmx-title-w,600)}
 #rmx .rmx-artist{font-size:15px;line-height:26px;font-weight:400;color:var(--rmx-sub);margin-left:.6em}
 #rmx .rmx-artist:empty{display:none}
@@ -1219,12 +1228,12 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWind
 #rmx .rmx-play .rmx-pause,#rmx.rmx-playing .rmx-play .rmx-go{display:none}
 #rmx.rmx-playing .rmx-play .rmx-pause{display:block}
 #rmx.rmx-wait .rmx-play{opacity:.65}
-#rmx .rmx-right{display:flex;justify-content:flex-end;align-items:center;gap:10px;color:var(--rmx-sub)}
+#rmx .rmx-right{min-width:0;display:flex;justify-content:flex-end;align-items:center;gap:10px;color:var(--rmx-sub)}
 #rmx .rmx-mute{width:32px;height:32px;border-radius:16px;display:grid;place-items:center}
 #rmx .rmx-mute svg{width:18px;height:18px}
 #rmx .rmx-mute .rmx-off,#rmx .rmx-mute[aria-pressed="true"] .rmx-on{display:none}
 #rmx .rmx-mute[aria-pressed="true"] .rmx-off{display:block}
-#rmx .rmx-vol{-webkit-appearance:none;appearance:none;width:200px;height:20px;margin:0;background:transparent;--v:70%}
+#rmx .rmx-vol{-webkit-appearance:none;appearance:none;width:200px;min-width:96px;flex:0 1 200px;height:20px;margin:0;background:transparent;--v:70%}
 #rmx .rmx-vol::-webkit-slider-runnable-track{height:var(--rmx-vt,4px);border-radius:3px;background:linear-gradient(90deg,var(--rmx-acc) var(--v),transparent var(--v)),var(--rmx-rail)}
 #rmx .rmx-vol::-moz-range-track{height:var(--rmx-vt,4px);border-radius:3px;background:linear-gradient(90deg,var(--rmx-acc) var(--v),transparent var(--v)),var(--rmx-rail)}
 #rmx .rmx-vol::-webkit-slider-thumb{-webkit-appearance:none;width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);margin-top:calc((var(--rmx-vt,4px) - var(--rmx-kh,18px)) / 2);border-radius:3px;background:var(--rmx-ink);border:0}
@@ -1277,6 +1286,19 @@ body>#slowFxPanel.rmx-fx{max-width:none!important;width:min(680px,calc(100vw - 2
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-entry>.station-favorite[aria-pressed="true"]{color:var(--rmx-acc)!important}
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-list{scrollbar-color:var(--rmx-well) transparent}
 #stationOverlay[data-skin="dither"] .station-tile .station-logo{image-rendering:pixelated}
+/* The center dock (js/radio-max.js): when the screen is wide enough the radio stands in the dock's row, centred on
+   the viewport, its bottom on the dock's bottom, as wide as the room between the dock's two halves. The halves are
+   the dock's own buttons moved sideways (translate) over two pills of the dock's own glass; the Radio key fades in
+   its place. Narrower than that, the radio keeps its old place above the dock. */
+html.mk-cdock body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow{left:var(--mkcd-left)!important;right:auto!important;top:auto!important;bottom:var(--mkcd-bottom,10px)!important;width:var(--mkcd-w)!important;max-width:none!important;min-width:0!important;transform:none!important;}
+html.mk-cdock #radioWindow>.radio-drag-strip{display:none!important}
+/* With the station list open the player widens above the dock (the list ends above the dock's row); it eases back. */
+html.mk-cdock.mk-cd-st body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow{left:var(--mkcd-st-left)!important;width:var(--mkcd-st-w)!important;}
+html.mk-cdock body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow:not(.mk-cd-snap){transition:left 380ms cubic-bezier(.2,0,0,1),width 380ms cubic-bezier(.2,0,0,1)!important}
+#bottomBtnBar.mk-split{pointer-events:none!important}
+#bottomBtnBar.mk-split>button{pointer-events:auto}
+#bottomBtnBar .mk-cd-pill{position:absolute;top:0;height:100%;z-index:-1;pointer-events:none;box-sizing:border-box}
+#bottomBtnBar.mk-split .mk-cd-gone{opacity:0;pointer-events:none!important}
 /* The window's corners follow the skin's surface. */
 #radioWindow[data-radio-skin]{--rmx-r:26px}#radioWindow[data-radio-skin="clean"]{--rmx-r:28px}#radioWindow[data-radio-skin="pixel"]{--rmx-r:32px}#radioWindow[data-radio-skin="pioneer"]{--rmx-r:18px}#radioWindow[data-radio-skin="amp"]{--rmx-r:16px}#radioWindow[data-radio-skin="dither"]{--rmx-r:8px}
 /* The drag handle stays above the skeleton; the look sheet's spectrum frame and position belonged to the old display. */
@@ -1289,7 +1311,7 @@ body>#slowFxPanel.rmx-fx{max-width:none!important;width:min(680px,calc(100vw - 2
   <div id="rmx" role="group" aria-label="Radio atskaņotājs">
     <div class="rmx-meta">
       <span class="rmx-art"><img alt="" decoding="async"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8c0-1.11-.89-2-2-2H8.3l8.26-3.34L15.88 1 3.24 6.15zM7 20c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-8h-2v-2h-2v2H4V8h16v4z"/></svg></span>
-      <div class="rmx-lines"><div class="rmx-station"></div><div class="rmx-song"><span class="rmx-title"></span><span class="rmx-artist"></span></div></div>
+      <div class="rmx-lines"><div class="rmx-station"></div><div class="rmx-song"><i><span class="rmx-title"></span><span class="rmx-artist"></span></i></div></div>
     </div>
     <div class="rmx-top">
       <button type="button" class="rmx-btn" data-rmx="stations" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.76 16.24C6.67 15.16 6 13.66 6 12s.67-3.16 1.76-4.24l1.42 1.42C8.45 9.9 8 10.9 8 12c0 1.1.45 2.1 1.17 2.83l-1.41 1.41zm8.48 0C17.33 15.16 18 13.66 18 12s-.67-3.16-1.76-4.24l-1.42 1.42C15.55 9.9 16 10.9 16 12c0 1.1-.45 2.1-1.17 2.83l1.41 1.41zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm8 2c0 2.21-.9 4.21-2.35 5.65l1.42 1.42C20.88 17.26 22 14.76 22 12s-1.12-5.26-2.93-7.07l-1.42 1.42C19.1 7.79 20 9.79 20 12zM6.35 6.35L4.93 4.93C3.12 6.74 2 9.24 2 12s1.12 5.26 2.93 7.07l1.42-1.42C4.9 16.21 4 14.21 4 12s.9-4.21 2.35-5.65z"/></svg>Stacijas</button>
@@ -1525,8 +1547,8 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261125mx2']);
-  await loadAny(['js/radio-max.js?v=20261125mx5']);
+  await loadAny(['js/radio.js?v=20261125cd2']);
+  await loadAny(['js/radio-max.js?v=20261125ce5']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
@@ -1583,6 +1605,9 @@ const mkRadioReveal = (function () {
   const DIM_MS = 80;                   // cards dim to their floor this fast
   const REFLOW_AT_MS = 90;             // reflow lands once the dim is in
   const MORPH = 'cubic-bezier(.38,1.21,.22,1)';
+  // The center dock (js/radio-max.js): window and dock halves move as one, M3 standard, no overshoot.
+  const CDOCK = { duration: 380, easing: 'cubic-bezier(.2,0,0,1)' };
+  const centerDock = () => document.documentElement.classList.contains('mk-cdock');
   let running = null, guard = 0;
   let reflowTimer = 0;                 // calendar reflow scheduler
   document.documentElement.classList.add('radio-morph');
@@ -1620,7 +1645,7 @@ const mkRadioReveal = (function () {
     me.laidOut = true;
     try { cancelAnimationFrame(_syncRaf); _doSync(true); } catch (_e) {}
     try { if (typeof window.__mkAmbienceSync === 'function') window.__mkAmbienceSync(); } catch (_e) {}
-    cardsFade('in', 160);
+    if (!centerDock()) cardsFade('in', 160);
   }
   // Always leaves a consistent state: radio-anim never survives a cancelled
   // or rejected animation (finished() rejects with AbortError on cancel), and
@@ -1777,8 +1802,9 @@ const mkRadioReveal = (function () {
     if (!pose) { running = { open: open, anims: [], rw: rw, laidOut: false }; finalize(rw, open); return true; }
     const fade = motionToken('effects-default');
     let anims, total;
+    const cd = centerDock();
     if (open) {
-      const t = motionToken('spatial-default');
+      const t = cd ? CDOCK : motionToken('spatial-default');
       total = t.duration;
       anims = [
         rw.animate([
@@ -1789,14 +1815,14 @@ const mkRadioReveal = (function () {
           { duration: Math.min(total, fade.duration), easing: fade.easing, fill: 'both' })
       ];
     } else {
-      const t = motionToken('spatial-fast', true);
+      const t = cd ? CDOCK : motionToken('spatial-fast', true);
       total = t.duration;
       anims = [
         rw.animate([
           { translate: from ? from.translate : '0px 0px', scale: from ? from.scale : '1' },
           { translate: pose.translate, scale: pose.scale }
         ], { duration: total, easing: t.easing, fill: 'both' }),
-        rw.animate([{ opacity: from ? from.opacity : 1 }, { opacity: from ? from.opacity : 1, offset: .6 }, { opacity: 0 }],
+        rw.animate([{ opacity: from ? from.opacity : 1 }, { opacity: from ? from.opacity : 1, offset: cd ? .35 : .6 }, { opacity: 0, offset: cd ? .8 : 1 }, { opacity: 0 }],
           { duration: total, easing: 'linear', fill: 'both' })
       ];
     }
@@ -1807,13 +1833,15 @@ const mkRadioReveal = (function () {
     // still on its way. A timer, not a frame callback: this task may block
     // the main thread for a while on a slow machine, and the compositor
     // carries the transform through it either way.
-    cardsFade('out', DIM_MS);
     clearTimeout(reflowTimer);
-    reflowTimer = setTimeout(function () { if (running === me) reflow(me); }, REFLOW_AT_MS);
+    if (!cd) {
+      cardsFade('out', DIM_MS);
+      reflowTimer = setTimeout(function () { if (running === me) reflow(me); }, REFLOW_AT_MS);
+    }
     const all = Promise.all(anims.map(a => a.finished));
     if (window.MinkaMotion) window.MinkaMotion.measure(all.catch(function () {}), total);
     all.then(
-      function () { if (running === me) { finalize(rw, open); if (!open) catchOnButton(); } },
+      function () { if (running === me) { finalize(rw, open); if (!open && !cd) catchOnButton(); } },
       function () { if (running === me) finalize(rw, open); }   // AbortError: cancelled → settle the state now
     );
     guard = setTimeout(function () { if (running === me) finalize(rw, open); }, total + 250);   // hidden tab / stalled timeline
@@ -1942,7 +1970,9 @@ function _doSync(duringReveal) {
   const btnH = (dockShelf && dockShelf.offsetHeight) ? dockShelf.offsetHeight
              : (dockBar   && dockBar.offsetHeight)   ? dockBar.offsetHeight + 20
              : 52;
-  const radioVisible = !!rw && !document.body.classList.contains('radio-hidden') && !document.body.classList.contains('radio-idle') && rw.style.display !== 'none';
+  // In the center dock (js/radio-max.js) the radio sits in the dock's row between its two halves: the calendar is
+  // laid out exactly as with the radio closed, so nothing in it (side cards, middle) moves or shrinks.
+  const radioVisible = !!rw && !document.documentElement?.classList?.contains('mk-cdock') && !document.body.classList.contains('radio-hidden') && !document.body.classList.contains('radio-idle') && rw.style.display !== 'none';
   // Layout height, not the visual box: mid-reveal the window is scaled down,
   // and getBoundingClientRect() then gave the calendar a too-small radio, so
   // it re-laid twice on every open (under the dim, then again at settle).
