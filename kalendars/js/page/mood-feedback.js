@@ -2760,6 +2760,7 @@
      with the M3 look); until then, and without it, everything works as it did. */
   function m3Web(card) {
     if (!M3) return;
+    m3Ind(card || (list && list.querySelector('.rg-feedback-card')));
     if (!window.__mdWebMood) {
       window.__mdWebMood = 1;
       var load = function () {
@@ -2777,6 +2778,31 @@
       el.appendChild(document.createElement('md-ripple'));        // both attach to their parent by themselves
       el.appendChild(document.createElement('md-focus-ring'));
     });
+  }
+  /* Alive, the app's own way (the user: natural and fluid): the shape under the chosen rating is one pill for the
+     row, moved by MinkaMotion.liquid (js/mk-motion.js): it flows from the old choice to the new, stretching on the
+     way. Placed without motion when the card is drawn; it flows only when the choice changes in a card on show.
+     One observer per card on the row's own class changes; it reads the layout only when the choice is another. */
+  function m3Ind(card) {
+    var MM = window.MinkaMotion, row = card && card.querySelector('.rg-pulse-taps');
+    if (!row || !MM || !MM.liquid) return;
+    var ind = row.querySelector(':scope > .m3-ind');
+    if (!ind) {
+      ind = document.createElement('i');
+      ind.className = 'm3-ind';
+      ind.setAttribute('aria-hidden', 'true');
+      row.insertBefore(ind, row.firstChild);
+      new MutationObserver(function () { place(true); }).observe(row, { attributes: true, attributeFilter: ['class'], subtree: true });
+    }
+    function place(flow) {
+      var sel = row.querySelector(':scope > .rg-pulse-tap.is-selected'), at = sel ? [].indexOf.call(row.children, sel) : -1;
+      if (ind.__at === at) return;
+      var was = ind.__at;
+      ind.__at = at;
+      if (!sel) { ind.classList.remove('is-on'); return; }
+      if (MM.liquid(ind, row, sel, { animate: !!flow && was > 0 })) ind.classList.add('is-on'); else ind.__at = -2;   // (not laid out yet: tried again at the next change)
+    }
+    place(false);
   }
   var mbDayT = 0;
   function mbDayNight() {
@@ -2983,6 +3009,17 @@
   var commentFeed = {};                  // day -> [{ type: 'chat'|'art', ... }], newest first
   var MX_SAY_FIRST = 8000, MX_SAY_GAP = 24000, MX_SAY_SPREAD = 16000, MX_SAY_HOLD = 7000;
   var mxSay = { timer: 0, hide: 0, el: null, anim: null, shown: {}, last: '', feedAt: 0, busy: false, hover: false, count: 0, token: 0 };
+  /* The cat speaks less and only of what is new (the user: smarter, lighter, not in the way). It used to speak
+     every 24 to 40 s for ever: the same comments round and round, "Novērtē maiņu!" every other turn, the gallery
+     every fourth. Now: a comment or a drawing is read once and remembered on this computer (never again); the
+     vote is asked for once a shift, the gallery offered once a day; after it has spoken it keeps quiet for a
+     minute or more, and with nothing new it only looks again every five minutes. It waits while the person is
+     pressing or typing, and a day switch no longer starts it talking. */
+  var MX_SAID_KEY = 'mkCatSaidV1', MX_ASKED_KEY = 'mkCatAskedV1', mxInputAt = 0;
+  function mxSaid() { var o = {}; (readJson(MX_SAID_KEY, []) || []).forEach(function (k) { o[k] = 1; }); return o; }
+  function mxSaidAdd(key) { var a = readJson(MX_SAID_KEY, []) || []; if (a.indexOf(key) < 0) { a.push(key); writeJson(MX_SAID_KEY, a.slice(-300)); } }
+  function mxAsked(what, day) { var o = readJson(MX_ASKED_KEY, {}) || {}; if (day == null) return o[what] || ''; o[what] = day; writeJson(MX_ASKED_KEY, o); }
+  if (MX) ['pointerdown', 'keydown', 'wheel'].forEach(function (ev) { window.addEventListener(ev, function () { mxInputAt = Date.now(); }, { passive: true, capture: true }); });
   var mxSpringEase = '';
   function mxSpring() {
     if (!mxSpringEase) mxSpringEase = getComputedStyle(document.documentElement).getPropertyValue('--mk-ease-spring').trim() || 'cubic-bezier(.2, .9, .25, 1)';
@@ -3030,11 +3067,9 @@
     if (!pool.length) return null;
     var seen = readSeenAt('comment');
     pool.sort(function (a, b) { return ((b.c.at > seen) - (a.c.at > seen)) || b.c.at - a.c.at; });
-    var fresh = pool.filter(function (p) { return !mxSay.shown[p.key]; });
-    if (!fresh.length) {
-      mxSay.shown = {};
-      fresh = pool.length > 1 ? pool.filter(function (p) { return p.key !== mxSay.last; }) : pool;
-    }
+    var said = mxSaid();
+    var fresh = pool.filter(function (p) { return !mxSay.shown[p.key] && !said[p.key]; });
+    if (!fresh.length) return null;   // nothing new: the cat keeps quiet (it used to start over and read them all again)
     var pick = fresh[0];
     mxSay.shown[pick.key] = true;
     mxSay.last = pick.key;
@@ -3155,7 +3190,7 @@
   }
   function mxSaySchedule(ms) {
     clearTimeout(mxSay.timer);
-    mxSay.timer = setTimeout(mxSayNext, ms != null ? ms : MX_SAY_GAP + Math.random() * MX_SAY_SPREAD);
+    mxSay.timer = setTimeout(mxSayNext, ms != null ? ms : 5 * 60000);   // nothing to say: a look again in five minutes
   }
   function mxSayNext() {
     mxSay.timer = 0;
@@ -3165,21 +3200,24 @@
       mxSaySchedule(20000);
       return;
     }
+    if (Date.now() - mxInputAt < 4000) { mxSaySchedule(6000); return; }   // the person is at something: not now
     mxSayFeed();
     mxSay.count++;
-    var cat = window.__minkaDailyCat, next = MX_SAY_HOLD + MX_SAY_GAP + Math.random() * MX_SAY_SPREAD;
+    var cat = window.__minkaDailyCat, next = MX_SAY_HOLD + 60000 + Math.random() * 30000;
     var day = shiftDayKey();
     // today without a vote from this computer: every other turn the cat asks
     // (the first turn goes to today's new comments, if there are any)
-    if (day === liveShiftDayKey() && !pulseCounts()._last && mxSay.count % 2 === 1
+    if (day === liveShiftDayKey() && !pulseCounts()._last && mxAsked('vote') !== day
       && !(mxSay.count === 1 && newTodayCount('comment') > 0) && cat && cat.say
       && cat.say({ text: 'Novērtē maiņu!', ask: true, onClick: function () { mxInvite(true); } })) {
+      mxAsked('vote', day);   // once a shift
       mxSaySchedule(next);
       return;
     }
     // now and then (not on a day still to come) the cat invites into the gallery
-    if (mxSay.count % 4 === 2 && !futureDay(day) && cat && cat.say
+    if (mxSay.count >= 2 && mxAsked('gallery') !== liveShiftDayKey() && !futureDay(day) && cat && cat.say
       && cat.say({ text: 'Apskaties galeriju un uzzīmē!', ask: true, onClick: function () { mxOpenGallery3D(list.querySelector('.rg-feedback-card .mx-draw-tap')); } })) {
+      mxAsked('gallery', liveShiftDayKey());   // once a day
       mxSaySchedule(next);
       return;
     }
@@ -3197,7 +3235,7 @@
           : note ? 'Par maiņu ' + mxSayDay(pick.day) + ': ' + pick.c.body
           : 'Komentārs ' + mxSayDay(pick.day) + ': ' + pick.c.body + '. Atvērt komentārus',
         onClick: drawing ? function () { mxOpenGallery3D(list.querySelector('.rg-feedback-card .mx-draw-tap')); } : function () { mxOpenComments(null); }
-      })) { mxSaySchedule(next); return; }
+      })) { mxSaidAdd(pick.key); mxSaySchedule(next); return; }
       // the cat is there but busy (running about, on the glass): it reads
       // this one a little later, rather than the sky covering the curve
       if (cat.present && cat.present()) {
@@ -3208,7 +3246,8 @@
     }
     // no cat on screen (switched off, a narrow window): a comment rises in the
     // sky instead; a drawing waits for the cat (no pictures over the curve)
-    mxSaySchedule(pick && pick.c.type === 'chat' && mxSayShow(pick) ? next : null);
+    if (pick && pick.c.type === 'chat' && mxSayShow(pick)) { mxSaidAdd(pick.key); mxSaySchedule(next); }
+    else mxSaySchedule(null);
   }
   function mxOpenComments(from) {
     openModal('comment', list.querySelector('.rg-feedback-card [data-rg-write="comment"]') || from);
@@ -3217,7 +3256,7 @@
     mxSayOut(true);
     mxSay.shown = {};
     mxSay.count = 0;
-    mxSaySchedule(MX_SAY_FIRST);
+    mxSaySchedule(20000);   // (a day switch does not start the cat talking: it looks in a while)
   }
   if (MX) {
     mxSaySchedule(MX_SAY_FIRST);
@@ -3628,7 +3667,7 @@
   /* Galerija kā Doom (js/page/mood-gallery-3d.js, ielādējas tikai pirmajā
      reizē): pastaiga pa zāli ar zīmējumiem uz sienām. Ja tā neielādējas,
      paliek parastā galerija (režģis augstāk). */
-  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261115sw7';
+  var GALLERY3D_SRC = 'js/page/mood-gallery-3d.js?v=20261124ng1';
   var gallery3dLoad = null;
   // the gallery's own paint window (js/page/mood-gallery-paint.js): only for the
   // gallery's frames; everywhere else the usual editor (js/skin-draw.js)

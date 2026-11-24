@@ -62,6 +62,7 @@
     { id: 'storm', name: 'Kaķis', note: 'Kaķis ar zobenu dejo lietū', fx: { field: 'cat', img: 'center-g-cat.webp', shares: [0, .5, 1], uniforms: {} } },
     { id: 'mines', name: 'Mīnas', note: 'Mīnas noskaņas krāsā, spēlē uzreiz', icon: '💣', game: 'mines' },
     { id: 'candy', name: 'Konfektes', note: 'Konfektes 98 no galerijas, ar līmeņiem', icon: '🍬', game: 'candy' },
+    { id: 'runner', name: 'Skrējiens', note: 'Nogurumiņš lec pāri krūzēm, katrs līmenis citā tonī', icon: '🏃', game: 'runner' },
     // widgets: plain DOM in the mood's place (see mountWidget)
     { id: 'emoji', name: 'Emoji', note: 'Liels emoji pēc izvēles, ar kustību', icon: '😎', widget: 'emoji' },
     { id: 'month', name: 'Kalendārs', note: 'Mēneša kalendārs: klikšķis atver dienu', icon: '📅', widget: 'month' },
@@ -250,11 +251,15 @@
   bar.innerHTML = '<span class="mk-cl-quick"></span><button type="button" class="mk-cl-more" aria-haspopup="dialog" aria-expanded="false" aria-label="Visi izkārtojumi" title="Visi izkārtojumi">' +
     '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg></button>' +
     // the game, one press away: a gold segment of the same switch
-    '<button type="button" class="mk-cl-candy" aria-pressed="false" aria-label="Konfektes: spēle noskaņas vietā" title="Konfektes">' + CANDY_ICON + '</button>';
+    '<button type="button" class="mk-cl-candy" aria-pressed="false" aria-label="Konfektes: spēle noskaņas vietā" title="Konfektes">' + CANDY_ICON + '</button>' +
+    // the other game, the same way: a Nogurumiņš that jumps over the shift's cups (js/page/mk-runner.js)
+    '<button type="button" class="mk-cl-run" aria-pressed="false" aria-label="Skrējiens: spēle noskaņas vietā" title="Skrējiens"><img src="assets/butnes/runner-icon.webp?v=20261124rn1" alt="" width="27" height="24" draggable="false"></button>';
   var quick = bar.querySelector('.mk-cl-quick'), btn = bar.querySelector('.mk-cl-more'), quickKey = '';
   // the game in the mood's place, and back to the mood again
   var candyBtn = bar.querySelector('.mk-cl-candy');
   candyBtn.addEventListener('click', function () { setCenter(centerNow() === 'candy' ? 'mood' : 'candy'); });
+  var runBtn = bar.querySelector('.mk-cl-run');
+  runBtn.addEventListener('click', function () { setCenter(centerNow() === 'runner' ? 'mood' : 'runner'); });
   // The sweet twinkles now and then, not all the time (running without end it cost more than the whole mood card
   // while the app idled): three breaths when the bar appears, when another day is opened and under the pointer;
   // the CSS animation itself is as it was (card-layout.css), only its class comes and goes. No timer.
@@ -359,10 +364,10 @@
       var spot = null, compact = false;
       // M3: the switch is the rating row's second row, wherever that row is: in the mood card, or in the game's own
       // copy of the row while a game or picture covers the card (the user: the game showed the old look)
-      var dockHost = !M3DOCK || current().mood === false ? null : covered || (mood && mood.querySelector('.rg-pulse-taps')), docked = !!dockHost;   // in the row's own box: on a day not yet begun a line of words stands under the row, and the switch must not land on it
+      // (Which row it goes into is settled below, after the middle is built or hidden: dockBar.)
+      var docked = M3DOCK && !!mood && current().mood !== false;
       if (bar.classList.contains('is-docked') !== docked) { bar.classList.toggle('is-docked', docked); placed = ''; }
-      if (docked) {   // one element with the ratings (the user): inside the card, so it moves with it and needs no place of its own
-        if (bar.parentNode !== dockHost) { dockHost.appendChild(bar); placed = ''; }
+      if (docked) {   // one element with the ratings (the user): in the row's own box, so it moves with it and needs no place of its own
         bar.classList.remove('in-rail', 'is-compact');
         spot = ['', ''];
       }
@@ -384,6 +389,14 @@
       key = docked ? 'dock,' : Math.round(spot[0]) + ',' + Math.round(spot[1]);
     }
     placeCenter(off ? null : M);
+    // In the rating row's own box: the game's copy of the row while a game or picture covers the card, else the
+    // card's own row (on a day not yet begun a line of words stands under the row: the switch must not land on
+    // it). After placeCenter: only then is it known which of the two rows is on show.
+    if (!off && M3DOCK && bar.classList.contains('is-docked')) {
+      var dockHost = (!centerEl.hidden && centerEl.querySelector('.mk-cl-moodrow')) || (mood && mood.querySelector('.rg-pulse-taps'));
+      if (dockHost && bar.parentNode !== dockHost) dockHost.appendChild(bar);
+      dockInd();
+    }
     if (key === placed && !off === !bar.hidden) return;
     bar.hidden = off;
     if (off) { placed = ''; close(); return; }
@@ -392,6 +405,22 @@
     bar.style.left = k[0] === 'dock' ? '' : k[0] + 'px'; bar.style.top = k[0] === 'dock' ? '' : k[1] + 'px';   // docked: the stylesheet places it in the card
     if (isOpen) placePanel();
     window.dispatchEvent(new Event('mk-cl-bar-placed'));   // the pet stands beside it at home
+  }
+  // The layout shown now has one pill in the docked row, and it flows from the old layout to the new (the user:
+  // natural and fluid; MinkaMotion.liquid, as the app's tabs). Read and moved only when the layout or the row
+  // it stands in is another.
+  var dockIndKey = '';
+  function dockInd() {
+    var LQ = window.MinkaMotion;
+    if (!LQ || !LQ.liquid) return;
+    var ind = bar.querySelector(':scope > .m3-ind'), t = bar.querySelector('.mk-cl-q[aria-pressed="true"]');
+    if (!ind) { ind = document.createElement('i'); ind.className = 'm3-ind'; ind.setAttribute('aria-hidden', 'true'); bar.insertBefore(ind, bar.firstChild); dockIndKey = ''; }
+    var host = bar.parentNode && bar.parentNode.className, key = t ? t.dataset.q + '|' + host : '';
+    if (key === dockIndKey) return;
+    var flow = !!dockIndKey && !!key && dockIndKey.split('|')[1] === String(host);   // the same row: it flows; another row: it stands there at once
+    dockIndKey = key;
+    if (!t) { ind.classList.remove('is-on'); return; }
+    if (LQ.liquid(ind, bar, t, { animate: flow })) ind.classList.add('is-on'); else dockIndKey = '';
   }
   var placeFrame = 0;
   function schedulePlace() { if (!placeFrame) placeFrame = requestAnimationFrame(function () { placeFrame = 0; placeBtn(); }); }
@@ -822,6 +851,7 @@
     var id = centerNow(), l = current(), mood = list.querySelector('.rg-feedback-card');
     var on = id !== 'mood' && !!M && !!mood && l.mood !== false;
     candyBtn.setAttribute('aria-pressed', String(on && id === 'candy'));
+    runBtn.setAttribute('aria-pressed', String(on && id === 'runner'));
     // The game in the usual grid (Režģis): the mood card is one cell of two columns among the cards; for
     // the game it takes four and the height down to the switch, and the cards close up in the rest
     // (card-layout.css mk-cl-game-grid).
@@ -834,7 +864,7 @@
     if (on !== root.classList.contains('mk-cl-center-on')) document.dispatchEvent(new CustomEvent('mk-mood-covered', { detail: on }));
     root.classList.toggle('mk-cl-center-on', on);
     centerEl.hidden = !on;
-    if (!on) { if (centerSig) { centerSig = ''; centerMood = null; centerBox = ''; unmountGame(); unmountWidget(); stopLive(); centerEl.innerHTML = ''; } return; }
+    if (!on) { if (centerSig || centerEl.firstChild) { centerSig = ''; centerMood = null; centerBox = ''; unmountGame(); unmountWidget(); stopLive(); centerEl.innerHTML = ''; } return; }   // (firstChild: setCenter has already cleared centerSig, and the game stayed alive, hidden)
     // The picture (its worker and WebGL program) or the game lives on through day switches: only a
     // new choice builds it again. The mood's face, word and rating row follow the day's own mood
     // card when that card is a new one; later changes to it come through watchMoodState.
@@ -870,9 +900,18 @@
   var centerMood = null, centerBox = '', settleUntil = 0, settleTimer = 0;
   function settled() { settleUntil = 0; centerEl.classList.remove('is-settling'); }
   // the games: the gallery's own Windows 98 (js/page/mood-gallery-pc.js), one game mounted in the box
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261115s24', pcLoad = null, game = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261124ng1', pcLoad = null, game = null;
+  var RUN_SRC = 'js/page/mk-runner.js?v=20261124rn2', runLoad = null;
   function mountGame(app) {
     var box = centerEl.querySelector('.mk-cl-game-box');
+    if (app === 'runner') {   // its own small file, fetched on the first opening; it keeps the mood card's own size
+      if (!runLoad) runLoad = new Promise(function (ok, no) {
+        if (window.MinkaRunner) { ok(); return; }
+        var sc = document.createElement('script'); sc.src = RUN_SRC; sc.onload = ok; sc.onerror = function () { runLoad = null; no(); }; document.head.appendChild(sc);
+      });
+      runLoad.then(function () { if (box.isConnected && !game && centerNow() === 'runner') window.__mkRunner = game = window.MinkaRunner.open({ mount: box }); }, function () {});
+      return;
+    }
     loadPC().then(function () {
       if (!box.isConnected || game || window.MinkaGalleryPC.isOpen()) return;
       centerEl.classList.add('is-settling'); settleUntil = Date.now() + 700;

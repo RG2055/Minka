@@ -4196,7 +4196,7 @@ function filterFullList(btn) {
       if (uiState.isActive && uiState.remainingMs > 0) {
         // Analog dial (card-faces.js) shows this timer once a minute: no per-second text for it.
         if (timer.classList.contains('wf-analog')) return;
-        if (valEl) valEl.textContent = uiState.timerText;
+        setTextIfChanged(valEl, uiState.timerText);
         const secsLeft = Math.floor(uiState.remainingMs / 1000);
         timer.classList.toggle('warning-critical', secsLeft <= 300);
         timer.classList.toggle('warning-low', secsLeft > 300 && secsLeft <= 900);
@@ -4231,7 +4231,14 @@ function filterFullList(btn) {
   }
 
   function setTextIfChanged(el, text) {
-    if (el && el.textContent !== text) el.textContent = text;
+    if (!el) return;
+    // A lone text node is changed in place. Setting textContent replaces the node, which counts as the element's
+    // children changing, and every :has() rule on an element above then restyles all it governs: the timers
+    // ticking once a second cost about 720 restyled elements each time (measured 2026-11-24). What is shown is
+    // the same.
+    var t = el.firstChild;
+    if (text !== '' && t && t === el.lastChild && t.nodeType === 3) { if (t.data !== text) t.data = text; }
+    else if (el.textContent !== text) el.textContent = text;
   }
   // Galvene X shows what is left of the shift as "19 h 15 min": it cannot be
   // mistaken for a clock time and changes once a minute, not every second.
@@ -4256,14 +4263,14 @@ function filterFullList(btn) {
         const elapsedMs = Math.max(0, t - startMs);
         const h = Math.floor(elapsedMs / 3600000);
         const m = Math.floor((elapsedMs % 3600000) / 60000);
-        elapsedEl.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+        setTextIfChanged(elapsedEl, String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
       }
       if (remainEl && endMs) {
         const remainingMs = Math.max(0, endMs - t);
         const h = Math.floor(remainingMs / 3600000);
         const m = Math.floor((remainingMs % 3600000) / 60000);
         const s = Math.floor((remainingMs % 60000) / 1000);
-        remainEl.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        setTextIfChanged(remainEl, String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'));
         remainEl.style.color = remainingMs > 14400000 ? 'rgba(100,210,255,0.95)' : remainingMs > 7200000 ? 'rgba(251,191,36,0.95)' : 'rgba(239,68,68,0.95)';
 
         // Low-performance mode skips the heavy ruler rebuild for four out of
@@ -5447,13 +5454,27 @@ function filterFullList(btn) {
     if (!ruler) return false;
     ruler._mkScrubPct = scrubPct;
     var rulerWidth = ruler.clientWidth || 0;
+    // Called every second, but what it places moves a tenth of a pixel every few seconds. When nothing that
+    // decides the places has changed since the last full pass (the ruler's width, the pill's and the
+    // percentage's text, the fill's end to a tenth of a pixel), there is nothing to do; a full pass anyway
+    // every 15 s, for what this cannot see (a font that came in late). Each pass used to write the pill's
+    // width off and on again and its place, and every such write restyled the whole header (measured 2026-11-24).
+    var nowT = Date.now(), pillText = rNow.textContent, pct0 = ruler.querySelector('.sl-ruler-pct');
+    var sig = rulerWidth + '|' + pillText + '|' + (pct0 ? pct0.textContent : '') + '|' + (rulerWidth * Math.max(0, Math.min(100, scrubPct)) / 100).toFixed(1);
+    if (rulerWidth && ruler._mkSig === sig && nowT - (ruler._mkSigAt || 0) < 15000) return true;
     // The pill's natural width (its text shrinks from "20 h 7 min" to
     // "8 min"). It is then set explicitly, so a CSS transition can let the
     // pill narrow smoothly instead of snapping (header X, see its CSS).
-    var prevWidth = rNow.style.width;
-    rNow.style.width = '';
-    var pillWidth = rNow.offsetWidth || 0;
-    if (prevWidth) { rNow.style.width = prevWidth; void rNow.offsetWidth; }
+    // Measured again only when its text or the ruler's width changes (and every 15 s): the measuring itself
+    // takes the width off and puts it back.
+    var pillWidth = rNow._mkW || 0;
+    if (!pillWidth || rNow._mkTxt !== pillText || rNow._mkRW !== rulerWidth || nowT - (rNow._mkWAt || 0) >= 15000) {
+      var prevWidth = rNow.style.width;
+      rNow.style.width = '';
+      pillWidth = rNow.offsetWidth || 0;
+      if (prevWidth) { rNow.style.width = prevWidth; void rNow.offsetWidth; }
+      if (rulerWidth && pillWidth) { rNow._mkTxt = pillText; rNow._mkRW = rulerWidth; rNow._mkWAt = nowT; }
+    }
     if (!rulerWidth || !pillWidth) return false;
     if (rNow._mkW !== pillWidth) { rNow._mkW = pillWidth; rNow.style.width = pillWidth + 'px'; }
 
@@ -5462,8 +5483,9 @@ function filterFullList(btn) {
     var EDGE = 6;
     var center = rulerWidth * Math.max(0, Math.min(100, scrubPct)) / 100;
     var left = Math.max(EDGE, Math.min(rulerWidth - pillWidth - EDGE, center - pillWidth / 2));
-    rNow.style.left = left.toFixed(1) + 'px';
-    rNow.style.transform = 'none';
+    var leftPx = left.toFixed(1) + 'px';   // (written only when it differs: a write restyles the header)
+    if (rNow.style.left !== leftPx) rNow.style.left = leftPx;
+    if (rNow.style.transform !== 'none') rNow.style.transform = 'none';
 
     // The percentage is a caption of the elapsed fill, so it is pinned to the
     // fill's end in pixels: inside the fill while it fits, and just after it
@@ -5478,8 +5500,9 @@ function filterFullList(btn) {
       var inside = fillWidth >= pctWidth + 12;
       var pctLeft = inside ? fillWidth - pctWidth - 6 : Math.min(rulerWidth - pctWidth, fillWidth + 6);
       pctEl.classList.toggle('sl-ruler-pct-out', !inside);
-      pctEl.style.right = 'auto';
-      pctEl.style.left = pctLeft.toFixed(1) + 'px';
+      if (pctEl.style.right !== 'auto') pctEl.style.right = 'auto';
+      var pctPx = pctLeft.toFixed(1) + 'px';
+      if (pctEl.style.left !== pctPx) pctEl.style.left = pctPx;
       pctBox = { left: pctLeft, right: pctLeft + pctWidth, top: pctEl.offsetTop, bottom: pctEl.offsetTop + pctEl.offsetHeight };
     }
     var pillBox = { left: left, right: left + pillWidth, top: rNow.offsetTop, bottom: rNow.offsetTop + rNow.offsetHeight };
@@ -5510,6 +5533,7 @@ function filterFullList(btn) {
     metrics.forEach(function(m) {
       m.tick.classList.toggle('sl-rtick-hidden', hits(m, pillBox, 5) || hits(m, pctBox, 6));
     });
+    ruler._mkSig = sig; ruler._mkSigAt = nowT;
     return true;
   }
 

@@ -70,6 +70,19 @@
 @keyframes mk-cl-candy-spark { 0%, 40%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); } 18% { opacity: 1; transform: scale(1) rotate(45deg); } }
 .mk-cl-candy:hover { background: rgba(255, 196, 64, .14); }
 .mk-cl-candy[aria-pressed="true"] { background: rgba(255, 196, 64, .24); box-shadow: inset 0 0 0 1px rgba(255, 210, 90, .45); }
+/* "Skrējiens" (js/page/mk-runner.js): the running Nogurumiņš's own picture, a segment like the sweet's */
+.mk-cl-run {
+  display: inline-grid; place-items: center; width: 40px; height: 32px; margin-left: 2px; padding: 0; border: 0; border-radius: 10px;
+  position: relative; cursor: pointer; background: transparent;
+  transition: background-color 140ms cubic-bezier(.2, 0, 0, 1), scale 420ms var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1));
+}
+.mk-cl-run::after { content: ''; position: absolute; inset: -4px -1px; }
+.mk-cl-run img { display: block; width: 27px; height: 24px; }
+.mk-cl-run:hover { background: color-mix(in srgb, var(--mk-cl-accent) 14%, transparent); }
+.mk-cl-run:active { scale: .96; }
+.mk-cl-run:focus-visible { outline: 2px solid var(--mk-cl-accent); outline-offset: 2px; }
+.mk-cl-run[aria-pressed="true"] { background: color-mix(in srgb, var(--mk-cl-accent) 26%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mk-cl-accent) 45%, transparent); }
+.mk-cl-bar.is-compact .mk-cl-run { display: none; }   /* (no room: the menu has it) */
 .mk-cl-candy:active { scale: .92; transition-duration: 140ms, 140ms; }
 .mk-cl-candy:focus-visible { outline: 2px solid #ffd664; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .mk-cl-candy-live .mk-cl-candy-halo, .mk-cl-candy-live .mk-cl-candy-spark { animation: none; } }

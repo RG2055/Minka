@@ -3728,7 +3728,7 @@
     return { tris: tris, bills: [] };
   }
   // the old computer's Windows 98 (js/page/mood-gallery-pc.js), loaded the first time it is switched on
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261115s24', pcLoad = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261124ng1', pcLoad = null;
   function openPC(st, app) {
     freeMouse();
     if (!pcLoad) pcLoad = new Promise(function (ok, no) {

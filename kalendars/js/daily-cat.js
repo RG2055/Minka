@@ -54,8 +54,8 @@
   // The comment bubble is the pet's home, but every few minutes it wanders off
   // to sit on somebody's card. Only the choice is random — the placement itself
   // is derived from the anchor, so scrolling still follows it exactly.
-  var ANCHOR_ROTATE_MIN = 150000;
-  var ANCHOR_ROTATE_MAX = 300000;
+  var ANCHOR_ROTATE_MIN = 480000;   // it moves to another place every 8 to 15 minutes (was 2.5 to 5: the user: less in the way)
+  var ANCHOR_ROTATE_MAX = 900000;
   var COMMENT_ANCHOR_CHANCE = 0.45;
   var anchorChoice = { kind: 'comment', worker: '' };
   var anchorTimer = 0;
@@ -389,7 +389,7 @@
      Dragged away, perched at night or hidden: it only reacts where it is. */
   var CHEER_ACTION = { excellent: 'jumping', good: 'waving', ok: 'review', bad: 'failed', terrible: 'failed' };
   var CHEER_STAY = 9000;
-  var TOUR_CHANCE = 0.4;
+  var TOUR_CHANCE = 0.15;
   var cheerTimer = 0;
   var cheerActTimer = 0;
   function cheerHome() {
@@ -891,7 +891,7 @@
       ambientTimer = 0;
       var choices = ['waving', 'review', 'jumping', 'running', 'running-right', 'running-left'];
       playAction(choices[Math.floor(Math.random() * choices.length)], 1);
-    }, 28000 + Math.floor(Math.random() * 22000));
+    }, 180000 + Math.floor(Math.random() * 120000));   // a small move of its own every 3 to 5 minutes (was every half minute)
   }
   function startIdle() {
     clearAnimationTimers();
@@ -899,6 +899,8 @@
     var token = actionToken;
     var frame = 0;
     showFrame(ACTIONS.idle.row, frame, true);
+    // It keeps breathing for as long as it is on screen: resting it after two rounds (tried 2026-11-24) read as
+    // a cat that got stuck. One small frame about once a second.
     function nextIdleFrame() {
       if (token !== actionToken || !canAnimate() || pickerOpen || dragState) return;
       frameTimer = setTimeout(function () {

@@ -19,9 +19,12 @@
   /* the bright roles from the fatigue's own colour (--mb-acc: green, orange, red); the surfaces neutral */
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.card.mk-mid-card {
     --md-sys-color-primary: var(--mb-acc);
-    --md-sys-color-surface-container: color-mix(in srgb, var(--mb-acc) 4%, #171d23);          /* the buttons' container */
+    /* the buttons' container and what is chosen in its lower row: the header's own tint (the user: tinted as the
+       header; mk-header-x.js applyTone gives the two colours from the header's picture) */
+    --md-sys-color-surface-container: color-mix(in srgb, var(--hxr-accent, #c8d3e2) 9%, var(--hxr-surface, #1a2026));
     --md-sys-color-surface-container-high: color-mix(in srgb, var(--mb-acc) 5%, #232a31);     /* the colleagues' discs */
-    --md-sys-color-surface-container-highest: color-mix(in srgb, var(--mb-acc) 6%, #2e373f);  /* the layout shown now */
+    --md-sys-color-surface-container-highest: color-mix(in srgb, var(--hxr-accent, #c8d3e2) 26%, var(--hxr-surface, #1a2026));
+    --m3-dock-ink: color-mix(in srgb, var(--hxr-accent, #c8d3e2) 62%, #ffffff);            /* the lower row's icons */
     --md-sys-color-primary-fixed: color-mix(in srgb, var(--mb-acc) 30%, #fff6e6);      /* the accent's cream: the chosen rating, the beads */
     --md-sys-color-on-primary-fixed: color-mix(in srgb, var(--mb-acc) 16%, #0c0a08);   /* ink on it */
     --md-sys-color-on-surface: #eef1f4;
@@ -333,20 +336,22 @@
     border-radius: 20px !important;
     background: none !important;
     transform: none !important;
-    translate: none !important;
-    scale: none !important;
-    transition: border-radius var(--m3-spatial), background-color var(--m3-effects) !important;
+    translate: none;                        /* (nothing moves under the pointer: these two outrank the older hover lift) */
+    scale: 1;
+    transition: border-radius var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), background-color var(--m3-effects), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)) !important;
   }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse] { flex-grow: 1.12 !important; }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-tap:hover > span:first-child { rotate: none !important; }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):active { border-radius: 14px !important; background: var(--md-sys-color-surface-container-highest) !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):active { border-radius: 14px !important; background: var(--md-sys-color-surface-container-highest) !important; scale: .94; translate: none; }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected,
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected:hover { background: var(--md-sys-color-primary-fixed) !important; }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected:active { border-radius: 14px !important; background: var(--md-sys-color-primary-fixed) !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected:hover,
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected:active { background: none !important; }   /* (its shape is the row's flowing pill) */
+  /* without the motion helper (it should always be there) the chosen one still has its shape */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps:not(:has(> .m3-ind)) > .rg-pulse-tap.is-selected { background: var(--md-sys-color-primary-fixed) !important; }
   /* (B's round under each button and its ring on the chosen one are not drawn here) */
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card :is(.rg-pulse-tap:not(.rg-pulse-own), .rg-pulse-write--comment)::before { content: none !important; display: none !important; }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-tap:not(.rg-pulse-own) > span:first-child { font-size: 23px !important; }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected > span:first-child { font-size: 27px !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-tap:not(.rg-pulse-own) > span:first-child { font-size: 23px !important; scale: 1; transition: scale var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), rotate 0s !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-tap.is-selected > span:first-child { scale: 1.17; }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps:has(.rg-pulse-tap.is-selected) .rg-pulse-tap[data-rg-pulse]:not(.is-selected) > span:first-child { opacity: .8 !important; }
   /* a rating's vote count: a small badge on the face's shoulder, whole inside the button (it was cut off at the top) */
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-count {
@@ -368,6 +373,23 @@
     padding: 0 0 5px !important;
   }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon::before { font-size: 9.5px; }
+
+  /* --- alive, in the app's own way (the user: natural and fluid; js/mk-motion.js liquid with css/mk-sys.css, as
+     the dock and the tabs elsewhere): the shape under the chosen rating is ONE pill for the whole row. It flows
+     from the old choice to the new with its leading edge ahead and its trailing edge behind, so it stretches on
+     the way and settles; the chosen face grows a little on the same spring. A press gives slightly and comes
+     back (the app's spring, about 1 % over; no bounce). Nothing moves by itself or under the pointer --- */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .m3-ind {
+    top: 4px;
+    height: 40px;
+    z-index: 0;
+    border-radius: 20px;
+    background: var(--md-sys-color-primary-fixed);
+    opacity: 0;
+    pointer-events: none;
+  }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .m3-ind.is-on { opacity: 1; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment) { z-index: 1; }
 
   /* --- Material Web's ripple and focus ring (mood-feedback.js m3Web): no tint under the pointer (the user), a
      ripple on the press, the ring for the keyboard; both in the button's own shape --- */
@@ -393,22 +415,28 @@
 }
 :root.mk-m3 .mk-cl-moodrow .mk-cl-bar.is-docked { left: 50%; margin-left: -151px; }   /* the game's row is centred in its box */
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-quick { display: flex; flex: 4.2 1 0; gap: 0; min-width: 0; }
-:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy),
-:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy):hover {
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run),
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):hover {
   flex: 1 1 0; justify-content: center; width: auto; min-width: 0; height: 36px; margin: 0; padding: 0;
-  border-radius: 18px; background: none; color: var(--md-sys-color-on-surface-variant); scale: 1;
-  transition: border-radius 350ms cubic-bezier(.42, 1.67, .21, .9), background-color 200ms cubic-bezier(.34, .8, .34, 1);
+  border-radius: 18px; background: none; color: color-mix(in srgb, var(--m3-dock-ink, #c8d3e2) 72%, transparent); scale: 1;
+  position: relative; z-index: 1;
+  transition: border-radius var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), background-color 200ms cubic-bezier(.34, .8, .34, 1), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1));
 }
-:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy):active { scale: 1; border-radius: 12px; background: var(--md-sys-color-surface-container-highest); }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):active { scale: .94; border-radius: 12px; background: var(--md-sys-color-surface-container-highest); }
 /* the layouts' small pictures: plain and light, the mood's dot in the accent */
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q svg { background: none; outline: 0; }
-:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q .mk-cl-cards { fill: color-mix(in srgb, var(--md-sys-color-on-surface) 62%, transparent); }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q .mk-cl-cards { fill: color-mix(in srgb, var(--m3-dock-ink, #c8d3e2) 62%, transparent); }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q .mk-cl-mood { fill: var(--mb-acc, #f7a43a); }
 /* the layout shown now: a quiet round shape and its name (only the chosen rating is bright) */
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"],
-:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"]:hover { flex-grow: 2.4; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"]:hover { flex-grow: 2.4; background: none; color: var(--md-sys-color-on-surface); }   /* (its shape is the row's flowing pill, below) */
+/* the layout shown now: one pill for the row that flows from the old layout to the new (card-layout.js dockInd) */
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked > .m3-ind { top: 0; height: 36px; z-index: 0; border-radius: 18px; background: var(--md-sys-color-surface-container-highest); opacity: 0; pointer-events: none; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked > .m3-ind.is-on { opacity: 1; }
+.mk-cl-bar:not(.is-docked) > .m3-ind { display: none; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] .mk-cl-cards { fill: color-mix(in srgb, var(--md-sys-color-on-surface) 85%, transparent); }
-:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more[aria-expanded="true"], .mk-cl-candy[aria-pressed="true"]) { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more[aria-expanded="true"], .mk-cl-candy[aria-pressed="true"], .mk-cl-run[aria-pressed="true"]) { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); box-shadow: none; }   /* one look for whatever is chosen in this row: the quiet round shape, no gold ring round the sweet (the user) */
 /* the sweet without its glow here (the user: no glow); its sparks still twinkle now and then */
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-candy svg { filter: none; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-candy-halo { display: none; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-run { box-shadow: none; }

@@ -161,23 +161,28 @@
       const isRdBlock = !!block.closest('#radiologists-duty');
       const accent = isRdBlock ? rdAccent : rgAccent;
       block.style.setProperty('--staff-accent', accent);
-      block.classList.remove('is-active-duty', 'is-up-next-duty');
       const timer = block.querySelector('.duty-timer');
       const done  = block.classList.contains('duty-done');
-      if (timer && !done) {
-        block.classList.add('is-active-duty');
-        activeNames.add(name);
-      }
+      const active = !!(timer && !done);
+      // Each class only when it really changes. This runs every 10 s; it used to take both classes off every
+      // card and put them back, and each such change restyled both side columns (the cards carry :has() rules).
+      if (block.classList.contains('is-active-duty') !== active) block.classList.toggle('is-active-duty', active);
+      if (active) activeNames.add(name);
     });
 
     // mark first non-done card in each duty column as UP NEXT only if there is no active timer
+    const upNext = new Set();
     ['radiographers-duty','radiologists-duty'].forEach((id) => {
       const wrap = document.getElementById(id);
       if (!wrap) return;
       const hasActive = !!wrap.querySelector('.duty-block.is-active-duty');
       if (hasActive) return;
       const firstReady = Array.from(wrap.querySelectorAll('.duty-block:not(.duty-done)'))[0];
-      if (firstReady) firstReady.classList.add('is-up-next-duty');
+      if (firstReady) upNext.add(firstReady);
+    });
+    document.querySelectorAll('.duty-block').forEach((block) => {
+      const next = upNext.has(block);
+      if (block.classList.contains('is-up-next-duty') !== next) block.classList.toggle('is-up-next-duty', next);
     });
 
     document.querySelectorAll('.card').forEach((card) => {

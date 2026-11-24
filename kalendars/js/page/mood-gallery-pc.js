@@ -1,5 +1,6 @@
 (function MinkaGalleryPC() {
   'use strict';
+  var SELF = document.currentScript && document.currentScript.src || '';   // where this file is: its pictures stand beside it
 
   /* Vecais dators galerijā (mood-gallery-3d.js, priekšmets "oldpc"): Windows 98 darbvirsma
      vaporwave krāsās. Uz tās:
@@ -150,6 +151,7 @@
      menu's icons are not there, the six pixel pieces above are used. The seventh (Red Bull) joins the
      board on the later levels. */
   var DRINKS = ['narvesen', 'monster', 'kongstrong', 'lofbergs', 'dynamit', 'brite', 'redbull'], HQ = false, drinkJob = null;
+  var NOG = ['pufs-happy', 'koro-tired', 'zakis-very-tired'];   // the Nogurumiņi among the sweets: green, orange, red
   /* The old pixel pieces (pill, cat, star, heart) stay in the game beside the drinks, drawn again as
      smooth shapes on the same 128 px canvas: types 7 to 10. */
   var OLD = [
@@ -269,8 +271,19 @@
         q.drawImage(im, (S - im.width * k) / 2, (S - im.height * k) / 2, im.width * k, im.height * k);
         return c;
       }).concat(OLD.concat(SWEETS).map(function (paint) { var c = canvas(128, 128), q = c.getContext('2d'); paint(q); return c; }));
-      HQ = true;
-      return true;
+      // The user's Nogurumiņi as sweets too (Konfektes in the calendar's middle): three of the side cards' own
+      // creatures, each in the colour of its fatigue: rested green, tired orange, very tired red (pieces 18 to
+      // 20). Their pictures are fetched here, with the game; without them the game plays with the old set.
+      return Promise.all(NOG.map(function (name) {
+        return new Promise(function (ok, no) { var im = new Image(); im.onload = function () { ok(im); }; im.onerror = no; im.src = new URL('../../assets/butnes/' + name + '.webp', SELF || location.href).href; });
+      })).then(function (list) {
+        list.forEach(function (im) {
+          var S = 128, c = canvas(S, S), q = c.getContext('2d'), k = Math.min(S / im.width, S / im.height) * 0.96;
+          q.imageSmoothingQuality = 'high';
+          q.drawImage(im, (S - im.width * k) / 2, (S - im.height * k) / 2, im.width * k, im.height * k);
+          PIECES.push(c);
+        });
+      }, function () {}).then(function () { HQ = true; return true; });
     }, function () { drinkJob = null; return false; });
     return drinkJob;
   }
@@ -402,17 +415,20 @@
        a beam across the board, a word. Hints when idle; tips the first times. ── */
     // the drinks' colours (their sparks, and the soft tile behind each so six cans are told apart at a glance)
     var PCOL = ['#f08a24', '#7bdc3a', '#4f8dff', '#a678e0', '#ffe14a', '#b5e655', '#e5484d', '#5aa8ff', '#9a8fb8', '#ffd23f', '#ff4f7a',
-      '#f0283f', '#ff8a12', '#3fcb3a', '#2f8bff', '#ff4f9a', '#ffd21c', '#f2b829'];
+      '#f0283f', '#ff8a12', '#3fcb3a', '#2f8bff', '#ff4f9a', '#ffd21c', '#f2b829', '#34d089', '#ff9a3c', '#ff5d6c'];
     // what is collected, as said after a number ("Savāc 20 lācīšus")
     var PMANY = ['Narvesen kafijas', 'Monster bundžas', 'Kong Strong bundžas', 'Löfbergs kafijas', 'Dynamit bundžas', 'Brite bundžas', 'Red Bull bundžas', 'tabletes', 'kaķus', 'zvaigznes', 'sirdis',
-      'lācīšus', 'virpuļus', 'kubiņus', 'pilienus', 'virtuļus', 'citronus', 'konfektes'];
+      'lācīšus', 'virpuļus', 'kubiņus', 'pilienus', 'virtuļus', 'citronus', 'konfektes', 'zaļos Nogurumiņus', 'oranžos Nogurumiņus', 'sarkanos Nogurumiņus'];
     var PNAME = ['Narvesen', 'Monster', 'Kong Strong', 'Löfbergs', 'Dynamit', 'Brite', 'Red Bull', 'Tablete', 'Kaķis', 'Zvaigzne', 'Sirds',
-      'Lācītis', 'Virpulis', 'Kubiņš', 'Piliens', 'Virtulis', 'Citrons', 'Konfekte'];
+      'Lācītis', 'Virpulis', 'Kubiņš', 'Piliens', 'Virtulis', 'Citrons', 'Konfekte', 'Zaļais Nogurumiņš', 'Oranžais Nogurumiņš', 'Sarkanais Nogurumiņš'];
     // The game in the calendar's middle (SW): glossy sweets and the drinks on one board. Each game deals
     // three of the menu's drinks and three sweets, no two of one colour family; one more sweet joins later.
     var SW = embed;
-    var HUE = { 0: 'o', 1: 'g', 2: 'b', 3: 'p', 4: 'y', 5: 'g', 6: 'r', 11: 'r', 12: 'o', 13: 'g', 14: 'b', 15: 'p', 16: 'y', 17: 'y' };
+    var HUE = { 0: 'o', 1: 'g', 2: 'b', 3: 'p', 4: 'y', 5: 'g', 6: 'r', 11: 'r', 12: 'o', 13: 'g', 14: 'b', 15: 'p', 16: 'y', 17: 'y', 18: 'g', 19: 'o', 20: 'r' };
     function sweetSet(r) {
+      // with the Nogurumiņi in (the user: they are the sweets): the gold candy, the three of them, and one blue and
+      // one pink piece beside them, so all six are told apart by colour at a glance; no seventh piece later
+      if (PIECES.length > 20) return { set: [17, 18, 19, 20, r() < 0.5 ? 2 : 14, 15], extra: -1 };
       var pick = function (pool, n, used) { var out = []; pool = pool.slice(); while (out.length < n && pool.length) { var t = pool.splice((r() * pool.length) | 0, 1)[0]; if (!used[HUE[t]]) { used[HUE[t]] = 1; out.push(t); } } return out; };
       // the gold wrapped candy (the game's own sign) is in every game; the yellows step aside for it
       var used = { y: 1 }, drinks = pick([0, 1, 2, 5], 2, used), sweets = pick([11, 12, 13, 14, 15], 4, used);
