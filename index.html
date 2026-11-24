@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261124cg7';
+  var CALENDAR_BUILD = '20261124ch1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -2824,6 +2824,25 @@ window.addEventListener('DOMContentLoaded', () => {
     #bolusDocBtn .bolus-room-seg.is-caution { --led: #fbbf24; color: #fde9a8 !important; }
     #bolusDocBtn .bolus-room-seg.is-warn    { --led: #fb923c; color: #ffd9b3 !important; }
     #bolusDocBtn .bolus-room-seg.is-stale   { --led: #ff5a6e; color: #ffd0d6 !important; background: rgba(255, 90, 110, .14) !important; }
+    /* M3, as the mood card's own GE / Ph bars (kalendars/css/page/mk-mood-m3.css): each room in its colour, GE blue,
+       Philips green; the battery of the hours left fills in that colour over a dark tone of it; the word in dark
+       ink while the pill is more than half full, light over the dark part when less (bolus.js .is-lit). No rim, no
+       box round it; the same size and letters as before. An empty one (to be changed now) turns red. */
+    #bolusDocBtn .bolus-room-seg[data-room="ge"] { --room: #7db8ff; --room-ink: #0b1b30; --room-lt: #d6e7ff; }
+    #bolusDocBtn .bolus-room-seg[data-room="philips"] { --room: #6fdc9c; --room-ink: #0a2416; --room-lt: #d2f6e1; }
+    #bolusDocBtn .bolus-room-seg.is-stale { --room: #ff7a88; --room-ink: #2b0a10; --room-lt: #ffd6dc; }
+    #bolusDocBtn .bolus-room-seg,
+    #bolusDocBtn .bolus-room-seg.is-fresh,
+    #bolusDocBtn .bolus-room-seg.is-caution,
+    #bolusDocBtn .bolus-room-seg.is-warn,
+    #bolusDocBtn .bolus-room-seg.is-stale {
+      border-radius: 6px !important;
+      background: linear-gradient(90deg, var(--room) 0 var(--bol-left, 0%), color-mix(in srgb, var(--room) 22%, #141a21) var(--bol-left, 0%) 100%) !important;
+      box-shadow: none !important;
+      color: var(--room-lt) !important;
+      font-weight: 700 !important;
+    }
+    #bolusDocBtn .bolus-room-seg.is-lit { color: var(--room-ink) !important; }
 
     /* Keep music recognizable without adding animation, glow or rendering cost. */
     #lacitisDockBtn,
@@ -3909,7 +3928,7 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radi
 @keyframes mobileQrSpin{to{transform:rotate(360deg)}}
 </style>
 
-<script src="js/bolus.js?v=20261012ld2" defer></script>
+<script src="js/bolus.js?v=20261124gp1" defer></script>
 
 <script>
 var _nsOpen = false;

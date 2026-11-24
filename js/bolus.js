@@ -1306,6 +1306,7 @@
         // Čips ir kā baterija: aizpildījums = cik no 24 h vēl atlicis.
         var leftPct = Math.max(0, 100 - pctRoom);
         seg.style.setProperty('--bol-left', leftPct.toFixed(1) + '%');
+        seg.classList.toggle('is-lit', leftPct >= 50);   // the word dark on the light fill while that is under most of it
         var hoursLeft = st.changedAt ? Math.max(0, (WARN_MS - (now - st.changedAt)) / 3600000) : 0;
         seg.title = r.label + (fresh ? ' bolus — atlikušas ' + (hoursLeft >= 1 ? Math.floor(hoursLeft) + ' h' : Math.round(hoursLeft * 60) + ' min') : ' bolus jāmaina tagad');
       }

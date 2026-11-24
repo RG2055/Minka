@@ -102,6 +102,8 @@
   /* a section's heading row ("Radiologi") spans the whole width in a narrow window and lay, invisible, over the mood
      card's top: it took the switch's presses. It holds no control: presses go through it. */
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .cards-section-label { pointer-events: none !important; }   /* the switch stands in its place (its room is kept: the number does not move) */
+  /* the days' faces under their beans (mood-trend.js): a day nobody rated wears a plain face, grey and faint */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-scape-own.is-none { filter: grayscale(1) !important; opacity: .3 !important; }
   /* the shift's coffee is no longer a line of its own beside the glass: it stands under the month's coffee bar as "+6" */
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-side--right { display: none !important; }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--coffee small {

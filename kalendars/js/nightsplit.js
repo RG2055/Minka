@@ -465,6 +465,14 @@
     /* emoji balloons as cushions (Emoji Balloons Pack, DESIGNRIP, CC BY 4.0) — added at the end, so saved choices keep their numbers */
     ["bl-b01", "Balons: smaids", 170, 0, "b"], ["bl-b02", "Balons: smaids", 170, 0, "b"], ["bl-b03", "Balons: prieks", 170, 0, "b"], ["bl-b04", "Balons: mirkšķis", 170, 0, "b"], ["bl-b05", "Balons: smiekli", 170, 0, "b"], ["bl-b06", "Balons: plats smaids", 170, 0, "b"], ["bl-b07", "Balons: svilpo", 170, 0, "b"], ["bl-b08", "Balons: dusmas", 170, 0, "b"], ["bl-b09", "Balons: acis uz augšu", 170, 0, "b"], ["bl-b10", "Balons: neveikli", 170, 0, "b"], ["bl-b11", "Balons: mierīgs", 170, 0, "b"], ["bl-b12", "Balons: smejas", 170, 0, "b"], ["bl-b13", "Balons: neitrāls", 170, 0, "b"], ["bl-b14", "Balons: mēle", 170, 0, "b"], ["bl-b15", "Balons: mēle ārā", 170, 0, "b"], ["bl-b16", "Balons: miegains", 170, 0, "b"], ["bl-b17", "Balons: bēdīgs", 170, 0, "b"], ["bl-b18", "Balons: prieka asaras", 170, 0, "b"], ["bl-b19", "Balons: raud", 170, 0, "b"], ["bl-b20", "Balons: siekalas", 170, 0, "b"], ["bl-b21", "Balons: buča", 170, 0, "b"], ["bl-b22", "Balons: iemīlējies", 170, 0, "b"], ["bl-b23", "Balons: satraukts", 170, 0, "b"], ["bl-b24", "Balons: slikti", 170, 0, "b"], ["bl-b25", "Balons: bučo", 170, 0, "b"], ["bl-b26", "Balons: maska", 170, 0, "b"], ["bl-b27", "Balons: nauda", 170, 0, "b"]];
   var BED_TOYS=[['','Nav',0],["toy-teddy", "Lācītis", 94],["toy-teddy-cream", "Krēmīgais lācītis", 94],["toy-teddy-grey", "Pelēkais lācītis", 94],["toy-panda", "Panda", 94],["toy-koala", "Koala", 91],["toy-bunny", "Zaķītis", 77],["toy-cat", "Kaķītis", 85],["toy-cat-black", "Melnais kaķītis", 85],["toy-dog", "Sunītis", 79],["toy-fox", "Lapsiņa", 95],["toy-raccoon", "Jenots", 107],["toy-lion", "Lauva", 89],["toy-monkey", "Pērtiķis", 95],["toy-pig", "Sivēns", 86],["toy-cow", "Gotiņa", 90],["toy-sheep", "Aitiņa", 96],["toy-unicorn", "Vienradzis", 89],["toy-elephant", "Zilonītis", 83],["toy-dino", "Dinozaurs", 81],["toy-penguin", "Pingvīns", 94],["toy-owl", "Pūce", 81],["toy-chick", "Cālītis", 88],["toy-duck", "Pīlīte", 66],["toy-mouse", "Pelīte", 68],["toy-hamster", "Kāmis", 81],["toy-hedgehog", "Ezītis", 81],["toy-frog", "Vardīte", 97],["toy-turtle", "Bruņurupucis", 96],["toy-ladybug", "Mārīte", 80],["toy-bee", "Bitīte", 86],["toy-whale", "Valis", 117],["toy-dolphin", "Delfīns", 70],["toy-seal", "Ronis", 96],["toy-octopus", "Astoņkājis", 182],["toy-star", "Zvaigzne", 176],["toy-heart", "Sirsniņa", 169],["toy-cloud", "Mākonītis", 219]];
+  /* Nogurumiņi in five colours (scripts/build-bed-butnes.py), at the end so saved numbers stay;
+     12 x 5 ends at 97, inside the API's bp:\d{1,2}. */
+  var NB_TOY_KINDS={ aksi:'Aksolotls', antenas:'Antenas', asns:'Lapiņas', astonis:'Astoņkājis', cekuls:'Cekuls', koro:'Radziņš', lacis:'Lācis', lumo:'Garausis', mizi:'Kaķis', pele:'Pele', pufs:'Pūka', zakis:'Zaķis' };
+  var NB_TOY_END={ pufs:'a', pele:'a', antenas:'as', asns:'as' }; // colour agrees: Pele zaļa, Antenas zaļas
+  Object.keys(NB_TOY_KINDS).forEach(function(k){
+    [['g','zaļš'],['y','dzeltens'],['o','oranžs'],['r','sarkans'],['b','zils']].forEach(function(c){
+      BED_TOYS.push(['toy-nb-'+k+'-'+c[0], NB_TOY_KINDS[k]+': '+(NB_TOY_END[k]?c[1].slice(0,-1)+NB_TOY_END[k]:c[1]), 100]); });
+  });
   // Fabric cushions come in neutral grey; each gets its own colour (neighbours differ).
   var CUSHION_RGB=['224,165,38','127,184,230','200,50,60','241,157,176','98,184,122','242,138,60','47,99,179','31,157,143','246,212,78','86,101,122','201,111,74','143,174,139','224,72,72','74,163,223'];
   function cushionRgb(file){ var i=BED_PILLOWS.filter(function(p){ return p[3]; }).map(function(p){ return p[0]; }).indexOf(file); return CUSHION_RGB[(i<0?0:i)%CUSHION_RGB.length]; }
@@ -3785,7 +3793,7 @@
     return colour.rgb || (/^#[0-9a-f]{6}$/i.test(colour.accent||'') ? [1,3,5].map(function(i){ return parseInt(colour.accent.slice(i,i+2),16); }).join(',') : '120,170,200');
   }
   // Groups follow one another (printed, then fabric, then the rest); "none" first.
-  var STUDIO_ORDER={ '':-2, c:-1, k:-1, b:-.5, x:0, p:1, f:2, o:3, a:0, s:1 };
+  var STUDIO_ORDER={ '':-2, c:-1, k:-1, b:-.5, x:0, p:1, f:2, o:3, a:0, n:-1, s:1 };
   function studioItems(cat,skin){
     var list, cur, key;
     if(cat==='linen'){
@@ -3795,7 +3803,7 @@
       list=BED_PILLOWS.map(function(p,i){ return { id:String(i), label:p[1], group:p[4]||'', src:p[0]?bedAccSrc(p[0]):'', tint:p[3]?cushionRgb(p[0]):'' }; });
       cur=String(+(skin.bq||0)||0); key='bq';
     } else {
-      list=BED_TOYS.map(function(t,i){ return { id:String(i), label:t[1], group:/^toy-(star|heart|cloud)$/.test(t[0])?'s':(t[0]?'a':''), src:t[0]?bedAccSrc(t[0]):'', tint:false }; });
+      list=BED_TOYS.map(function(t,i){ return { id:String(i), label:t[1], group:/^toy-(star|heart|cloud)$/.test(t[0])?'s':/^toy-nb-/.test(t[0])?'n':(t[0]?'a':''), src:t[0]?bedAccSrc(t[0]):'', tint:false }; });
       cur=String(+(skin.bp||0)||0); key='bp';
     }
     list=list.map(function(x,i){ x.n=i; return x; }).sort(function(x,y){ return (STUDIO_ORDER[x.group]-STUDIO_ORDER[y.group]) || (x.n-y.n); });

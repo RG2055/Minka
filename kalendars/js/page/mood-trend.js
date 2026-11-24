@@ -747,6 +747,8 @@
     pts.forEach(function (p) {
       // the day's own emoji, else the face of the team's rating, so each rated point says what it was
       var emoji = p.own ? p.own.emoji : p.row.mood ? FACES[moodFor(p.row.mood.score).key][0] : '';
+      // M3: a day nobody rated says so too, as a grey bean says no coffee: a plain face, grey and faint (the user)
+      if (!emoji && M3) { html += '<i class="rg-scape-own is-none" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + 20).toFixed(1) + 'px">😐</i>'; return; }
       if (!emoji) return;
       var below = M3 ? 11 : p.row.mood ? dotR(p.row) : 2;   // right under its point (M3: under its bean)
       html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + (M3 ? 9 : MB ? 11.5 : 9)).toFixed(1) + 'px">' + esc(emoji) + '</i>';
