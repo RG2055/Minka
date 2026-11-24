@@ -101,7 +101,7 @@
     var grow = l && l.grow || 0;
     var moodH = g.moods[kind] * (grow || ms), moodHalf = g.moodHalf * ms;
     // on whole pixels (the user: it looked blurry): the card is its own layer, centred by -50 % of an odd height
-    var mcy = moodH > vis ? base + moodH / 2 + 4 : cy, mh = Math.round(g.moods[kind] || 0);   // (the height as kept for this kind of day: steady while the card is being redrawn)
+    var mcy = base + moodH / 2 + 4, mh = Math.round(g.moods[kind] || 0);   // (the height as kept for this kind of day: steady while the card is being redrawn)
     list.style.setProperty('--cor-mcy', (Math.round(mcy - mh / 2) + mh / 2).toFixed(1) + 'px');
     // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
@@ -208,7 +208,9 @@
     // Both walls start at one height, their headings on one line: the taller wall is centred in the
     // strip (or starts at its top when it does not fit) and the shorter one hangs from the same top.
     var tallest = walls.reduce(function (m, wall) { return Math.max(m, wall.h); }, 0);
-    var wallTop = tallest <= vis ? base + (vis - tallest) / 2 : base + 4;
+    // Both walls and the mood card stand at the top of the strip, right under the day strip, always (the user: the
+    // middle sat low on some days and the radio, opened, covered its bottom); what is left over lies below them.
+    var wallTop = base + 4;
     // the corridor's end lies a dock's height (and the lift of a card under the pointer) below the
     // lowest card, so the last row scrolls fully above the dock instead of staying cut under it
     var end = Math.max(wallTop + tallest, moodH > vis ? base + moodH + 8 : 0) + g.below + 24;
