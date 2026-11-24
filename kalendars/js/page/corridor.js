@@ -40,8 +40,9 @@
   var moodSeen = null, moodRO = window.ResizeObserver ? new ResizeObserver(function () { geo = null; schedule(); }) : null;
   function measure() {
     // the strip of the list really seen: under the header, above the dock
-    // shortcut: the dock's height is a fixed guess (100 px), measure it if it ever moves
-    var L = list.getBoundingClientRect(), top = L.top, bottom = Math.min(L.bottom, window.innerHeight - 100);
+    // (the host already ends this frame above its dock, --calendar-bottom: a further 100 px "for the dock" left an
+    // empty band under the walls and made every card smaller); the list's last 22 px fade out (its mask): end above
+    var L = list.getBoundingClientRect(), top = L.top, bottom = Math.min(L.bottom - 26, window.innerHeight - 8);
     if (header) { var H = header.getBoundingClientRect(); if (H.bottom > top) top = H.bottom; }
     // nothing to measure (a dialog over the calendar, the list hidden): leave the cards as they are,
     // else they shrink to the smallest size and the look editor copies a squashed card
@@ -131,19 +132,26 @@
     // short window), the usual size in the fewest rows — the corridor then scrolls a little.
     // inner: how near the middle the wall may start (by default beside the mood card)
     function fitWall(n, inner) {
-      var rows = 0, cols = 0, size = 0, fits = [], free = 0;   // free: the largest size that fits, whatever MAX says
+      var rows = 0, cols = 0, size = 0, fits = [], small = [], free = 0;   // free: the largest size that fits, whatever MAX says
       for (var r = 1; r <= n; r++) {
         var c = Math.ceil(n / r), byW = largest(c, inner), byH = (vis - LABEL - (r - 1) * GAP) / r;
         // one's own layout (card-layout.js "Savs") keeps its walls with smaller cards rather than
         // turning into the grid while a slider is moved
-        if (byW < (l && l.own ? 96 : MIN) || r > MAXROWS || (ROWS && r !== Math.min(ROWS, n))) continue;
-        if (byH >= MIN) { fits.push({ r: r, c: c, size: Math.min(byW, byH, MAX) }); free = Math.max(free, Math.min(byW, byH)); }
-        // nothing fits at the usual size (a short window, many people): smaller cards, down to
-        // 104 px, rather than a bottom row cut off under the dock
-        else if (!fits.length && !rows) { size = Math.min(byW, MAX, Math.max(Math.min(MIN, 104), byH)); rows = r; cols = c; }
+        if (r > MAXROWS || (ROWS && r !== Math.min(ROWS, n))) continue;
+        if (byW >= (l && l.own ? 96 : MIN) && byH >= MIN) { fits.push({ r: r, c: c, size: Math.min(byW, byH, MAX), wide: byW <= byH }); free = Math.max(free, Math.min(byW, byH)); }
+        // nothing fits at the usual size (a short window, many people): of all the row counts, the one with the
+        // largest cards that fit both ways (it fills the width as far as it can), not under 96 px
+        else if (byW >= 96) small.push({ r: r, c: c, size: Math.min(byW, MAX, Math.max(96, byH)), wide: byW <= byH });
       }
+      // The wall fills its width (the user: never an empty band beside it, whatever the screen): of the arrangements
+      // whose cards are as wide as the wall allows (the height leaves them room), the largest; only when none is, the
+      // largest at all. Arrangements under the usual size count only when none reaches it.
+      var pick = function (list) { var by = function (m, f) { return !m || f.size > m.size + 0.5 ? f : m; }; return list.filter(function (f) { return f.wide; }).reduce(by, null) || list.reduce(by, null); };
+      if (!fits.length && small.length) { var sm = pick(small); size = sm.size; rows = sm.r; cols = sm.c; }
       if (fits.length) {   // the largest cards that fit; between equal sizes (both at MAX), two to a row
         var best = fits.reduce(function (m, f) { return f.size > m.size + 0.5 || (Math.abs(f.size - m.size) <= 0.5 && f.c === 2 && m.c !== 2) ? f : m; });
+        var wide = fits.filter(function (f) { return f.wide; }).length ? pick(fits) : null;
+        if (wide) best = wide;
         size = best.size; rows = best.r; cols = best.c;
       }
       if (!rows) return null;
