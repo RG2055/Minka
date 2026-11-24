@@ -1159,8 +1159,163 @@ body:not(.radio-idle) #radioIdleBtn{display:none;}
 <div id="stationOverlay" role="dialog" aria-label="Radio stacijas" aria-hidden="true"></div>
 
 <!-- Radio window -->
+<style>
+/* The radio window, maximized: one skeleton for every skin (js/radio-max.js wires it to the radio engine).
+   One surface, three bands: the song with a small cover and the toolbar; the skin's spectrum across the whole
+   width; one strip with the EQ preset at the left, the transport dead centre, volume at the right; Stacijas sits
+   with the toolbar top right.
+   A skin (data-radio-skin) changes material, type, key finish and the spectrum's drawing, never where things
+   are. The old per-layout consoles stay in the DOM, hidden: the skeleton only presses their controls. The phone
+   keeps its own radio. */
+#rmx{display:none}
+@media not all and (max-width:760px){@media not all and (pointer:coarse) and (max-width:950px){
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-skin]{padding:0!important;border-width:0!important;height:auto!important;min-height:0!important;border-radius:var(--rmx-r,26px)!important;overflow:hidden!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-skin]::after,html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-skin]::before{display:none!important;}
+html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-skin]>:is(.radio-win-body,#radioSourceBar){display:none!important;}
+#radioWindow[data-radio-skin]>#rmx{display:grid;}
+}}
+#rmx{--rmx-surface:#0c1216;--rmx-tile-r:14px;--rmx-art-r:14px;--rmx-acc:color-mix(in srgb,rgb(var(--radio-accent-rgb,158,224,187)) 74%,#fff 26%);--rmx-ink:#eef2f6;--rmx-sub:#a7b2bd;--rmx-well:color-mix(in srgb,var(--rmx-ink) 8%,transparent);--rmx-on:color-mix(in srgb,var(--rmx-acc) 26%,transparent);--rmx-on-ink:var(--rmx-ink);--rmx-rail:color-mix(in srgb,var(--rmx-ink) 16%,transparent);--rmx-font:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;--rmx-label:var(--rmx-font);
+  position:relative;z-index:6;box-sizing:border-box;height:238px;width:100%;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:52px minmax(0,1fr) 44px;row-gap:10px;padding:16px 20px;
+  color:var(--rmx-ink);font-family:var(--rmx-font);background:var(--rmx-bg,linear-gradient(180deg,rgba(6,10,14,.42),rgba(6,10,14,.66)));border-radius:inherit;}
+#rmx *{box-sizing:border-box}
+#rmx button{margin:0;border:0;padding:0;background:none;color:inherit;font:inherit;cursor:pointer;}
+#rmx button:focus-visible,#rmx input:focus-visible{outline:2px solid var(--rmx-acc);outline-offset:2px;}
+#rmx svg{display:block;fill:currentColor}
+/* band 1: the song, its cover beside it; the toolbar top right */
+#rmx .rmx-meta{grid-column:1;grid-row:1;display:flex;align-items:center;gap:14px;min-width:0}
+#rmx .rmx-art{width:52px;height:52px;flex:none;border-radius:var(--rmx-art-r);overflow:hidden;background:var(--rmx-well);display:grid;place-items:center;color:var(--rmx-sub)}
+#rmx .rmx-art img{width:100%;height:100%;object-fit:cover;display:block}
+#rmx .rmx-art img:not([src]),#rmx .rmx-art img[src=""]{display:none}
+#rmx .rmx-art svg{width:24px;height:24px}
+#rmx .rmx-art:has(img[src]:not([src=""])) svg{display:none}
+#rmx .rmx-lines{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+#rmx .rmx-station{font:500 11.5px/15px var(--rmx-label);color:var(--rmx-sub);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);white-space:nowrap;overflow:hidden}
+#rmx .rmx-song{white-space:nowrap;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
+#rmx .rmx-title{font-size:20px;line-height:26px;font-weight:var(--rmx-title-w,600)}
+#rmx .rmx-artist{font-size:15px;line-height:26px;font-weight:400;color:var(--rmx-sub);margin-left:.6em}
+#rmx .rmx-artist:empty{display:none}
+#rmx .rmx-top{grid-column:2;grid-row:1;align-self:start;display:flex;align-items:center;gap:8px}
+#rmx .rmx-top .rmx-btn{height:38px;border-radius:19px}
+#rmx .rmx-tools{display:flex;gap:2px;padding:3px;border-radius:20px;background:var(--rmx-well)}
+#rmx .rmx-tool{width:32px;height:32px;border-radius:16px;display:grid;place-items:center;color:var(--rmx-sub)}
+#rmx .rmx-tool svg{width:17px;height:17px}
+/* band 2: the spectrum. It folds onto its line on pause (one transition, nothing runs while paused). */
+#rmx .rmx-viz{grid-column:1 / 3;grid-row:2;min-height:0;position:relative}
+#rmx .rmx-viz canvas{position:absolute;inset:0;width:100%;height:100%;transform-origin:50% 100%;scale:1 .1;transition:scale 420ms cubic-bezier(.2,0,0,1);color:var(--rmx-acc)}
+#rmx.rmx-playing .rmx-viz canvas{scale:1 1}
+/* band 3: one strip */
+#rmx .rmx-strip{grid-column:1 / 3;grid-row:3;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:16px}
+#rmx .rmx-left{display:flex;gap:8px;align-items:center;min-width:0}
+#rmx .rmx-btn{width:120px;justify-content:center;height:36px;border-radius:18px;padding:0 10px;display:inline-flex;align-items:center;gap:8px;overflow:hidden;background:var(--rmx-well);font:600 13px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);white-space:nowrap}
+#rmx .rmx-btn svg{width:17px;height:17px;flex:none}
+#rmx .rmx-btn b{font-weight:600;color:var(--rmx-acc)}
+#rmx .rmx-btn .rmx-dd{width:14px;height:14px;opacity:.7;margin-left:-3px}
+#rmx .rmx-btn[aria-expanded="true"]{background:var(--rmx-on);color:var(--rmx-on-ink)}
+#rmx .rmx-tr{display:flex;align-items:center;gap:12px}
+#rmx .rmx-key{width:40px;height:40px;border-radius:20px;display:grid;place-items:center;background:var(--rmx-well)}
+#rmx .rmx-key svg{width:20px;height:20px}
+#rmx .rmx-play{width:var(--rmx-play-w,52px);height:44px;border-radius:var(--rmx-play-r,22px);background:var(--rmx-on);color:var(--rmx-on-ink)}
+#rmx .rmx-play svg{width:22px;height:22px}
+#rmx .rmx-play .rmx-pause,#rmx.rmx-playing .rmx-play .rmx-go{display:none}
+#rmx.rmx-playing .rmx-play .rmx-pause{display:block}
+#rmx.rmx-wait .rmx-play{opacity:.65}
+#rmx .rmx-right{display:flex;justify-content:flex-end;align-items:center;gap:10px;color:var(--rmx-sub)}
+#rmx .rmx-mute{width:32px;height:32px;border-radius:16px;display:grid;place-items:center}
+#rmx .rmx-mute svg{width:18px;height:18px}
+#rmx .rmx-mute .rmx-off,#rmx .rmx-mute[aria-pressed="true"] .rmx-on{display:none}
+#rmx .rmx-mute[aria-pressed="true"] .rmx-off{display:block}
+#rmx .rmx-vol{-webkit-appearance:none;appearance:none;width:200px;height:20px;margin:0;background:transparent;--v:70%}
+#rmx .rmx-vol::-webkit-slider-runnable-track{height:var(--rmx-vt,4px);border-radius:3px;background:linear-gradient(90deg,var(--rmx-acc) var(--v),transparent var(--v)),var(--rmx-rail)}
+#rmx .rmx-vol::-moz-range-track{height:var(--rmx-vt,4px);border-radius:3px;background:linear-gradient(90deg,var(--rmx-acc) var(--v),transparent var(--v)),var(--rmx-rail)}
+#rmx .rmx-vol::-webkit-slider-thumb{-webkit-appearance:none;width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);margin-top:calc((var(--rmx-vt,4px) - var(--rmx-kh,18px)) / 2);border-radius:3px;background:var(--rmx-ink);border:0}
+#rmx .rmx-vol::-moz-range-thumb{width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);border-radius:3px;background:var(--rmx-ink);border:0}
+/* the EQ presets: a compact menu over the spectrum, above its button */
+#rmx .rmx-eq{position:absolute;left:20px;bottom:66px;z-index:3;display:grid;grid-template-columns:repeat(6,auto);gap:4px;padding:6px;border-radius:18px;background:var(--rmx-menu,#151a20);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#rmx .rmx-eq[hidden]{display:none}
+#rmx .rmx-eq button{height:32px;padding:0 12px;border-radius:16px;font:600 12px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);color:var(--rmx-sub)}
+#rmx .rmx-eq button[aria-checked="true"]{background:var(--rmx-on);color:var(--rmx-on-ink)}
+/* ---------- skins: material, type, shapes; the spectrum's drawing is chosen in js by data-radio-skin ---------- */
+/* Klasiskais / Jauns: the chosen background shows through a dark wash; Jauns a cooler glass. */
+#radioWindow[data-radio-skin="clean"] #rmx{--rmx-surface:#0e131a;--rmx-tile-r:16px;--rmx-art-r:16px;--rmx-bg:linear-gradient(100deg,rgba(14,19,26,.5),rgba(14,19,26,.72))}
+/* Pixel: Material 3 Expressive, the album palette surface, big soft shapes, the wide pill play key. */
+#radioWindow[data-radio-skin="pixel"] #rmx{--rmx-surface:var(--pixel-surface,#1b2420);--rmx-tile-r:24px;--rmx-art-r:26px;--rmx-bg:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.22));--rmx-play-r:16px;--rmx-on:var(--rmx-acc);--rmx-on-ink:color-mix(in srgb,var(--rmx-acc) 22%,#071009);--rmx-vt:6px;--rmx-kw:6px;--rmx-kh:22px;--rmx-title-w:500}
+/* Pioneer: a network player's OLED. Blue-black, ice, labels in tracked caps, a tick-marked volume. */
+#radioWindow[data-radio-skin="pioneer"] #rmx{--rmx-surface:#06090c;--rmx-tile-r:8px;--rmx-art-r:6px;--rmx-bg:linear-gradient(180deg,#0b1116,#06090c);--rmx-acc:color-mix(in srgb,rgb(var(--radio-accent-rgb,191,230,255)) 80%,#fff 20%);--rmx-ink:#e6f4ff;--rmx-sub:#7f9bb0;--rmx-rail:repeating-linear-gradient(90deg,rgba(191,230,255,.3) 0 1px,transparent 1px 8px);--rmx-vt:8px;--rmx-kw:3px;--rmx-kh:20px;--rmx-track:.14em;--rmx-case:uppercase;--rmx-title-w:500;--rmx-menu:#0e151b}
+#radioWindow[data-radio-skin="pioneer"] #rmx .rmx-btn{font-size:11.5px}
+/* Amp: Winamp as an instrument. Graphite, the station in the LED display face, bars with falling caps. */
+#radioWindow[data-radio-skin="amp"] #rmx{--rmx-surface:#0e100f;--rmx-tile-r:8px;--rmx-art-r:6px;--rmx-bg:linear-gradient(180deg,#141716,#0e100f);--rmx-ink:#eceeed;--rmx-sub:#9ba19e;--rmx-well:rgba(255,255,255,.06);--rmx-rail:rgba(255,255,255,.12);--rmx-menu:#181b1a}
+#radioWindow[data-radio-skin="amp"] #rmx .rmx-station{font:400 15px/15px 'Digital-7 Mono','JetBrains Mono',ui-monospace,monospace;color:var(--rmx-acc);letter-spacing:.04em}
+/* Dither: 1-bit. Paper black, one ink, the cover in grey pixels, digital mono type, dotted spectrum and volume. */
+#radioWindow[data-radio-skin="dither"] #rmx{--rmx-surface:#060606;--rmx-tile-r:2px;--rmx-art-r:2px;--rmx-bg:#060606;--rmx-acc:rgb(var(--dth-ink-rgb,var(--radio-accent-rgb,120,220,200)));--rmx-ink:#f4f3ec;--rmx-sub:#a9a89f;--rmx-well:color-mix(in srgb,var(--rmx-acc) 11%,transparent);--rmx-on:color-mix(in srgb,var(--rmx-acc) 30%,transparent);--rmx-rail:repeating-linear-gradient(90deg,rgba(244,243,236,.35) 0 2px,transparent 2px 4px);--rmx-kw:4px;--rmx-kh:14px;--rmx-font:'JetBrains Mono',ui-monospace,monospace;--rmx-case:uppercase;--rmx-track:.03em;--rmx-menu:#0d0d0d}
+#radioWindow[data-radio-skin="dither"] #rmx .rmx-art img{image-rendering:pixelated;filter:grayscale(1) contrast(1.5)}
+#radioWindow[data-radio-skin="dither"] #rmx .rmx-title{font-size:18px}
+#radioWindow[data-radio-skin="dither"] #rmx .rmx-artist{font-size:13px}
+/* The sound effects sheet, opened from the EQ menu: wide and low (two columns of sliders), so it sits above the
+   radio window without scrolling and without covering the dock. */
+body>#slowFxPanel.rmx-fx{max-width:none!important;width:min(680px,calc(100vw - 24px))!important}
+#slowFxPanel.rmx-fx.open{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;align-items:start}
+#slowFxPanel.rmx-fx .slowfx-popup-head{grid-column:1 / -1}
+#slowFxPanel.rmx-fx .slowfx-row{margin-top:14px}
+/* The station list joined under the skeleton wears the same skin: js/radio-max.js copies the skin's tokens onto it
+   (--rmx-*). One surface, no rim; tiles and tabs are the skin's tinted wells, the playing station its accent. */
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin]{background:var(--rmx-surface)!important;background-image:none!important;border:0!important;box-shadow:none!important;color:var(--rmx-ink);font-family:var(--rmx-font)}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin].mk-st-joined{border-radius:0 0 var(--rmx-r) var(--rmx-r)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-title strong{font-family:var(--rmx-label)!important;letter-spacing:var(--rmx-track,0)!important;text-transform:var(--rmx-case,none)!important;color:var(--rmx-ink)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-search{background:var(--rmx-well)!important;border:0!important;box-shadow:none!important;border-radius:20px!important;color:var(--rmx-sub)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-search:focus-within{outline:0!important;background:color-mix(in srgb,var(--rmx-ink) 13%,transparent)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-search input{font-family:var(--rmx-font)!important;color:var(--rmx-ink)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-close{background:none!important;border:0!important;color:var(--rmx-sub)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button,#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .world-genre-row [data-wg]{background:var(--rmx-well)!important;border:0!important;box-shadow:none!important;color:var(--rmx-ink)!important;font-family:var(--rmx-label)!important;letter-spacing:var(--rmx-track,0)!important;text-transform:var(--rmx-case,none)!important;border-radius:calc(var(--rmx-tile-r) + 2px)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button.active,#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .world-genre-row [data-wg]:is([aria-pressed="true"],.active,[aria-selected="true"]){background:var(--rmx-on)!important;color:var(--rmx-on-ink)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile{background:var(--rmx-well)!important;border:0!important;box-shadow:none!important;border-radius:var(--rmx-tile-r)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile.is-current{background:color-mix(in srgb,var(--rmx-acc) 20%,transparent)!important;box-shadow:none!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile.is-offline{background:color-mix(in srgb,var(--rmx-ink) 3%,transparent)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile .station-logo-wrap{border-radius:var(--rmx-art-r)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile .station-copy strong,#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-ehr .ehr-head strong{font-family:var(--rmx-font)!important;color:var(--rmx-ink)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile .station-copy small{font-family:var(--rmx-font)!important;color:var(--rmx-sub)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-entry>.station-favorite{color:var(--rmx-sub)!important;background:none!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-entry>.station-favorite[aria-pressed="true"]{color:var(--rmx-acc)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-list{scrollbar-color:var(--rmx-well) transparent}
+#stationOverlay[data-skin="dither"] .station-tile .station-logo{image-rendering:pixelated}
+/* The window's corners follow the skin's surface. */
+#radioWindow[data-radio-skin]{--rmx-r:26px}#radioWindow[data-radio-skin="clean"]{--rmx-r:28px}#radioWindow[data-radio-skin="pixel"]{--rmx-r:32px}#radioWindow[data-radio-skin="pioneer"]{--rmx-r:18px}#radioWindow[data-radio-skin="amp"]{--rmx-r:16px}#radioWindow[data-radio-skin="dither"]{--rmx-r:8px}
+/* The drag handle stays above the skeleton; the look sheet's spectrum frame and position belonged to the old display. */
+#radioWindow[data-radio-skin]>.radio-drag-strip{z-index:7}
+#radioWindow[data-radio-skin]~#themePanel .rb-page[data-step="more-b"],#radioWindow[data-radio-skin]~#themePanel #pioneerMetalControls,#radioWindow[data-radio-skin]~#themePanel #ampVisControls,#radioWindow[data-radio-skin]~#themePanel #ditherVisControls,#radioWindow[data-radio-skin]~#themePanel #pioneerDisplayControls{display:none!important}
+@media (prefers-reduced-motion:reduce){#rmx .rmx-viz canvas{transition:none}}
+</style>
 <div id="radioWindow" style="display:none;">
   <div class="radio-drag-strip" id="radioWinHeader" title="Drag"></div>
+  <div id="rmx" role="group" aria-label="Radio atskaņotājs">
+    <div class="rmx-meta">
+      <span class="rmx-art"><img alt="" decoding="async"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8c0-1.11-.89-2-2-2H8.3l8.26-3.34L15.88 1 3.24 6.15zM7 20c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-8h-2v-2h-2v2H4V8h16v4z"/></svg></span>
+      <div class="rmx-lines"><div class="rmx-station"></div><div class="rmx-song"><span class="rmx-title"></span><span class="rmx-artist"></span></div></div>
+    </div>
+    <div class="rmx-top">
+      <button type="button" class="rmx-btn" data-rmx="stations" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.76 16.24C6.67 15.16 6 13.66 6 12s.67-3.16 1.76-4.24l1.42 1.42C8.45 9.9 8 10.9 8 12c0 1.1.45 2.1 1.17 2.83l-1.41 1.41zm8.48 0C17.33 15.16 18 13.66 18 12s-.67-3.16-1.76-4.24l-1.42 1.42C15.55 9.9 16 10.9 16 12c0 1.1-.45 2.1-1.17 2.83l1.41 1.41zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm8 2c0 2.21-.9 4.21-2.35 5.65l1.42 1.42C20.88 17.26 22 14.76 22 12s-1.12-5.26-2.93-7.07l-1.42 1.42C19.1 7.79 20 9.79 20 12zM6.35 6.35L4.93 4.93C3.12 6.74 2 9.24 2 12s1.12 5.26 2.93 7.07l1.42-1.42C4.9 16.21 4 14.21 4 12s.9-4.21 2.35-5.65z"/></svg>Stacijas</button>
+    <div class="rmx-tools">
+      <button type="button" class="rmx-tool" data-rmx="look" title="Izskats un iestatījumi" aria-label="Izskats un iestatījumi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg></button>
+      <button type="button" class="rmx-tool" data-rmx="profile" title="Profils" aria-label="Profils"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></button>
+      <button type="button" class="rmx-tool" data-rmx="min" title="Samazināt" aria-label="Samazināt radio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19h12v-2H6z"/></svg></button>
+    </div>
+    </div>
+    <div class="rmx-viz" aria-hidden="true"><canvas></canvas></div>
+    <div class="rmx-strip">
+      <div class="rmx-left">
+        <button type="button" class="rmx-btn" data-rmx="eq" aria-haspopup="menu" aria-expanded="false" title="Skaņas profils"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg><b>FLAT</b><svg class="rmx-dd" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
+      </div>
+      <div class="rmx-tr">
+        <button type="button" class="rmx-key" data-rmx="prev" title="Iepriekšējā stacija" aria-label="Iepriekšējā stacija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+        <button type="button" class="rmx-key rmx-play" data-rmx="play" title="Atskaņot" aria-label="Atskaņot"><svg class="rmx-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="rmx-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></button>
+        <button type="button" class="rmx-key" data-rmx="next" title="Nākamā stacija" aria-label="Nākamā stacija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+      </div>
+      <div class="rmx-right">
+        <button type="button" class="rmx-mute" data-rmx="mute" aria-pressed="false" title="Izslēgt skaņu" aria-label="Izslēgt skaņu"><svg class="rmx-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg><svg class="rmx-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+        <input type="range" class="rmx-vol" min="0" max="1" step="0.01" value="0.7" aria-label="Skaļums">
+      </div>
+    </div>
+    <div class="rmx-eq" role="menu" aria-label="Skaņas profils" hidden></div>
+  </div>
   <div id="radioSourceBar" class="radio-source-bar" role="group" aria-label="Atskaņošanas avots">
     <button id="radioSourceBroadcast" type="button" aria-pressed="true" onclick="setRadioSource('radio')"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 7 13-4M5 8h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="14.5" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M14 12h4m-4 4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>RADIO</span></button>
     <span id="radioSourceStatus" role="status"></span>
@@ -1370,7 +1525,8 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261124mp1']);
+  await loadAny(['js/radio.js?v=20261125mx2']);
+  await loadAny(['js/radio-max.js?v=20261125mx5']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
