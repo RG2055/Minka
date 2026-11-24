@@ -38,6 +38,8 @@ const modernMeter = {level:0};
 const MK_DEFAULT_VIZ = 7;
 let __mkLastSpectrum = MK_DEFAULT_VIZ;
 let aCtx, analyser, src, lowNode, highNode, hls, masterGain, dryGain, wetGain, delayNode, feedbackNode, convolverNode, compressorNode, vinylNoiseSrc, vinylLPF, vinylGain, depthSplitter, depthMerger, depthDelayR, depthDryGain, depthWetGain, depthSumGain;
+// The dock's mini player draws the music's spectrum from the same analyser (index.html __mkMiniDock.spectrum).
+window.__mkRadioAnalyser = () => analyser || null;
 let stationsList = [];
 let recordStations = [];
 let latvianStations = [];

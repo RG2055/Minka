@@ -1370,7 +1370,7 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261116pn2']);
+  await loadAny(['js/radio.js?v=20261124mp1']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
@@ -3238,63 +3238,131 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.d
      it is hidden; while shown, the progress line is one CSS animation (a step a second), restarted only when the
      player reports play, pause, a seek or a new song. -->
 <style>
-/* It sits in the dock's row, beside the dock (nothing else is drawn there), as tall as the dock: it never covers
+/* RG Music's mini player, unchanged. It sits in the dock's row, beside the dock (nothing else is drawn there), as tall as the dock: it never covers
    the calendar. Narrower room gives a smaller layout (rgm-mid: cover and transport, rgm-tiny: cover and play);
    with no room at all it stays hidden. Colours come from the album (--rgm-*, set by the player), else neutral.
    Columns: cover | song, keys and wave | the close button. */
-:is(#rgMini,#radioMini){--rgm-bg:#161a21;--rgm-ink:#eef2f8;--rgm-sub:#aab4c3;--rgm-acc:#eef2f8;--rgm-on:#111418;--rgm-key:rgba(255,255,255,.1);position:fixed;z-index:171194;box-sizing:border-box;display:grid;grid-template-columns:56px minmax(0,1fr) 24px;grid-template-rows:28px 34px 12px;align-content:center;column-gap:12px;row-gap:0;align-items:center;padding:0 12px 0 9.5px;border-radius:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--rgm-bg) 90%,#fff 10%),var(--rgm-bg) 70%);border:1.5px solid rgba(214,226,240,.38);box-shadow:0 14px 36px rgba(0,0,0,.55);color:var(--rgm-ink);font-family:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;overflow:hidden;contain:layout paint;transition:background-color 500ms cubic-bezier(.2,0,0,1),color 500ms cubic-bezier(.2,0,0,1);}
-:is(#rgMini,#radioMini)[hidden]{display:none;}
-:is(#rgMini,#radioMini) button{border:0;padding:0;margin:0;background:none;color:inherit;cursor:pointer;font:inherit;}
-:is(#rgMini,#radioMini) button:focus-visible{outline:2px solid #a8c7fa;outline-offset:2px;}
-:is(#rgMini,#radioMini) .rgm-art{grid-column:1;grid-row:1 / 4;align-self:center;width:56px;height:56px;border-radius:22px;overflow:hidden;background:rgba(255,255,255,.08);}
-:is(#rgMini,#radioMini) .rgm-art img{display:block;width:100%;height:100%;object-fit:cover;}
-:is(#rgMini,#radioMini) .rgm-meta{grid-column:2;grid-row:1;align-self:end;min-width:0;text-align:left;padding:0 0 0 2px;}
-:is(#rgMini,#radioMini) .rgm-meta>:is(b,span){display:block;overflow:hidden;white-space:nowrap;}
-:is(#rgMini,#radioMini) .rgm-meta>:is(b,span)>i{display:inline-block;font-style:normal;}
-:is(#rgMini,#radioMini) .rgm-meta>b{font-weight:600;font-size:13px;line-height:15px;}
-:is(#rgMini,#radioMini) .rgm-meta>span{font-size:11.5px;line-height:13px;color:var(--rgm-sub);transition:color 500ms cubic-bezier(.2,0,0,1);}
+#rgMini{--rgm-bg:#161a21;--rgm-ink:#eef2f8;--rgm-sub:#aab4c3;--rgm-acc:#eef2f8;--rgm-on:#111418;--rgm-key:rgba(255,255,255,.1);position:fixed;z-index:171194;box-sizing:border-box;display:grid;grid-template-columns:56px minmax(0,1fr) 24px;grid-template-rows:28px 34px 12px;align-content:center;column-gap:12px;row-gap:0;align-items:center;padding:0 12px 0 9.5px;border-radius:28px;background:linear-gradient(180deg,color-mix(in srgb,var(--rgm-bg) 90%,#fff 10%),var(--rgm-bg) 70%);border:1.5px solid rgba(214,226,240,.38);box-shadow:0 14px 36px rgba(0,0,0,.55);color:var(--rgm-ink);font-family:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;overflow:hidden;contain:layout paint;transition:background-color 500ms cubic-bezier(.2,0,0,1),color 500ms cubic-bezier(.2,0,0,1);}
+#rgMini[hidden]{display:none;}
+#rgMini button{border:0;padding:0;margin:0;background:none;color:inherit;cursor:pointer;font:inherit;}
+#rgMini button:focus-visible{outline:2px solid #a8c7fa;outline-offset:2px;}
+#rgMini .rgm-art{grid-column:1;grid-row:1 / 4;align-self:center;width:56px;height:56px;border-radius:22px;overflow:hidden;background:rgba(255,255,255,.08);}
+#rgMini .rgm-art img{display:block;width:100%;height:100%;object-fit:cover;}
+#rgMini .rgm-meta{grid-column:2;grid-row:1;align-self:end;min-width:0;text-align:left;padding:0 0 0 2px;}
+#rgMini .rgm-meta>:is(b,span){display:block;overflow:hidden;white-space:nowrap;}
+#rgMini .rgm-meta>:is(b,span)>i{display:inline-block;font-style:normal;}
+#rgMini .rgm-meta>b{font-weight:600;font-size:13px;line-height:15px;}
+#rgMini .rgm-meta>span{font-size:11.5px;line-height:13px;color:var(--rgm-sub);transition:color 500ms cubic-bezier(.2,0,0,1);}
 /* A name longer than its line slides to its end and back while it plays (transform only); paused, it rests at
    its start and fades out where it is cut. Measured only when the name or the width changes. */
-:is(#rgMini,#radioMini) .rgm-run{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);}
-:is(#rgMini,#radioMini) .rgm-run>i{animation:rgmMarq var(--rgm-dur,10s) ease-in-out infinite paused;}
-:is(#rgMini,#radioMini).rgm-playing .rgm-run>i{animation-play-state:running;}
+#rgMini .rgm-run{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);}
+#rgMini .rgm-run>i{animation:rgmMarq var(--rgm-dur,10s) ease-in-out infinite paused;}
+#rgMini.rgm-playing .rgm-run>i{animation-play-state:running;}
 @keyframes rgmMarq{0%,18%{transform:none}50%,68%{transform:translateX(var(--rgm-shift,0px))}100%{transform:none}}
-:is(#rgMini,#radioMini) .rgm-x{grid-column:3;grid-row:1;align-self:center;justify-self:end;width:24px;height:24px;border-radius:12px;display:grid;place-items:center;color:var(--rgm-sub);opacity:.8;transition:background-color 150ms cubic-bezier(.2,0,0,1),opacity 150ms cubic-bezier(.2,0,0,1);}
-:is(#rgMini,#radioMini) .rgm-x:hover{background:var(--rgm-key);opacity:1;color:var(--rgm-ink);}
-:is(#rgMini,#radioMini) .rgm-x svg{width:14px;height:14px;fill:currentColor;}
-:is(#rgMini,#radioMini) .rgm-ctrls{grid-column:2 / 4;grid-row:2;align-self:center;display:flex;align-items:center;justify-content:space-between;max-width:240px;}
-:is(#rgMini,#radioMini) .rgm-b{width:32px;height:32px;border-radius:16px;display:grid;place-items:center;color:inherit;opacity:.82;transition:background-color 150ms cubic-bezier(.2,0,0,1),opacity 150ms cubic-bezier(.2,0,0,1);}
-:is(#rgMini,#radioMini) .rgm-b:hover{background:var(--rgm-key);opacity:1;}
-:is(#rgMini,#radioMini) .rgm-b svg{width:20px;height:20px;fill:currentColor;}
-:is(#rgMini,#radioMini) .rgm-play{width:36px;height:36px;border-radius:18px;background:var(--rgm-acc);color:var(--rgm-on);opacity:1;transition:background-color 500ms cubic-bezier(.2,0,0,1),color 500ms cubic-bezier(.2,0,0,1);}
-:is(#rgMini,#radioMini) .rgm-play:hover{background:var(--rgm-acc);filter:brightness(1.08);}
-:is(#rgMini,#radioMini) .rgm-like[aria-pressed="true"]{color:#ff5a4f;opacity:1;}
-:is(#rgMini,#radioMini) .rgm-on,:is(#rgMini,#radioMini) [aria-pressed="true"] .rgm-off,:is(#rgMini,#radioMini).rgm-playing .rgm-play .rgm-off{display:none;}
-:is(#rgMini,#radioMini) [aria-pressed="true"] .rgm-on,:is(#rgMini,#radioMini).rgm-playing .rgm-play .rgm-on{display:inline;}
-:is(#rgMini,#radioMini).rgm-wait .rgm-play{opacity:.6;}
+#rgMini .rgm-x{grid-column:3;grid-row:1;align-self:center;justify-self:end;width:24px;height:24px;border-radius:12px;display:grid;place-items:center;color:var(--rgm-sub);opacity:.8;transition:background-color 150ms cubic-bezier(.2,0,0,1),opacity 150ms cubic-bezier(.2,0,0,1);}
+#rgMini .rgm-x:hover{background:var(--rgm-key);opacity:1;color:var(--rgm-ink);}
+#rgMini .rgm-x svg{width:14px;height:14px;fill:currentColor;}
+#rgMini .rgm-ctrls{grid-column:2 / 4;grid-row:2;align-self:center;display:flex;align-items:center;justify-content:space-between;max-width:240px;}
+#rgMini .rgm-b{width:32px;height:32px;border-radius:16px;display:grid;place-items:center;color:inherit;opacity:.82;transition:background-color 150ms cubic-bezier(.2,0,0,1),opacity 150ms cubic-bezier(.2,0,0,1);}
+#rgMini .rgm-b:hover{background:var(--rgm-key);opacity:1;}
+#rgMini .rgm-b svg{width:20px;height:20px;fill:currentColor;}
+#rgMini .rgm-play{width:36px;height:36px;border-radius:18px;background:var(--rgm-acc);color:var(--rgm-on);opacity:1;transition:background-color 500ms cubic-bezier(.2,0,0,1),color 500ms cubic-bezier(.2,0,0,1);}
+#rgMini .rgm-play:hover{background:var(--rgm-acc);filter:brightness(1.08);}
+#rgMini .rgm-like[aria-pressed="true"]{color:#ff5a4f;opacity:1;}
+#rgMini .rgm-on,#rgMini [aria-pressed="true"] .rgm-off,#rgMini.rgm-playing .rgm-play .rgm-off{display:none;}
+#rgMini [aria-pressed="true"] .rgm-on,#rgMini.rgm-playing .rgm-play .rgm-on{display:inline;}
+#rgMini.rgm-wait .rgm-play{opacity:.6;}
 /* The M3 wavy progress, in its own row under the keys (it never reaches them). Played: the wave, drawn by a mask
    so it takes the album colour; the rest: a flat line after a small gap. Position is the counter-moved pair
    .rgm-pw/.rgm-pi plus .rgm-tr (transforms only, a step a second). The wave tile's line runs past both edges so
    the tiles join without a notch; it flows on its own compositor layer while playing and flattens on pause. */
-:is(#rgMini,#radioMini) .rgm-wave{grid-column:2 / 4;grid-row:3;align-self:center;position:relative;height:12px;width:100%;max-width:240px;overflow:hidden;}
-:is(#rgMini,#radioMini) .rgm-wave>*{position:absolute;inset:0;}
-:is(#rgMini,#radioMini) .rgm-tr{transform:translateX(0);}
-:is(#rgMini,#radioMini) .rgm-tr::before{content:'';position:absolute;left:6px;right:0;top:5px;height:2px;border-radius:1px;background:var(--rgm-sub);opacity:.35;}
-:is(#rgMini,#radioMini) .rgm-pw{overflow:hidden;transform:translateX(-100%);}
-:is(#rgMini,#radioMini) .rgm-pw>i,:is(#rgMini,#radioMini) .rgm-pw>i>b{position:absolute;inset:0;}
-:is(#rgMini,#radioMini) .rgm-pw>i{transform:translateX(100%);}
-:is(#rgMini,#radioMini) .rgm-pw>i>b{transform:scaleY(.2);transition:transform 400ms cubic-bezier(.2,0,0,1);}
-:is(#rgMini,#radioMini).rgm-playing .rgm-pw>i>b{transform:none;}
-:is(#rgMini,#radioMini) .rgm-wv{position:absolute;top:0;bottom:0;left:0;width:calc(100% + 24px);background:var(--rgm-acc);-webkit-mask:var(--rgm-wave) 0 50%/24px 12px repeat-x;mask:var(--rgm-wave) 0 50%/24px 12px repeat-x;will-change:transform;transition:background-color 500ms cubic-bezier(.2,0,0,1);}
-:is(#rgMini,#radioMini).rgm-playing .rgm-wv{animation:rgmFlow 1.6s linear infinite;}
-:is(#rgMini,#radioMini){--rgm-wave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M-12 6Q-6 1.5 0 6T12 6T24 6T36 6' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");}
+#rgMini .rgm-wave{grid-column:2 / 4;grid-row:3;align-self:center;position:relative;height:12px;width:100%;max-width:240px;overflow:hidden;}
+#rgMini .rgm-wave>*{position:absolute;inset:0;}
+#rgMini .rgm-tr{transform:translateX(0);}
+#rgMini .rgm-tr::before{content:'';position:absolute;left:6px;right:0;top:5px;height:2px;border-radius:1px;background:var(--rgm-sub);opacity:.35;}
+#rgMini .rgm-pw{overflow:hidden;transform:translateX(-100%);}
+#rgMini .rgm-pw>i,#rgMini .rgm-pw>i>b{position:absolute;inset:0;}
+#rgMini .rgm-pw>i{transform:translateX(100%);}
+#rgMini .rgm-pw>i>b{transform:scaleY(.2);transition:transform 400ms cubic-bezier(.2,0,0,1);}
+#rgMini.rgm-playing .rgm-pw>i>b{transform:none;}
+#rgMini .rgm-wv{position:absolute;top:0;bottom:0;left:0;width:calc(100% + 24px);background:var(--rgm-acc);-webkit-mask:var(--rgm-wave) 0 50%/24px 12px repeat-x;mask:var(--rgm-wave) 0 50%/24px 12px repeat-x;will-change:transform;transition:background-color 500ms cubic-bezier(.2,0,0,1);}
+#rgMini.rgm-playing .rgm-wv{animation:rgmFlow 1.6s linear infinite;}
+#rgMini{--rgm-wave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12'%3E%3Cpath d='M-12 6Q-6 1.5 0 6T12 6T24 6T36 6' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");}
 @keyframes rgmFlow{from{transform:translateX(-24px)}to{transform:none}}
-@media (prefers-reduced-motion:reduce){:is(#rgMini,#radioMini) .rgm-wv,:is(#rgMini,#radioMini) .rgm-run>i{animation:none!important}}
-:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny){grid-template-rows:36px 12px;row-gap:3px;}
-:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny) :is(.rgm-meta,.rgm-like,.rgm-mute),:is(#rgMini,#radioMini).rgm-tiny :is([data-rgm="prev"],[data-rgm="next"]){display:none;}
-:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny) .rgm-art{grid-row:1 / 3;}
-:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny) .rgm-ctrls{grid-column:2;grid-row:1;justify-content:flex-start;gap:6px;}
-:is(#rgMini,#radioMini):is(.rgm-mid,.rgm-tiny) .rgm-wave{grid-column:2;grid-row:2;}
+@media (prefers-reduced-motion:reduce){#rgMini .rgm-wv,#rgMini .rgm-run>i{animation:none!important}}
+#rgMini:is(.rgm-mid,.rgm-tiny){grid-template-rows:36px 12px;row-gap:3px;}
+#rgMini:is(.rgm-mid,.rgm-tiny) :is(.rgm-meta,.rgm-like,.rgm-mute),#rgMini.rgm-tiny :is([data-rgm="prev"],[data-rgm="next"]){display:none;}
+#rgMini:is(.rgm-mid,.rgm-tiny) .rgm-art{grid-row:1 / 3;}
+#rgMini:is(.rgm-mid,.rgm-tiny) .rgm-ctrls{grid-column:2;grid-row:1;justify-content:flex-start;gap:6px;}
+#rgMini:is(.rgm-mid,.rgm-tiny) .rgm-wave{grid-column:2;grid-row:2;}
+@keyframes rgmPwA{from{transform:translateX(-100%)}to{transform:none}}@keyframes rgmPwB{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes rgmPiA{from{transform:translateX(100%)}to{transform:none}}@keyframes rgmPiB{from{transform:translateX(100%)}to{transform:none}}
+@keyframes rgmTrA{from{transform:none}to{transform:translateX(100%)}}@keyframes rgmTrB{from{transform:none}to{transform:translateX(100%)}}
+/* It sits in the dock's row, beside the dock (nothing else is drawn there), as tall as the dock: it never covers
+   the calendar. One build for every look (after the Android 16 media player), one surface without outlines: the
+   album cover under a dark gradient; the song centred on top (the artist smaller and softer), the close button at
+   its right; the music's spectrum across the whole width on a thin line; the keys under it, the same three in the
+   middle, the time (songs only) at the left and volume at the right. A look changes colours, type and the
+   spectrum's fill, never where things are. */
+#radioMini{--rgm-bg:#161a21;--rgm-ink:#f2f4f8;--rgm-sub:#b4bcc8;--rgm-acc:#eef2f8;--rgm-dk:color-mix(in srgb,var(--rgm-bg) 55%,#000);position:fixed;z-index:171194;box-sizing:border-box;display:grid;grid-template-columns:18px minmax(0,1fr) 18px;grid-template-rows:14px 18px 26px;align-content:center;column-gap:6px;row-gap:0;align-items:center;padding:10px 12px;border:0;border-radius:24px;background:var(--rgm-dk);box-shadow:0 8px 24px rgba(0,0,0,.35);color:var(--rgm-ink);font-family:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;overflow:hidden;contain:layout paint;transition:background-color 500ms cubic-bezier(.2,0,0,1),color 500ms cubic-bezier(.2,0,0,1);}
+#radioMini[hidden]{display:none;}
+#radioMini>:not(.rgm-art){position:relative;z-index:1;}
+#radioMini button{border:0;padding:0;margin:0;background:none;color:inherit;cursor:pointer;font:inherit;}
+#radioMini button:focus-visible{outline:2px solid #a8c7fa;outline-offset:2px;}
+#radioMini .rgm-art{position:absolute;inset:0;z-index:0;pointer-events:none;background:var(--rgm-dk);}
+#radioMini .rgm-art img{display:block;width:100%;height:100%;object-fit:cover;}
+#radioMini .rgm-art img:not([src]){display:none;}
+#radioMini .rgm-art::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--rgm-dk) 58%,transparent),color-mix(in srgb,var(--rgm-dk) 70%,transparent) 45%,color-mix(in srgb,var(--rgm-dk) 86%,transparent));transition:background 500ms cubic-bezier(.2,0,0,1);}
+/* The song, centred; longer than the line, it starts at the left and slides to its end and back while it plays
+   (transform only), resting at its start, fading where it is cut, when paused. */
+#radioMini .rgm-meta{grid-column:2;grid-row:1;min-width:0;text-align:center;line-height:14px;}
+#radioMini .rgm-meta>span{display:block;height:14px;overflow:hidden;white-space:nowrap;}
+#radioMini .rgm-meta>span>i{display:inline-block;vertical-align:top;font-style:normal;}
+#radioMini .rgm-meta b{font-weight:600;font-size:12.5px;}
+#radioMini .rgm-meta em{font-style:normal;font-weight:400;font-size:11px;color:var(--rgm-sub);margin-left:.7em;transition:color 500ms cubic-bezier(.2,0,0,1);}
+#radioMini .rgm-meta em:empty{display:none;}
+#radioMini .rgm-run{text-align:left;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 16px),transparent);}
+#radioMini .rgm-run>i{animation:rgmMarq var(--rgm-dur,10s) ease-in-out infinite paused;}
+#radioMini.rgm-playing .rgm-run>i{animation-play-state:running;}
+html.mk-low-spec #radioMini .rgm-run>i{animation-iteration-count:2;}
+@keyframes rgmMarq{0%,18%{transform:none}50%,68%{transform:translateX(var(--rgm-shift,0px))}100%{transform:none}}
+#radioMini .rgm-x{grid-column:3;grid-row:1;justify-self:end;width:18px;height:14px;border-radius:7px;display:grid;place-items:center;color:var(--rgm-sub);}
+#radioMini .rgm-x svg{width:11px;height:11px;fill:currentColor;}
+/* The keys: tinted see-through rounds, play a little stronger; volume at the right end (a click mutes, a drag or
+   the wheel sets it). */
+#radioMini .rgm-ctrls{grid-column:1 / 4;grid-row:3;align-self:end;display:grid;grid-template-columns:minmax(0,1fr) 24px 24px 24px minmax(0,1fr);column-gap:14px;align-items:center;}
+#radioMini .rgm-b{grid-row:1;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:inherit;background:color-mix(in srgb,var(--rgm-acc) 14%,transparent);transition:background-color 500ms cubic-bezier(.2,0,0,1),color 500ms cubic-bezier(.2,0,0,1);}
+#radioMini [data-rgm="prev"]{grid-column:2;}
+#radioMini .rgm-play{grid-column:3;background:color-mix(in srgb,var(--rgm-acc) 30%,transparent);}
+#radioMini [data-rgm="next"]{grid-column:4;}
+#radioMini .rgm-b svg{width:15px;height:15px;fill:currentColor;}
+#radioMini .rgm-mute svg{width:13px;height:13px;}
+#radioMini .rgm-mute{grid-column:5;justify-self:end;position:relative;background:none;color:var(--rgm-ink);touch-action:none;}
+/* The volume ring: how loud, read at a glance (--rgm-vol, set by __mkMiniDock.volume). */
+#radioMini .rgm-mute::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--rgm-acc) calc(var(--rgm-vol) * 1turn),color-mix(in srgb,var(--rgm-acc) 20%,transparent) 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));}
+#radioMini .rgm-on,#radioMini [aria-pressed="true"] .rgm-off,#radioMini.rgm-playing .rgm-play .rgm-off{display:none;}
+#radioMini [aria-pressed="true"] .rgm-on,#radioMini.rgm-playing .rgm-play .rgm-on{display:inline;}
+#radioMini.rgm-wait .rgm-play{opacity:.6;}
+#radioMini .rgm-times{grid-column:1;grid-row:1;justify-self:start;min-width:0;overflow:hidden;white-space:nowrap;font-size:10.5px;color:var(--rgm-sub);font-variant-numeric:tabular-nums;}
+#radioMini .rgm-t1:not(:empty)::before{content:' / ';opacity:.7;}
+/* The spectrum row. Played: a thin line with the spectrum canvas over it (__mkMiniDock.spectrum draws it only
+   while it plays); the rest: the same line, dimmer. Position is the counter-moved pair .rgm-pw/.rgm-pi plus .rgm-tr
+   and the thumb .rgm-th (transforms only, a step a second). On pause the spectrum folds onto the line. */
+#radioMini .rgm-wave{grid-column:1 / 4;grid-row:2;align-self:end;height:17px;width:100%;overflow:hidden;}
+#radioMini .rgm-wave>*{position:absolute;inset:0;}
+#radioMini .rgm-tr{transform:translateX(0);}
+#radioMini .rgm-tr::before{content:'';position:absolute;left:6px;right:0;top:13.5px;height:2px;border-radius:1px;background:var(--rgm-sub);opacity:.3;}
+#radioMini .rgm-pw{overflow:hidden;transform:translateX(-100%);}
+#radioMini .rgm-pw>i,#radioMini .rgm-pw>i>b{position:absolute;inset:0;}
+#radioMini .rgm-pw>i{transform:translateX(100%);}
+#radioMini .rgm-pw>i>b::before{content:'';position:absolute;left:0;right:0;top:13.5px;height:2px;border-radius:1px;background:var(--rgm-acc);opacity:.9;transition:background-color 500ms cubic-bezier(.2,0,0,1);}
+#radioMini .rgm-sp{position:absolute;left:0;top:0;width:100%;height:14px;color:var(--rgm-acc);transform-origin:50% 100%;scale:1 .1;transition:scale 400ms cubic-bezier(.2,0,0,1);}
+#radioMini.rgm-playing .rgm-sp{scale:1 1;}
+#radioMini .rgm-th{grid-column:1 / 4;grid-row:2;align-self:end;height:17px;pointer-events:none;transform:translateX(0);}
+#radioMini .rgm-th::after{content:'';position:absolute;left:-4px;top:10.5px;width:8px;height:8px;border-radius:50%;background:var(--rgm-acc);transition:background-color 500ms cubic-bezier(.2,0,0,1);}
+/* Narrow: the same build without the time. */
+#radioMini.rgm-tiny .rgm-ctrls{grid-template-columns:0 24px 24px 24px minmax(24px,1fr);column-gap:8px;}
+#radioMini.rgm-tiny .rgm-times{display:none;}
 @keyframes rgmPwA{from{transform:translateX(-100%)}to{transform:none}}@keyframes rgmPwB{from{transform:translateX(-100%)}to{transform:none}}
 @keyframes rgmPiA{from{transform:translateX(100%)}to{transform:none}}@keyframes rgmPiB{from{transform:translateX(100%)}to{transform:none}}
 @keyframes rgmTrA{from{transform:none}to{transform:translateX(100%)}}@keyframes rgmTrB{from{transform:none}to{transform:translateX(100%)}}
@@ -3789,45 +3857,28 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radi
 
 /* Radio's mini player wears the radio's own look (data-look = the radio layout); the colours are read from the
    radio window as it hides (--radio-accent-rgb, --pioneer-*, --amp-*, --dth-*). A live stream has no position:
-   the wave is full and only flows while it plays (rgm-live). */
+   the played line is full and has no thumb (rgm-live). Only colours, type and the spectrum's fill differ between
+   looks; the build is the shared one above. */
 #radioMini.rgm-live .rgm-pw,#radioMini.rgm-live .rgm-pw>i{transform:none!important;animation:none!important;}
-#radioMini.rgm-live .rgm-tr{display:none;}
-/* An album accent can be dark: keys and text take it lifted towards white, as the radio's own M3 tone does. */
-#radioMini{--rgm-acc:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 78%,#fff 22%);--rgm-on:#0b0d10;--rgm-bg:color-mix(in srgb,#10161a 84%,rgb(var(--radio-accent-rgb,30,215,96)) 16%);}
+#radioMini.rgm-live :is(.rgm-tr,.rgm-th){display:none;}
+/* An album accent can be dark: the spectrum and keys take it lifted towards white, as the radio's own M3 tone does. */
+#radioMini{--rgm-acc:color-mix(in srgb,rgb(var(--radio-accent-rgb,30,215,96)) 70%,#fff 30%);--rgm-bg:color-mix(in srgb,#10161a 80%,rgb(var(--radio-accent-rgb,30,215,96)) 20%);}
 #radioMini[data-look="clean"]{--rgm-bg:#161a21;}
-#radioMini[data-look="pixel"]{--rgm-bg:color-mix(in srgb,#14171c 74%,rgb(var(--radio-accent-rgb,30,215,96)) 26%);}
-#radioMini[data-look="pixel"] .rgm-play{border-radius:12px;}
-/* Pioneer: a car head unit. One LCD window (the song over its level wave), a row of metal keys under it. */
-#radioMini[data-look="pioneer"]{--rgm-acc:var(--pioneer-ink,#1ed760);--rgm-ink:#1b1d20;--rgm-sub:#1b1d20;--rgm-key:rgba(0,0,0,.12);--key-top:#f3f4f5;--key-bottom:#b1b5b9;--key-ink:#1b1d20;grid-template-rows:28px 12px 32px;background:linear-gradient(165deg,var(--pioneer-metal-faceTop,#a6adb3),var(--pioneer-metal-face,#858b91) 42%,var(--pioneer-metal-faceBottom,#656b6f));border-color:var(--pioneer-metal-edge,rgba(0,0,0,.25));border-radius:20px;}
-#radioMini[data-look="pioneer"][data-metal="dark"]{--rgm-ink:#e6e8ea;--rgm-sub:#e6e8ea;--rgm-key:rgba(255,255,255,.12);--key-top:#45484d;--key-bottom:#1e2023;--key-ink:#e6e8ea;}
-#radioMini[data-look="pioneer"] :is(.rgm-meta,.rgm-wave){background:#0b0f0c;}
-#radioMini[data-look="pioneer"] .rgm-meta{align-self:stretch;display:flex;flex-direction:column;justify-content:center;padding:0 8px;border-radius:6px 6px 0 0;font-family:ui-monospace,'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.04em;}
-#radioMini[data-look="pioneer"] .rgm-meta>b{color:var(--pioneer-ink,#1ed760);}
-#radioMini[data-look="pioneer"] .rgm-meta>span{color:color-mix(in srgb,var(--pioneer-ink,#1ed760) 62%,#0b0f0c);}
-#radioMini[data-look="pioneer"]:not(.rgm-mid):not(.rgm-tiny) .rgm-wave{grid-column:2;grid-row:2;max-width:none;border-radius:0 0 6px 6px;}
-#radioMini[data-look="pioneer"]:not(.rgm-mid):not(.rgm-tiny) .rgm-ctrls{grid-row:3;}
-#radioMini[data-look="pioneer"]:is(.rgm-mid,.rgm-tiny) .rgm-wave{border-radius:4px;}
-#radioMini[data-look="pioneer"] .rgm-wave>*{left:8px;right:8px;}
-#radioMini[data-look="pioneer"] .rgm-art{border-radius:6px;}
-#radioMini[data-look="pioneer"] .rgm-b{width:36px;height:26px;border-radius:6px;opacity:1;color:var(--key-ink);background:linear-gradient(var(--key-top),var(--key-bottom));box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.4),0 0 0 1px rgba(0,0,0,.25);}
-#radioMini[data-look="pioneer"] .rgm-b:hover{background:linear-gradient(var(--key-top),var(--key-bottom));filter:brightness(1.07);}
-#radioMini[data-look="pioneer"] .rgm-play{width:52px;}
-#radioMini[data-look="pioneer"] .rgm-b svg{width:16px;height:16px;}
-/* Amp: Winamp. The song in the LED screen, small bevelled transport keys, an oscilloscope line. */
-#radioMini[data-look="amp"]{--amp-led:color-mix(in srgb,rgb(var(--amp-accent-rgb,105,201,30)) 70%,#fff 30%);--rgm-bg:var(--amp-body,#2b3048);--rgm-ink:var(--amp-led);--rgm-sub:var(--amp-dim,#9aa1bd);--rgm-acc:var(--amp-led);--rgm-on:var(--amp-screen,#171a2c);border-color:var(--amp-line,#3a4160);border-radius:8px;}
-#radioMini[data-look="amp"] .rgm-meta{align-self:stretch;display:flex;flex-direction:column;justify-content:center;background:var(--amp-screen,#171a2c);border-radius:3px;padding:0 7px;box-shadow:inset 0 1px 3px rgba(0,0,0,.5);font-family:var(--font-time,'Geist Mono',ui-monospace,monospace);}
-#radioMini[data-look="amp"] .rgm-art{border-radius:3px;}
-#radioMini[data-look="amp"] .rgm-b{width:34px;height:24px;border-radius:3px;opacity:1;color:var(--amp-dim,#9aa1bd);background:linear-gradient(var(--amp-line,#3a4160),var(--amp-inset,#1e2237));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 2px rgba(0,0,0,.4);}
-#radioMini[data-look="amp"] .rgm-b:hover{color:var(--amp-text,#e9ecf6);background:linear-gradient(var(--amp-line,#3a4160),var(--amp-inset,#1e2237));}
-#radioMini[data-look="amp"] .rgm-play{width:40px;color:var(--amp-led);}
-#radioMini[data-look="amp"] .rgm-b svg{width:16px;height:16px;}
-#radioMini[data-look="amp"] .rgm-x{width:16px;height:16px;border-radius:2px;color:var(--amp-dim,#9aa1bd);background:linear-gradient(var(--amp-line,#3a4160),var(--amp-inset,#1e2237));}
-#radioMini[data-look="amp"] .rgm-x svg{width:10px;height:10px;}
-/* Dither: 1-bit. Paper and one ink, a dotted ink frame, square everything, a stepped wave. */
-#radioMini[data-look="dither"]{--rgm-bg:var(--dth-paper,#050505);--rgm-ink:var(--dth-text,#f6f5ef);--rgm-sub:var(--dth-dim,#cfcec6);--rgm-acc:rgb(var(--dth-ink-rgb,120,220,200));--rgm-on:var(--dth-paper,#050505);border:2px solid transparent;border-radius:0;box-shadow:none;background:linear-gradient(var(--dth-paper,#050505),var(--dth-paper,#050505)) padding-box,repeating-conic-gradient(rgb(var(--dth-ink-rgb,120,220,200)) 0 25%,transparent 0 50%) 0 0/2px 2px border-box;--rgm-wave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12' viewBox='0 0 24 12' shape-rendering='crispEdges'%3E%3Cpath d='M-2 9H6V3H18V9H26' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E");}
-#radioMini[data-look="dither"] .rgm-meta{font-family:ui-monospace,'Geist Mono',monospace;}
-#radioMini[data-look="dither"] :is(.rgm-b,.rgm-art,.rgm-x){border-radius:0;}
-#radioMini[data-look="dither"] .rgm-art img{image-rendering:pixelated;}
+/* Pioneer: a network player's OLED display. Blue-black glass over a muted cover, ice type, a spectrum of faint
+   fills under one bright edge. */
+#radioMini[data-look="pioneer"] .rgm-art img{filter:saturate(.5) brightness(.8);}
+#radioMini[data-look="pioneer"]{--rgm-bg:#0e1820;--rgm-acc:color-mix(in srgb,var(--pioneer-ink,#bfe6ff) 70%,#fff);--rgm-ink:color-mix(in srgb,var(--pioneer-ink,#bfe6ff) 30%,#fff);--rgm-sub:color-mix(in srgb,var(--rgm-ink) 66%,transparent);border-radius:18px;}
+/* Amp: Winamp. The LED screen's tint, its LED type (the look's own) and green spectrum. */
+#radioMini[data-look="amp"]{--amp-led:color-mix(in srgb,rgb(var(--amp-accent-rgb,105,201,30)) 70%,#fff 30%);--rgm-bg:var(--amp-screen,#171a2c);--rgm-ink:var(--amp-led);--rgm-sub:var(--amp-dim,#9aa1bd);--rgm-acc:var(--amp-led);border-radius:14px;}
+#radioMini[data-look="amp"] :is(.rgm-meta,.rgm-times){font-family:var(--font-time,'Geist Mono',ui-monospace,monospace);}
+#radioMini[data-look="amp"] .rgm-meta b{font-size:11.5px;}
+#radioMini[data-look="amp"] .rgm-meta em{font-size:10.5px;}
+/* Dither: 1-bit. Paper and one ink, the cover in grey pixels, the spectrum filled with ink dots, square corners. */
+#radioMini[data-look="dither"]{--rgm-bg:var(--dth-paper,#050505);--rgm-dk:var(--dth-paper,#050505);--rgm-ink:var(--dth-text,#f6f5ef);--rgm-sub:var(--dth-dim,#cfcec6);--rgm-acc:rgb(var(--dth-ink-rgb,120,220,200));border-radius:0;box-shadow:none;}
+#radioMini[data-look="dither"] .rgm-art img{image-rendering:pixelated;filter:grayscale(1) contrast(1.4);}
+#radioMini[data-look="dither"] :is(.rgm-meta,.rgm-times){font-family:ui-monospace,'Geist Mono',monospace;}
+#radioMini[data-look="dither"] .rgm-meta b{font-size:11.5px;}
+#radioMini[data-look="dither"] .rgm-meta em{font-size:10.5px;}
 </style>
 <div id="rgMini" role="region" aria-label="RG Music mini atskaņotājs" hidden>
   <button type="button" class="rgm-art" data-rgm="open" aria-label="Atvērt RG Music" title="Atvērt RG Music"><img alt="" decoding="async"></button>
@@ -3843,16 +3894,18 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radi
   <div class="rgm-wave" aria-hidden="true"><i class="rgm-tr"></i><span class="rgm-pw"><i><b><i class="rgm-wv"></i></b></i></span></div>
 </div>
 <div id="radioMini" class="rgm-live" role="region" aria-label="Radio mini atskaņotājs" hidden>
-  <button type="button" class="rgm-art" data-rgm="open" aria-label="Atvērt radio" title="Atvērt radio"><img alt="" decoding="async"></button>
-  <button type="button" class="rgm-meta" data-rgm="open" title="Atvērt radio"><b><i></i></b><span><i></i></span></button>
+  <div class="rgm-art" aria-hidden="true"><img alt="" decoding="async"></div>
+  <button type="button" class="rgm-meta" data-rgm="open" title="Atvērt radio"><span><i><b></b><em></em></i></span></button>
   <button type="button" class="rgm-x" data-rgm="hide" aria-label="Aizvērt mini atskaņotāju (mūzika skan tālāk)" title="Aizvērt (mūzika skan tālāk)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.47 4.47a.75.75 0 0 1 1.06 0L10 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L11.06 10l4.47 4.47a.75.75 0 1 1-1.06 1.06L10 11.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L8.94 10 4.47 5.53a.75.75 0 0 1 0-1.06Z"/></svg></button>
   <div class="rgm-ctrls">
+    <span class="rgm-times" aria-hidden="true"><span class="rgm-t0"></span><span class="rgm-t1"></span></span>
     <button type="button" class="rgm-b" data-rgm="prev" aria-label="Iepriekšējā stacija" title="Iepriekšējā stacija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
     <button type="button" class="rgm-b rgm-play" data-rgm="play" aria-label="Atskaņot" title="Atskaņot"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="rgm-on" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/><path class="rgm-off" d="M8 5v14l11-7z"/></svg></button>
     <button type="button" class="rgm-b" data-rgm="next" aria-label="Nākamā stacija" title="Nākamā stacija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
     <button type="button" class="rgm-b rgm-mute" data-rgm="mute" aria-pressed="false" aria-label="Izslēgt skaņu" title="Izslēgt skaņu"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="rgm-on" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/><path class="rgm-off" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
   </div>
-  <div class="rgm-wave" aria-hidden="true"><i class="rgm-tr"></i><span class="rgm-pw"><i><b><i class="rgm-wv"></i></b></i></span></div>
+  <div class="rgm-wave" aria-hidden="true"><i class="rgm-tr"></i><span class="rgm-pw"><i><b><canvas class="rgm-sp"></canvas></b></i></span></div>
+  <i class="rgm-th" aria-hidden="true"></i>
 </div>
 
 <!-- rgpool (rgapp.page/pool, its own Worker): the electricity price, opened from the header search. -->
@@ -4527,12 +4580,18 @@ window.__mkMiniDock = (function () {
     });
     shown.forEach(function (m) { m.refresh(); });
   }
-  // The progress wave: one step a second from where the player is; the keyframe set alternates (A/B) so a new
-  // report restarts it. s = null stops it.
+  // The progress wave and its thumb: one step a second from where the player is; the keyframe set alternates
+  // (A/B) so a new report restarts it. The elapsed time follows with one timer a second, only while it plays.
+  // s = null stops both.
+  function clock(x) {
+    x = Math.floor(x);
+    var h = Math.floor(x / 3600), m = Math.floor(x / 60) % 60, sec = x % 60;
+    return (h ? h + ':' : '') + (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
   function progress(el, s) {
     var pw = el.querySelector('.rgm-pw');
     if (!pw) return;
-    var parts = [[pw, 'rgmPw'], [pw.firstElementChild, 'rgmPi'], [el.querySelector('.rgm-tr'), 'rgmTr']];
+    var parts = [[pw, 'rgmPw'], [pw.firstElementChild, 'rgmPi'], [el.querySelector('.rgm-tr'), 'rgmTr'], [el.querySelector('.rgm-th'), 'rgmTr']];
     var dur = s ? +s.dur || 0 : 0, rate = s ? +s.rate || 1 : 1, run = '', live = s && s.playing && !s.loading;
     if (dur > 0) {
       // The report is from when it came (song start, seek); while playing, the song has moved on since.
@@ -4542,10 +4601,130 @@ window.__mkMiniDock = (function () {
         (Math.min(at, dur) / rate).toFixed(2) + 's 1 both ' + (live ? 'running' : 'paused');
     }
     parts.forEach(function (x) { if (x[0]) x[0].style.animation = run ? x[1] + el.dataset.step + run : 'none'; });
+    clearTimeout(el.__tick);
+    var t0 = el.querySelector('.rgm-t0'), t1 = el.querySelector('.rgm-t1');
+    if (!t0 || el.classList.contains('rgm-live')) return;
+    t1.textContent = dur > 0 ? clock(dur) : '';
+    if (!(dur > 0)) { t0.textContent = ''; return; }
+    var since = performance.now();
+    (function tick() {
+      var x = Math.min(dur, at + (live ? (performance.now() - since) / 1000 * rate : 0));
+      t0.textContent = clock(x);
+      if (live && x < dur) el.__tick = setTimeout(tick, (1 - x % 1) * 1000 / rate + 20);
+    })();
   }
-  // The song's lines; a name longer than its line slides (CSS rgmMarq). Measured only when it changes.
+  // The spectrum over the played line: three see-through layers of rounded hills on the line, each a little apart
+  // so their peaks never stack: the falling peaks (back), the slow level (middle) and the level now (front).
+  // source() gives an AnalyserNode (real audio) or null (no access: one still shape). Drawn at ~30 fps only while
+  // it plays and shows, never on a weak computer (there one still frame); on pause CSS folds it onto the line.
+  // Returns update(), called on every render of the mini.
+  function spectrum(el, source) {
+    var cv = el.querySelector('.rgm-sp');
+    if (!cv) return function () {};
+    var N = 24, ctx = cv.getContext('2d'), now = new Float32Array(N), slow = new Float32Array(N), peak = new Float32Array(N);
+    var raf = 0, last = 0, data = null, fills = [], top = .12;
+    var STILL = [.18, .3, .42, .35, .5, .72, .6, .45, .55, .8, 1, .85, .62, .5, .58, .7, .52, .4, .46, .35, .28, .22, .16, .1];
+    function running() { return !el.hidden && el.classList.contains('rgm-playing') && !document.documentElement.classList.contains('mk-low-spec'); }
+    function read() {
+      var a = source();
+      if (!a) { for (var k = 0; k < N; k++) { now[k] = STILL[k] * .7; slow[k] = STILL[(k + 3) % N] * .85; peak[k] = STILL[(k + 7) % N]; } return; }
+      if (!data || data.length !== a.frequencyBinCount) data = new Uint8Array(a.frequencyBinCount);
+      a.getByteFrequencyData(data);
+      // Bands spaced as we hear (50 Hz to 14 kHz, log), each the loudest bin in it.
+      // Quiet or loud, broad or thin, the shape spans the height: each band is measured from the quietest one up to
+      // a slowly falling running maximum, so there are always peaks and valleys.
+      var ny = (a.context.sampleRate || 48000) / 2, L = data.length, lv = [], m = 0, f = 1;
+      for (var i = 0; i < N; i++) {
+        var lo = Math.floor(L * 50 * Math.pow(280, i / N) / ny), hi = Math.max(lo + 1, Math.floor(L * 50 * Math.pow(280, (i + 1) / N) / ny)), v = 0;
+        for (var j = lo; j < hi && j < L; j++) if (data[j] > v) v = data[j];
+        // Music is quieter up high: the levels are decibels, so the tilt is added (about 3 dB an octave).
+        lv[i] = v / 255 + i / N * .26;
+        if (lv[i] > m) m = lv[i];
+        if (lv[i] < f) f = lv[i];
+      }
+      top = Math.max(m - f, top * .97, .12);
+      for (i = 0; i < N; i++) {
+        var v = Math.pow(Math.max(0, lv[i] - f) / top, 1.6) * .95;
+        now[i] = now[i] * .45 + v * .55;
+        slow[i] = slow[i] * .88 + v * .12;
+        peak[i] = Math.max(now[i], peak[i] - .012);
+      }
+    }
+    // A closed hill line through the band levels, its points shifted by `off` of a band.
+    function hills(lv, off, W, H) {
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      var px = 0, py = H;
+      for (var i = 0; i <= N; i++) {
+        var x = i < N ? Math.min(W, (i + .5 + off) / N * W) : W, y = i < N ? H - Math.min(1, lv[i]) * (H - 1) : H;
+        ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
+        px = x; py = y;
+      }
+      ctx.lineTo(W, H);
+      ctx.fill();
+    }
+    function draw() {
+      var d = Math.min(2, window.devicePixelRatio || 1), W = Math.round(cv.clientWidth * d), H = Math.round(14 * d);
+      if (!W) return;
+      if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = fills[0]; ctx.globalAlpha = fills[3]; hills(peak, .45, W, H);
+      ctx.fillStyle = fills[1]; ctx.globalAlpha = fills[4]; hills(slow, -.3, W, H);
+      ctx.fillStyle = fills[2]; ctx.globalAlpha = fills[5]; hills(now, 0, W, H);
+      // The OLED look: the level now also as a bright edge on its hills.
+      if (fills[6]) { ctx.globalAlpha = 1; ctx.strokeStyle = fills[2]; ctx.lineWidth = d; ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    }
+    function frame(ts) {
+      raf = 0;
+      if (!running() || !source()) return;
+      raf = requestAnimationFrame(frame);
+      if (ts - last < 32) return;
+      last = ts;
+      read();
+      draw();
+    }
+    // A fill of ink dots, one in every `step` pixels, for the 1-bit look.
+    function dots(c, step) {
+      var t = document.createElement('canvas'); t.width = t.height = step;
+      var tc = t.getContext('2d'); tc.fillStyle = c; tc.fillRect(0, 0, 1, 1); if (step === 2) tc.fillRect(1, 1, 1, 1);
+      return ctx.createPattern(t, 'repeat');
+    }
+    return function update() {
+      // Colours once per render: the accent in three strengths, or for the 1-bit look three densities of ink dots.
+      var c = getComputedStyle(cv).color;
+      fills = el.dataset.look === 'dither' ? [dots(c, 4), dots(c, 3), dots(c, 2), 1, 1, 1] :
+        el.dataset.look === 'pioneer' ? [c, c, c, .12, .2, .3, true] : [c, c, c, .22, .34, .62];
+      if (running() && source()) { if (!raf) raf = requestAnimationFrame(frame); }
+      else if (!el.hidden) { read(); draw(); }
+    };
+  }
+  // The volume key: a click mutes (the owner's click handler), a drag across or up, the wheel or the arrow keys
+  // set the level; its ring shows it. get() is 0..1 or null (unknown: then it only mutes). Returns the ring's refresh.
+  function volume(el, get, set) {
+    var b = el.querySelector('[data-rgm="mute"]'), drag = null, moved = false;
+    function show() { var v = get(); if (v == null) b.style.removeProperty('--rgm-vol'); else b.style.setProperty('--rgm-vol', v); }
+    function to(v) { v = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100; set(v); b.style.setProperty('--rgm-vol', v); }
+    b.addEventListener('pointerdown', function (e) { var v = get(); if (v == null || e.button) return; drag = { x: e.clientX, y: e.clientY, v: v }; moved = false; b.setPointerCapture(e.pointerId); });
+    b.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var d = (e.clientX - drag.x) - (e.clientY - drag.y);
+      if (moved || Math.abs(d) > 4) { moved = true; to(drag.v + d / 120); }
+    });
+    ['pointerup', 'pointercancel'].forEach(function (t) { b.addEventListener(t, function () { drag = null; }); });
+    // A drag is not a click: it must not also mute.
+    b.addEventListener('click', function (e) { if (moved) { moved = false; e.stopImmediatePropagation(); } }, true);
+    b.addEventListener('wheel', function (e) { var v = get(); if (v == null) return; e.preventDefault(); to(v - Math.sign(e.deltaY) * 0.05); }, { passive: false });
+    b.addEventListener('keydown', function (e) {
+      var k = { ArrowUp: 0.05, ArrowRight: 0.05, ArrowDown: -0.05, ArrowLeft: -0.05 }[e.key], v = get();
+      if (k && v != null) { e.preventDefault(); to(v + k); }
+    });
+    return show;
+  }
+  // The song and the artist on one line; longer than it, it slides (CSS rgmMarq). Measured only when it changes.
   function text(el, title, sub) {
-    var t = el.querySelector('.rgm-meta>b>i'), s = el.querySelector('.rgm-meta>span>i');
+    // RG Music's mini has two lines (b>i, span>i), the radio's one (b, em).
+    var t = el.querySelector('.rgm-meta>b>i') || el.querySelector('.rgm-meta b'), s = el.querySelector('.rgm-meta em') || el.querySelector('.rgm-meta>span>i');
     if (!t || (t.textContent === title && s.textContent === sub)) return;
     t.textContent = title;
     s.textContent = sub;
@@ -4576,7 +4755,7 @@ window.__mkMiniDock = (function () {
   window.addEventListener('resize', function () { list.forEach(function (m) { m.refresh(); }); });
   return {
     add: function (m) { list.push(m); },
-    layout: layout, progress: progress, violet: violet, text: text, slide: slide
+    layout: layout, progress: progress, violet: violet, text: text, slide: slide, volume: volume, spectrum: spectrum
   };
 })();
 
@@ -4798,7 +4977,7 @@ window.__mkMiniDock = (function () {
     dock.layout(item);
     if (el.hidden) return;
     var name = station(), title = meta.title || name || 'Radio';
-    var sub = meta.title ? [meta.artist, name].filter(Boolean).join(' – ') : 'RG Radio';
+    var sub = meta.title ? meta.artist || name : name ? 'RG Radio' : '';
     dock.text(el, title, sub);
     var img = el.querySelector('.rgm-art img');
     if (meta.cover && img.getAttribute('src') !== meta.cover) img.src = meta.cover;
@@ -4809,7 +4988,13 @@ window.__mkMiniDock = (function () {
     var mute = el.querySelector('[data-rgm="mute"]'), ml = st.muted ? 'Ieslēgt skaņu' : 'Izslēgt skaņu';
     mute.setAttribute('aria-pressed', String(!!st.muted));
     if (mute.getAttribute('aria-label') !== ml) { mute.setAttribute('aria-label', ml); mute.title = ml; }
+    volRing();
+    spec();
   }
+  var volRing = dock.volume(el,
+    function () { var v = $('vol'); return v ? +v.value : null; },
+    function (v) { if (window.rgListening) window.rgListening.setVolume(v); });
+  var spec = dock.spectrum(el, function () { return window.__mkRadioAnalyser ? window.__mkRadioAnalyser() : null; });
   var item = { el: el, wants: wants, refresh: render };
   dock.add(item);
   document.addEventListener('rg-radio-state', function (e) {
