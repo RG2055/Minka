@@ -178,6 +178,16 @@
   &:is(.mk-sf-b, .mk-sf-p) > .sf-caf { position: absolute; right: 12px; bottom: 6px; height: 22px; padding: 0 8px 0 6px; border-radius: 11px; }
   &:is(.mk-sf-b, .mk-sf-p) > .sf-caf::before { width: 15px; height: 15px; }
   &:is(.mk-sf-b, .mk-sf-p) > .sf-caf b { font-size: 14.5px; }
+  /* With the ring (the only look now) the capsule stood on the ring's corner and on the stepper's + (the user: "slāņo").
+     It stands in the card's upper left corner, inside the ring, over the person's emoji or initials: nothing else
+     is there (the lower left has the next shift's line beside it). Tonal, in the boost's blue: the same colour as
+     its part of the ring. */
+  & { --sf-boost: #6fd3ff; }
+  &:is(.mk-sf-b, .mk-sf-p):has(> .sf-ring) > .sf-caf { left: 15px; right: auto; top: 14px; bottom: auto; height: 28px; gap: 3px; padding: 0 10px 0 7px; border-radius: 14px; background: color-mix(in srgb, var(--sf-boost) 22%, #0b0d12); color: var(--sf-boost); }
+  /* a coffee bean (the user), and the number large enough to read on a small card */
+  &:is(.mk-sf-b, .mk-sf-p):has(> .sf-ring) > .sf-caf::before { width: 19px; height: 19px; margin-right: 1px; background: var(--sf-boost); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3Cmask id='m'%3E%3Crect width='24' height='24' fill='white'/%3E%3Cpath d='M12 3c-3.4 3.1 3.4 5.9 0 9s3.4 5.9 0 9' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round'/%3E%3C/mask%3E%3C/defs%3E%3Cellipse cx='12' cy='12' rx='6.7' ry='9.3' transform='rotate(34 12 12)' mask='url(%23m)'/%3E%3C/svg%3E") center / contain no-repeat; }
+  &:is(.mk-sf-b, .mk-sf-p):has(> .sf-ring) > .sf-caf b { font-size: 20px; font-weight: 800; }
+  &:is(.mk-sf-b, .mk-sf-p):has(> .sf-ring) > .sf-caf small { font-size: 13.5px; }
   & .sf-tk:has(+ .sf-caf) { right: 104px; }
   /* The faces' button: in the figure's empty top left corner, small, tinted in the level's colour, shown when the card
      is pointed at. It reaches 4px out past the figure's left edge, into the gap before the name. */
@@ -337,6 +347,7 @@
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat > .sf-adj button::before { --g: calc(var(--rf) * .82); }   /* not em: the button's own font-size is 0 */
   /* the number's bolt (the user: "an arrow like energy", as on the mood card): drawn in the number's own colour */
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat .sf-num { display: inline-flex; align-items: center; gap: .04em; }
+  & .sf-fat .sf-num small { align-self: flex-end; margin: 0 0 .1em .04em; font-size: .56em; font-weight: 700; opacity: .86; }   /* the energy's percent sign */
   &:is(.mk-sf-b, .mk-sf-p) .sf-fat .sf-num::before {
     content: ""; flex: none; width: .5em; height: .74em; margin-right: .02em; background: currentColor;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 20'%3E%3Cpath d='M9 0 0 11.5h5.6L4.4 20 14 8.2H8.2Z'/%3E%3C/svg%3E") center / contain no-repeat;
@@ -402,15 +413,40 @@
    battery); the rest big and plain, no boxes, no borders. Sizes in the card's own px; the card is zoomed down in
    its column, so what is 18px here reaches the eye at about 12. */
 .mk-sf:is(.mk-sf-b, .mk-sf-p) {
-  & > .sf-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-  & > .sf-ring rect { x: 4.5px; y: 4.5px; width: calc(100% - 9px); height: calc(100% - 9px); rx: 21.5px; fill: none; stroke-width: 7px; }
-  & > .sf-ring .tr { stroke: color-mix(in srgb, var(--c) 16%, transparent); }
-  /* the score's part of the way round, from the top's middle: the rounded rectangle's length from the card's own size
-     (cqw / cqh of .mk-sf: 4 sides less the corners, plus the corners' circle, 2 x pi x 21.5px), nothing measured */
-  & > .sf-ring .pg {
-    --rw: calc(100cqw - 9px); --run: calc(2 * (var(--rw) + 100cqh - 9px) - 172px + 135.09px);
-    stroke: var(--c); stroke-linecap: round; stroke-dasharray: calc(var(--sc, 0) * var(--run) / 100) var(--run); stroke-dashoffset: calc(21.5px - var(--rw) / 2);
+  /* The fatigue round the card's edge: MkOutline (the .mko rules at the end of this sheet) on the card's own rounded
+     rectangle. Its length from the card's size (cqw / cqh of .mk-sf: 4 sides less the corners, plus the corners'
+     circle, 2 x pi x 21.5px), nothing measured; it starts at the top's middle. */
+  & > .sf-ring {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    --rw: calc(100cqw - 9px); --mko-run: calc(2 * (var(--rw) + 100cqh - 9px) - 172px + 135.09px); --mko-u: calc(var(--mko-run) / 100); --mko-off: calc(21.5px - var(--rw) / 2);
+    --mko-w: 7px; --mko-c: var(--c); --mko-track: color-mix(in srgb, var(--c) 16%, transparent);
   }
+  /* (the rectangle's own place and size are on the element itself, in mk-side-faces.js band(): a shape used by
+     reference takes nothing from a rule that names its ancestors) */
+  /* Where a sign stands on the card's edge: --at percent of the way round from the top's middle, worked out here
+     from the card's own size, nothing measured. The way round is nine pieces (half the top, a corner, the right
+     side, a corner, the bottom, a corner, the left side, a corner, half the top); --t1..--t9 is how far along each
+     piece the sign has come, and a corner turns it by its arc. (offset-path would say this in one line, but an
+     SVG group does not ride one against the svg's own box.) */
+  & > .sf-ring .mko-k {
+    --L: calc(var(--rw) / 2 - 21.5px); --q: 33.772px; --V: calc(100cqh - 52px); --H: calc(var(--rw) - 43px);
+    --D: calc(var(--at, 0) * var(--mko-u));
+    --t1: clamp(0px, var(--D), var(--L));
+    --t2: clamp(0px, calc(var(--D) - var(--L)), var(--q));
+    --t3: clamp(0px, calc(var(--D) - var(--L) - var(--q)), var(--V));
+    --t4: clamp(0px, calc(var(--D) - var(--L) - var(--q) - var(--V)), var(--q));
+    --t5: clamp(0px, calc(var(--D) - var(--L) - 2 * var(--q) - var(--V)), var(--H));
+    --t6: clamp(0px, calc(var(--D) - var(--L) - 2 * var(--q) - var(--V) - var(--H)), var(--q));
+    --t7: clamp(0px, calc(var(--D) - var(--L) - 3 * var(--q) - var(--V) - var(--H)), var(--V));
+    --t8: clamp(0px, calc(var(--D) - var(--L) - 3 * var(--q) - 2 * var(--V) - var(--H)), var(--q));
+    --t9: clamp(0px, calc(var(--D) - var(--L) - 4 * var(--q) - 2 * var(--V) - var(--H)), var(--L));
+    --a2: calc(tan(atan2(var(--t2), 21.5px)) * 1rad); --a4: calc(tan(atan2(var(--t4), 21.5px)) * 1rad); --a6: calc(tan(atan2(var(--t6), 21.5px)) * 1rad); --a8: calc(tan(atan2(var(--t8), 21.5px)) * 1rad);
+    transform:
+      translate(calc(50cqw + var(--t1) + 21.5px * sin(var(--a2)) - 21.5px * (1 - cos(var(--a4))) - var(--t5) - 21.5px * sin(var(--a6)) + 21.5px * (1 - cos(var(--a8))) + var(--t9)),
+                calc(4.5px + 21.5px * (1 - cos(var(--a2))) + var(--t3) + 21.5px * sin(var(--a4)) - 21.5px * (1 - cos(var(--a6))) - var(--t7) - 21.5px * sin(var(--a8))))
+      rotate(calc(var(--a2) + var(--a4) + var(--a6) + var(--a8)));
+  }
+  & > .sf-ring { --mko-kz: .78; --mko-ksep: 7.4px; }   /* a sign 18 px tall, 2.6 times the line's width, with 1.2 px of screen between it and the line; half of it stands outside the line (the rules after this block let it pass the card's edge) */
   & > .sf-top { padding: 13px 16px 0 0; }
   &:has(> .sf-ring) .sf-pl { left: 18px; right: 15px; top: 112px; height: 40px; gap: 10px; font-size: 18px; }
   /* the creature larger, down to the second row; the stepper (↓ ⚡N ↑) under it in the second row, centred on it
@@ -506,3 +542,45 @@
 /* the number keeps the room of three digits: a press from 100 to 95 does not narrow the stepper, so the creature over
    it and the names beside it stay where they are (the user: the text jumped at every press) */
 .mk-sf:has(> .sf-ring) .sf-fat > .sf-num { min-width: 3ch; text-align: center; }
+
+/* A sign on the card's edge stands half outside the line, a few px past the card itself. Three things cut that
+   off and are opened here by just that much, with no box changing its size: the face layer and the card (they
+   clip; now with a margin), and the list the cards scroll in with the box round it (4 px of padding taken back by
+   the same margin, so the cards stand exactly where they did). */
+.mk-sf { overflow: clip; overflow-clip-margin: 9px; }
+:is(#radiographers-duty, #radiologists-duty) > .mk-side-card:has(> .mk-sf > .sf-ring) { overflow-clip-margin: 9px; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-duty, #radiologists-duty),
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel > div:has(> :is(#radiographers-duty, #radiologists-duty)) { padding-top: 4px !important; padding-left: 4px !important; padding-right: 4px !important; margin: -4px -4px 0 !important; }
+
+/* MkOutline (js/page/mk-outline.js): a progress outline, the same for a round avatar and a card's edge. One path
+   (.mko-g, used by reference for everything). .mko-t the track; .mko-m the line itself, a mask: one width, round
+   at its two open ends, as long as fatigue + boost; behind it .mko-f the fatigue's colour all the way round and
+   .mko-b the caffeine's part in steps along the path, deep to bright, each cut straight across the line. The
+   colours are wider than the line: only the mask's edge is ever seen. The place sets --mko-run (the path's
+   length), --mko-u (a percent of it), --mko-off (where its start is), --mko-w, --mko-c and --mko-track. */
+.mko { overflow: visible; pointer-events: none; }   /* (no defaults for the variables here: this sheet is not in a layer and would win over the places' own, which are) */
+.mko use { fill: none; stroke-dashoffset: var(--mko-off, 0px); }
+.mko .mko-t { stroke: var(--mko-track, transparent); stroke-width: var(--mko-w, 7px); }
+.mko .mko-m {
+  --len: calc((var(--mko-pf, 0) + var(--mko-pb, 0)) * var(--mko-u, 1px));
+  stroke: #fff; stroke-width: var(--mko-w, 7px); stroke-linecap: round;
+  stroke-dasharray: var(--len) max(0px, calc(var(--mko-run, 100px) - var(--len)));
+  transition: stroke-dasharray .7s cubic-bezier(.2, .7, .2, 1);
+}
+.mko .mko-f { stroke: var(--mko-c, #8a94a3); stroke-width: calc(var(--mko-w, 7px) * 1.8); }
+.mko .mko-b {
+  --at: calc((var(--mko-pf, 0) + var(--mko-pb, 0) * var(--k)) * var(--mko-u, 1px)); --rest: calc((var(--mko-pb, 0) * (1 - var(--k)) + 2.5) * var(--mko-u, 1px));   /* to the boost's end and 2.5 % past it, under the line's round end (never as far as the line's start) */
+  stroke: color-mix(in oklch, var(--mko-b0, oklch(.6 .12 232)), var(--mko-b1, oklch(.87 .084 232)) calc(var(--k) * 100%)); stroke-width: calc(var(--mko-w, 7px) * 1.8); stroke-linecap: butt;
+  stroke-dasharray: 0 var(--at) var(--rest) max(0px, calc(var(--mko-run, 100px) - var(--at) - var(--rest)));
+  transition: stroke-dasharray .7s cubic-bezier(.2, .7, .2, 1), stroke .9s linear;
+}
+/* a sign set into the line (a bolt, a bean): .mko-k is where it stands (the place's transform), .mko-kp its size
+   (--mko-kz: the sign's 24-unit box to this scale), .mko-kc its silhouette cut from the line and the track with a
+   hair of room round it, .mko-kd the sign in the line's own colour there */
+.mko .mko-kp { transform: scale(var(--mko-kz, .58)); }
+.mko .mko-kc * { fill: var(--mko-bg, #000); stroke: var(--mko-bg, #000); stroke-width: calc(var(--mko-ksep, 4px) / var(--mko-kz, .58)); stroke-linejoin: round; }   /* --mko-ksep: twice the room round the sign; black cuts a mask, and is a card's own background where the room is painted */
+.mko .mko-mb { stroke: #fff; stroke-width: calc(var(--mko-w, 7px) + 2px); }   /* the line's band: where a painted room may show */
+.mko .mko-k-bolt .mko-kd * { fill: var(--mko-c, #8a94a3); }
+.mko .mko-k-bean .mko-kd * { fill: color-mix(in oklch, var(--mko-b0, oklch(.67 .12 232)), var(--mko-b1, oklch(.89 .08 232)) 50%); }
+.mko .mko-k-bean .mko-kd .mko-ks { fill: none; stroke: #0b0d12; stroke-width: 2px; stroke-linecap: round; }
+@media (prefers-reduced-motion: reduce) { .mko use { transition: none !important; } }

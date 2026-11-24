@@ -3560,6 +3560,24 @@ function filterFullList(btn) {
     return index;
   }
 
+  /* What the cards show of a person's fatigue: the energy that is left (the default), as a battery would, or the
+     fatigue itself as before. One switch for the whole page (js/page/mk-outline.js; the team's number on the mood
+     card turns it). The model, its levels and their colours are untouched: only the number is turned round, its
+     word with it (little fatigue is much energy), and the trend's arrow. */
+  const ENERGY_WORD = { low: 'Augsta', mid: 'Vidēja', high: 'Zema', crit: 'Kritiska' };
+  function energyView() { return !window.MkOutline || !window.MkOutline.energyView || window.MkOutline.energyView(); }
+  function shownFatigue(score, key, label) {
+    const en = energyView() && !!key;
+    score = Math.round(Number(score) || 0);
+    return { num: en ? 100 - score : score, word: en ? (ENERGY_WORD[key] || '') : (label || ''), what: en ? 'Enerģija' : 'Nogurums', energy: en };
+  }
+  function shownArrow(arrow) { return energyView() ? ({ '↗': '↘', '↘': '↗' }[arrow] || arrow) : arrow; }
+  window.addEventListener('mk-energy-view', () => {
+    document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card[data-worker]').forEach(card => {
+      try { patchSideFatigue(card, getSideFatigue(card.dataset.worker)); } catch (_e) {}
+    });
+    try { window.__refreshFatigueBars && window.__refreshFatigueBars(); } catch (_e) {}
+  });
   function getSideFatigue(workerName) {
     let result = null;
     try {
@@ -3572,9 +3590,11 @@ function filterFullList(btn) {
     // and its creature as tired as before, drink or no drink. caf rides along for the card.
     let caf = null;
     try { caf = window.__minkaCaffeineNow?.(workerName) || null; } catch (_e) {}
-    const score = Math.max(0, (result && Number.isFinite(result.score)
-      ? Math.max(0, Math.min(100, Math.round(result.score)))
-      : 0) - (caf ? caf.pts : 0));
+    const model = result && Number.isFinite(result.score) ? Math.max(0, Math.min(100, Math.round(result.score))) : 0;
+    const score = Math.max(0, model - (caf ? caf.pts : 0));
+    // what the caffeine really takes off here (a rested person has less to take off than the drink could): the
+    // card's energy line is the model's energy plus exactly this, so nothing is counted twice
+    if (caf) caf = { src: caf.src, mg: caf.mg, pts: model - score };
     if (window.__fatigue && typeof window.__fatigue.getPresentation === 'function') {
       return {...window.__fatigue.getPresentation(score), contextLabel: result?.contextLabel || 'Tagad', caf};
     }
@@ -3758,7 +3778,7 @@ function filterFullList(btn) {
   }
   /* The side cards' faces (js/page/mk-side-faces.js and its sheet, fetched on the first need: a card that has a
      face, or a press on a card's plus). With a card: open the picker for it; without: repaint the chosen faces. */
-  const SIDE_FACES_V = '20261124ds2';
+  const SIDE_FACES_V = '20261124cg7';
   let sideFacesLoad = 0, sideFacesCard = null;
   function sideFaces(card) {
     if (window.MkSideFaces) return card ? window.MkSideFaces.open(card) : window.MkSideFaces.sync();
@@ -3916,18 +3936,19 @@ function filterFullList(btn) {
   const sideCafAttr = caf => caf.src + ',' + caf.pts + ',' + caf.mg;
   const SIDE_NO_FATIGUE = { score: 0, key: '', label: '', color: '', contextLabel: '' };
   function patchSideFatigue(el, fatigue) {
-    el.style.setProperty('--mk-side-fat', fatigue.score + '%');
+    const shown = shownFatigue(fatigue.score, fatigue.key, fatigue.label);
+    el.style.setProperty('--mk-side-fat', shown.num + '%');
     el.style.setProperty('--mk-side-fat-color', fatigue.color);
     el.dataset.fatScore = String(fatigue.score);
     if (fatigue.caf) el.dataset.cf = sideCafAttr(fatigue.caf); else delete el.dataset.cf;
     el.dataset.fatLabel = fatigue.label || '';
     el.dataset.fatigue = fatigue.key;
     const ring = el.querySelector('.mk-side-ring');
-    if (ring) ring.setAttribute('aria-label', `Nogurums ${fatigue.score} procenti, ${fatigue.label}`);
+    if (ring) ring.setAttribute('aria-label', `${shown.what} ${shown.num} procenti, ${shown.word}`);
     const score = el.querySelector('.mk-side-score');
-    if (score) score.innerHTML = `${mkEscAttr(fatigue.score)}<small>${mkEscAttr(fatigue.label || '')}</small>`;
+    if (score) score.innerHTML = `${mkEscAttr(shown.num)}<small>${mkEscAttr(shown.word)}</small>`;
     const caption = el.querySelector('.mk-side-fatigue-caption');
-    if (caption) caption.title = fatigue.contextLabel || 'Tagad';
+    if (caption) { caption.title = fatigue.contextLabel || 'Tagad'; if (caption.textContent !== shown.what) caption.textContent = shown.what; }
   }
   function syncSideTicks(el, item) {
     const row = el.querySelector(':scope > .mk-side-ticks');
@@ -4017,7 +4038,8 @@ function filterFullList(btn) {
       // few frames later, one card at a time, and until then the classic content showed under the face at another size.
       const sideFace = sideSf ? ` data-sf="${sideSf[1]}"${sideSf[2] ? ` data-sfp="${sideSf[2]}"` : ''}` : '';
       const card = (fatigue, ticks) => {
-        const sideVars = `--mk-side-fat:${fatigue.score}%;--mk-side-fat-color:${fatigue.color};`;
+        const shown = shownFatigue(fatigue.score, fatigue.key, fatigue.label);
+        const sideVars = `--mk-side-fat:${shown.num}%;--mk-side-fat-color:${fatigue.color};`;
         return `
         <article class="duty-block mk-side-card ${options.roleClass}${iconHtml ? ' has-shift-icon' : ''}${isDone ? ' duty-done' : ''}${ticks || sideSf ? ' mk-has-ticks' : ''}" style="${sideVars}"${fatigue.caf ? ` data-cf="${mkEscAttr(sideCafAttr(fatigue.caf))}"` : ''} data-fat-score="${mkEscAttr(fatigue.score)}" data-fat-label="${mkEscAttr(fatigue.label || '')}"${sideFace} data-worker="${workerAttr}" data-shift="${shiftAttr}" data-type="${typeAttr}" data-fatigue="${fatigue.key}">
           <div class="mk-side-card-main">
@@ -4034,8 +4056,8 @@ function filterFullList(btn) {
               </div>
               <div class="badge-row mk-side-clock-row">${shiftChip}${timerHtml}</div>
               <div class="mk-side-fatigue">
-                <div class="mk-side-ring" role="img" aria-label="Nogurums ${fatigue.score} procenti, ${fatigue.label}"><span class="mk-side-liquid-vessel" aria-hidden="true"><span class="liquid-fill"></span></span><span class="mk-side-score">${fatigue.score}<small>${fatigue.label}</small></span></div>
-                <span class="mk-side-fatigue-caption" title="${mkEscAttr(fatigue.contextLabel || 'Tagad')}">Nogurums</span>
+                <div class="mk-side-ring" role="img" aria-label="${shown.what} ${shown.num} procenti, ${shown.word}"><span class="mk-side-liquid-vessel" aria-hidden="true"><span class="liquid-fill"></span></span><span class="mk-side-score">${shown.num}<small>${shown.word}</small></span></div>
+                <span class="mk-side-fatigue-caption" title="${mkEscAttr(fatigue.contextLabel || 'Tagad')}">${shown.what}</span>
               </div>
             </div>
           </div>
@@ -6015,8 +6037,13 @@ function filterFullList(btn) {
              tendenci rēķina no vēstures, un tā nemainās ar šo atsvaidzinājumu. */
           const metaVal = card.querySelector('.mk-mid-meta-value');
           if (metaVal) {
-            const arrow = (metaVal.textContent.match(/[↗↘→]/) || [''])[0];
-            metaVal.textContent = score + '%' + (arrow ? ' ' + arrow : '');
+            // the trend's own arrow rides on the element (what is written may be turned round for the energy view)
+            const arrow = metaVal.dataset.arrow || (metaVal.textContent.match(/[↗↘→]/) || [''])[0];
+            const midNow = shownFatigue(Math.round(score), 'x', '');
+            metaVal.dataset.fat = String(Math.round(score)); if (arrow) metaVal.dataset.arrow = arrow;
+            metaVal.textContent = midNow.num + '%' + (arrow ? ' ' + shownArrow(arrow) : '');
+            const metaLabel = card.querySelector('.mk-mid-meta-label');
+            if (metaLabel && metaLabel.textContent !== midNow.what) metaLabel.textContent = midNow.what;
             const meta = card.querySelector('.mk-mid-meta');
             if (meta) {
               meta.style.setProperty('--mk-mid-fat-color',
@@ -6877,6 +6904,7 @@ function filterFullList(btn) {
     // a point for every 14 mg, 15 at most (a cup peaks near 5, a large energy drink near 10). Known from the drink
     // on, for an hour at least, and for as long as 15 mg are left.
     window.__minkaCoffeeIcon = coffeeIcon;
+    window.__minkaCoffeeColor = src => (coffeeSourceMeta[cleanCoffeeSource(src)] || {}).color || '';   // the drink's own colour (js/page/mk-outline.js takes the caffeine's tone from it)
     window.__minkaCaffeineNow = function (name) {
       const drinks = coffeeTimedDrinks(name).drinks;
       if (!drinks.length) return null;
@@ -7318,7 +7346,9 @@ function filterFullList(btn) {
     }
     // The side cards say the same number in a small capsule with a cup: "142 mg", only where there is caffeine to speak of.
     window.__minkaSideCaf = () => document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card[data-worker] .mk-side-caf').forEach(row => {
-      const a = coffeeAura(row.closest('.mk-side-card').getAttribute('data-worker') || ''), mg = a ? String(Math.round(a.mg)) : '';
+      // the caffeine in the body now, the same number the card's fatigue is lowered by and its tooltip says (it showed
+      // the peak still to come, 45 minutes ahead: 415 on the capsule, 365 in the tooltip)
+      const who = row.closest('.mk-side-card').getAttribute('data-worker') || '', a = coffeeDayLive() ? window.__minkaCaffeineNow(who) : null, mg = a ? String(a.mg) : '';
       if (row.hidden !== !a) row.hidden = !a;
       if (row.dataset.mg !== mg) { row.dataset.mg = mg; row.lastElementChild.innerHTML = a ? '<b>' + mg + '</b><small>mg</small>' : ''; }
     });
@@ -7531,7 +7561,8 @@ function filterFullList(btn) {
          emoji ailei, tāpēc pilnas stundas rāda bez “:00” → “20–08”. */
       const shortTime = t => /^\d{1,2}:00$/.test(t) ? t.slice(0, t.indexOf(':')) : t;
       const timeLabel = (start && end) ? (shortTime(start) + '–' + shortTime(end)) : (dutyHours ? dutyHours + 'h' : '—');
-      const fatText = hasFatigueScore ? (fatigueScore + '% ' + trend.icon) : '—';
+      const midShown = shownFatigue(fatigueScore, hasFatigueScore ? 'x' : '', '');
+      const fatText = hasFatigueScore ? (midShown.num + '% ' + shownArrow(trend.icon)) : '—';
 
       /* Vidū — tā paša cilvēka taimeris, kas agrāk tikšķēja sānu panelī.
          Elementam paliek klase .duty-timer, tāpēc to atjauno tas pats
@@ -7556,8 +7587,8 @@ function filterFullList(btn) {
       return `
             <div class="mk-mid-meta ${trend.cls}" style="--mk-mid-fat-color:${fatigueColor}">
               <span class="mk-mid-meta-fat">
-                <span class="mk-mid-meta-label" title="${escapeHtml(window.__fatigue?.calculateFatigue(w.name)?.contextLabel || 'Tagad')}">Nogurums</span>
-                <span class="mk-mid-meta-value">${escapeHtml(fatText)}</span>
+                <span class="mk-mid-meta-label" title="${escapeHtml(window.__fatigue?.calculateFatigue(w.name)?.contextLabel || 'Tagad')}">${midShown.what}</span>
+                <span class="mk-mid-meta-value"${hasFatigueScore ? ` data-fat="${fatigueScore}" data-arrow="${trend.icon}"` : ''}>${escapeHtml(fatText)}</span>
               </span>
               ${timeCell}
               <span class="mk-mid-meta-emoji${personEmoji ? '' : ' is-initials'}" data-mk-emoji-click="1" data-mk-emoji-home="${personEmoji ? escapeHtml(personEmoji) : escapeHtml(initials || '')}" title="Mainīt emoji"><span class="mk-mid-meta-emoji-fly">${personEmoji ? escapeHtml(personEmoji) : escapeHtml(initials || '')}</span></span>

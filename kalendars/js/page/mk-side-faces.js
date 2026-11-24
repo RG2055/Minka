@@ -45,7 +45,7 @@
   // calendar before the next shift)
   var KIND = { diena: 'D', dienas: 'D', nakts: 'N', naktis: 'N', diennakts: '24h', diennaktis: '24h' };
   function name(d) { return '<b>' + esc(d.first) + '</b>' + (d.last ? '<i>' + esc(d.last) + '</i>' : ''); }
-  function caf(d) { return d.caf ? '<span class="sf-caf"><b>' + esc(d.caf) + '</b><small>mg</small></span>' : ''; }
+  function caf(d) { var t = d.caf ? boostTone(d) : null; return d.caf ? '<span class="sf-caf"' + (t ? ' style="--sf-boost:' + t[1] + '"' : '') + '><b>' + esc(d.caf) + '</b><small>mg</small></span>' : ''; }   // in the tone of the caffeine's part of the ring
   /* Būtne and Dzīvnieks (the user's picture): three capsules as tall as the Nogurums row, each a small word over its
      value with an icon: "Šodien 12 h" (the shift's colour), "Mēnesī 2 / 4", "Maiņas 4 × N" (the kind's colour; several
      kinds sit side by side in their own colours on the month's capsule). Plain spans inside: the name's b / i rules
@@ -152,7 +152,7 @@
   /* A press on the creature: it says the person's name in its own voice (page/mk-say-name.js, loaded on the
      first press; the same law as the squeak: the more tired, the lower and slower). Until the voice is here,
      and for a card with no name to say, the squeak. */
-  var SAY_SRC = 'js/page/mk-say-name.js?v=20261124sn4', sayLoad = 0;
+  var SAY_SRC = 'js/page/mk-say-name.js?v=20261124sn5', sayLoad = 0;
   function sayName(card, score) {
     var el = card && card.querySelector('.duty-name'), name = el ? el.textContent.trim() : '';
     if (!name) return false;
@@ -261,15 +261,47 @@
     var n = Math.round((day - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
     return (n === 0 ? 'šodien ' : n === 1 ? 'rīt ' : n === 2 ? 'parīt ' : short ? m[1] + '.' + (mi + 1) + '. ' : m[1] + '. ' + m[2] + '. ') + m[3];
   }
+  // the caffeine's two tones for this card: from the last drink's colour, kept apart from the fatigue's own (MkOutline.tone)
+  function boostTone(d) {
+    if (!d.cf || !d.cf.pts || !window.MkOutline) return null;
+    var drink = window.__minkaCoffeeColor ? window.__minkaCoffeeColor(d.cf.src) : '', lvl = '';
+    try { lvl = d.ringC || window.__fatigue.getPresentation(+d.score || 0).color; } catch (_) {}
+    return window.MkOutline.tone(drink, lvl);
+  }
+  /* What the card shows is energy, as a battery does (the user, 2026-11-24): what is left, so more is better.
+     Nothing is worked out anew: the fatigue model and the caffeine's points are as they were (calendar.js
+     getSideFatigue), only turned round. base = 100 less the model's fatigue; boost = the points the caffeine takes
+     off for now; shown = base + boost (= 100 less the fatigue the card used to show). Colours, levels and the
+     creature still go by the fatigue. */
+  function energy(d) {
+    var fat = Math.max(0, Math.min(100, +d.score || 0)), boost = d.cf && d.cf.pts ? Math.max(0, Math.min(100 - fat, d.cf.pts)) : 0;
+    return { base: 100 - fat - boost, boost: boost, shown: 100 - fat };
+  }
+  // energy (the default) or the fatigue as before: the switch on the mood card's team number (MkOutline.energyView)
+  function EN() { return !window.MkOutline || window.MkOutline.energyView(); }
+  function energyTip(d) {
+    var e = energy(d);
+    if (!EN()) return d.label + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + (d.cf && d.cf.pts ? ' (kofeīns uz laiku −' + d.cf.pts + ', ' + (d.caf || d.cf.mg) + ' mg organismā)' : '');
+    return 'Bāzes enerģija: ' + e.base + '%' + (e.boost ? '\nKofeīna atbalsts: +' + e.boost : '') + '\nEfektīvā enerģija: ' + e.shown + '%'
+      + (d.caf || (d.cf && d.cf.mg) ? '\nAktīvais kofeīns: ' + (d.caf || d.cf.mg) + ' mg' : '') + (d.adj ? '\nAr roku: ' + signed(-d.adj) : '') + '\nNogurums: ' + d.label + '\nModelēts novērtējums, nav mērījums';
+  }
+  // The energy round the card's edge, from the top's middle clockwise: what is left of one's own, then on the same
+  // line what the caffeine adds for now, then the empty track. Drawn by MkOutline (js/page/mk-outline.js), the
+  // same way as the colleagues' rings on the mood card. The path here is the card's rounded rectangle; its size,
+  // length and start are CSS (no measuring).
   function band(d) {
-    var sc = Math.max(0, Math.min(100, +d.score || 0));
-    return '<svg class="sf-ring" aria-hidden="true"><rect class="tr"/><rect class="pg" style="--sc:' + sc + '"/></svg>';   // its length and start: CSS (no measuring)
+    var e = energy(d), first = EN() ? e.base : 100 - e.shown;   // the fatigue view: the fatigue shown, then what the caffeine holds off
+    if (!window.MkOutline) return '<svg class="sf-ring" aria-hidden="true"></svg>';
+    // set into the line: a bolt where it starts, a bean in the middle of the caffeine's part (when that is long enough to hold one)
+    var marks = [{ at: 0, icon: 'bolt' }];
+    if (e.boost >= 3) marks.push({ at: first + e.boost / 2, icon: 'bean' });
+    return window.MkOutline.svg('<rect style="x:4.5px;y:4.5px;width:calc(100% - 9px);height:calc(100% - 9px);rx:21.5px"/>', { cls: 'sf-ring', key: 'sf|' + d.who, pf: first, pb: e.boost, tone: e.boost ? boostTone(d) : null, marks: marks, cut: 'paint' });
   }
   function sketch(d, figure) {
     if (BAND) {
       return band(d) + '<div class="sf-top"' + (d.ar ? ' style="--ar:' + d.ar + '"' : '') + '><i class="sf-av" aria-hidden="true"></i><div class="sf-nm"><div class="sf-id">' + name(d) + '</div></div><div class="sf-fig">' + figure + '</div></div>'
         + '<div class="sf-pl">' + (d.chip ? '<span class="sf-bv sf-bh" title="Šodien">' + esc(hrs(d.chip)) + '</span>' : '')
-        + '<div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + (d.cf && d.cf.pts ? ' (kofeīns uz laiku −' + d.cf.pts + ', ' + d.cf.mg + ' mg organismā)' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
+        + '<div class="sf-fat" title="' + esc(energyTip(d)) + '"><span>' + (EN() ? 'Enerģija' : 'Nogurums') + '</span>' + (EN() ? '<div class="sf-num" data-n="' + String(energy(d).shown).length + '">' + energy(d).shown + '<small>%</small></div>' : '<div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>') + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
         + (d.next ? '<div class="sf-rc"><span class="sf-bv sf-bn" title="Nākamā maiņa: ' + esc(d.next) + '" data-l="' + esc(when(d.next)) + '" data-s="' + esc(when(d.next, true)) + '">' + esc(when(d.next)) + '</span></div>' : '')
         + caf(d) + (figure.indexOf('sf-pick') < 0 ? PICK : '');
     }
@@ -279,7 +311,7 @@
       // the − / + at the end of the row of capsules: the figure keeps the whole height above it
       // In the order one looks (the user): first what is now, today's hours, the month and the fatigue with its − / +
       // under the creature; then the month's shifts and the next one.
-      + '<div class="sf-pl">' + stats(d) + '<div class="sf-fat" title="' + esc(d.label) + (d.adj ? ' (ar roku ' + signed(d.adj) + ')' : '') + (d.cf && d.cf.pts ? ' (kofeīns uz laiku −' + d.cf.pts + ', ' + d.cf.mg + ' mg organismā)' : '') + '"><span>Nogurums</span><div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>' + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
+      + '<div class="sf-pl">' + stats(d) + '<div class="sf-fat" title="' + esc(energyTip(d)) + '"><span>' + (EN() ? 'Enerģija' : 'Nogurums') + '</span>' + (EN() ? '<div class="sf-num" data-n="' + String(energy(d).shown).length + '">' + energy(d).shown + '<small>%</small></div>' : '<div class="sf-num" data-n="' + d.score.length + '">' + esc(d.score) + '</div>') + (d.adj ? '<em class="sf-ad" data-s="' + (d.adj > 0 ? 'p' : 'm') + '">' + signed(d.adj) + '</em>' : '') + adjust(d) + '</div></div>'
       + '<div class="sf-rc">' + stats(d, 'kinds') + (d.next ? '<div class="sf-nc"><small>Nākamā</small><b>' + esc(d.next) + '</b>' + (d.nextH ? '<span class="sf-nd"></span><i>' + esc(hrs(d.nextH)) + '</i>' : '') + '</div>' : '') + '</div>'
       + (ticks ? '<div class="sf-tk" title="Nogurums šajā maiņā">' + ticks + '</div>' : '') + caf(d)
       // the faces' button in the figure's empty top left corner (Būtne draws it with its picture, which knows its edge)
@@ -296,7 +328,7 @@
     if (!id || !DRAW[id]) { if (layer) layer.remove(); return; }
     var d = read(card);
     if (id === 'p') { loadPets(); var pi = petIndex(card); if (pi >= 0) { d.pet = pets[pi].dir + 'spritesheet.webp'; d.petName = pets[pi].name; } }
-    var sig = id + JSON.stringify(d);
+    var sig = id + (EN() ? 'e' : 'f') + JSON.stringify(d);
     if (layer && layer.__sig === sig) return;
     if (!layer) {
       layer = document.createElement('div');
@@ -306,9 +338,11 @@
     layer.__sig = sig;
     layer.className = 'mk-sf mk-sf-' + id;
     layer.dataset.level = d.level;
-    layer.setAttribute('aria-label', d.first + ': nogurums ' + d.score + ', ' + d.label + '. Atvērt');
+    if (d.cf && d.cf.pts) d.ringC = getComputedStyle(layer).getPropertyValue('--c').trim();   // the ring's own colour at this level (the caffeine's tone keeps clear of it); read only for a card with caffeine
+    layer.setAttribute('aria-label', d.first + (EN() ? ': enerģija ' + energy(d).shown + ' %, nogurums ' + String(d.label).toLowerCase() : ': nogurums ' + d.score + ', ' + d.label) + '. Atvērt');
     var seen = layer.querySelector('.sf-pet .pi'), was = seen && seen.complete && seen.naturalWidth ? seen.getAttribute('src') : '';
     layer.innerHTML = DRAW[id](d);
+    if (window.MkOutline) window.MkOutline.settle(layer);
     carry(layer, was);
     var mv = settle[card.dataset.worker || ''], fig = mv && performance.now() - mv[1] < 1000 && layer.querySelector('.sf-pet, .sf-spr');
     if (mv && !fig) delete settle[card.dataset.worker || ''];
@@ -562,8 +596,12 @@
   var settle = {};
   function adjust(d) {
     var tip = ' Paliek, līdz to maini; redz visi.';
-    return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāks nogurums" title="Jūtos mazāk noguris: −5.' + tip + '"' + (d.adj <= -30 ? ' disabled' : '') + '>↓</button>'
+    // data-d: where the shown number goes. With the energy shown, down is "more tired" (the person's correction
+    // to the fatigue, d.adj, goes up by 5) and up is "less tired"; with the fatigue shown it is the other way round
+    if (!EN()) return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāks nogurums" title="Jūtos mazāk noguris: −5.' + tip + '"' + (d.adj <= -30 ? ' disabled' : '') + '>↓</button>'
       + '<button type="button" data-d="5" aria-label="Lielāks nogurums" title="Jūtos vairāk noguris: +5.' + tip + '"' + (d.adj >= 30 ? ' disabled' : '') + '>↑</button></div>';
+    return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāk enerģijas" title="Jūtos vairāk noguris: enerģija −5.' + tip + '"' + (d.adj >= 30 ? ' disabled' : '') + '>↓</button>'
+      + '<button type="button" data-d="5" aria-label="Vairāk enerģijas" title="Jūtos mazāk noguris: enerģija +5.' + tip + '"' + (d.adj <= -30 ? ' disabled' : '') + '>↑</button></div>';
   }
   /* A drink (calendar.js playCoffeeAddedEffect). The latest drink is in the creature's paw for as long as its
      caffeine works (pet() above). When it is added, the creature takes a sip and answers in the drink's own way. sip (every coffee): it leans back, content; buzz (the energy drinks): it
@@ -633,13 +671,14 @@
     if (!card) { if (e.target && e.target.closest && e.target.closest('.mk-sf .sf-fat')) { e.preventDefault(); e.stopPropagation(); } return; }   // the stepper's number and gaps: its own, not the card's window
     e.preventDefault(); e.stopPropagation();   // not the card's own press (the person's window)
     if (b.disabled || !window.mkPatchWorkerSkin) return;
-    var worker = card.dataset.worker || '', n = Math.max(-30, Math.min(30, manual(worker) + +b.dataset.d));
-    settle[worker] = [+b.dataset.d > 0 ? 'dn' : 'up', performance.now()];
+    var step = EN() ? -(+b.dataset.d) : +b.dataset.d;   // with the energy shown the button's number is the energy's; the correction is kept as fatigue
+    var worker = card.dataset.worker || '', n = Math.max(-30, Math.min(30, manual(worker) + step));
+    settle[worker] = [step > 0 ? 'dn' : 'up', performance.now()];
     // the points change, the minute of the first press stays: the whole time since then carries the person's judgement
     var was = /^-?\d{1,2},(\d{7,9})$/.exec(((window.mkGetWorkerSkin && window.mkGetWorkerSkin(worker)) || {}).fa || '');
     // sent at once, as a logged drink is: the other computers have it at their next look (they look every 30 s)
     window.mkPatchWorkerSkin(worker, { fa: n ? n + ',' + (was ? was[1] : Math.floor(Date.now() / 60000)) : null }, 1);
-    fly(b, worker, +b.dataset.d);
+    fly(b, worker, step);
   }, true);
 
   /* The picker: the faces by name beside the card; a press puts the face on the card at once and saves it to
@@ -729,5 +768,6 @@
     (el.querySelector('[aria-pressed="true"]') || el.querySelector('button')).focus();
   }
 
+  window.addEventListener('mk-energy-view', sync);   // the switch: energy or fatigue
   window.MkSideFaces = { sync: sync, open: open, close: close, faces: FACES };
 })();

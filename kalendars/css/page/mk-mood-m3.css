@@ -62,6 +62,53 @@
     font: 500 12px/1 'Geist Sans', system-ui, sans-serif !important;
   }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-side--left .rg-mood-side-label::before { display: none !important; }
+  /* The switch between energy and fatigue (mood-feedback.js): in the place of the word over the team's number,
+     no taller than room there is above it (the number stays where it was). M3 Expressive's connected buttons, 3 px apart, one height: the chosen one a
+     fully round pill in the accent's light tone with its icon and word (16 px at its sides, 8 px between icon and
+     word); the other its icon alone on a dark tinted shape, round on the outside and with small inner corners, its
+     icon at full strength (it is a choice, not a disabled button). The shapes, colours and the word's width move
+     on the app's spring; nothing moves under the pointer. No border, shadow or box round the two. */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en {
+    position: absolute !important; left: 9px !important; top: 5px !important; z-index: 30 !important; display: flex !important; gap: 3px !important; pointer-events: auto !important;
+  }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button {
+    display: inline-flex !important; align-items: center !important; height: 22px !important; margin: 0 !important; padding: 0 10px !important; border: 0 !important; cursor: pointer !important; overflow: hidden !important;
+    background: color-mix(in srgb, var(--mb-acc, #f7a43a) 14%, var(--md-sys-color-surface-container-high, #232a31)) !important; color: color-mix(in srgb, var(--mb-acc, #f7a43a) 40%, #fff) !important;
+    -webkit-text-fill-color: currentColor !important; font: 600 12px/1 'Geist Sans', system-ui, sans-serif !important; letter-spacing: .005em !important; white-space: nowrap !important;
+    transition: border-radius var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), padding var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), background-color 220ms cubic-bezier(.34, .8, .34, 1), color 220ms cubic-bezier(.34, .8, .34, 1), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1));
+  }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button:first-child { border-radius: 11px 5px 5px 11px !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button:nth-child(2) { border-radius: 5px 11px 11px 5px !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button[aria-pressed="true"] {
+    padding: 0 12px 0 10px !important; border-radius: 11px !important; background: var(--md-sys-color-primary-fixed) !important; color: var(--md-sys-color-on-primary-fixed) !important;
+  }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button > span {
+    display: block !important; max-width: 0 !important; margin-left: 0 !important; opacity: 0 !important; overflow: hidden !important;
+    transition: max-width var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), margin-left var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), opacity 160ms ease-out;
+  }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button[aria-pressed="true"] > span { max-width: 90px !important; margin-left: 6px !important; opacity: 1 !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button:active { scale: .95 !important; border-radius: 8px !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button:focus-visible { outline: 2px solid var(--md-sys-color-on-surface, #fff) !important; outline-offset: 2px !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button > svg { flex: none !important; width: 14px !important; height: 14px !important; fill: none !important; stroke: currentColor !important; stroke-width: 2.1 !important; stroke-linejoin: round !important; stroke-linecap: round !important; }
+  /* the chosen button shows its own sign and word, the other the two arrows of a switch */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button > .mb-en-swap { display: none !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button[aria-pressed="false"] > .mb-en-own { display: none !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card > .mb-en > button[aria-pressed="false"] > .mb-en-swap { display: block !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.has-mb-en .rg-mood-side--left .rg-mood-side-label { visibility: hidden !important; }
+  /* one top line for the switch and the month's bars (the user): both start 5 px under the card's top; the number
+     stands 6 px lower than it did, just under the switch */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.has-mb-en .mx-month-top { top: -1px !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.has-mb-en .rg-mood-pill--fatigue { margin-top: 6px !important; }
+  /* a section's heading row ("Radiologi") spans the whole width in a narrow window and lay, invisible, over the mood
+     card's top: it took the switch's presses. It holds no control: presses go through it. */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .cards-section-label { pointer-events: none !important; }   /* the switch stands in its place (its room is kept: the number does not move) */
+  /* the shift's coffee is no longer a line of its own beside the glass: it stands under the month's coffee bar as "+6" */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-side--right { display: none !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--coffee small {
+    display: block !important; position: absolute; left: 50%; top: calc(100% + 4px); translate: -50% 0; margin: 0 !important; padding: 0 !important;
+    color: var(--tint) !important; -webkit-text-fill-color: var(--tint) !important; font: 700 11.5px/1 'Geist Sans', system-ui, sans-serif !important; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .mx-month-top .rg-month-item--coffee small:empty { display: none !important; }
 
   /* --- the month, top right, all at once (B turned through its facts one at a time): three small upright bars
      (the user: as the phone's brightness and volume bars): the bolus changes as two full parts (below), and the
@@ -243,32 +290,24 @@
   /* --- the colleagues on the orbit: a tonal disc, and round it only the arc of that person's fatigue, in its
      colour, with round ends and no track under it (the user: no grey rims). The arc is one conic gradient cut to
      a ring, its ends two dots: one at the top, one turned to where the arc stops --- */
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass { background: var(--md-sys-color-surface-container-high) !important; }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass::before {
-    inset: -5.5px !important;
-    background:
-      radial-gradient(circle 1.75px at 50% 1.75px, rgb(var(--rg-person-fatigue-rgb, 120, 130, 145)) 92%, transparent),
-      conic-gradient(rgb(var(--rg-person-fatigue-rgb, 120, 130, 145)) calc(var(--mb-pf, 0) * 1%), transparent 0) !important;
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.9px), #000 calc(100% - 3.5px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 3.9px), #000 calc(100% - 3.5px));
+  /* The disc and its ring are one SVG (mood-feedback.js buildMoodStaff): viewBox 184, both on its centre, so they
+     cannot drift apart. The SVG is 184/136 of the disc's size and stands centred on the disc's box by its edges
+     alone (no translate, no rotate, no scale). The ring is MkOutline's (the .mko rules in mk-side-faces.css), the
+     same drawing as the side cards' edges. (It was a conic gradient cut to a ring with two dots on
+     its ends, then three circles on top of each other: the user's drawings set it right.) */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass { background: none !important; isolation: isolate; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass::before,
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass::after { content: none !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .mb-arc {
+    --mb-arc: calc(var(--rg-person-size, 34px) * 184 / 136);
+    position: absolute; left: calc((100% - var(--mb-arc)) / 2); top: calc((100% - var(--mb-arc)) / 2); width: var(--mb-arc); height: var(--mb-arc);
+    z-index: -1;
+    --mko-w: 16px; --mko-u: 1px; --mko-run: 100px; --mko-c: rgb(var(--rg-person-fatigue-rgb, 120, 130, 145));   /* the path's own units: its length is 100 */
   }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .rg-mood-person-glass::after {
-    content: '' !important;
-    display: block !important;
-    position: absolute !important;
-    inset: -5.5px !important;
-    width: auto !important;
-    height: auto !important;
-    border: 0 !important;
-    border-radius: 50% !important;
-    background: radial-gradient(circle 1.75px at 50% 1.75px, rgb(var(--rg-person-fatigue-rgb, 120, 130, 145)) 92%, transparent) !important;
-    box-shadow: none !important;
-    opacity: 1 !important;
-    filter: none !important;
-    transform: none !important;
-    rotate: calc(var(--mb-pf, 0) * 3.6deg);
-    pointer-events: none;
-  }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .mb-arc .d { fill: var(--md-sys-color-surface-container-high); }
+  /* a sign on the ring: at the top of the circle, then turned round the shared centre to its share of the way */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .mb-arc { --mko-kz: 1.48; --mko-ksep: 12px; }   /* 2.2 times the ring's width (9 px on a 4 px ring): a larger sign would touch the ring of the colleague above */
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-mood-person .mb-arc .mko-k { transform-box: view-box; transform-origin: 92px 92px; transform: rotate(calc(var(--at, 0) * 3.6deg)) translate(92px, 10px); }
   /* their drinks round their own disc, right outside its arc on the side away from the glass (mood-feedback.js
      m3Orbit gives each icon its place): a fan of icons that plainly belongs to that disc. The count, when a kind
      was drunk more than once, beyond its icon: to the left on the left arc, to the right on the right */

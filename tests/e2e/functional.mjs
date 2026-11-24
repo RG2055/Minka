@@ -153,8 +153,8 @@ await test('month calendar opens, navigates, closes', async()=>{ const p=await c
   await p.evaluate(()=>window.MinkaMonthCal.close()); ok(await waitFor(()=>p.evaluate(()=>!window.MinkaMonthCal.isOpen())),'not closed');
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return 'nodes while open '+nodes; });
 
-await test('mood panel: fatigue (NOGURUMS) chip eventually shows', async()=>{ const p=await cal();
-  ok(await waitFor(()=>p.evaluate(()=>/NOGURUMS/.test(document.querySelector('.card.mk-mid-card-rd')?.innerText||'')),10000),'no NOGURUMS in mood card'); await p.context().close(); });
+await test('mood panel: fatigue (NOGURUMS) or energy (ENERĢIJA) chip eventually shows', async()=>{ const p=await cal();
+  ok(await waitFor(()=>p.evaluate(()=>/NOGURUMS|ENERĢIJA/i.test(document.querySelector('.card.mk-mid-card-rd')?.innerText||'')),10000),'no NOGURUMS / ENERĢIJA in mood card'); await p.context().close(); });
 
 await test('main page: calendar iframe loads and dock buttons open panels without errors', async()=>{ const p=await fresh('/index.html');
   const fr=()=>p.frame({url:/kalendars\/index\.html/}); ok(fr(),'no calendar iframe');

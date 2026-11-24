@@ -282,7 +282,7 @@
     if (W < 120 || H < 200) return null;
     var faceY = mx.faceY || 132, ground = H - (mx.groundGap || 24), amp = 66;   // low enough that the coffee over the points stays clear of the ring
     if (MB) { ground += 8; amp = 46; }   // B: flatter and lower, close over the rating row (the user: less empty room there), bigger marks
-    if (M3) { ground = H - 6; amp = 44; }   // M3: a ribbon under the bigger glass, its faces just over the buttons; the day's coffees lift it further (drawScape)
+    if (M3) { ground = H - 26; amp = 30; }   // M3: a ribbon under the bigger glass, its faces just over the buttons; the day's coffees lift it further (drawScape); under it the days' dates (m3Days)
     return { W: W, H: H, cx: W / 2, faceY: faceY, faceR: (mx.faceD || 124) / 2,
       ground: ground, amp: amp, left: 14, right: W - 14, chartTop: ground - 4 - amp, chartBottom: ground - 14 };
   }
@@ -675,10 +675,11 @@
     var owns = readJson(OWN_KEY);
     var levels = curveLevels(m.rows);
     var pts = m.rows.map(function (r, i) { return { row: r, x: X(i), y: Y(levels[i]), own: owns[r.day] && owns[r.day].emoji ? owns[r.day] : null }; });
-    if (M3) {   // the ribbon rises with the day's coffees (the user: higher where there was coffee, not a straight line): up to 16 px on the fortnight's biggest day
+    if (M3) pts.forEach(function (p) { p.y = geo.H - 58; });   // M3: no rating ribbon (the user: only the team's line); the days stand in one row: a bean, the day's face under it, its date at the foot
+    if (false) {   // the ribbon rises with the day's coffees (the user: higher where there was coffee, not a straight line): up to 16 px on the fortnight's biggest day
       var cupsN = coffeeByDay(m.rows.map(function (r) { return r.day; })), most = 0;
       Object.keys(cupsN).forEach(function (d) { if (cupsN[d] > most) most = cupsN[d]; });
-      pts.forEach(function (p) { p.lift = most ? (cupsN[p.row.day] || 0) / most * 16 : 0; p.y -= p.lift; });
+      pts.forEach(function (p) { p.lift = 0; });   // the ribbon is the rating alone now: the coffee is the beans with their numbers, the team's day the line over it (the user: three things, each its own; the coffee lift mixed two of them)
     }
     scape.pts = pts;
     var dots = pts.filter(function (p) { return p.row.mood; });
@@ -687,7 +688,7 @@
     // the days after the last vote are no longer one straight stroke.
     var first = pts.findIndex(function (p) { return p.row.mood; });
     var path = first < 0 ? [] : pts.slice(first);
-    if (path.length > 1) {
+    if (path.length > 1 && !M3) {
       var line = monotone(path.map(function (p) { return [p.x, p.y]; }), 12);
       var trace = function (c) { c.beginPath(); line.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); };
       ctx.save();
@@ -699,13 +700,25 @@
       trace(ctx);
       if (!M3) { ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = acc ? 5 : 4.2; ctx.stroke(); }
       if (!acc) { ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke(); }
-      ctx.strokeStyle = acc || '#8fdcff'; ctx.lineWidth = M3 ? 6 : acc ? 3 : 2; ctx.stroke();   // M3: a ribbon, no dark edge
+      if (M3) {
+        // M3: drawn as the team's line over it (the user: a wearable's curve, not a tube): a mist under it fading
+        // into the dark, and the line, both soft at the first day and full at the latest; no dark edge
+        var rx0 = line[0][0], rx1 = line[line.length - 1][0], rspan = Math.max(1, rx1 - rx0), base = acc || '#8fdcff';
+        var ramp = function (alpha) { var g = ctx.createLinearGradient(rx0, 0, rx1, 0); for (var t = 0; t <= 1.0001; t += .125) g.addColorStop(Math.min(1, t), 'color-mix(in srgb, ' + base + ' ' + Math.round(alpha * (.14 + .86 * Math.pow(t, 1.5)) * 100) + '%, transparent)'); return g; };
+        var rlow = Math.max.apply(null, line.map(function (q) { return q[1]; })) + 18, rtop = Math.min.apply(null, line.map(function (q) { return q[1]; }));
+        ctx.save(); trace(ctx); ctx.lineTo(rx1, rlow); ctx.lineTo(rx0, rlow); ctx.closePath(); ctx.clip();
+        ctx.fillStyle = ramp(.24); ctx.fillRect(rx0 - 2, rtop - 2, rspan + 4, rlow - rtop + 4);
+        var rfade = ctx.createLinearGradient(0, rtop, 0, rlow); rfade.addColorStop(0, 'rgba(11,14,17,0)'); rfade.addColorStop(1, 'rgba(11,14,17,1)');
+        ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = rfade; ctx.fillRect(rx0 - 2, rtop - 2, rspan + 4, rlow - rtop + 4);
+        ctx.restore();
+        trace(ctx); ctx.strokeStyle = ramp(1); ctx.lineWidth = 3; ctx.stroke();
+      } else { ctx.strokeStyle = acc || '#8fdcff'; ctx.lineWidth = acc ? 3 : 2; ctx.stroke(); }
       ctx.restore();
     }
     // The sky's characters fill down to this curve: move their border too.
     scape.line = line && line.length > 1 ? line : null;
     skyRegion();
-    if (M3) m3Beads(ctx, pts, card.style.getPropertyValue('--mb-acc').trim(), m.selected);
+    if (M3) { m3Beads(ctx, pts, card.style.getPropertyValue('--mb-acc').trim(), m.selected); m3Days(ctx, pts, geo); m3Energy(ctx, pts, geo, card, plot); }
     else pts.forEach(function (p) {
       var sel = p.row.day === m.selected;
       if (!p.row.mood && MB && scape.line) {   // B: a day without a rating is a quiet grey dot on the line
@@ -735,8 +748,8 @@
       // the day's own emoji, else the face of the team's rating, so each rated point says what it was
       var emoji = p.own ? p.own.emoji : p.row.mood ? FACES[moodFor(p.row.mood.score).key][0] : '';
       if (!emoji) return;
-      var below = p.row.mood ? dotR(p.row) : 2;   // right under its point
-      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + (M3 ? 11 : MB ? 11.5 : 9)).toFixed(1) + 'px">' + esc(emoji) + '</i>';
+      var below = M3 ? 11 : p.row.mood ? dotR(p.row) : 2;   // right under its point (M3: under its bean)
+      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + (M3 ? 9 : MB ? 11.5 : 9)).toFixed(1) + 'px">' + esc(emoji) + '</i>';
     });
     marks.innerHTML = html;
   }
@@ -799,23 +812,189 @@
     var p = function (h) { return [1, 3, 5].map(function (i) { return parseInt(h.slice(i, i + 2), 16); }); }, A = p(a), B = p(b);
     return 'rgb(' + A.map(function (v, i) { return Math.round(v * t + B[i] * (1 - t)); }).join(',') + ')';
   }
+  /* M3: the days in one row (no rating ribbon any more: the user kept only the team's line): each a coffee bean,
+     the sweets game's (mood-gallery-pc.js swBean), brown with the day's cups on it, grey without a number where no
+     coffee was logged; the day's face under it (the rating), its date at the foot (m3Days). */
   function m3Beads(ctx, pts, acc, selected) {
     if (!/^#[0-9a-f]{6}$/i.test(acc)) acc = '#f7a43a';
     var cups = coffeeByDay(pts.map(function (p) { return p.row.day; }));
     var cream = m3Mix(acc, '#fff6e6', .3), ink = m3Mix(acc, '#0c0a08', .16), tone = '#3a434d';   // an unrated day: a neutral grey (the accent mixed into dark came out brown: the user)
     ctx.save();
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = "800 10.5px 'Geist Sans', Inter, system-ui, sans-serif";
     pts.forEach(function (p) {
-      var n = cups[p.row.day] || 0, rated = !!p.row.mood, y = rated ? p.y : scape.line ? curveYAt(scape.line, p.x) : null;
-      if (y == null) { if (!n) return; y = p.y; }             // before the first rating there is no ribbon: only a day's coffees
-      var r = n ? 8.4 : rated ? 5 : 3.2;
-      ctx.fillStyle = rated ? cream : tone;
-      ctx.beginPath(); ctx.arc(p.x, y, r, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#0c0d11'; ctx.lineWidth = 1.5; ctx.stroke();
-      if (n) { ctx.fillStyle = rated ? ink : '#ece6dc'; ctx.fillText(String(n), p.x, y + .6); }
-      if (p.row.day === selected && rated) { ctx.strokeStyle = 'rgba(236,230,220,.9)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(p.x, y, r + 3, 0, Math.PI * 2); ctx.stroke(); }
+      var n = cups[p.row.day] || 0, y = p.y;
+      p.beadY = y; p.beanH = 11;
+      // every day a bean (the user): brown with the day's cups on it, or grey without a number where no coffee was logged
+      ctx.save(); ctx.translate(p.x, y); ctx.rotate(-0.5);
+      var lit = ctx.createRadialGradient(-3.5, -5, 1, 0, 0, 14);
+      if (n) { lit.addColorStop(0, '#c58a52'); lit.addColorStop(.5, '#7a4a22'); lit.addColorStop(1, '#3d220f'); }
+      else { lit.addColorStop(0, '#5d6168'); lit.addColorStop(.5, '#3a3e44'); lit.addColorStop(1, '#25282d'); }
+      ctx.fillStyle = lit; ctx.beginPath(); ctx.ellipse(0, 0, 8.2, 11, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = n ? '#2a160a' : '#16181c'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+      if (n) {   // the crease at its two ends only: the number stands clear in the middle
+        ctx.beginPath(); ctx.moveTo(.4, -8.9); ctx.quadraticCurveTo(-2.2, -7, -.6, -5.4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-.4, 8.9); ctx.quadraticCurveTo(2.2, 7, .6, 5.4); ctx.stroke();
+      } else { ctx.beginPath(); ctx.moveTo(.4, -8.9); ctx.bezierCurveTo(-3.1, -3.1, 3.5, 2.6, -.4, 8.9); ctx.stroke(); }
+      ctx.fillStyle = n ? 'rgba(255,230,200,.45)' : 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.ellipse(-3.4, -4.9, 1.7, 3, .3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      if (!n) return;
+      ctx.font = "800 " + (n > 9 ? 10 : 11.5) + "px 'Geist Sans', Inter, system-ui, sans-serif";
+      ctx.lineJoin = 'round'; ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(30,16,6,.9)'; ctx.strokeText(String(n), p.x, y + .6);
+      ctx.fillStyle = '#ffffff'; ctx.fillText(String(n), p.x, y + .6);
     });
+    ctx.restore();
+  }
+  /* M3: under the ribbon the days' dates, the weekday's letter over each (lv, as the day strip: P O T C P S S),
+     subtle; Saturdays, Sundays and the days off by law (js/lv-holidays.js) in red. */
+  function m3Days(ctx, pts, geo) {
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    pts.forEach(function (p) {
+      var day = p.row.day, d = new Date(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10), 12), dow = d.getDay();
+      var dmy = day.slice(8) + '.' + day.slice(5, 7) + '.' + day.slice(0, 4), h = window.MinkaLvHolidays && window.MinkaLvHolidays.get ? window.MinkaLvHolidays.get(dmy) : null;
+      var red = dow === 0 || dow === 6 || !!(h && h.free);
+      ctx.font = "600 8px 'Geist Sans', Inter, system-ui, sans-serif";
+      ctx.fillStyle = red ? 'rgba(255,122,122,.78)' : 'rgba(214,222,230,.46)';
+      ctx.fillText(d.toLocaleDateString('lv', { weekday: 'narrow' }).toUpperCase(), p.x, geo.H - 13);
+      ctx.font = "700 9.5px 'Geist Sans', Inter, system-ui, sans-serif";
+      ctx.fillStyle = red ? 'rgba(255,122,122,.95)' : 'rgba(226,232,238,.72)';
+      ctx.fillText(String(+day.slice(8)), p.x, geo.H - 2.5);
+    });
+    ctx.restore();
+  }
+  /* M3: the team's day, a thin line over the ribbon: the same number as the statistics' team chart (daybook-stats.js
+     teamFatigue), the hours everyone together spent awake in the high zone (fatigue above Vidējs, fatigue.js
+     FATIGUE_LEVELS), the radiographers of the month (MinkaLevels.fatigueNames), from the fatigue model's hourly
+     month (monthSeries). (A mean of the people on duty came out as a straight line, the user: a team mean sits
+     flat, the statistics say so too.) With energy shown (js/page/mk-outline.js) the line is high on light days
+     and low on heavy ones; with fatigue shown the other way round. Its colours are the levels' own, from the
+     fortnight's lightest day (green) to its heaviest (red). Worked out a slice
+     at a time when the page is idle (as the statistics warm a month), then kept. Full-moon days wear a small moon. */
+  var team = { key: '', val: null, busy: 0 };
+  var MONTH_LV = ['Janvāris', 'Februāris', 'Marts', 'Aprīlis', 'Maijs', 'Jūnijs', 'Jūlijs', 'Augusts', 'Septembris', 'Oktobris', 'Novembris', 'Decembris'];
+  function energyOn() { return !window.MkOutline || !window.MkOutline.energyView || window.MkOutline.energyView(); }
+  function teamFatigue(days) {
+    var F = window.__fatigue, L = window.MinkaLevels;
+    if (!F || !F.monthSeries || !F.FATIGUE_LEVELS || !L || !L.fatigueNames || !days.length) return null;
+    var key = days.join(',') + '|' + new Date().toDateString() + '|' + (new Date().getHours() >= 8);
+    if (team.key === key) return team.val;
+    if (team.busy) return null;
+    team.busy = 1;
+    // the months the fortnight touches, and everyone of each
+    var jobs = [], months = {};
+    days.forEach(function (day) {
+      var mk = day.slice(0, 7);
+      if (months[mk]) return;
+      var meta = null;
+      try { meta = L.fatigueNames(MONTH_LV[+day.slice(5, 7) - 1] + ' ' + day.slice(0, 4)); } catch (_) {}
+      months[mk] = { names: meta && meta.names ? meta.names : [], y: +day.slice(0, 4), mm: +day.slice(5, 7), series: {} };
+      months[mk].names.forEach(function (name) { jobs.push([mk, name]); });
+    });
+    var idle = typeof requestIdleCallback === 'function' ? function (fn) { requestIdleCallback(fn, { timeout: 2500 }); } : function (fn) { setTimeout(fn, 60); };
+    var high = F.FATIGUE_LEVELS[1].max, crit = F.FATIGUE_LEVELS[2].max;
+    (function step() {
+      var until = performance.now() + 12;
+      while (jobs.length && performance.now() < until) { var j = jobs.shift(), mo = months[j[0]]; try { mo.series[j[1]] = F.monthSeries(j[1], mo.y, mo.mm, 1); } catch (_) {} }
+      if (jobs.length) { idle(step); return; }
+      var out = {};
+      days.forEach(function (day) {
+        var mo = months[day.slice(0, 7)], dd = +day.slice(8, 10), h = 0, c = 0, any = false;
+        Object.keys(mo.series).forEach(function (name) {
+          var se = mo.series[name];
+          if (!se) return;
+          var per = 24 / se.stepHours, from = (dd - 1) * per;
+          for (var i = from; i < from + per && i < se.samples.length; i++) {
+            var v = se.samples[i];
+            if (!v) continue;
+            any = true;
+            if (v.asleep || v.score <= high) continue;
+            if (v.score > crit) c += se.stepHours; else h += se.stepHours;
+          }
+        });
+        if (any) out[day] = { hours: h + c, crit: c };
+      });
+      team.key = key; team.val = out; team.busy = 0;
+      scape.sig = ''; paint();
+    })();
+    return null;
+  }
+  function fullMoon(day) {
+    var t = new Date(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10), 12).getTime();
+    var phase = (((t - Date.UTC(2000, 0, 6, 18, 14)) / 86400000 / 29.5305882) % 1 + 1) % 1;
+    return Math.abs(phase - .5) * 29.5305882 < .5;
+  }
+  function m3Energy(ctx, pts, geo, card, plot) {
+    var fat = teamFatigue(pts.map(function (p) { return p.row.day; }));
+    if (!fat) return;
+    var en = energyOn(), F = window.__fatigue;
+    // its band: under the glass and the colleagues' discs, over the beans
+    var P = plot.getBoundingClientRect(), top = geo.faceY + geo.faceR + 7;
+    [].forEach.call(card.querySelectorAll('.rg-mood-person'), function (e) { var q = e.getBoundingClientRect(); if (q.height) top = Math.max(top, q.bottom - P.top + 7); });
+    var bottom = geo.chartTop - 4;
+    var beansTop = bottom;
+    pts.forEach(function (p) { if (p.beadY != null) beansTop = Math.min(beansTop, p.beadY - (p.beanH || 4)); });
+    bottom = Math.min(bottom, beansTop - 15);   // room under the line for its ribbon (14 px), clear of the beans
+    if (bottom - top < 14) top = bottom - 14;
+    // the fortnight's lightest day at one edge of the band, its heaviest at the other (the user: it has to show the
+    // days as the statistics do; from zero the line hardly moved), never closer than 12 h apart (a calm fortnight
+    // stays calm); energy: the heavy days low
+    var least = Infinity, most = 0;
+    pts.forEach(function (p) { var d = fat[p.row.day]; if (d) { least = Math.min(least, d.hours); most = Math.max(most, d.hours); } });
+    if (most - least < 12) { var mid = (most + least) / 2; least = Math.max(0, mid - 6); most = least + 12; }
+    // its colours: the fatigue levels' own (fatigue.js), from the fortnight's lightest day (green) to its heaviest
+    // (red), so the line says at a glance which days were good and which hard (one level's colour for every day
+    // that had some hours in the high zone made it one orange line: the user)
+    var line = pts.filter(function (p) { return fat[p.row.day] != null; }).map(function (p) {
+      var d = fat[p.row.day], share = Math.max(0, Math.min(1, (d.hours - least) / (most - least))), v = en ? 1 - share : share;
+      return { x: p.x, y: bottom - v * (bottom - top), c: F.getPresentation(Math.round(12 + share * 76)).color, moon: fullMoon(p.row.day) };
+    });
+    if (!line.length) return;
+    /* Drawn as a wearable's curve (the user's brief): one smooth spline through the days (the ribbon's own monotone
+       curve, so it never overshoots a day), a narrow ribbon right under it that fades out within 14 px, the
+       crisp line in the levels' colours over it, and a small warm-white dot on today. No per-day dots, no glow,
+       no blur, no fill behind the beans; drawn once per change. */
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    var x0 = line[0].x, x1 = line[line.length - 1].x, span = Math.max(1, x1 - x0);
+    // the colours along the curve, each day its own, blending into the next; one opacity for every day (each
+    // value as readable as the others: a fade along the fortnight hid the past, the user)
+    var hue = function (alpha) {
+      var g = ctx.createLinearGradient(x0, 0, x1, 0);
+      line.forEach(function (q) { var t = Math.max(0, Math.min(1, (q.x - x0) / span)); g.addColorStop(t, alpha < 1 ? 'color-mix(in srgb, ' + q.c + ' ' + Math.round(alpha * 100) + '%, transparent)' : q.c); });
+      return g;
+    };
+    var curve = line.length > 1 ? monotone(line.map(function (q) { return [q.x, q.y]; }), 10) : null;
+    if (curve) {
+      var trace = function () { ctx.beginPath(); curve.forEach(function (c, i) { if (i) ctx.lineTo(c[0], c[1]); else ctx.moveTo(c[0], c[1]); }); };
+      // the ribbon under it: the same curve again, one pixel lower each time, fading out over 14 px (geometry,
+      // no blur): it follows the line's own bends and never reaches the beans
+      var depth = 14;
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, geo.W, beansTop - 1); ctx.clip();
+      for (var k = 1; k <= depth; k++) {
+        ctx.save(); ctx.translate(0, k);
+        trace(); ctx.strokeStyle = hue(.2 * Math.pow(1 - k / (depth + 1), 1.6)); ctx.lineWidth = 1.4; ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+      // the line itself: crisp, 2.2 px, every day in full
+      trace(); ctx.strokeStyle = hue(1); ctx.lineWidth = 2.2; ctx.stroke();
+    }
+    var at = function (x) { if (!curve) return line[0].y; for (var i = 1; i < curve.length; i++) if (curve[i][0] >= x) { var a = curve[i - 1], b = curve[i], t = b[0] > a[0] ? (x - a[0]) / (b[0] - a[0]) : 0; return a[1] + (b[1] - a[1]) * t; } return curve[curve.length - 1][1]; };
+    line.forEach(function (q) {
+      if (!q.moon) return;   // a full moon: a small pale disc on the curve
+      var y = at(q.x);
+      ctx.fillStyle = '#f1ead2'; ctx.beginPath(); ctx.arc(q.x, y, 4.4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0c0d11'; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+    // today: a small crisp warm-white dot on the line
+    var last = line[line.length - 1], ly = at(last.x);
+    if (!last.moon) { ctx.fillStyle = '#fff6e6'; ctx.beginPath(); ctx.arc(last.x, ly, 3.2, 0, Math.PI * 2); ctx.fill(); }
+    // what the line is, at its start: a bolt for energy, a crescent for fatigue, in its first day's colour
+    var a = line[0], k = .42;
+    ctx.translate(a.x - 13, a.y); ctx.scale(k, k); ctx.translate(-12, -12);
+    ctx.fillStyle = a.c; ctx.strokeStyle = a.c; ctx.lineWidth = 2.2 / k;
+    if (en) ctx.fill(new Path2D('M13 2.5 4.5 13.5H11l-1 8 8.5-11H12z'));
+    else { ctx.fill(new Path2D('M20 14.2A8 8 0 0 1 9.8 4a8 8 0 1 0 10.2 10.2Z')); }
     ctx.restore();
   }
   function drawCoffee(ctx, pts, geo, line) {
@@ -915,7 +1094,8 @@
       + '|' + m.rows.map(function (r) { return owns[r.day] && owns[r.day].emoji || ''; }).join(',')
       + '|' + m.rows.map(function (r) { return r.mood ? r.mood.score.toFixed(3) + ':' + r.mood.total : '-'; }).join(',')
       + '|' + JSON.stringify(coffeeByDay(m.rows.map(function (r) { return r.day; })))
-      + (MB ? '|' + card.style.getPropertyValue('--mb-acc') : '');   // the curve's colour follows the fatigue
+      + (MB ? '|' + card.style.getPropertyValue('--mb-acc') : '')   // the curve's colour follows the fatigue
+      + (M3 ? '|' + (energyOn() ? 'e' : 'f') + '|' + team.key + '|' + JSON.stringify(team.val) + '|' + card.querySelectorAll('.rg-mood-person').length : '');   // the team's line, and what it shows
     scape.m = m;
     scape.geo = geo;
     loadSky();
@@ -1062,6 +1242,9 @@
   var coffeeRepaint = 0;
   function repaintSoon() { clearTimeout(coffeeRepaint); coffeeRepaint = setTimeout(function () { paint(); }, 950); }   // a saved coffee's icon lands on the curve at ~0.9 s (calendar.js flyCoffeeToCurve)
   document.addEventListener('minka:coffee-changed', repaintSoon);
+  // the switch over the team's number (energy or fatigue) turns the curve's line too; a fatigue model that changed redraws it
+  window.addEventListener('mk-energy-view', function () { scape.sig = ''; paint(); });
+  document.addEventListener('minka:fatigue-updated', function () { team.key = ''; repaintSoon(); });
   window.addEventListener('storage', function (event) { if (event.key === 'minkaCoffeeCountsV1') repaintSoon(); });
   // A centre (card-layout.js) stands over the mood card: nobody sees the sky, so it rests
   document.addEventListener('mk-mood-covered', function (e) { scape.covered = !!e.detail; skyRun(!document.hidden && !scape.hold && !scape.covered); });

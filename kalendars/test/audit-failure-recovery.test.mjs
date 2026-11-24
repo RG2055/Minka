@@ -129,7 +129,9 @@ test('new day/night cards paint personal initials immediately, before emoji hook
   getPersonEmoji:w=>w.emoji,getShiftEmoji:w=>w.night?'🌙':'☀️',getDutyPeriod:w=>w.night?'night':'day',
   getDutyStartTime:()=> '20:00',getDutyEndTime:()=> '08:00',
   midFatigueTrend:()=>({icon:'→',cls:''}),getMonthHoursForWorker:()=>120,
-  getDutyShiftHours:()=>12,buildCoffeeRow:()=>''});
+  getDutyShiftHours:()=>12,buildCoffeeRow:()=>'',
+  // what the card's cell shows (energy left or fatigue: calendar.js shownFatigue); here as written, the fatigue
+  shownFatigue:(score)=>({num:score,word:'',what:'Nogurums',energy:false}),shownArrow:a=>a});
  vm.runInContext(section(read('kalendars/js/calendar.js'),'    function buildMidMeta(','    // Refresh fatigue bars after render'),c);
  for(const night of [false,true])for(const emoji of ['', '🦊']){
   const card=c.buildCard({name:'AIJA JAIDZUMA',shift:'12',night,emoji},false);

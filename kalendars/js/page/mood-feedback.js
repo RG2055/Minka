@@ -556,7 +556,10 @@
     if (MX) setTimeout(function () { mxMonthTicker(false); }, 0);
     var cupB = (row.closest('.rg-feedback-card') || row).querySelector('[data-rg-month-tab="coffee"] b');
     if (cupB) cupB.dataset.unit = n.cups % 10 === 1 && n.cups % 100 !== 11 ? 'kafija' : 'kafijas';
-    set('coffee', n.cups, 'kafijas šomēnes', '', 'Šomēnes izdzertas ' + n.cups + ' kafijas. Atvērt statistiku');
+    // M3: what was drunk on this shift stands under the month's total as "+6" (the user: the separate "6 Dežūrā"
+    // beside the glass was one thing too many there); read from the shift's own counter
+    var monthHome = row.closest('.rg-feedback-card') || row, shiftCups = M3 ? parseInt((monthHome.querySelector('[data-rg-coffee-num]') || {}).textContent, 10) || 0 : 0;
+    set('coffee', n.cups, 'kafijas šomēnes', shiftCups ? '+' + shiftCups : '', 'Šomēnes izdzertas ' + n.cups + ' kafijas' + (shiftCups ? ', šajā maiņā ' + shiftCups : '') + '. Atvērt statistiku');
     set('radio', M3 ? n.radioDays : n.top ? n.top.name : '', n.top ? 'biežākā stacija' : 'radio šomēnes', '', n.top ? 'Šomēnes biežāk skanēja ' + n.top.name + ' (' + n.top.days + ' dienas), kopā ' + n.stations + ' stacijas. Atvērt statistiku' : 'Radio šomēnes nav skanējis');
     // Bolus: GE against Philips as one split bar under the number.
     var share = n.bolus ? (n.ge / n.bolus).toFixed(3) : '0.5';
@@ -577,7 +580,7 @@
       // (neither thinner than its number). The user tried it as a filling bar like the other two and took this
       // one back. And each bar says what it is under the pointer
       var tip = function (k, text) { var b = monthCard.querySelector('[data-rg-month-tab="' + k + '"]'); if (b && b.dataset.m3Tip !== text) b.dataset.m3Tip = text; return b; };
-      tip('coffee', 'Kafijas šomēnes: ' + n.cups);
+      tip('coffee', 'Kafijas šomēnes: ' + n.cups + (shiftCups ? ', šajā maiņā +' + shiftCups : ''));
       tip('radio', 'Radio šomēnes: ' + n.radioDays + (n.radioDays % 10 === 1 && n.radioDays % 100 !== 11 ? ' diena' : ' dienas') + (n.top ? ', biežāk ' + n.top.name : ''));
       var bb = tip('bolus', 'Bolus šomēnes: GE ' + n.ge + ', Philips ' + n.philips);
       if (bb) bb.style.setProperty('--m3-ge', String(n.bolus ? Math.max(.38, Math.min(.62, n.ge / n.bolus)) : .5));
@@ -744,9 +747,18 @@
          (.mk-mid-meta-value, piem. “50% ↗”). Vecais .mk-mid-fat-pct paliek kā
          rezerve, ja kāds skats vēl zīmē veco svītriņu rindu. */
       var fatigueNode = card.querySelector('.mk-mid-fat-pct') || card.querySelector('.mk-mid-meta-value');
-      var value = parseInt(String(fatigueNode && fatigueNode.textContent || '').replace('%', ''), 10);
+      // (the model's fatigue rides on the element: what is written there may be the energy left, 100 less it)
+      var value = parseInt(fatigueNode && fatigueNode.dataset && fatigueNode.dataset.fat != null ? fatigueNode.dataset.fat : String(fatigueNode && fatigueNode.textContent || '').replace('%', ''), 10);
       if (Number.isFinite(value)) {
-        data.staff[data.staff.length - 1].fatigue = value;
+        // The person's own arc shows what their side card shows: the fatigue as it is felt now, lowered for a while
+        // by the caffeine still in the body (calendar.js getSideFatigue), with the lowered part drawn beside it in
+        // the caffeine's colour. (The user: one place said red, the other yellow.) The team's number stays the model's.
+        var caf = null;
+        try { caf = window.__minkaCaffeineNow ? window.__minkaCaffeineNow(name) : null; } catch (_e) {}
+        var boost = caf && caf.pts ? Math.min(value, caf.pts) : 0;
+        data.staff[data.staff.length - 1].fatigue = value - boost;
+        data.staff[data.staff.length - 1].boost = boost;
+        data.staff[data.staff.length - 1].cafSrc = boost ? caf.src : '';
         scores.push(value);
       }
     });
@@ -921,7 +933,7 @@
     var list = (sources || []).filter(function (s) { return Number(s.count) > 0; }).slice(0, 3);
     if (side != null) {   // B: every kind drunk as its own icon in a tidy stack beside the bubble (towards the middle), its count
       // as a big tinted number only when more than one of that kind (the user: two Dynamit: "2" by it; one Löfbergs: just it)
-      var kinds = (sources || []).filter(function (s) { return Number(s.count) > 0; }).sort(function (a, b) { return b.count - a.count; }).slice(0, 3);
+      var kinds = (sources || []).filter(function (s) { return Number(s.count) > 0; }).sort(function (a, b) { return b.count - a.count; }).slice(0, M3 ? 5 : 3);   // M3: the fan round the disc has room for five; three hid a fourth drink (the user's own test)
       if (!kinds.length) return;
       var mark = document.createElement('span');
       mark.className = 'rg-mood-moon mb-cups mb-cups-' + kinds.length + (side ? ' is-right' : '');
@@ -1019,7 +1031,7 @@
     var ringOut = d * .446 + 12;                           // the glass you see (the lens picture's clear part) and the fatigue ring's outer edge
     var isRd = function (p) { return p.classList.contains('is-rd'); };
     [people.filter(function (p) { return !isRd(p); }), people.filter(isRd)].forEach(function (side, s) {
-      var k = side.length, size = 34, lo = k > 4 ? -34 : -30, hi = k > 4 ? 58 : 50, R, pitch;   // degrees from the level line, down positive: under the number and the month, over the curve (five and more take a little more of the arc)
+      var k = side.length, size = 34, lo = k > 4 ? -40 : -30, hi = k > 4 ? 46 : 44, R, pitch;   // (the lowest disc no deeper than 46 degrees: under it runs the team's line over the curve, mood-trend.js m3Energy)   // degrees from the level line, down positive: under the number and the month, over the curve (five and more take a little more of the arc)
       if (!k) return;
       for (;;) {                                           // many on a side: smaller discs, never one over another
         R = ringOut + 11 + size / 2;                       // 5.5 px between a disc's own arc and the big one
@@ -1028,24 +1040,24 @@
         size -= 2;
       }
       if (k > 1) pitch = Math.min(pitch, (hi - lo) / (k - 1));
-      var span = pitch * (k - 1), a0 = Math.max(lo, Math.min(hi - span, 4 - span / 2));
+      var span = pitch * (k - 1), a0 = Math.max(lo, Math.min(hi - span, -span / 2));   // centred on the level line: two on a side stand exactly one above the other (it was 4 degrees lower and the pair leaned: the user, "nelīdzeni")
       side.forEach(function (person, r) {
         var a = (a0 + r * pitch) * Math.PI / 180;
         person.style.setProperty('--rg-person-size', size + 'px');
-        person.style.transform = 'translate(-50%,-50%) translate(' + (R * Math.cos(a) * (s ? 1 : -1)).toFixed(1) + 'px,' + (R * Math.sin(a)).toFixed(1) + 'px)';
+        person.style.transform = 'translate(-50%,-50%) translate(' + Math.round(R * Math.cos(a) * (s ? 1 : -1)) + 'px,' + Math.round(R * Math.sin(a)) + 'px)';   // whole pixels: a disc and its arc keep sharp edges
         person.style.opacity = '';
         mxMoons(person, person.__mxCoffee, size, s);
-        // that person's drinks stand round their own disc, right outside its arc on the side away from the glass:
-        // each kind's icon the same short step from the disc (a fan), so none hangs loose between two people
-        // (the user: a column out on the ray read as nobody's). The count, when more than one, beyond its icon.
+        // that person's drinks stand beside their own disc, right outside its arc on the side away from the glass:
+        // a straight column centred on the disc, even steps (a fan round the disc was tried: three small icons on
+        // a curve read as crooked, the user). Three to a column; a fourth and fifth kind in a second one further out.
         var cups = person.querySelector('.mb-cups'), n = cups ? cups.children.length : 0;
         if (n) {
-          var kk = size < 28 ? 10 : 12, far = size / 2 + 5.5 + 3 + kk / 2, out = Math.atan2(Math.sin(a), Math.cos(a) * (s ? 1 : -1)), step = (kk + 2) / far;
+          var kk = size < 28 ? 10 : 12, x0 = size / 2 + 5.5 + 4 + kk / 2, per = n > 3 ? Math.ceil(n / 2) : n, dir = s ? 1 : -1;
           cups.style.setProperty('--k', kk + 'px');
           [].forEach.call(cups.children, function (item, q) {
-            var t = out + (q - (n - 1) / 2) * step * (s ? 1 : -1);   // the first kind uppermost on both sides
-            item.style.left = (far * Math.cos(t)).toFixed(1) + 'px';
-            item.style.top = (far * Math.sin(t)).toFixed(1) + 'px';
+            var col = Math.floor(q / per), row = q - col * per, rows = col ? n - per : per;
+            item.style.left = Math.round(dir * (x0 + col * (kk + 3))) + 'px';
+            item.style.top = Math.round((row - (rows - 1) / 2) * (kk + 3)) + 'px';
           });
         }
       });
@@ -1783,6 +1795,8 @@
       source.style.setProperty('--rg-coffee-z', String(Math.round((1 - placement.depth) * 8) + 1));
     });
   }
+  // energy that is left (the default) or the fatigue as before: the switch is the team's number (js/page/mk-outline.js keeps it)
+  function moodEnergyView() { return !window.MkOutline || !window.MkOutline.energyView || window.MkOutline.energyView(); }
   function buildMoodStaff(ring, staff, coffeeSources) {
     var moodCard = ring && ring.closest('.rg-feedback-card');
     var staffList = staff || [];
@@ -1808,6 +1822,7 @@
         item.style.setProperty('--rg-person-fatigue-rgb', moodFatigueRgb(person.fatigue));
         item.style.setProperty('--rg-person-fatigue-level', fatigueLevel.toFixed(1) + '%');
         item.style.setProperty('--rg-person-liquid-rgb', moodPersonLiquidRgb(person.fatigue));
+        var boosted = Math.max(0, Math.min(100 - fatigueLevel, Number(person.boost) || 0));
         item.style.setProperty('--mb-pf', fatigueLevel.toFixed(0));   // B: the ring round the person, as the side card's line
       }
       var glass = document.createElement('span');
@@ -1824,6 +1839,22 @@
       else identity.textContent = person.emoji || person.initials || '?';
       glass.appendChild(liquidVessel);
       glass.appendChild(identity);
+      /* M3: the disc and the ring of the person's fatigue are ONE drawing with one coordinate system (the user
+         measured the ring 2 px off the disc when they were two boxes): viewBox 184, both centred on 92,92; the
+         disc r 68, the ring r 82 and 16 wide, so 6 between them all the way round (34 px disc: 4 px ring, 1.5 px
+         gap). The ring is MkOutline's (js/page/mk-outline.js), as on the side cards' edges: one path from the
+         top, clockwise; the fatigue, then the caffeine's part in the last drink's tone. */
+      if (M3 && window.MkOutline) {
+        // energy, as on the side cards: what is left of one's own (100 less the model's fatigue), then what the caffeine adds for now
+        var fat = Number.isFinite(person.fatigue) ? Math.max(0, Math.min(100, person.fatigue)) : 100, pb = Math.max(0, Math.min(100 - fat, Number(person.boost) || 0)), en = moodEnergyView(), pf = en ? 100 - fat - pb : fat;
+        if (Number.isFinite(person.fatigue)) item.title += en ? ' · enerģija ' + Math.round(100 - fat) + '%' + (pb ? ' (bāzes ' + Math.round(pf) + '%, kofeīns +' + Math.round(pb) + ')' : '') : ' · nogurums ' + Math.round(fat) + '%' + (pb ? ' (kofeīns uz laiku −' + Math.round(pb) + ')' : '');
+        glass.insertAdjacentHTML('afterbegin', window.MkOutline.svg('<path d="M92 10A82 82 0 1 1 92 174A82 82 0 1 1 92 10" pathLength="100"/>', {
+          cls: 'mb-arc', attrs: 'viewBox="0 0 184 184"', box: 'x="0" y="0" width="184" height="184"', before: '<circle class="d" cx="92" cy="92" r="68"/>',
+          key: 'mb|' + person.key, pf: Math.round(pf), pb: Math.round(pb),
+          marks: [{ at: 0, icon: 'bolt' }].concat(pb >= 4 ? [{ at: Math.round(pf) + Math.round(pb) / 2, icon: 'bean' }] : []),   // the same signs as on the side cards' edges
+          tone: pb ? window.MkOutline.tone(window.__minkaCoffeeColor ? window.__minkaCoffeeColor(person.cafSrc) : '', moodFatigueColor(person.fatigue)) : null }));
+        window.MkOutline.settle(glass);
+      }
       item.appendChild(glass);
       if (person.coffee > 0) {
         var coffee = document.createElement('small');
@@ -2129,8 +2160,8 @@
     if (ring) {
       var signature = stats.staff.map(function (person) {
         var sources = (person.coffeeSources || []).map(function (source) { return source.key + source.count; }).join(',');
-        return [person.key, person.emoji, person.role, person.fatigue, person.coffee, sources].join(':');
-      }).join('|') + '::' + stats.sources.map(function (source) { return source.key + source.count; }).join(',');
+        return [person.key, person.emoji, person.role, person.fatigue, person.boost || 0, person.cafSrc || '', person.coffee, sources].join(':');
+      }).join('|') + '::' + stats.sources.map(function (source) { return source.key + source.count; }).join(',') + (moodEnergyView() ? '' : '::fat');
       if (ring.dataset.rgStaff !== signature) {
         buildMoodStaff(ring, stats.staff, stats.sources);
         ring.dataset.rgStaff = signature;
@@ -2141,7 +2172,7 @@
       coffee.classList.toggle('is-mounted', stats.total !== null);
       coffee.classList.toggle('rg-mood-pill', true);
       var num = coffee.querySelector('[data-rg-coffee-num]');
-      if (num) num.textContent = String(stats.total === null ? 0 : stats.total);
+      if (num && num.textContent !== String(stats.total === null ? 0 : stats.total)) { num.textContent = String(stats.total === null ? 0 : stats.total); if (M3) paintMonth(); }   // (M3 shows it under the month's coffee bar)
       coffee.classList.toggle('is-on', (stats.total || 0) > 0);
       var rightSide = coffee.closest('.rg-mood-side');   // shown only once a coffee is logged on the shift (the user)
       if (rightSide) {
@@ -2156,12 +2187,45 @@
       fatigue.classList.add('rg-mood-side');
       if (stats.fatigue !== null) {
         var fnum = fatigue.querySelector('[data-rg-fatigue-num]');
-        if (fnum) { if (MB) fnum.innerHTML = stats.fatigue + '<small>%</small>'; else fnum.textContent = stats.fatigue + '%'; }   // B: the % smaller, in the accent
+        // the team's number the same way round as the people's: energy left (100 less the fatigue) or the fatigue;
+        // its colour and the stage's wash stay the fatigue's
+        var teamEn = moodEnergyView(), teamNum = teamEn ? 100 - stats.fatigue : stats.fatigue, teamLabel = fatigue.querySelector('.rg-mood-side-label');
+        // The word over the number says what it is, as it always did (nothing above or under it moves).
+        if (teamLabel) { var word = teamEn ? 'Enerģija' : 'Nogurums'; if (teamLabel.textContent !== word) teamLabel.textContent = word; }
+        // The switch between the two stands where the word over the number stood, in its place (the user: "Enerģija"
+        // written twice, and beside the number it ran onto the bolus bars). As low as that word's line, so the number
+        // under it does not move (taller, it pushed the number into the colleagues' discs). M3 Expressive's connected
+        // buttons: the chosen one a round pill with its icon and word, the other its icon alone on a dark tinted
+        // shape with small inner corners.
+        var mbCard = M3 && window.MkOutline && window.MkOutline.setEnergyView && fatigue.closest('.rg-feedback-card');
+        if (mbCard) {
+          var sw = mbCard.querySelector(':scope > .mb-en');
+          if (!sw) {
+            sw = document.createElement('span');
+            sw.className = 'mb-en'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'Ko rādīt: enerģiju vai nogurumu');
+            // each button: its own sign and word (shown when it is the chosen one), and the two arrows (shown when it
+            // is not: a press on it changes what is shown; a moon alone read as the moon, the user)
+            var SWAP = '<svg class="mb-en-swap" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5h14M14.5 4.5l4 4-4 4M20 15.5H6M9.5 11.5l-4 4 4 4"/></svg>';
+            sw.innerHTML = '<button type="button" data-mb-en="1"><svg class="mb-en-own" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5 4.5 13.5H11l-1 8 8.5-11H12z"/></svg>' + SWAP + '<span>Enerģija</span></button>'
+              + '<button type="button" data-mb-en="0"><svg class="mb-en-own" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.2A8 8 0 0 1 9.8 4a8 8 0 1 0 10.2 10.2Z"/></svg>' + SWAP + '<span>Nogurums</span></button>';
+            mbCard.appendChild(sw);
+          }
+          mbCard.classList.add('has-mb-en');   // the switch says what the number is: the word over it steps aside (its room kept)
+          [].forEach.call(sw.querySelectorAll('[data-mb-en]'), function (btn) {
+            var isEn = btn.getAttribute('data-mb-en') === '1', on = isEn === teamEn;
+            if (btn.getAttribute('aria-pressed') !== String(on)) btn.setAttribute('aria-pressed', String(on));
+            // the words the user chose, as the browser's own tooltip (nothing drawn over the card)
+            var t = on ? (isEn ? 'Enerģija: komandas vidējā atlikusī enerģija, ieskaitot kofeīna īslaicīgo efektu.' : 'Nogurums: komandas vidējais noguruma līmenis.')
+              : (isEn ? 'Pārslēgt uz enerģiju.' : 'Pārslēgt uz nogurumu.');
+            if (btn.title !== t) { btn.title = t; btn.setAttribute('aria-label', t); }
+          });
+        }
+        if (fnum) { if (MB) fnum.innerHTML = teamNum + '<small>%</small>'; else fnum.textContent = teamNum + '%'; }   // B: the % smaller, in the accent
         fatigue.style.setProperty('--rg-fat', moodFatigueColor(stats.fatigue));
         fatigue.style.setProperty('--rg-fat-ink', moodFatigueInk(stats.fatigue));
         refs.stage.style.setProperty('--rg-fatigue-wash', moodFatigueColor(stats.fatigue));
         refs.stage.style.setProperty('--rg-fatigue-alpha', (.12 + Math.min(100, stats.fatigue) * .0022).toFixed(3));
-        mbFatigue(refs, stats.fatigue);
+        mbFatigue(refs, stats.fatigue, teamEn ? teamNum : null);
       } else {
         refs.stage.style.removeProperty('--rg-fatigue-wash');
         refs.stage.style.removeProperty('--rg-fatigue-alpha');
@@ -2815,7 +2879,7 @@
   }
   /* Noskaņa B: the card's accent and the bubble's ring from the fatigue. Another day: the ring stands at its
      value at once (the user: it slid while the day came in); within a day a change glides. No value: empty. */
-  function mbFatigue(refs, fatigue) {
+  function mbFatigue(refs, fatigue, shown) {   // shown: the arc's length when it is not the fatigue's (the energy view)
     var card = MB && refs.stage && refs.stage.closest('.rg-feedback-card');
     if (!card) return;
     var day = String(window.__activeDateStr || '');
@@ -2825,7 +2889,7 @@
       requestAnimationFrame(function () { requestAnimationFrame(function () { card.classList.remove('mb-jump'); }); });
     }
     card.style.setProperty('--mb-acc', mbAccent(fatigue || 0));
-    card.style.setProperty('--mb-fat', String(fatigue == null ? 0 : Math.max(0, Math.min(100, fatigue))));
+    card.style.setProperty('--mb-fat', String(fatigue == null ? 0 : Math.max(0, Math.min(100, shown == null ? fatigue : shown))));
   }
   // the accent of the whole card: green while rested, orange tired, red very tired (the fatigue pill's own bands)
   function mbAccent(score) { return score > 70 ? '#ff6b5f' : score > 20 ? '#f7a43a' : '#3ad07a'; }
@@ -5897,6 +5961,15 @@
   // the "0 %" it read before that, unless an unrelated repaint happened to follow.
   document.addEventListener('minka:initial-decorations-ready', scheduleMoodCoffeeRefresh);
   document.addEventListener('minka:fatigue-updated', scheduleMoodCoffeeRefresh);
+  window.addEventListener('mk-energy-view', scheduleMoodCoffeeRefresh);   // the switch: energy or fatigue
+  // the switch itself: the two joined buttons over the team's number
+  document.addEventListener('click', function (e) {
+    var btn = e.target && e.target.closest && e.target.closest('.rg-feedback-card [data-mb-en]');
+    if (!btn || !window.MkOutline) return;
+    e.preventDefault(); e.stopPropagation();
+    var want = btn.getAttribute('data-mb-en') === '1';
+    if (window.MkOutline.energyView() !== want) window.MkOutline.setEnergyView(want);
+  }, true);
   // someone chose a new emoji: the bubbles show it now, not after the next day switch
   document.addEventListener('minka:personal-emoji', scheduleMoodCoffeeRefresh);
   if (window.__minkaInitialDecorationsReady) scheduleMoodCoffeeRefresh();
