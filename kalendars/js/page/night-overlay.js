@@ -69,7 +69,9 @@
       MM.animate(el, [{opacity:0, translate:'0 -10px'},{opacity:1, translate:'0 0'}], 'spatial-fast');
     }); });
   }
+  var _nsDeferOpen=null;
   window.toggleNsOverlay=function(forceOpen, opts){
+    _nsDeferOpen=null;   // a later click wins over an open still waiting for its first build
     var wasOpen=_nsOpen;
     _nsOpen = (typeof forceOpen === 'boolean') ? !!forceOpen : !_nsOpen;
     if(_nsOpen === wasOpen) return;
@@ -83,6 +85,19 @@
         void overlay.offsetWidth;
       }
       overlay.classList.remove('ns-closing');
+      // Opened before its idle build (soon after a load): build it now, before it grows. Built during the
+      // growth, it froze the animation twice and seemed to open twice (the user); after that it is ready.
+      var content=document.getElementById('nsPanelContent');
+      if(content && !content.querySelector('.ns-panel-head') && window.__ns && typeof window.__ns._update==='function'){
+        window.__nsOverlayOpen = true;   // update() builds at once only for an open panel
+        try { window.__ns._update(); } catch(_e) {}
+        window.__nsOverlayOpen = false;
+        // and it opens once the new content has been laid out and painted unseen (its first frame froze the growth)
+        _nsOpen = wasOpen;
+        var go = _nsDeferOpen = {};
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ if(_nsDeferOpen===go) toggleNsOverlay(true, opts); }); });
+        return;
+      }
     }
     overlay.classList.toggle('open',_nsOpen);
     if(_nsOpen) catOut(true);
@@ -163,6 +178,8 @@
         _nsParkTimer=setTimeout(function(){ if(!_nsOpen) overlay.classList.add('ns-parked'); }, 5000);
       }
       try { if(window.__ns && typeof window.__ns.warmImages==='function') window.__ns.warmImages(); } catch(_e) {}
+      // not built yet: its idle build is asked for now (still lazy: only once the button is reached for)
+      try { if(window.__ns && typeof window.__ns._update==='function' && !document.querySelector('#nsPanelContent .ns-panel-head')) window.__ns._update(); } catch(_e) {}
       return;
     }
     if(e.data && e.data.type==='toggleNs') {

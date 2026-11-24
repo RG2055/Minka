@@ -552,6 +552,21 @@
       if(img.__tintKey===key){ img.removeAttribute('srcset'); img.src=url; }
     }).catch(function(){ if(img.__tintKey===key) img.__tintKey=null; });
   };
+  /* A bed's picture is a blob URL from the tint cache, which releases its oldest URLs. The cats' duvet game
+     keeps the bed's URL while the duvet is off and puts it back afterwards; in a long-open app it may have
+     been released by then, and the bed showed a broken image (the user). Such a bed is drawn again. */
+  document.addEventListener('error',function(e){
+    var img=e.target;
+    if(!img||img.tagName!=='IMG'||!img.closest||!img.closest('.ns-room-bed-picture')) return;
+    var look=img.__look, bed=img.closest('.ns-room-bed');
+    if(!look||String(img.src).indexOf('blob:')!==0||(bed&&bed.classList.contains('ns-duvet-off'))) return;
+    if((img.__heals=(img.__heals||0)+1)>3) return;
+    var who=look.who||{}, dead=img.src, dress='full|'+who.fig+'|'+who.pants+'|'+who.accent+'|'+who.url;
+    var tk=look.rgb+'|'+BED_BARE+(look.overlay?'|'+look.overlay:'')+'|'+dress, was=_bedTints.get(tk);   // tintedBed's own key
+    (was||Promise.resolve()).catch(function(){}).then(function(u){ if(u===dead&&_bedTints.get(tk)===was) _bedTints.delete(tk); })
+      .then(function(){ return tintedBed(look.rgb,BED_BARE,0,look.overlay,dress); })
+      .then(function(u){ if(img.isConnected) img.src=u; }).catch(function(){});
+  },true);
   /* The bed by the chalkboard wears a different set every day (the same one all day). */
   function dressCareBed(root){
     var img=(root||document).querySelector('#nsPanel .ns-bedcare-bed .ns-room-bed-picture img'); if(!img) return;
@@ -3212,6 +3227,9 @@
   }
 
   // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // the switch between energy and fatigue (js/page/mk-outline.js): an open night panel draws its cards again
+    window.__nsRerender=function(){ if(document.getElementById('nsPanelContent')) try{ render(false); }catch(_e){} };   // (the latest panel's own render)
+    if(!window.__nsEnergyHook){ window.__nsEnergyHook=1; window.addEventListener('mk-energy-view', function(){ if(window.__nsRerender) window.__nsRerender(); }); }
     function render(reorder){
     // Target the nsPanel inside overlay, not the old bottom panel
     var panel = document.getElementById('nsPanelContent');
@@ -3469,7 +3487,12 @@
           return '<div class="nsc-full-desc"><span class="nsc-desc'+(state?' '+state.cls:'')+'" data-desc="'+escHtml(desc)+'">'+(state?escHtml(state.text):desc)+'</span></div>';
         })()
         +'<div class="nsc-full-meta">'
-        +'<span class="nsc-full-fat '+tr.cls+'" style="--nsc-fat-color:'+fatCol+';--nsc-fat-pct:'+fatPct+'%"><span class="nsc-fat-label">Nogurums</span><span class="nsc-fat-value" style="color:'+fatCol+' !important">'+fatPct+'% '+tr.icon+'</span></span>'
+        +(function(){
+          // energy that is left (100 less the fatigue) or the fatigue as before: the switch on the mood card's team
+          // number (js/page/mk-outline.js); the level's colour stays the fatigue's, the trend's arrow turns round
+          var en=!window.MkOutline||!window.MkOutline.energyView||window.MkOutline.energyView(), num=en?100-fatPct:fatPct, ic=en?({'↗':'↘','↘':'↗'}[tr.icon]||tr.icon):tr.icon;
+          return '<span class="nsc-full-fat '+tr.cls+'" style="--nsc-fat-color:'+fatCol+';--nsc-fat-pct:'+num+'%"><span class="nsc-fat-label">'+(en?'Enerģija':'Nogurums')+'</span><span class="nsc-fat-value" style="color:'+fatCol+' !important">'+num+'% '+ic+'</span></span>';
+        })()
         +'<span class="nsc-dur-cluster"><span class="nsc-full-dur">'+dur+'</span></span>'
         +nscEmojiCell(s.w.name, em)
         +'</div>'
@@ -3568,7 +3591,8 @@
       +'<div class="ns-mode-group">'
       +'<span class="ns-mode-glabel">Kārtot</span>'
       +'<div class="ns-mode-btns">'
-      +'<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?'':' is-on')+'" onclick="__ns.byFat()" title="Kārto pēc noguruma — nogurušākais pirmajā daļā">Nogurums</button>'
+      +(function(){ var en=!window.MkOutline||!window.MkOutline.energyView||window.MkOutline.energyView();   // the same order either way: the most tired first
+        return '<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?'':' is-on')+'" onclick="__ns.byFat()" title="'+(en?'Kārto pēc enerģijas: mazākā enerģija pirmajā daļā':'Kārto pēc noguruma: nogurušākais pirmajā daļā')+'">'+(en?'Enerģija':'Nogurums')+'</button>'; })()
       +'<button type="button" class="ns-mode-btn'+(_nsSortMode==='freq'?' is-on':'')+'" onclick="__ns.byFreq()" title="Kārto pēc statistikas — katrs savā biežākajā daļā">Biežums</button>'
       +'<button type="button" class="ns-raffle-trigger" data-ns-raffle-action="open" title="Atvērt nakts daļu izlozi" aria-label="Atvērt nakts izlozi">'
       +'<svg class="ns-raffle-cat" viewBox="0 0 32 32" aria-hidden="true" focusable="false">'
