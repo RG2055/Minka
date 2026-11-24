@@ -10,18 +10,48 @@
    phrase at a time (the user: "why do they all dance the same"), the third mirrored. The clock runs on the radio's own sound when it can be heard (its Web
    Audio graph in radio.js: the bass's onsets give the tempo and nudge the phase, the energy picks the phrase); for RG
    Music (another site's player: its sound cannot be read) and on a weak computer, on a steady 116 a minute.
-   Cost: nothing while hidden; while shown, a background position moved about 12 times a second and,
-   with the radio, a 256-point spectrum read 20 times a second. RG only (not /rad). */
+   Cost: nothing while hidden; while shown, one small frame drawn into each dancer's own small canvas about 12 times
+   a second and, with the radio, a 256-point spectrum read 20 times a second. The sheets are held decoded once, as
+   bitmaps, in the size the screen can show (-1x or -2x, scripts/build-dance.sh), and given back 20 s after the
+   music stops. (Before 2026-11-24 each dancer was a box with its whole sheet as a moving background: Chrome held
+   the four full sheets several times over, +350 MB in the tab and +500 MB in the GPU process, for minutes after.)
+   RG only (not /rad). */
 (function () {
   if (window.MINKA_APP === 'rad') return;
-  var V = '20261123dn18', KINDS = ['pufs', 'koro', 'antenas'], MIRROR = [false, false, true];   // three (the user); koro in the middle
-  var SHEET = { w: 0, h: 0, cols: 16, rows: 24, steps: 12 };   // w / h from the sheet's own size
+  var V = '20261124dn19', KINDS = ['pufs', 'koro', 'antenas'], MIRROR = [false, false, true];   // three (the user); koro in the middle
+  var SHEET = { cols: 16, rows: 24, steps: 12 };
+  var FRAME = [186, 160];   // written by scripts/build-dance.sh: one frame as rendered (EBOX and TEETH are in these pixels)
   var EBOX = [16, 11, 152, 145], TEETH = [66, 106, 50, 14];               // written by scripts/build-dance.sh: x, y, w, h in the frame's pixels
   var ART = new URL('kalendars/assets/butnes/', location.href).href;   // whole addresses: the dancers live in the calendar's page
-  var ESHEET = ART + 'dance-koro-e.webp';
   var LOW = document.documentElement.classList.contains('mk-low-spec');
   var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var row = null, cells = [], ebox = null, eready = false, frame = 0, raf = 0, last = 0, sync = 0;
+  var SIZE = !LOW && (window.devicePixelRatio || 1) >= 1.5 ? '2x' : '1x';   // which sheets: a dense screen shows more of them
+  var row = null, cells = [], ebox = null, frame = 0, raf = 0, last = 0, sync = 0;
+  // the sheets, decoded once: the three dancers' and koro's close-up. Loaded when they are first to dance, closed
+  // (their memory given back at once) 20 s after they stop
+  var art = null, loading = false, freeT = 0;
+  function load() {
+    clearTimeout(freeT);
+    if (art || loading || !window.createImageBitmap || !window.fetch) return;
+    loading = true;
+    Promise.all(KINDS.concat('koro-e').map(function (name) {
+      return fetch(ART + 'dance-' + name + '-' + SIZE + '.webp?v=' + V).then(function (r) { if (!r.ok) throw 0; return r.blob(); }).then(function (b) { return createImageBitmap(b); });
+    })).then(function (list) { art = list; loading = false; refresh(); }, function () { loading = false; });
+  }
+  function free() {
+    if (art) art.forEach(function (b) { try { b.close(); } catch (_e) {} });
+    art = null;
+    cells.forEach(function (c) { c._n = -1; });
+    if (ebox) ebox._n = -1;
+  }
+  function draw(cv, sheet, n, rows) {   // frame n of a sheet into a canvas
+    // (willReadFrequently: the canvas is drawn by the processor, so the sheets are never copied to the graphics
+    // card whole; a frame this small costs nothing to draw there)
+    var ctx = cv._ctx || (cv._ctx = cv.getContext('2d', { willReadFrequently: true })), fw = sheet.width / SHEET.cols, fh = sheet.height / rows;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(sheet, (n % SHEET.cols) * fw, Math.floor(n / SHEET.cols) * fh, fw, fh, 0, 0, cv.width, cv.height);
+  }
   var minis = function () { return [document.getElementById('rgMini'), document.getElementById('radioMini')].filter(Boolean); };
 
   // ---- the beat clock ----
@@ -109,34 +139,28 @@
 
   // ---- the picture ----
   function paint(inPhrase) {
-    if (!SHEET.w || !row) return;
+    if (!art || !row) return;
     if (!bowl.isConnected) { soon(); return; }   // the calendar redrew the mood card: back into the new bubble
     var per = 8 * SHEET.steps;
     for (var i = 0; i < cells.length; i++) {
-      var grin = close && i === 1 && eready, c = cells[i], h = c._h || 1, s = h / SHEET.h;   // (no close-up until its sheet is decoded: koro would blink out)
-      if (c._e !== grin || c._s !== s) {   // koro's close-up comes from its own sheet, in a box of its own (it may reach past the frame)
+      var grin = close && i === 1, c = cells[i], h = c._h || 1;
+      if (c._e !== grin) {   // koro's close-up comes from its own sheet, in a canvas of its own (it may reach past the frame)
         var into = grin && !c._e, back = !grin && c._e;
         if (into) c._eAt = performance.now();
-        c._e = grin; c._s = s;
-        c.style.backgroundImage = 'url("' + ART + 'dance-' + KINDS[i] + '.webp?v=' + V + '")';
-        c.style.backgroundSize = (SHEET.cols * SHEET.w * s).toFixed(1) + 'px ' + (SHEET.rows * SHEET.h * s).toFixed(1) + 'px';
+        c._e = grin;
         if (i === 1) {
-          ebox.style.left = (EBOX[0] * s).toFixed(1) + 'px'; ebox.style.top = (EBOX[1] * s).toFixed(1) + 'px';
-          ebox.style.width = (EBOX[2] * s).toFixed(1) + 'px'; ebox.style.height = (EBOX[3] * s).toFixed(1) + 'px';
-          ebox.style.backgroundSize = (SHEET.cols * EBOX[2] * s).toFixed(1) + 'px ' + (6 * EBOX[3] * s).toFixed(1) + 'px';
           // in and out with a short fade over the dancing koro (the close-up's denser fur and finer picture
           // blinked at the switch, the user): it stands in the same pose then, so the fade hides the change
           if (into) { ebox.style.display = 'block'; requestAnimationFrame(function () { ebox.style.opacity = '1'; }); }
-          if (back) { ebox.style.opacity = '0'; setTimeout(function () { if (!cells[1]._e) ebox.style.display = 'none'; }, 300); }
+          if (back) { c._cv.style.visibility = ''; c._n = -1; ebox.style.opacity = '0'; setTimeout(function () { if (!cells[1]._e) ebox.style.display = 'none'; }, 300); }
         }
       }
       var n = grin ? frame : ((phrase + OFF[i]) % 4) * per + frame;   // each its own phrase, one beat
-      var x = n % SHEET.cols, y = Math.floor(n / SHEET.cols);
       if (grin) {
-        ebox.style.backgroundPosition = (-x * EBOX[2] * s).toFixed(1) + 'px ' + (-y * EBOX[3] * s).toFixed(1) + 'px';
+        if (ebox._n !== n) { ebox._n = n; draw(ebox, art[3], n, 6); }
         // the dancing koro stays under the close-up's first frames (they are its pose) until those are surely drawn
-        if (c.style.backgroundImage !== 'none' && performance.now() - c._eAt > 250) c.style.backgroundImage = 'none';
-      } else c.style.backgroundPosition = (-x * SHEET.w * s).toFixed(1) + 'px ' + (-y * SHEET.h * s).toFixed(1) + 'px';
+        if (c._cv.style.visibility !== 'hidden' && performance.now() - c._eAt > 250) c._cv.style.visibility = 'hidden';
+      } else if (c._n !== n) { c._n = n; draw(c._cv, art[i], n, SHEET.rows); }
       // koro's close-up: it hops up to the camera, a hop a beat, two beats (the frames: a nearing camera, a wider
       // lens, a lean in; the page: a step bigger with each hop, in the air), stays for four, hops back over two
       var t = inPhrase || 0, g = 0, up = 0;
@@ -195,7 +219,7 @@
   function glint() {
     var c = cells[1];
     if (!c || !c.animate || !TEETH[2]) return;
-    var s = (c._h || 1) / SHEET.h, z = (8 + Math.random() * 5) * s, g = c.ownerDocument.createElement('b');
+    var s = (c._h || 1) / FRAME[1], z = (8 + Math.random() * 5) * s, g = c.ownerDocument.createElement('b');
     g.style.cssText = 'position:absolute;pointer-events:none;background:#fff;clip-path:' + STAR + ';width:' + z.toFixed(1) + 'px;height:' + z.toFixed(1) + 'px;'
       + 'left:' + ((TEETH[0] + Math.random() * TEETH[2]) * s - z / 2).toFixed(1) + 'px;top:' + ((TEETH[1] + Math.random() * TEETH[3] * 0.8) * s - z / 2).toFixed(1) + 'px';
     c.appendChild(g);
@@ -223,22 +247,20 @@
     row.style.cssText = 'position:absolute;inset:0;pointer-events:none';
     bowl.appendChild(row);
     KINDS.forEach(function (k, i) {
-      var c = document.createElement('i');
-      c.style.cssText = 'display:block;position:absolute;transform-origin:50% 100%;cursor:pointer;background-repeat:no-repeat';
+      var c = document.createElement('i'), cv = document.createElement('canvas');
+      c.style.cssText = 'display:block;position:absolute;transform-origin:50% 100%;cursor:pointer';
+      cv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none';
+      c.appendChild(cv);
+      c._cv = cv; c._n = -1;
       c.addEventListener('pointerdown', function (e) { e.stopPropagation(); press(i); });
       c.addEventListener('click', function (e) { e.stopPropagation(); });   // the mood card's own taps are not for them
       row.appendChild(c);
       cells.push(c);
     });
-    ebox = document.createElement('i');   // koro's close-up frames (their own sheet), over its cell
-    ebox.style.cssText = 'position:absolute;display:none;opacity:0;transition:opacity .25s ease;pointer-events:none;background-repeat:no-repeat;background-image:url("' + ESHEET + '?v=' + V + '")';
+    ebox = document.createElement('canvas');   // koro's close-up frames (their own sheet), over its cell
+    ebox.style.cssText = 'position:absolute;display:none;opacity:0;transition:opacity .25s ease;pointer-events:none';
+    ebox._n = -1;
     cells[1].appendChild(ebox);
-    var pre = new Image();   // loaded and decoded now (a hidden box's picture is not): koro does not blink out at its first close-up
-    pre.src = ESHEET + '?v=' + V;
-    (pre.decode ? pre.decode() : Promise.resolve()).then(function () { eready = true; }, function () {});
-    var probe = new Image();
-    probe.onload = function () { SHEET.w = probe.naturalWidth / SHEET.cols; SHEET.h = probe.naturalHeight / SHEET.rows; refresh(); };
-    probe.src = ART + 'dance-' + KINDS[0] + '.webp?v=' + V;
   }
   function calDoc() {
     var cal = document.getElementById('calIframe');
@@ -264,26 +286,37 @@
   // floor, close together; the outer two partly behind the rim, as in a fishbowl
   function place() {
     var lens = bubble();
-    if (!lens || !SHEET.w) return false;
+    if (!lens) return false;
     hook(lens.ownerDocument);
     var wrap = lens.parentNode;
     if (bowl.parentNode !== wrap) {
       if (wrapNow && wrapNow !== wrap) wrapNow.classList.remove('mk-dancing');
       wrap.insertBefore(lens.ownerDocument.adoptNode(bowl), lens);
       wrapNow = wrap;
-      cells.forEach(function (c) { c._s = 0; });   // sizes again
+      cells.forEach(function (c) { c._n = -1; });   // drawn again
     }
     // koro in the middle and in front; the other two a little smaller, a quarter of the bowl out to either
     // side and a little higher (further back), well inside the glass (the user: they were half behind the rim)
-    var D = Math.round(lens.offsetWidth * 0.8), ar = SHEET.w / SHEET.h;   // the glass's clear inside, inside its rim
+    var D = Math.round(lens.offsetWidth * 0.8), ar = FRAME[0] / FRAME[1], dpr = Math.min(2, window.devicePixelRatio || 1);   // the glass's clear inside, inside its rim
     bowl.style.width = bowl.style.height = D + 'px';
-    cells.forEach(function (c, i) {   // the sheet's size: paint() (it knows which sheet)
+    var fit = function (cv, w, h) {   // a canvas with as many pixels as the screen shows of it
+      var bw = Math.max(1, Math.round(w * dpr)), bh = Math.max(1, Math.round(h * dpr));
+      if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; return true; }
+    };
+    cells.forEach(function (c, i) {
       var front = i === 1, h = D * (front ? 0.54 : 0.45), w = h * ar, cx = D / 2 + (i - 1) * D * 0.25;
       c._h = h;
       c.style.width = w.toFixed(1) + 'px';
       c.style.height = h.toFixed(1) + 'px';
       c.style.left = (cx - w / 2).toFixed(1) + 'px';
       c.style.bottom = (D * (front ? 0.11 : 0.16)).toFixed(1) + 'px';
+      if (fit(c._cv, w, h)) c._n = -1;
+      if (front) {   // koro's close-up: its own box in the frame, with pixels for the 1.6 times it grows to
+        var s = h / FRAME[1];
+        ebox.style.left = (EBOX[0] * s).toFixed(1) + 'px'; ebox.style.top = (EBOX[1] * s).toFixed(1) + 'px';
+        ebox.style.width = (EBOX[2] * s).toFixed(1) + 'px'; ebox.style.height = (EBOX[3] * s).toFixed(1) + 'px';
+        if (fit(ebox, EBOX[2] * s * 1.6, EBOX[3] * s * 1.6)) ebox._n = -1;
+      }
     });
     return true;
   }
@@ -305,7 +338,9 @@
     var on = !!lens && !REDUCE;   // (reduced motion: the mood stays as it is)
     if (on && !row) make();
     if (!row) return;
-    on = on && place();
+    if (on) load();                                         // (the face stays until the sheets are in)
+    on = on && !!art && place();
+    if (!on && art) { clearTimeout(freeT); freeT = setTimeout(free, 20000); }
     listen(on);
     if (on && !raf) { last = 0; raf = requestAnimationFrame(tick); }
     if (!on && raf) { cancelAnimationFrame(raf); raf = 0; }
