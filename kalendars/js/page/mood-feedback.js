@@ -6,6 +6,7 @@
   var MX = document.documentElement.classList.contains('mk-mx');
   // Noskaņa B (kalendars/index.html): the same card simpler and lighter, see mbEnhance, mbColumns, mk-mood-b.css.
   var MB = MX && document.documentElement.classList.contains('mk-mb');
+  var M3 = MB && document.documentElement.classList.contains('mk-m3');   // B as Material 3 Expressive (css/page/mk-mood-m3.css)
   // /rad keeps its own mood and comments in the browser too (same origin).
   var mkKey = (window.__mkKey || function (k) { return k; });
   var PULSE_KEY = mkKey('minkaShiftPulseV2');
@@ -506,9 +507,10 @@
       });
     });
     // Station → days it played this month; the line shows the favourite.
-    var stations = {}, seenDay = {};
+    var stations = {}, seenDay = {}, radioDay = {};
     var addStation = function (day, name) {
       if (!inMonth(day) || !name) return;
+      radioDay[day] = true;                                  // (M3: on how many days of the month the radio played at all)
       var k = M.norm(name), dk = day + '|' + k;
       if (seenDay[dk]) return;
       seenDay[dk] = true;
@@ -525,7 +527,7 @@
       });
     } catch (_e) {}
     var top = Object.keys(stations).map(function (k) { return stations[k]; }).sort(function (a, b) { return b.days - a.days; })[0] || null;
-    return { range: range, today: today, cups: cups, drinkers: Object.keys(people).length, stations: Object.keys(stations).length, top: top, bolus: bolus, ge: ge, philips: bolus - ge };
+    return { range: range, today: today, cups: cups, drinkers: Object.keys(people).length, stations: Object.keys(stations).length, radioDays: Object.keys(radioDay).length, top: top, bolus: bolus, ge: ge, philips: bolus - ge };
   }
   var monthFillAt = 0, monthMemo = null;
   // Called on every mood repaint (day switches too): the stores are parsed at
@@ -555,10 +557,31 @@
     var cupB = (row.closest('.rg-feedback-card') || row).querySelector('[data-rg-month-tab="coffee"] b');
     if (cupB) cupB.dataset.unit = n.cups % 10 === 1 && n.cups % 100 !== 11 ? 'kafija' : 'kafijas';
     set('coffee', n.cups, 'kafijas šomēnes', '', 'Šomēnes izdzertas ' + n.cups + ' kafijas. Atvērt statistiku');
-    set('radio', n.top ? n.top.name : '', n.top ? 'biežākā stacija' : 'radio šomēnes', '', n.top ? 'Šomēnes biežāk skanēja ' + n.top.name + ' (' + n.top.days + ' dienas), kopā ' + n.stations + ' stacijas. Atvērt statistiku' : 'Radio šomēnes nav skanējis');
+    set('radio', M3 ? n.radioDays : n.top ? n.top.name : '', n.top ? 'biežākā stacija' : 'radio šomēnes', '', n.top ? 'Šomēnes biežāk skanēja ' + n.top.name + ' (' + n.top.days + ' dienas), kopā ' + n.stations + ' stacijas. Atvērt statistiku' : 'Radio šomēnes nav skanējis');
     // Bolus: GE against Philips as one split bar under the number.
     var share = n.bolus ? (n.ge / n.bolus).toFixed(3) : '0.5';
     set('bolus', n.bolus, 'bolusa maiņas', n.bolus ? '<i class="rg-month-split" style="--ge:' + share + '" aria-hidden="true"></i>' + (MB ? '<em><i>GE</i>' + n.ge + '</em><em><i>Ph</i>' + n.philips + '</em>' : '<em>GE ' + n.ge + '</em><em>Ph ' + n.philips + '</em>') : '', 'Šomēnes ' + n.bolus + ' bolusa maiņas: GE ' + n.ge + ', Philips ' + n.philips + '. Atvērt statistiku');
+    if (M3) {
+      // M3: the month's coffee and radio are two small upright bars that fill from the bottom, each with its
+      // number (the user: both at once, as the phone's brightness and volume bars). Coffee fills towards the next
+      // hundred cups; the radio by the share of the month's days so far on which it played.
+      var monthCard = row.closest('.rg-feedback-card') || row, dayNo = Number(String(n.today || '').slice(8, 10)) || 30;
+      var fill = function (k, part) {
+        var b = monthCard.querySelector('[data-rg-month-tab="' + k + '"]'), pct = Math.round(Math.max(0, Math.min(1, part)) * 100);
+        if (!b) return;
+        b.style.setProperty('--m3-fill', pct + '%');
+      };
+      fill('coffee', n.cups / Math.max(100, Math.ceil(n.cups / 100) * 100));
+      fill('radio', n.radioDays / dayNo);
+      // the bolus bar is one bar of two full parts, GE below in blue and Philips above in green, by their share
+      // (neither thinner than its number). The user tried it as a filling bar like the other two and took this
+      // one back. And each bar says what it is under the pointer
+      var tip = function (k, text) { var b = monthCard.querySelector('[data-rg-month-tab="' + k + '"]'); if (b && b.dataset.m3Tip !== text) b.dataset.m3Tip = text; return b; };
+      tip('coffee', 'Kafijas šomēnes: ' + n.cups);
+      tip('radio', 'Radio šomēnes: ' + n.radioDays + (n.radioDays % 10 === 1 && n.radioDays % 100 !== 11 ? ' diena' : ' dienas') + (n.top ? ', biežāk ' + n.top.name : ''));
+      var bb = tip('bolus', 'Bolus šomēnes: GE ' + n.ge + ', Philips ' + n.philips);
+      if (bb) bb.style.setProperty('--m3-ge', String(n.bolus ? Math.max(.38, Math.min(.62, n.ge / n.bolus)) : .5));
+    }
     monthRadioFetch(n.range);
     // Past days rarely change, but corrections from another device should
     // still arrive: one month request per page load, then every 15 minutes.
@@ -889,8 +912,8 @@
      3D surface of characters (mood-trend.js). Fully determined by the head
      count: no retries, no measuring loop. The ring's size is handed to CSS
      and to the drawing (card.__mx). */
-  var MX_FACE_Y = 132;                   // face centre in the stage
-  var MX_BELOW = 209;                    // stage under the face centre: ring front, curve, marks (the month strip now sits under the faces, the mood's name in the heading)
+  var MX_FACE_Y = M3 ? 146 : 132;        // face centre in the stage (M3: the glass is a quarter bigger, so it stands lower)
+  var MX_BELOW = M3 ? 193 : 209;                    // stage under the face centre: ring front, curve, marks (the month strip now sits under the faces, the mood's name in the heading)
   // Their coffee: up to three moons on the upper right of the bubble, each
   // the calendar's own icon for that drink, with a count above one.
   function mxMoons(person, sources, size, side) {
@@ -989,10 +1012,50 @@
      bubble, radiographers left and radiologists right; a column starts under the big number and the month's numbers
      (the user: nothing over anything) and ends a little under the bubble; more than four a side make two
      columns there, the inner one half a step lower. No animation, no tick. d: the bubble's size. */
+  /* M3 "Orbīta" (the user chose it of three drawn): the colleagues stand on a circle round the glass, the
+     radiographers on its left arc and the radiologists on its right, each a small disc with its own fatigue arc
+     (mk-mood-m3.css); the drinks outside them. Still, as B's columns: placed once, nothing turns. */
+  function m3Orbit(people, d) {
+    var ringOut = d * .446 + 12;                           // the glass you see (the lens picture's clear part) and the fatigue ring's outer edge
+    var isRd = function (p) { return p.classList.contains('is-rd'); };
+    [people.filter(function (p) { return !isRd(p); }), people.filter(isRd)].forEach(function (side, s) {
+      var k = side.length, size = 34, lo = k > 4 ? -34 : -30, hi = k > 4 ? 58 : 50, R, pitch;   // degrees from the level line, down positive: under the number and the month, over the curve (five and more take a little more of the arc)
+      if (!k) return;
+      for (;;) {                                           // many on a side: smaller discs, never one over another
+        R = ringOut + 11 + size / 2;                       // 5.5 px between a disc's own arc and the big one
+        pitch = (size + 15) / R * 180 / Math.PI;           // the disc, its arc on both sides (11) and 4 px between neighbours
+        if (k < 2 || pitch * (k - 1) <= hi - lo || size <= 20) break;
+        size -= 2;
+      }
+      if (k > 1) pitch = Math.min(pitch, (hi - lo) / (k - 1));
+      var span = pitch * (k - 1), a0 = Math.max(lo, Math.min(hi - span, 4 - span / 2));
+      side.forEach(function (person, r) {
+        var a = (a0 + r * pitch) * Math.PI / 180;
+        person.style.setProperty('--rg-person-size', size + 'px');
+        person.style.transform = 'translate(-50%,-50%) translate(' + (R * Math.cos(a) * (s ? 1 : -1)).toFixed(1) + 'px,' + (R * Math.sin(a)).toFixed(1) + 'px)';
+        person.style.opacity = '';
+        mxMoons(person, person.__mxCoffee, size, s);
+        // that person's drinks stand round their own disc, right outside its arc on the side away from the glass:
+        // each kind's icon the same short step from the disc (a fan), so none hangs loose between two people
+        // (the user: a column out on the ray read as nobody's). The count, when more than one, beyond its icon.
+        var cups = person.querySelector('.mb-cups'), n = cups ? cups.children.length : 0;
+        if (n) {
+          var kk = size < 28 ? 10 : 12, far = size / 2 + 5.5 + 3 + kk / 2, out = Math.atan2(Math.sin(a), Math.cos(a) * (s ? 1 : -1)), step = (kk + 2) / far;
+          cups.style.setProperty('--k', kk + 'px');
+          [].forEach.call(cups.children, function (item, q) {
+            var t = out + (q - (n - 1) / 2) * step * (s ? 1 : -1);   // the first kind uppermost on both sides
+            item.style.left = (far * Math.cos(t)).toFixed(1) + 'px';
+            item.style.top = (far * Math.sin(t)).toFixed(1) + 'px';
+          });
+        }
+      });
+    });
+  }
   function mbColumns(people, W, big, d) {
     orbit.anims.forEach(function (anim) { anim.cancel(); });
     orbit.anims = [];
     orbitListen();
+    if (M3) { m3Orbit(people, d); return; }
     // the room for a column, as edges from the face's centre: under the big number and the month (84 px from the
     // stage's top) down to just above the curve's numbers; a column that would not fit gets smaller glass, never
     // glass over glass (the user: four a side overlapped)
@@ -1002,7 +1065,7 @@
     var card = people[0] && people[0].closest('.rg-feedback-card');
     var chip = !!(card && card.querySelector('.rg-mood-side--right.is-mounted'));   // the shift's coffee chip, top right
     [people.filter(function (p) { return !isRd(p); }), people.filter(isRd)].forEach(function (side, s) {
-      var top = chip ? 106 - MX_FACE_Y : topE;   // both columns from one height: under the shift's coffee line when it shows
+      var top = M3 ? 92 - MX_FACE_Y : chip ? 106 - MX_FACE_Y : topE;   // both columns from one height: under the shift's coffee line when it shows (M3: under the chips, always)
       var k = side.length, rows = k, size = big;
       if (rows > 1) size = Math.min(big, (botE - top - (rows - 1) * 6) / rows);
       var gap = rows > 1 ? Math.min(size + 16, (botE - top - size) / (rows - 1)) : 0, mid = (top + botE) / 2;
@@ -1190,6 +1253,26 @@
     // the same baseline as the line box: half the leading above the ascent
     var asc = Math.round(m.fontBoundingBoxAscent || size * .8), desc = Math.round(m.fontBoundingBoxDescent || size * .2);
     var x = pad + Math.ceil(w) / 2, y = pad + (h - asc - desc) / 2 + asc;
+    if (g.ink) {
+      // an emoji: by the picture actually drawn, not by the font's line box. A wide low picture (the game pad)
+      // sits low in its letter box and stood 2.7 px under the disc's middle (measured; the user saw it). The
+      // font's own ink numbers are no better for colour glyphs (they moved the tall ones up by 1 to 1.6 px), so
+      // the picture is drawn once on a spare canvas and its real edges are read. Once per emoji and size: the
+      // result is kept (mxGlyphCache). Initials stay on their baseline, so two letters never stand at two heights.
+      var probe = document.createElement('canvas'), pc = probe.getContext('2d', { willReadFrequently: true });
+      probe.width = cv.width; probe.height = cv.height;
+      if (pc) {
+        pc.scale(dpr, dpr); pc.font = g.font; pc.textAlign = 'center'; pc.textBaseline = 'alphabetic';
+        pc.fillText(g.text, x, y);
+        var px = pc.getImageData(0, 0, probe.width, probe.height).data, W0 = probe.width, x0 = W0, x1 = -1, y0 = probe.height, y1 = -1;
+        for (var q = 3, n = px.length; q < n; q += 4) if (px[q] > 40) { var k = (q - 3) / 4, cx = k % W0, cy = (k - cx) / W0; if (cx < x0) x0 = cx; if (cx > x1) x1 = cx; if (cy < y0) y0 = cy; if (cy > y1) y1 = cy; }
+        if (x1 >= x0 && y1 >= y0) {
+          var lim = pad - 1;                                 // (the canvas has that much room on every side)
+          x += Math.max(-lim, Math.min(lim, (W0 - (x0 + x1 + 1)) / 2 / dpr));
+          y += Math.max(-lim, Math.min(lim, (probe.height - (y0 + y1 + 1)) / 2 / dpr));
+        }
+      }
+    }
     ctx.fillStyle = g.color;
     // the shadows alone (the text of those passes lands out of sight), last one lowest, like CSS
     var away = cw + 40;
@@ -1219,9 +1302,10 @@
       var font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + size + 'px ' + cs.fontFamily;
       var g = {
         text: text, font: font, size: size, dpr: dpr, spacing: cs.letterSpacing,
-        lineH: parseFloat(cs.lineHeight) || size, color: cs.webkitTextFillColor || cs.color, shadow: cs.textShadow
+        lineH: parseFloat(cs.lineHeight) || size, color: cs.webkitTextFillColor || cs.color, shadow: cs.textShadow,
+        ink: !person.classList.contains('is-initials')      // an emoji is centred by its picture (mxGlyphDraw)
       };
-      g.key = [text, font, g.spacing, g.lineH, g.color, g.shadow, dpr].join('|');
+      g.key = [text, font, g.spacing, g.lineH, g.color, g.shadow, dpr, g.ink].join('|');
       if (span.__mxKey === g.key) return;
       if (document.fonts && document.fonts.check && !document.fonts.check(font, text)) {
         document.fonts.load(font, text).then(function () { if (person.isConnected) mxGlyphs([person]); }, function () {});
@@ -2657,7 +2741,7 @@
   var MB_SUN = 'assets/emoji3d/n6v-320.webp?v=20261010no5', MB_MOON = 'assets/emoji3d/n3q-320.webp?v=20261010no5';
   function mbEnhance(card) {
     var wrap = card.querySelector('.rg-mood-blob-wrap');
-    if (!card.querySelector('.mb-scene')) {
+    if (!M3 && !card.querySelector('.mb-scene')) {   // (M3: flat tonal surfaces, no sky picture)
       var scene = document.createElement('div');
       scene.className = 'mb-scene';
       scene.setAttribute('aria-hidden', 'true');
@@ -2668,6 +2752,31 @@
       wrap.insertAdjacentHTML('afterbegin', '<svg class="mb-ring" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47"/><circle class="mb-ring-on" cx="50" cy="50" r="47" pathLength="100"/></svg>');
     }
     mbDayNight();
+    m3Web(card);
+  }
+  /* Material Web (material-components/material-web; vendor/material-web/md-web-mood.js: its ripple and focus ring,
+     29 KB, built by scripts/build-md-web.sh) on what is pressed in the M3 card: the ratings, the chat, the month's
+     tiles, the shift's coffee. Loaded once, when the browser is idle after the page (never at startup, and only
+     with the M3 look); until then, and without it, everything works as it did. */
+  function m3Web(card) {
+    if (!M3) return;
+    if (!window.__mdWebMood) {
+      window.__mdWebMood = 1;
+      var load = function () {
+        var el = document.createElement('script');
+        el.src = '../vendor/material-web/md-web-mood.js?v=250a';
+        el.onload = function () { m3Web(list.querySelector('.rg-feedback-card')); };
+        document.head.appendChild(el);
+      };
+      if (window.requestIdleCallback) requestIdleCallback(load, { timeout: 5000 }); else setTimeout(load, 2500);
+      return;
+    }
+    if (!card || !window.customElements || !customElements.get('md-ripple')) return;
+    [].forEach.call(card.querySelectorAll('.rg-pulse-tap, .rg-pulse-write--comment, .mx-month-top .rg-month-item, [data-rg-coffee-open]'), function (el) {
+      if (el.querySelector(':scope > md-ripple')) return;
+      el.appendChild(document.createElement('md-ripple'));        // both attach to their parent by themselves
+      el.appendChild(document.createElement('md-focus-ring'));
+    });
   }
   var mbDayT = 0;
   function mbDayNight() {
@@ -3193,6 +3302,11 @@
   var monthTick = 0;
   function mxMonthTicker(step) {
     clearTimeout(monthTick);
+    if (M3) {                                                // M3 shows the month's facts all at once: nothing to turn through
+      var all = list.querySelector('.rg-feedback-card .mx-month-top');
+      if (all) [].forEach.call(all.querySelectorAll('.rg-month-item'), function (b) { b.classList.toggle('is-on', !b.classList.contains('is-empty')); });   // ("is-on" is what B's and X's rules show)
+      return;
+    }
     monthTick = setTimeout(function () { mxMonthTicker(true); }, 5200);
     var top = list.querySelector('.rg-feedback-card .mx-month-top');
     if (!top) return;

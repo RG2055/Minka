@@ -220,6 +220,16 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
     var b = on && window.MINKA_APP !== 'rad' && qb !== '0';
     try { b = b && (qb === '1' || localStorage.getItem('mkMoodB') !== '0'); } catch (_s) {}
     if (b) root.classList.add('mk-mb');
+    // Noskaņa M3 (2026-11-24, the user): Noskaņa B in Material 3 Expressive (tonal containers, pills, a button
+    // group, tall digits; the glass bubble in the middle stays). A layer over B: css/page/mk-mood-m3.css.
+    // ?moodm3=0 shows B as it was (remembered), ?moodm3=1 back.
+    var qm = null;
+    try { qm = new URLSearchParams(location.search).get('moodm3'); } catch (_q) {}
+    try { qm = qm || new URLSearchParams(parent.location.search).get('moodm3'); } catch (_p) {}
+    try { if (qm === '0') localStorage.setItem('mkMoodM3', '0'); else if (qm === '1') localStorage.removeItem('mkMoodM3'); } catch (_w) {}
+    var m3 = b && qm !== '0';
+    try { m3 = m3 && (qm === '1' || localStorage.getItem('mkMoodM3') !== '0'); } catch (_s) {}
+    if (m3) root.classList.add('mk-m3');
   } catch (_e) {}
 })();
 </script>
@@ -951,7 +961,7 @@ function _mkToast(msg, type) {
 <script src="js/page/coffee-fx.js?v=20261116gc7" defer></script>
 <script src="js/page/coffee-gold.js?v=20261116gc1" defer></script>
 <script src="js/depth-cards.js?v=20261022hv1" defer></script>
-<script src="js/daily-cat.js?v=20261115sw1" defer></script>
+<script src="js/daily-cat.js?v=20261124or6" defer></script>
 <script src="js/header-weather.js?v=20261110ds1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20261021wd1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
@@ -1722,8 +1732,8 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260926mg1">
 
-<script src="js/page/mood-feedback.js?v=20261124mb18"></script>
-<script src="js/page/mood-trend.js?v=20261124mb3" defer></script>
+<script src="js/page/mood-feedback.js?v=20261124or22"></script>
+<script src="js/page/mood-trend.js?v=20261124or6" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20261010cd1">
 
@@ -2042,9 +2052,11 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <link rel="stylesheet" id="mk-mood-x" href="css/page/mk-mood-x.css?v=20261022jr1">
 <!-- Noskaņa B: Noskaņa X vienkāršāk un vieglāk (html.mk-mb, sk. <head>). -->
 <link rel="stylesheet" id="mk-mood-b" href="css/page/mk-mood-b.css?v=20261124mb28">
+<!-- Noskaņa M3: Noskaņa B Material 3 Expressive veidolā (html.mk-m3, sk. <head>). -->
+<link rel="stylesheet" id="mk-mood-m3" href="css/page/mk-mood-m3.css?v=20261124or22">
 <link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261123mb2">
 <link rel="stylesheet" href="css/page/card-layout.css?v=20261124cd1">
-<script src="js/page/card-layout.js?v=20261124cd2" defer></script>
-<script src="js/page/corridor.js?v=20261124mb6" defer></script>
+<script src="js/page/card-layout.js?v=20261124or17" defer></script>
+<script src="js/page/corridor.js?v=20261124m33" defer></script>
 </body>
 </html>

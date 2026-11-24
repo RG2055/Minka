@@ -641,7 +641,7 @@
       // At home it sits beside the layout switch under the card (card-layout.js puts that in the
       // middle), on the switch's own floor by its gold "Konfektes": the switch and the cat never cover each other.
       var sw = document.querySelector('.mk-cl-bar:not([hidden]):not(.in-rail)'), S = sw && sw.getBoundingClientRect();
-      if (S && S.width && S.top >= compact.getBoundingClientRect().bottom - 4) {
+      if (S && S.width && (S.top >= compact.getBoundingClientRect().bottom - 4 || sw.classList.contains('is-docked'))) {   // (docked: the switch is the mood card's own lower row; the pet stands beside that)
         var half = 30 * petScale, cx = S.right + 8 + half;
         if (cx + half > innerWidth - 8) cx = S.left - 8 - half;
         return candidatePosition(cx - PET_SIZE / 2, S.bottom - FEET);   // scaled round its paws: they stay at FEET

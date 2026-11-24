@@ -216,6 +216,7 @@
   // Noskaņa B (kalendars/index.html): a still sky in CSS instead of this ASCII one (nothing to build or step), and
   // the curve in the fatigue's own colour (--mb-acc on the card, mood-feedback.js), without the dither under it.
   var MB = MX && document.documentElement.classList.contains('mk-mb');
+  var M3 = MB && document.documentElement.classList.contains('mk-m3');   // the M3 look: a coffee bean over the days, not a small cup
   var FACES = { excellent: ['😍', 'Lieliski'], good: ['🙂', 'Labi'], ok: ['😐', 'Normāli'], bad: ['😞', 'Slikti'], terrible: ['😠', 'Ļoti slikti'] };
   var WD = ['svētdiena', 'pirmdiena', 'otrdiena', 'trešdiena', 'ceturtdiena', 'piektdiena', 'sestdiena'];
   var MON = ['janvāris', 'februāris', 'marts', 'aprīlis', 'maijs', 'jūnijs', 'jūlijs', 'augusts', 'septembris', 'oktobris', 'novembris', 'decembris'];
@@ -281,6 +282,7 @@
     if (W < 120 || H < 200) return null;
     var faceY = mx.faceY || 132, ground = H - (mx.groundGap || 24), amp = 66;   // low enough that the coffee over the points stays clear of the ring
     if (MB) { ground += 8; amp = 46; }   // B: flatter and lower, close over the rating row (the user: less empty room there), bigger marks
+    if (M3) { ground = H - 6; amp = 44; }   // M3: a ribbon under the bigger glass, its faces just over the buttons; the day's coffees lift it further (drawScape)
     return { W: W, H: H, cx: W / 2, faceY: faceY, faceR: (mx.faceD || 124) / 2,
       ground: ground, amp: amp, left: 14, right: W - 14, chartTop: ground - 4 - amp, chartBottom: ground - 14 };
   }
@@ -673,6 +675,11 @@
     var owns = readJson(OWN_KEY);
     var levels = curveLevels(m.rows);
     var pts = m.rows.map(function (r, i) { return { row: r, x: X(i), y: Y(levels[i]), own: owns[r.day] && owns[r.day].emoji ? owns[r.day] : null }; });
+    if (M3) {   // the ribbon rises with the day's coffees (the user: higher where there was coffee, not a straight line): up to 16 px on the fortnight's biggest day
+      var cupsN = coffeeByDay(m.rows.map(function (r) { return r.day; })), most = 0;
+      Object.keys(cupsN).forEach(function (d) { if (cupsN[d] > most) most = cupsN[d]; });
+      pts.forEach(function (p) { p.lift = most ? (cupsN[p.row.day] || 0) / most * 16 : 0; p.y -= p.lift; });
+    }
     scape.pts = pts;
     var dots = pts.filter(function (p) { return p.row.mood; });
     // From the first vote on, the line passes every day: unrated ones at their
@@ -690,15 +697,16 @@
       var acc = MB && card.style.getPropertyValue('--mb-acc').trim();
       if (!acc) ditherFill(ctx, line, dpr);
       trace(ctx);
-      ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = acc ? 5 : 4.2; ctx.stroke();
+      if (!M3) { ctx.strokeStyle = 'rgba(4,7,14,.55)'; ctx.lineWidth = acc ? 5 : 4.2; ctx.stroke(); }
       if (!acc) { ctx.strokeStyle = 'rgba(125,211,252,.22)'; ctx.lineWidth = 6; ctx.stroke(); }
-      ctx.strokeStyle = acc || '#8fdcff'; ctx.lineWidth = acc ? 3 : 2; ctx.stroke();
+      ctx.strokeStyle = acc || '#8fdcff'; ctx.lineWidth = M3 ? 6 : acc ? 3 : 2; ctx.stroke();   // M3: a ribbon, no dark edge
       ctx.restore();
     }
     // The sky's characters fill down to this curve: move their border too.
     scape.line = line && line.length > 1 ? line : null;
     skyRegion();
-    pts.forEach(function (p) {
+    if (M3) m3Beads(ctx, pts, card.style.getPropertyValue('--mb-acc').trim(), m.selected);
+    else pts.forEach(function (p) {
       var sel = p.row.day === m.selected;
       if (!p.row.mood && MB && scape.line) {   // B: a day without a rating is a quiet grey dot on the line
         var gy = curveYAt(scape.line, p.x);
@@ -711,7 +719,7 @@
       ctx.strokeStyle = '#0c0d11'; ctx.lineWidth = 1.5; ctx.stroke();
       if (sel) { ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(p.x, p.y, r + 3, 0, Math.PI * 2); ctx.stroke(); }
     });
-    drawCoffee(ctx, pts, geo, scape.line);
+    if (!M3) drawCoffee(ctx, pts, geo, scape.line);
     // The days' own emoji, under their point (the characters fill the sky
     // above the curve): real text in the Fluent font (drawn by the page, so
     // the web font is always the one used).
@@ -728,7 +736,7 @@
       var emoji = p.own ? p.own.emoji : p.row.mood ? FACES[moodFor(p.row.mood.score).key][0] : '';
       if (!emoji) return;
       var below = p.row.mood ? dotR(p.row) : 2;   // right under its point
-      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + (MB ? 11.5 : 9)).toFixed(1) + 'px">' + esc(emoji) + '</i>';
+      html += '<i class="rg-scape-own" style="left:' + p.x.toFixed(1) + 'px;top:' + (p.y + below + (M3 ? 11 : MB ? 11.5 : 9)).toFixed(1) + 'px">' + esc(emoji) + '</i>';
     });
     marks.innerHTML = html;
   }
@@ -783,7 +791,33 @@
   // the bright characters too. A day without a vote sits where the curve
   // passes its date.
   // a rated day's dot: larger with more votes (B: larger altogether, read from across the room)
-  function dotR(row) { return row.mood ? (MB ? 4.6 : 3.2) + Math.min(MB ? 2.4 : 4, row.mood.total / 3) : (MB ? 3.4 : 1); }
+  function dotR(row) { return M3 ? 8.4 : row.mood ? (MB ? 4.6 : 3.2) + Math.min(MB ? 2.4 : 4, row.mood.total / 3) : (MB ? 3.4 : 1); }
+  /* M3: every day is a bead on the ribbon and the day's coffees are the number in it (no cup or bean over the
+     line, no outlined text: the user). A rated day's bead is the accent's cream with dark ink, an unrated one the
+     container tone; a day without coffee is a small bead. All tones from the fatigue's accent, as the card's. */
+  function m3Mix(a, b, t) {
+    var p = function (h) { return [1, 3, 5].map(function (i) { return parseInt(h.slice(i, i + 2), 16); }); }, A = p(a), B = p(b);
+    return 'rgb(' + A.map(function (v, i) { return Math.round(v * t + B[i] * (1 - t)); }).join(',') + ')';
+  }
+  function m3Beads(ctx, pts, acc, selected) {
+    if (!/^#[0-9a-f]{6}$/i.test(acc)) acc = '#f7a43a';
+    var cups = coffeeByDay(pts.map(function (p) { return p.row.day; }));
+    var cream = m3Mix(acc, '#fff6e6', .3), ink = m3Mix(acc, '#0c0a08', .16), tone = '#3a434d';   // an unrated day: a neutral grey (the accent mixed into dark came out brown: the user)
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = "800 10.5px 'Geist Sans', Inter, system-ui, sans-serif";
+    pts.forEach(function (p) {
+      var n = cups[p.row.day] || 0, rated = !!p.row.mood, y = rated ? p.y : scape.line ? curveYAt(scape.line, p.x) : null;
+      if (y == null) { if (!n) return; y = p.y; }             // before the first rating there is no ribbon: only a day's coffees
+      var r = n ? 8.4 : rated ? 5 : 3.2;
+      ctx.fillStyle = rated ? cream : tone;
+      ctx.beginPath(); ctx.arc(p.x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0c0d11'; ctx.lineWidth = 1.5; ctx.stroke();
+      if (n) { ctx.fillStyle = rated ? ink : '#ece6dc'; ctx.fillText(String(n), p.x, y + .6); }
+      if (p.row.day === selected && rated) { ctx.strokeStyle = 'rgba(236,230,220,.9)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(p.x, y, r + 3, 0, Math.PI * 2); ctx.stroke(); }
+    });
+    ctx.restore();
+  }
   function drawCoffee(ctx, pts, geo, line) {
     var cups = coffeeByDay(pts.map(function (p) { return p.row.day; }));
     if (!Object.keys(cups).length || typeof Path2D !== 'function') return;
@@ -808,6 +842,14 @@
       [-6, 6].forEach(function (dx) { var side = curveYAt(line, p.x + dx); if (side != null && side - 2 < y - r) { y = side - 2; r = 0; } });
       var cupTop = y - r - 3 - 16.8 * k;                     // the cup just over the point (its body ends 3 px above)
       ctx.save();
+      if (M3) {   // a bean: a leaning oval with its crease (the user: a bean now and then; the cup stays in the shift's chip)
+        ctx.translate(p.x, cupTop + 11.2 * k);
+        ctx.rotate(-0.5);
+        ctx.fillStyle = '#f5c46b';
+        ctx.beginPath(); ctx.ellipse(0, 0, 3.6, 5.2, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(40,22,4,.85)'; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(0.6, -4.1); ctx.bezierCurveTo(-2.2, -1.4, 2.2, 1.4, -0.6, 4.1); ctx.stroke();
+      } else {
       ctx.translate(p.x - 9.6 * k, cupTop);
       ctx.scale(k, k);
       ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(4,7,14,.9)';
@@ -816,6 +858,7 @@
       ctx.fill(CUP.body);
       ctx.lineWidth = 1.9;
       ctx.stroke(CUP.handle);
+      }
       ctx.restore();
       var base = cupTop + 5.6 * k - 2;                       // the number over the cup
       ctx.lineWidth = 3;
@@ -892,7 +935,7 @@
     if (!p) return null;
     var r = scape.plot.getBoundingClientRect();
     var mood = model().rows.find(function (row) { return row.day === m.selected; });
-    var y = mood && mood.mood && scape.geo ? scapeY(scape.geo, mood.mood.score) : p.y;
+    var y = mood && mood.mood && scape.geo ? scapeY(scape.geo, mood.mood.score) - (p.lift || 0) : p.y;
     return { x: r.left + p.x, y: r.top + y, local: { x: p.x, y: y } };
   }
   function scapePing(local) {

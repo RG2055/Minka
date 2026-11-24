@@ -101,7 +101,7 @@
     var grow = l && l.grow || 0;
     var moodH = g.moods[kind] * (grow || ms), moodHalf = g.moodHalf * ms;
     // on whole pixels (the user: it looked blurry): the card is its own layer, centred by -50 % of an odd height
-    var mcy = moodH > vis ? base + moodH / 2 + 4 : cy, mh = mood ? mood.offsetHeight : 0;
+    var mcy = moodH > vis ? base + moodH / 2 + 4 : cy, mh = Math.round(g.moods[kind] || 0);   // (the height as kept for this kind of day: steady while the card is being redrawn)
     list.style.setProperty('--cor-mcy', (Math.round(mcy - mh / 2) + mh / 2).toFixed(1) + 'px');
     // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
@@ -192,20 +192,11 @@
       var zin = function (wl) { return (wl.size / 2 - wl.span) * sin; };
       var at = Math.min.apply(null, walls.map(function (wl) { return (wl.room.hi * P / (P - zin(wl)) + gapIn) / 2; }));
       walls.forEach(function (wl) { wl.start = Math.max(wl.room.lo, Math.min(wl.room.hi, at * (P - zin(wl)) / P)); });
-      // ... and the three together (both walls and the mood card) in the middle of the list: the room the
-      // narrower wall leaves is shared by the two outer sides, not left empty on one (the user)
-      var spare = {};
-      walls.forEach(function (wl) { spare[wl.s] = edge - (wl.start + wl.span * cos) * P / (P - wl.size / 2 * sin); });
-      shift = Math.round((spare[1] - spare[-1]) / 2);
+      // (the three together were once centred in the list, the room a narrower wall leaves shared by both outer
+      // sides: then the mood card stood elsewhere on every day and jumped at each day switch (the user). It stays in
+      // the middle; shift is 0.)
     }
-    // the mood card on whole pixels (the user: blurry): its own layer, its left where the list's halves land. One
-    // write, and only when the value changes: this runs often, and a new value restyles every card
-    var mxNow = parseFloat(list.style.getPropertyValue('--cor-mx')) || 0, mx = shift;
-    if (mood && !noMood) {
-      var bare = mood.getBoundingClientRect().left - mxNow + shift, fx = bare - Math.round(bare);
-      if (Math.abs(fx) > 0.01) mx = shift - fx;
-    }
-    if (Math.abs(mx - mxNow) > 0.01 || !list.style.getPropertyValue('--cor-mx')) list.style.setProperty('--cor-mx', mx + 'px');
+    snapSoon();
     if (window.MkCardLayout) window.MkCardLayout.moodScaleNow = ms;   // the game's box takes this width
     // The layout editor's card size slider ends where the cards stop growing in this window.
     if (window.MkCardLayout) {
@@ -279,6 +270,24 @@
   // frame the layout is clean and measuring costs nothing. Only a size that really changed places
   // the cards again.
   var verifyT = 0;
+  /* The mood card on whole pixels (the user: it looked blurry): it is a layer of its own, and half a px off it is
+     drawn soft. Looked at right after the frame, when the layout is settled and reading it is free (a read inside
+     place() laid the whole page out in the middle of a day switch); --cor-mx takes off what is over a whole px.
+     One write, and only when it changes. */
+  var snapT = 0;
+  function snapSoon() {
+    if (snapT) return;
+    snapT = requestAnimationFrame(function () {
+      snapT = setTimeout(function () {
+        snapT = 0;
+        var mood = list.querySelector('.rg-feedback-card');
+        if (!mood || !root.classList.contains('mk-corridor')) return;
+        var now = parseFloat(list.style.getPropertyValue('--cor-mx')) || 0, bare = mood.getBoundingClientRect().left - now, fx = bare - Math.round(bare);
+        var mx = Math.abs(fx) > 0.01 ? -fx : 0;
+        if (Math.abs(mx - now) > 0.01) list.style.setProperty('--cor-mx', mx + 'px');
+      }, 0);
+    });
+  }
   function verifySoon() {
     if (verifyT) return;
     verifyT = requestAnimationFrame(function () {

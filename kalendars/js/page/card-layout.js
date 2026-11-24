@@ -311,6 +311,7 @@
   }
   bar.hidden = true;
   document.body.appendChild(bar);
+  var M3DOCK = document.documentElement.classList.contains('mk-m3');
   var placed = '', header = document.getElementById('minkaBarWrap');
   function placeBtn() {
     var mood = list.querySelector('.rg-feedback-card'), M = mood && mood.getBoundingClientRect();
@@ -325,8 +326,9 @@
     if (off) key = 'off';
     else if (M && M.width) {
       var Hb = header && header.getBoundingClientRect(), under = Hb && Hb.height ? Hb.bottom : 0;
-      var full = bar.classList.contains('is-compact') ? (bar.__fullW || 260) : (bar.offsetWidth || 260);
-      if (!bar.classList.contains('is-compact') && bar.offsetWidth) bar.__fullW = bar.offsetWidth;
+      var wide = bar.classList.contains('is-compact') || bar.classList.contains('is-docked');   // (its own width then is not the whole switch's)
+      var full = wide ? (bar.__fullW || 260) : (bar.offsetWidth || 260);
+      if (!wide && bar.offsetWidth) bar.__fullW = bar.offsetWidth;
       var w = full, h = 40, ih = window.innerHeight, iw = window.innerWidth;
       // the rating row on screen: the middle's own copy while a picture or game covers the mood card
       // (the card's row is hidden under it, wherever the card now stands)
@@ -352,7 +354,19 @@
         [M.left + M.width / 2 - w / 2, M.top - h - 8], [M.right + 12, ty], [M.left - w - 12, ty],
         [L.right - w - 12, Math.min(L.bottom, ih) - h - 8], [L.left + 12, Math.min(L.bottom, ih) - h - 8], bottomMid]);
       var pick = function () { return spots.filter(function (p) { return p && free(p[0], p[1]); })[0]; };
-      var spot = pick(), compact = false;
+      // M3 (mk-mood-m3.css): one block of buttons (the user: join them): the switch stands right under the rating
+      // row as its second row, as wide as it, when nothing is in the way there; otherwise it floats as before
+      var spot = null, compact = false;
+      // M3: the switch is the rating row's second row, wherever that row is: in the mood card, or in the game's own
+      // copy of the row while a game or picture covers the card (the user: the game showed the old look)
+      var dockHost = !M3DOCK || current().mood === false ? null : covered || (mood && mood.querySelector('.rg-pulse-taps')), docked = !!dockHost;   // in the row's own box: on a day not yet begun a line of words stands under the row, and the switch must not land on it
+      if (bar.classList.contains('is-docked') !== docked) { bar.classList.toggle('is-docked', docked); placed = ''; }
+      if (docked) {   // one element with the ratings (the user): inside the card, so it moves with it and needs no place of its own
+        if (bar.parentNode !== dockHost) { dockHost.appendChild(bar); placed = ''; }
+        bar.classList.remove('in-rail', 'is-compact');
+        spot = ['', ''];
+      }
+      if (!spot) spot = pick();
       // no room for the whole switch (a short window, many people): only "⋯", in a gap
       if (!spot) {
         compact = true; w = 92;   // "⋯" and the sweet
@@ -364,10 +378,10 @@
       // nowhere free at all: "⋯" waits in the day rail, by the month and the calendar
       var rail = !spot && document.querySelector('#minkaBarWrap .mk-date-controls');
       if (rail) { if (bar.parentNode !== rail) rail.insertBefore(bar, rail.firstChild); bar.classList.add('in-rail'); spot = [0, 0]; }
-      else if (bar.parentNode !== document.body) { document.body.appendChild(bar); bar.classList.remove('in-rail'); }
+      else if (!docked && bar.parentNode !== document.body) { document.body.appendChild(bar); bar.classList.remove('in-rail'); }
       if (!spot) spot = [M.right - 40, Math.min(M.bottom + 8, ih - 46)];
       if (bar.classList.contains('is-compact') !== compact) { bar.classList.toggle('is-compact', compact); placed = ''; }
-      key = Math.round(spot[0]) + ',' + Math.round(spot[1]);
+      key = docked ? 'dock,' : Math.round(spot[0]) + ',' + Math.round(spot[1]);
     }
     placeCenter(off ? null : M);
     if (key === placed && !off === !bar.hidden) return;
@@ -375,7 +389,7 @@
     if (off) { placed = ''; close(); return; }
     placed = key;
     var k = key.split(',');
-    bar.style.left = k[0] + 'px'; bar.style.top = k[1] + 'px';
+    bar.style.left = k[0] === 'dock' ? '' : k[0] + 'px'; bar.style.top = k[0] === 'dock' ? '' : k[1] + 'px';   // docked: the stylesheet places it in the card
     if (isOpen) placePanel();
     window.dispatchEvent(new Event('mk-cl-bar-placed'));   // the pet stands beside it at home
   }
@@ -712,13 +726,16 @@
     var host = centerEl.querySelector('.mk-cl-moodrow'), mood = list.querySelector('.rg-feedback-card'), taps = mood && mood.querySelector('.rg-pulse-taps');
     if (!host || !taps) return;
     mirrorRowStyles();
-    var copy = taps.cloneNode(true);
+    var copy = taps.cloneNode(true), sw = copy.querySelector('.mk-cl-bar');
+    if (sw) sw.remove();                                    // (the layout switch docked in the card's row is not part of the copy)
     copy.querySelectorAll('[id]').forEach(function (e) { e.removeAttribute('id'); });
     [].forEach.call(copy.children, function (b, i) { b.dataset.tap = i; });
     // the card's own custom properties (sizes, colours) on the host
     var cs = getComputedStyle(mood);
-    for (var i = 0; i < cs.length; i++) { var p = cs[i]; if (p.charCodeAt(0) === 45 && p.charCodeAt(1) === 45 && /^--(rg|mx|mk-mx|tap|pulse)/.test(p)) host.style.setProperty(p, cs.getPropertyValue(p)); }
+    for (var i = 0; i < cs.length; i++) { var p = cs[i]; if (p.charCodeAt(0) === 45 && p.charCodeAt(1) === 45 && /^--(rg|mx|mk-mx|tap|pulse|md-sys|m3-|mb-)/.test(p)) host.style.setProperty(p, cs.getPropertyValue(p)); }   // (md-sys, m3, mb: the M3 look's tones)
+    var docked = host.querySelector(':scope > .mk-cl-bar');   // the layout switch docked under the row stays (M3)
     host.replaceChildren(copy);
+    if (docked) host.appendChild(docked);
   }
   // the mood line: its face and word, then the shift's fatigue and coffee as on the mood card (each
   // can be switched off in the menu); the coffee chip opens the coffee statistics, as there
