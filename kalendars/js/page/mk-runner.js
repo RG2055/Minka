@@ -25,7 +25,7 @@
     cv.className = 'mk-run';
     cv.tabIndex = 0;
     cv.setAttribute('role', 'img');
-    cv.setAttribute('aria-label', 'Skrējiens: spied vai atstarpe, lai lēktu');
+    cv.setAttribute('aria-label', 'Skrējiens: spied vai atstarpe, lai lektu');
     cv.style.cssText = 'display:block;width:100%;height:100%;outline-offset:-2px;cursor:pointer;touch-action:manipulation';
     box.appendChild(cv);
 
@@ -174,7 +174,7 @@
       if (state !== 'run') {
         ctx.textAlign = 'center'; ctx.fillStyle = css(mix(c, [255, 255, 255], 0.3));
         ctx.font = "700 15px 'Geist Sans', system-ui, sans-serif";
-        ctx.fillText(state === 'over' ? 'Vēlreiz' : 'Spied, lai lēktu', W / 2, Math.round(H * 0.42));
+        ctx.fillText(state === 'over' ? 'Vēlreiz' : 'Spied, lai lektu', W / 2, Math.round(H * 0.42));
       }
     }
 

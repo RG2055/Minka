@@ -901,7 +901,7 @@
   function settled() { settleUntil = 0; centerEl.classList.remove('is-settling'); }
   // the games: the gallery's own Windows 98 (js/page/mood-gallery-pc.js), one game mounted in the box
   var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261124ng1', pcLoad = null, game = null;
-  var RUN_SRC = 'js/page/mk-runner.js?v=20261124rn2', runLoad = null;
+  var RUN_SRC = 'js/page/mk-runner.js?v=20261124rn3', runLoad = null;
   function mountGame(app) {
     var box = centerEl.querySelector('.mk-cl-game-box');
     if (app === 'runner') {   // its own small file, fetched on the first opening; it keeps the mood card's own size

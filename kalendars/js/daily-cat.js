@@ -51,13 +51,13 @@
   var positionMode = 'auto';
   var manualPosition = null;
   var renderedPosition = null;
-  // The comment bubble is the pet's home, but every few minutes it wanders off
-  // to sit on somebody's card. Only the choice is random — the placement itself
-  // is derived from the anchor, so scrolling still follows it exactly.
-  var ANCHOR_ROTATE_MIN = 480000;   // it moves to another place every 8 to 15 minutes (was 2.5 to 5: the user: less in the way)
-  var ANCHOR_ROTATE_MAX = 900000;
-  var COMMENT_ANCHOR_CHANCE = 0.45;
-  var anchorChoice = { kind: 'comment', worker: '' };
+  // Its only place is the floor: the top edge of the dock under the calendar, where it strolls a little way
+  // every few minutes. It no longer climbs onto cards or the mood card (the user, 2026-11-24: "lai kaķis tieši
+  // staigātu tur kā pa grīdu, tikai tur, nekur citur"). The card, mood and tour anchors further down are its
+  // older places: still understood, not chosen any more.
+  var ANCHOR_ROTATE_MIN = 90000;    // a stroll every 1.5 to 4 minutes
+  var ANCHOR_ROTATE_MAX = 240000;
+  var anchorChoice = { kind: 'floor', worker: '', x: 0.72 };
   var anchorTimer = 0;
   var hopTimer = 0;
   var nightPerchTarget = null;
@@ -172,7 +172,7 @@
   function clampPosition(position) {
     return {
       right: Math.max(8, Math.min(innerWidth - PET_SIZE - 8, Number(position.right) || 8)),
-      bottom: Math.max(8, Math.min(innerHeight - PET_SIZE - 8, Number(position.bottom) || 8))
+      bottom: Math.max(FEET - PET_SIZE, Math.min(innerHeight - PET_SIZE - 8, isFinite(position.bottom) ? Number(position.bottom) : 8))   // down to its paws on the bottom edge (the floor)
     };
   }
   function reducedMotion() {
@@ -212,7 +212,61 @@
   function moodAnchorNode() {
     return document.querySelector('.rg-feedback-card .rg-mood-glass-lens');
   }
+  /* The floor: the dock (the host page's #bottomBtnBar, right under this frame), the straight part of its top
+     edge between its round corners. The pet lives inside the calendar's frame, so its paws go to the frame's
+     very bottom edge, a few px above the dock. A spot is a share of that stretch, so a resize keeps it. Without
+     a dock to stand on (the calendar opened alone) the floor is the whole width of the window.
+     A new spot is a stroll away from the old one and, where there is a choice, not in front of anything that
+     reaches down there: a card, the mood card's rating row, a game in its place. Read only when it sets off. */
+  var floorLo = 8, floorHi = 9, floorKey = '';
+  function floorRange(fresh) {
+    var key = innerWidth + 'x' + innerHeight;
+    if (!fresh && key === floorKey) return;
+    floorKey = key;
+    floorLo = 8; floorHi = innerWidth - PET_SIZE - 8;
+    try {
+      var bar = parent !== window && parent.document.getElementById('bottomBtnBar'), frame = window.frameElement;
+      var B = bar && bar.getBoundingClientRect(), F = frame && frame.getBoundingClientRect();
+      if (B && F && B.width > 240 && B.top >= F.bottom - 2 && B.top < F.bottom + 40) {
+        var inset = (parseFloat(parent.getComputedStyle(bar).borderTopLeftRadius) || 24) + 18;   // off the round corner, half a small cat in
+        floorLo = Math.max(floorLo, B.left - F.left + inset - PET_SIZE / 2);
+        floorHi = Math.min(floorHi, B.right - F.left - inset - PET_SIZE / 2);
+      }
+    } catch (_e) {}
+    if (floorHi <= floorLo) floorHi = floorLo + 1;
+  }
+  function floorPosition(x) {
+    floorRange();
+    var left = floorLo + x * (floorHi - floorLo);
+    return clampPosition({ right: innerWidth - PET_SIZE - left, bottom: FEET - PET_SIZE });   // paws on the frame's bottom edge
+  }
+  function floorSpot(from) {
+    floorRange(true);
+    var span = floorHi - floorLo, top = innerHeight - 66, best = 0.5, bestCost = 9;
+    var inWay = [].map.call(document.querySelectorAll('#grafiks-list .card, .mk-cl-center:not([hidden]), .mk-cl-bar:not([hidden])'),
+      function (node) { return node.getBoundingClientRect(); })
+      .filter(function (r) { return r.width > 0 && r.bottom > top && r.top < innerHeight; });
+    // first a stroll's length away; where nothing is free that near, anywhere along the floor
+    for (var i = 0; i < 24; i++) {
+      var x = Math.random();
+      if (typeof from === 'number' && i < 10) {
+        var step = (100 + Math.random() * 260) / span * (Math.random() < 0.5 ? -1 : 1);
+        x = from + step;
+        if (x < 0 || x > 1) x = from - step;
+        x = Math.max(0, Math.min(1, x));
+      }
+      var mid = floorLo + x * span + PET_SIZE / 2;
+      var cost = inWay.some(function (r) { return mid + 34 > r.left && mid - 34 < r.right; }) ? 1 : 0;
+      if (cost < bestCost) { best = x; bestCost = cost; }
+      if (!cost) break;
+    }
+    return best;
+  }
+  function home() {
+    return { kind: 'floor', worker: '', x: floorSpot(anchorChoice.kind === 'floor' ? anchorChoice.x : undefined) };
+  }
   function resolveAnchorElement(choice) {
+    if (choice && choice.kind === 'floor') return null;
     // the mood card's own spots (its glass, a rating, the curve) are not on screen then
     if (choice && choice.kind !== 'card' && (moodCovered() || moodGone())) return commentAnchorNode();
     if (choice && choice.kind === 'mood') return moodAnchorNode() || commentAnchorNode();
@@ -226,23 +280,8 @@
     return null;
   }
   function setAnchorChoice(choice) {
-    anchorChoice = choice || { kind: 'comment', worker: '' };
+    anchorChoice = choice || home();
     observeAnchor(resolveAnchorElement(anchorChoice));
-  }
-  function pickAnchor() {
-    var bubble = commentAnchorNode();
-    var cards = visibleWorkerCards();
-    if (!cards.length) return bubble ? { kind: 'comment', worker: '' } : anchorChoice;
-    // Coming back to the bubble is the most likely single move; otherwise the
-    // pet picks a card it is not already sitting on.
-    if (bubble && anchorChoice.kind !== 'comment' && Math.random() < COMMENT_ANCHOR_CHANCE) {
-      return { kind: 'comment', worker: '' };
-    }
-    var pool = cards.filter(function (card) {
-      return anchorChoice.kind !== 'card' || card.dataset.worker !== anchorChoice.worker;
-    });
-    if (!pool.length) return bubble ? { kind: 'comment', worker: '' } : anchorChoice;
-    return { kind: 'card', worker: pool[Math.floor(Math.random() * pool.length)].dataset.worker };
   }
   /* A new size with every hop ("each time a little different"): big on the
      cards, the comments and the mood glass; small only while it runs about
@@ -261,7 +300,7 @@
     if (petButton) petButton.style.setProperty('--cat-size', scale.toFixed(3));
     if (petButton) petButton.classList.toggle('is-mini', scale < 0.7);
   }
-  function onMoodCard(choice) { return choice.kind !== 'card' && !!document.querySelector('.rg-feedback-card.mx-compact'); }
+  function onMoodCard(choice) { return choice.kind === 'floor' || (choice.kind !== 'card' && !!document.querySelector('.rg-feedback-card.mx-compact')); }   // small: on the floor and on the mood card
   function hopToAnchor(scale, action) {
     hideSpeech(true);
     setPetSize(scale || sizeIn(onMoodCard(anchorChoice) ? SIZE_HOME : SIZE_BIG));
@@ -282,13 +321,13 @@
   // Runs (not hops) to the current anchor: a steady glide timed by the
   // distance, the running frames facing the way it goes, looped meanwhile.
   var RUN_PX_PER_S = 150;
-  function runToAnchor(scale) {
+  function runToAnchor(scale, longest) {
     hideSpeech(true);
     setPetSize(scale);
     var from = renderedPosition, to = fastAutoPosition();
     if (!petButton || !from || !to || reducedMotion()) { hopToAnchor(scale, 'jumping'); return 700; }
     var dx = from.right - to.right, dy = from.bottom - to.bottom;     // + = to the right / up
-    var ms = Math.round(Math.max(420, Math.min(1800, Math.hypot(dx, dy) / RUN_PX_PER_S * 1000)));
+    var ms = Math.round(Math.max(420, Math.min(longest || 1800, Math.hypot(dx, dy) / RUN_PX_PER_S * 1000)));
     petButton.style.setProperty('--cat-hop', ms + 'ms');
     petButton.classList.add('is-hopping', 'is-running');
     if (hopTimer) clearTimeout(hopTimer);
@@ -333,9 +372,7 @@
     if (tour.left <= 0) {
       // grown back, off to a card (or home)
       endTour();
-      var next = pickAnchor();
-      if (next.kind === 'tap' || next.kind === 'curve' || next.kind === 'mood') next = { kind: 'comment', worker: '' };
-      setAnchorChoice(next);
+      setAnchorChoice(home());
       hopToAnchor(null, 'jumping');
       return;
     }
@@ -388,34 +425,13 @@
      good, a look for so-so, a slump for bad) and after a while goes home.
      Dragged away, perched at night or hidden: it only reacts where it is. */
   var CHEER_ACTION = { excellent: 'jumping', good: 'waving', ok: 'review', bad: 'failed', terrible: 'failed' };
-  var CHEER_STAY = 9000;
-  var TOUR_CHANCE = 0.15;
   var cheerTimer = 0;
   var cheerActTimer = 0;
-  function cheerHome() {
-    cheerTimer = 0;
-    if (!petButton || anchorChoice.kind !== 'mood') return;
-    setAnchorChoice({ kind: 'comment', worker: '' });
-    if (positionMode === 'auto' && !dragState) hopToAnchor();
-  }
   function cheer(mood) {
     var action = CHEER_ACTION[mood] || 'waving';
-    var loops = action === 'failed' ? 1 : 2;
     if (!canAnimate() || pickerOpen || dragState) return false;
-    clearTimeout(cheerActTimer);
-    cheerActTimer = 0;
     endTour();
-    if (positionMode !== 'auto' || nightPerchTarget || !moodAnchorNode()) return playAction(action, loops);
-    if (anchorChoice.kind !== 'mood') {
-      setAnchorChoice({ kind: 'mood', worker: '' });
-      hopToAnchor(sizeIn(SIZE_MOOD));      // leaps across, small; the reaction once it lands
-      cheerActTimer = setTimeout(function () { cheerActTimer = 0; playAction(action, loops); }, 720);
-    } else {
-      playAction(action, loops);
-    }
-    clearTimeout(cheerTimer);
-    cheerTimer = setTimeout(cheerHome, CHEER_STAY);
-    return true;
+    return playAction(action, action === 'failed' ? 1 : 2);   // where it stands: it no longer leaps onto the glass
   }
   // A comment rose in the mood sky: a look, if the pet is just sitting.
   function notice(action) {
@@ -535,13 +551,11 @@
   function rotateAnchor() {
     anchorTimer = 0;
     if (petButton && !petButton.hidden && !nightPerchTarget && positionMode === 'auto' &&
-        !dragState && !pickerOpen && !document.hidden && anchorChoice.kind !== 'mood' && !tour) {
-      if (Math.random() < TOUR_CHANCE && startTour()) { scheduleAnchorRotation(); return; }
-      var next = pickAnchor();
-      if (next.kind !== anchorChoice.kind || next.worker !== anchorChoice.worker) {
-        setAnchorChoice(next);
-        hopToAnchor();
-      }
+        !dragState && !pickerOpen && !document.hidden && !tour) {
+      var onFloor = anchorChoice.kind === 'floor';
+      setAnchorChoice(home());
+      if (onFloor) runToAnchor(petScale, 3600);   // a stroll: it walks, the size it has
+      else hopToAnchor();                        // back down
     }
     scheduleAnchorRotation();
   }
@@ -664,18 +678,10 @@
       if (again && again !== commentAnchorNode()) { observeAnchor(again); return again; }
       endTour();
     }
-    // A removed worker card must not trigger a list scan from a scroll frame.
-    // Fall home to the comment bubble; the rare daySelected handler can later
-    // resolve a new card explicitly.
-    if (anchorChoice.kind !== 'comment') anchorChoice = { kind: 'comment', worker: '' };
-    var target = commentAnchorNode();
-    // no bubble at all (a layout without the mood card): the first card is home
-    if (!target) {
-      var first = visibleWorkerCards()[0];
-      if (first) { anchorChoice = { kind: 'card', worker: first.dataset.worker }; target = first; }
-    }
-    observeAnchor(target);
-    return target;
+    // Its card is gone (another day): back down to the floor.
+    anchorChoice = home();
+    observeAnchor(null);
+    return null;
   }
   function fastAutoPosition() {
     positionedAtBubble = false;
@@ -683,7 +689,11 @@
       var perch = nightPerchPosition(nightPerchTarget);
       if (perch) return perch;
     }
-    return anchorPosition(activeAnchorElement());
+    if (anchorChoice.kind !== 'floor') {
+      var at = anchorPosition(activeAnchorElement());
+      if (anchorChoice.kind !== 'floor') return at;
+    }
+    return floorPosition(anchorChoice.x);
   }
   // Cold fallback: this may inspect many elements, so it is used only if the
   // normal anchor did not exist while the pet was being mounted.
@@ -837,7 +847,7 @@
   function resetAutoPosition() {
     positionMode = 'auto';
     manualPosition = null;
-    setAnchorChoice({ kind: 'comment', worker: '' });
+    setAnchorChoice(home());
     if (petButton) petButton.dataset.positionMode = positionMode;
     scheduleAutoPosition();
   }
@@ -1136,10 +1146,13 @@
     if (petButton || (isCompact() && !nightPerchTarget) || !catalog.length) return;
     positionMode = 'auto';
     // MutationObserver may call this many times while cards render. Keep that
-    // callback O(1): only try the comment anchor, never the collision search.
+    // callback O(1): it waits for the mood card's comment button (the cards are there by then), and only
+    // then looks, once, for a free spot on the floor.
     var target = commentAnchorNode();
-    var position = anchorPosition(target);
-    if (position) { stopPositionWait(); createPet(position); return; }
+    if (target && target.getBoundingClientRect().width) {
+      anchorChoice = { kind: 'floor', worker: '', x: floorSpot() };
+      stopPositionWait(); createPet(fastAutoPosition()); return;
+    }
     if (!positionObserver) {
       positionObserver = new MutationObserver(mountWhenReady);
       positionObserver.observe(document.getElementById('grafiks-list') || document.body,
@@ -1148,7 +1161,7 @@
         positionTimer = 0;
         // The expensive empty-space search is allowed only in this one rare
         // six-second fallback when no normal anchor appeared at all.
-        var latePosition = fallbackPosition();
+        var latePosition = fastAutoPosition() || fallbackPosition();   // (the floor is always there)
         if (latePosition) {
           stopPositionWait();
           createPet(latePosition);
@@ -1378,14 +1391,12 @@
       restorePosition();
       if (pickerOpen) requestAnimationFrame(positionPicker);
     }, { passive: true });
-    // another layout, or a picture in or out of the mood's place: home is elsewhere now
+    // another layout, or a picture in or out of the mood's place: off whatever it sat on, down to the floor
     var rehome = function () {
-      if (!petButton || positionMode !== 'auto') return;
-      setTimeout(function () { setAnchorChoice({ kind: 'comment', worker: '' }); scheduleAutoPosition(); }, 260);
+      if (!petButton || positionMode !== 'auto' || anchorChoice.kind === 'floor') return;
+      setTimeout(function () { endTour(); setAnchorChoice(home()); scheduleAutoPosition(); }, 260);
     };
     addEventListener('mk-card-layout', rehome);
-    // the layout switch moved: at home the cat stands beside it
-    addEventListener('mk-cl-bar-placed', function () { if (petButton && positionMode === 'auto' && anchorChoice.kind === 'comment') scheduleAutoPosition(); });
     document.addEventListener('mk-mood-covered', rehome);
     addEventListener('daySelected', function () {
       if (pickerOpen) requestAnimationFrame(positionPicker);
@@ -1393,7 +1404,7 @@
         setTimeout(function () {
           var nextTarget = resolveAnchorElement(anchorChoice);
           if (anchorChoice.kind === 'card' && !nextTarget) {
-            setAnchorChoice({ kind: 'comment', worker: '' });
+            setAnchorChoice(home());
           } else {
             observeAnchor(nextTarget);
           }
