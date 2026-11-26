@@ -707,7 +707,9 @@
     }
     job._wants = opts.stale ? [opts.stale] : null;
     job._key = key;
-    job.then(function (u) { job._url = u; }, function () {});
+    // _wants only decides whether a queued job still has someone waiting; once it settles the list (closures over
+    // the requesting cards) is dropped, or every card a cache hit was ever asked for stayed in memory with it.
+    job.then(function (u) { job._url = u; job._wants = null; }, function () { job._wants = null; });
     job.catch(function () { if (cache.get(key) === job) cache.delete(key); });
     remember(key, job);
     return job;
@@ -907,10 +909,17 @@
   var sizeWatch = host.ResizeObserver ? new host.ResizeObserver(function (entries) {
     entries.forEach(function (en) {
       var card = en.target;
-      if (!card.isConnected) { sizeWatch.unobserve(card); return; }
+      if (!card.isConnected) { unwatch(card); return; }
       if (card.dataset.mkDitherKey && card.__dthSize !== card.offsetWidth + 'x' + card.offsetHeight) skin(card);
     });
   }) : null;
+  /* An observed card is held by the observer until unobserved, and a card that leaves the page (RG Engine's
+     morph, a closed editor) gets no resize callback: without this every dithered card a day switch replaced
+     stayed in memory with its whole subtree. The watched cards are swept after each morph and skin batch. */
+  var watched = new Set();
+  function unwatch(card) { sizeWatch.unobserve(card); watched.delete(card); card.__dthSize = ''; }
+  function sweepWatched() { watched.forEach(function (c) { if (!c.isConnected) unwatch(c); }); }
+  if (sizeWatch && host.document) host.document.addEventListener('rg:patched', sweepWatched, true);
   /* The decoration (img.mk-card-addon, a transparent cut-out) with the card's
      effect: painted with the CSS content replacement, so the app's own src and
      sizing stay untouched and removing it restores the original at once. */
@@ -1049,7 +1058,7 @@
   function clearSkin(card) {
     clearFocus(card); clearPoster(card);
     if (card.__dthCardFx) { card.__dthCardFx = null; card.__dthDecorOn = false; decor(card); }
-    if (sizeWatch && card.__dthSize) { sizeWatch.unobserve(card); card.__dthSize = ''; }
+    if (sizeWatch && card.__dthSize) unwatch(card);
     // Always drop the key: a job still running for this card must not paint its
     // effect after the effect was switched off (its stale() check sees no key).
     delete card.dataset.mkDitherKey;
@@ -1090,6 +1099,7 @@
   function flushSkins() {
     if (skinFrame && host.cancelAnimationFrame) host.cancelAnimationFrame(skinFrame);
     host.clearTimeout(skinTimer); skinFrame = 0; skinTimer = 0;
+    if (sizeWatch) sweepWatched();
     var cards = [], snaps = [];
     pendingSkins.forEach(function (card) {
       if (!card.isConnected) return;
@@ -1188,7 +1198,7 @@
     if (card.querySelector(':scope > img.mk-card-addon')) requestDecor(card);
     if (zoom > 1) opts.dot = opts.dot / zoom;
     var key = [src, want, box.join('x'), pos.join(','), (!real || !dithered ? ink : tint).join('.'), tb, tc, zoom.toFixed(2)].join('|');
-    if (sizeWatch && !card.__dthSize) sizeWatch.observe(card);
+    if (sizeWatch && !card.__dthSize) { sizeWatch.observe(card); watched.add(card); }
     card.__dthSize = w + 'x' + h;
     if (card.dataset.mkDitherKey === key) return;
     card.dataset.mkDitherKey = key;
