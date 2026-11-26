@@ -32,11 +32,10 @@ var hospitalDatabase = window.hospitalDatabase;
   const periods = ['morning', 'day', 'sunset', 'night'];
   // Riga is the real St Peter's tower panorama (re-encoded 2026-09-20).
   const sceneSrc = (scene, period) => 'data/header-backgrounds/header-' + scene + '-' + period + '-20260920.webp';
-  // The collection ("mix"): single photographs, each tagged with the parts of
+  // The collection ("mix"): single pictures, each tagged with the parts of
   // the day it suits — bright ones for the morning and day, warm and darker
   // ones towards the evening, near-black ones at night. In mix mode the
-  // header draws one at random from the current period's set (the Riga
-  // variant for that period is in the draw too), and rotates every
+  // header draws one at random from the current period's set, and rotates every
   // MIX_ROTATE_MS, never repeating the picture just shown.
   const MIX_ROTATE_MS = 25 * 60 * 1000;
   // `position` is the picture's focal point (object-position), not a layout
@@ -44,43 +43,37 @@ var hospitalDatabase = window.hospitalDatabase;
   // so object-fit: cover crops a different slice everywhere. With the focal
   // point set to the subject, the same relative point of the picture is
   // pinned to the same relative point of the header, and the subject stays in
-  // view whichever side gets cropped. Measured on the 2400x433 files.
+  // view whichever side gets cropped.
   const MIX_POOL = [
-    { id: 'hummingbird', periods: ['morning', 'day'], position: '64% 10%' }   /* the head with the crest sits high on the right; a 16:1 header keeps only a third of the height */,
-    { id: 'daffodils-glass', periods: ['morning', 'day'], position: '50% 0%' }   /* the blooms sit high; keep their tops in a short header */,
-    { id: 'bellflowers', periods: ['morning', 'day'], position: '60% 50%' },
-    { id: 'blossom-orange', periods: ['day', 'sunset'], position: '20% 55%' }   /* the blossom cluster is bottom-left, the rest is sky */,
-    { id: 'riga-aerial-dusk', periods: ['day', 'sunset'], position: '40% 55%' }   /* St Peter's tower */,
-    { id: 'cat-ghost', periods: ['sunset'], position: '58% 30%' }   /* the eyes */,
-    { id: 'egle-20260920b', periods: ['sunset', 'night'], position: '65% 50%' }   /* spruce twig with a cone, cropped from the owner's photo (2026-09-20) */,
-    { id: 'moon-eclipse', periods: ['night'], position: '64% 50%' }   /* the moon */,
-    { id: 'tree-dusk', periods: ['night'], position: '30% 50%' }   /* the lone tree */,
-    // Cut to 2400x250 (9.6:1) on purpose: at that ratio a 1900px-wide header
-    // shows them whole, with no stretch and barely any crop.
-    { id: 'dunes-mono-20260922', periods: ['day', 'sunset'], position: '55% 50%' }   /* the dune ridge */,
-    { id: 'emoji-gold-20260922', periods: ['morning', 'day'], position: '42% 45%' }   /* the face */,
-    // Dither prints of temples and statues (scripts/build-dither-art.py). The ink
-    // fades out to the left, so the text there sits on plain paper; the subject
-    // is on the right. Light papers by day, dark ones in the evening.
-    { id: 'art-partenons', periods: ['morning', 'day', 'sunset'], position: '72% 50%' },
-    { id: 'art-kolonnas', periods: ['morning', 'day', 'sunset'], position: '72% 50%' },
-    { id: 'art-piramidas', periods: ['morning', 'day'], position: '72% 50%' },
-    { id: 'art-sfinksa', periods: ['day', 'sunset'], position: '72% 50%' },
-    { id: 'art-herakls', periods: ['morning', 'day'], position: '72% 50%' },
-    { id: 'art-atena', periods: ['morning', 'day'], position: '72% 50%' },
-    { id: 'art-kariatides', periods: ['day', 'sunset'], position: '72% 50%' },
-    { id: 'art-apolons', periods: ['sunset', 'night'], position: '72% 50%' },
-    { id: 'art-domatajs', periods: ['morning', 'day'], position: '72% 50%' },
-    { id: 'art-konkordija', periods: ['morning', 'day'], position: '72% 50%' },
-    { id: 'art-herkuls', periods: ['sunset', 'night'], position: '72% 50%' }
+    // Engraved classical panoramas, made at the header's own size (1894x170 on a Full HD screen), so they fit
+    // without stretch; on a narrower window the sides crop around the subject.
+    { id: 'desert-helmet', periods: ['morning', 'day'], position: '65% 50%' },
+    { id: 'classical-garden', periods: ['morning', 'day'], position: '50% 50%' },
+    { id: 'stone-bridge', periods: ['day'], position: '50% 50%' },
+    { id: 'golden-temple', periods: ['morning', 'day'], position: '75% 50%' },
+    { id: 'underground-sanctuary', periods: ['night'], position: '53% 50%' },
+    { id: 'roman-night', periods: ['night'], position: '26% 50%' },
+    { id: 'equestrian-statue', periods: ['sunset'], position: '67% 50%' },
+    { id: 'snowy-temple', periods: ['morning', 'day'], position: '60% 50%' },
+    { id: 'colosseum', periods: ['sunset', 'night'], position: '58% 50%' },
+    { id: 'poseidon-harbor', periods: ['sunset'], position: '35% 50%' },
+    { id: 'pantheon', periods: ['day'], position: '67% 50%' },
+    { id: 'lakeside-temple', periods: ['morning', 'sunset'], position: '40% 50%' },
+    { id: 'triumphal-arch', periods: ['morning', 'day'], position: '69% 50%' },
+    { id: 'marble-hall', periods: ['morning', 'day'], position: '50% 50%' },
+    { id: 'pyramid-sunset', periods: ['sunset'], position: '26% 50%' },
+    { id: 'pink-atrium', periods: ['day', 'sunset'], position: '50% 50%' },
+    { id: 'volcano', periods: ['sunset', 'night'], position: '75% 50%' },
+    { id: 'athena-clouds', periods: ['morning', 'day'], position: '31% 50%' },
+    { id: 'ancient-aqueduct', periods: ['day', 'sunset'], position: '60% 50%' },
+    { id: 'island-temple', periods: ['sunset'], position: '41% 50%' }
   ].map(item => ({ ...item, src: 'data/header-backgrounds/pool/' + item.id + '.webp' }));
   const MIX_LAST_KEY = 'mk_header_mix_last_v1';
   let mixCurrent = null;      // { src, position, period }
   let mixUpcoming = null;     // the next draw, decided early so it can be preloaded
   let mixTimer = 0;
   function mixCandidates(period) {
-    return MIX_POOL.filter(item => item.periods.includes(period))
-      .concat([{ id: 'riga-' + period, src: sceneSrc('riga', period), position: '50% 48%' }]);
+    return MIX_POOL.filter(item => item.periods.includes(period));
   }
   function mixDraw(period, avoidSrc) {
     const all = mixCandidates(period);
@@ -220,7 +213,8 @@ var hospitalDatabase = window.hospitalDatabase;
     const stripHeight = strip ? strip.getBoundingClientRect().height : 0;
     const width = Math.round(box.width);
     const height = Math.max(1, Math.round(box.height - stripHeight));
-    const boxRatio = width / height;
+    // the picture covers the whole box (the day strip sits over its foot), so it is judged on the whole box
+    const boxRatio = width / Math.max(1, Math.round(box.height));
     const stretch = boxRatio >= WIDE_BOX && boxRatio / (img.naturalWidth / img.naturalHeight) >= STRETCH_AT;
     layer.classList.toggle('is-stretch', stretch);
     const canvas = layer.querySelector('.mk-header-scenic-canvas');

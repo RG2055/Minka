@@ -149,11 +149,27 @@
   // The game asks for just what it uses: the board is square and as tall as the box allows, the panel
   // stands at its side (mood-gallery-pc.js SW), so its width is the board's height plus the panel. Wider
   // would only leave empty bands beside the board and make the cards smaller for nothing.
+  // Where the middle's room ends: above the frame's own bottom, and with the radio in the middle of the dock (the
+  // shell's mk-cdock, wide screens) above where that radio's top stands when it opens, open or not, so opening it
+  // moves nothing (the user: nothing overlapping, nothing resizing on open). The radio is #rmx's height, its bottom
+  // on the dock's bottom (js/radio-max.js place()).
+  function roomBottom() {
+    var b = window.innerHeight - 8;
+    try {
+      var P = window.parent.document, fe = window.frameElement;
+      if (fe && P.documentElement.classList.contains('mk-cdock')) {
+        var bar = P.getElementById('bottomBtnBar'), rmx = P.getElementById('rmx');
+        var rh = rmx && rmx.offsetHeight || parseFloat(getComputedStyle(rmx || P.documentElement).height) || 136;
+        if (bar) b = Math.min(b, bar.getBoundingClientRect().bottom - rh - fe.getBoundingClientRect().top - 12);
+      }
+    } catch (_e) {}
+    return b;
+  }
   function gameOn() { var c = centerNow(); return (c === 'candy' || c === 'runner') && current().mood !== false; }   // both games get the room (the runner stayed mood-card small)
   function gameSpan() {
     // (the host ends this frame above its dock already: a further 64 px "for the dock" left an empty band under the game, as
     // it did under the walls, f07f8134)
-    var Hb = header && header.getBoundingClientRect(), top = Hb && Hb.height ? Hb.bottom + 8 : 4, h = window.innerHeight - 8 - top;
+    var Hb = header && header.getBoundingClientRect(), top = Hb && Hb.height ? Hb.bottom + 8 : 4, h = roomBottom() - top;
     // what is not the game in the box (the mood's line and the rating row), as last measured
     var gb = centerEl.querySelector('.mk-cl-game-box'), over = !centerEl.hidden && gb && gb.offsetHeight ? centerEl.offsetHeight - gb.offsetHeight : 150;
     // the board as tall as what is left under the strip (78), plus the picture's padding; never
@@ -177,7 +193,7 @@
   function centreRect(M) {
     if (!M || !M.width || !gameOn()) return M;
     var span = gameSpan(), cor = root.classList.contains('mk-corridor'), L = list.getBoundingClientRect();
-    var top = cor ? Math.max(L.top + 4, span.top) : M.top, bot = cor ? window.innerHeight - 8 : M.bottom;
+    var top = cor ? Math.max(L.top + 4, span.top) : M.top, bot = cor ? roomBottom() : M.bottom;
     var cx = M.left + M.width / 2, lo = Math.max(L.left + 8, 8), hi = Math.min(L.right - 8, window.innerWidth - 8);
     [].forEach.call(list.querySelectorAll('.card.mk-mid-card:not(.rg-feedback-card), .cards-section-label'), function (c) {
       var r = c.getBoundingClientRect();
@@ -233,6 +249,22 @@
     return '<svg viewBox="0 0 100 56" aria-hidden="true"><g class="mk-cl-cards">' + cards + '</g>' + mood + '</svg>';
   }
 
+  // the same layouts as 24 px icons for the M3 toolbar (the thumbnails above are for the big chooser): cards as
+  // rounded tiles, the mood as the dot, the walls' angle as the tiles' inner edge
+  function glyph(l) {
+    var c = '', i, R = function (x, y, w, h, t) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="1.5"' + (t ? ' transform="rotate(' + t + ' ' + (x + w / 2) + ' ' + (y + h / 2) + ')"' : '') + '/>'; };
+    var dot = '<circle class="mk-cl-mood" cx="12" cy="12" r="3"/>';
+    if (l.carousel && l.flat) { for (i = 0; i < 6; i++) c += R(2 + (i % 3) * 7, 5 + Math.floor(i / 3) * 7.5, 6, 6.5); return '<svg viewBox="0 0 24 24" aria-hidden="true"><g class="mk-cl-cards">' + c + '</g></svg>'; }
+    if (l.angle == null) { for (i = 0; i < 4; i++) c += R(2 + (i % 2) * 6.5, 5 + Math.floor(i / 2) * 7.5, 5.5, 6.5); return '<svg viewBox="0 0 24 24" aria-hidden="true"><g class="mk-cl-cards">' + c + R(15.5, 5, 6.5, 14) + '</g><circle class="mk-cl-mood" cx="18.75" cy="12" r="2"/></svg>'; }
+    if (l.scatter) { c = R(2.5, 4, 6, 6, -10) + R(15.5, 4, 6, 6, 8) + R(2.5, 14, 6, 6, 6) + R(15.5, 14, 6, 6, -9); return '<svg viewBox="0 0 24 24" aria-hidden="true"><g class="mk-cl-cards">' + c + '</g>' + dot + '</svg>'; }
+    var cols = l.mood === false ? 2 : 1, w = l.mood === false ? 4.5 : 6, inner = l.mood === false ? 1.5 : 5.5, d = Math.sin(l.angle * Math.PI / 180) * 2.4;
+    [-1, 1].forEach(function (s) { for (var col = 0; col < cols; col++) for (var row = 0; row < 2; row++) {
+      var near = 12 + s * (inner + col * (w + 1)), far = near + s * w, top = 4.5 + row * 8, h = 7;
+      c += '<path d="M' + far.toFixed(1) + ' ' + top + 'L' + near.toFixed(1) + ' ' + (top + d).toFixed(1) + 'V' + (top + h - d).toFixed(1) + 'L' + far.toFixed(1) + ' ' + (top + h) + 'Z" stroke-linejoin="round"/>';
+    } });
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><g class="mk-cl-cards">' + c + '</g>' + (l.mood === false ? '' : dot) + '</svg>';
+  }
+
   /* Under the mood card: a small segmented switch with the three layouts used last (one click
      shows one and keeps it, as Saglabāt does) and "⋯" opening all of them. */
   // a wrapped sweet in gold: glossy body with a twist, pleated wrapper ends, a highlight;
@@ -251,7 +283,7 @@
   bar.setAttribute('role', 'group');
   bar.setAttribute('aria-label', 'Kartīšu izkārtojums');
   bar.innerHTML = '<span class="mk-cl-quick"></span><button type="button" class="mk-cl-more" aria-haspopup="dialog" aria-expanded="false" aria-label="Visi izkārtojumi" title="Visi izkārtojumi">' +
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg></button>' +
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.4 6 9.4 7.4 8l4.6 4.6L16.6 8 18 9.4z"/></svg></button>' +
     // the game, one press away: a gold segment of the same switch
     '<button type="button" class="mk-cl-candy" aria-pressed="false" aria-label="Konfektes: spēle noskaņas vietā" title="Konfektes">' + CANDY_ICON + '</button>' +
     // the other game, the same way: a Nogurumiņš that jumps over the shift's cups (js/page/mk-runner.js)
@@ -311,7 +343,7 @@
     quickKey = k;
     quick.innerHTML = ids.map(function (id) {
       var x = id === l.id ? l : id === 'savs' ? lastOwn() : byId(id), mine = fromAcc && id === l.id;
-      return '<button type="button" class="mk-cl-q" data-q="' + id + '" aria-pressed="' + (id === l.id) + '" title="' + x.name + (mine ? ': no tava konta' : '') + '">' + picture(x) + '<span>' + x.name + '</span>' +
+      return '<button type="button" class="mk-cl-q" data-q="' + id + '" aria-pressed="' + (id === l.id) + '" title="' + x.name + (mine ? ': no tava konta' : '') + '">' + (root.classList.contains('mk-m3') ? glyph(x) : picture(x)) + '<span>' + x.name + '</span>' +
         (mine ? '<i class="mk-cl-qacct" aria-label="No tava konta"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v1.5h16V19c0-2.8-3.6-5-8-5Z"/></svg></i>' : '') + '</button>';
     }).join('');
     schedulePlace();
@@ -862,7 +894,7 @@
     var gameGrid = on && id === 'candy' && !root.classList.contains('mk-corridor');
     if (root.classList.contains('mk-cl-game-grid') !== gameGrid) root.classList.toggle('mk-cl-game-grid', gameGrid);
     if (mood) {
-      var mh = gameGrid ? Math.max(0, Math.round(window.innerHeight - 8 - mood.getBoundingClientRect().top)) + 'px' : '';
+      var mh = gameGrid ? Math.max(0, Math.round(roomBottom() - mood.getBoundingClientRect().top)) + 'px' : '';
       if (mood.style.getPropertyValue('min-height') !== mh) { if (mh) mood.style.setProperty('min-height', mh, 'important'); else mood.style.removeProperty('min-height'); }
     }
     if (on !== root.classList.contains('mk-cl-center-on')) document.dispatchEvent(new CustomEvent('mk-mood-covered', { detail: on }));
