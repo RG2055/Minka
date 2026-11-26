@@ -1801,9 +1801,10 @@
     ['grafiks-list', 'radiographers-duty', 'radiologists-duty'].forEach(function(id) {
       var container = document.getElementById(id);
       if (!container) return;
-      // Card containers are rebuilt at their top level. A body-wide subtree
-      // observer also reacted to every timer tick and unrelated UI update.
-      new MutationObserver(queueCardHook).observe(container, { childList: true });
+      // The card list is written by RG Engine, which says when; the side columns are rebuilt at
+      // their top level. A body-wide subtree observer also reacted to every timer tick.
+      if (id === 'grafiks-list') container.addEventListener('rg:patched', queueCardHook);
+      else new MutationObserver(queueCardHook).observe(container, { childList: true });
     });
     setTimeout(loadFromGist, 250);
     if (window.MinkaApi || GIST_ID) setInterval(loadFromGist, POLL_MS);

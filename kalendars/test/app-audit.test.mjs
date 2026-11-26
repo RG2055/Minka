@@ -127,7 +127,8 @@ test('calendar scheduled sizing uses container width instead of the rAF timestam
   const callbacks = [], observers = [];
   const cards = Array.from({ length: 10 }, () => ({ style: {}, querySelector: () => null }));
   const grid = { dataset: {}, style: {}, clientHeight: 0, querySelectorAll: () => cards, querySelector: () => null };
-  const container = { clientWidth: 600, clientHeight: 0, classList: { contains: () => true }, querySelectorAll: () => [grid] };
+  // the roster written by RG Engine announces itself with rg:patched
+  const container = { clientWidth: 600, clientHeight: 0, classList: { contains: () => true }, querySelectorAll: () => [grid], addEventListener: (type, fn) => { if (type === 'rg:patched') observers.push(fn); } };
   const c = vm.createContext({
     window: {}, document: { getElementById: () => container },
     requestAnimationFrame: fn => callbacks.push(fn), applyStaffAccents() {},

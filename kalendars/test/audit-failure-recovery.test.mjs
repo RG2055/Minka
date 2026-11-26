@@ -124,7 +124,7 @@ test('emoji selection and removal update the visible card badge without a roster
 });
 test('new day/night cards paint personal initials immediately, before emoji hooks run',()=>{
  const c=vm.createContext({window:{},probe:null,isGridView:true,isToday:false,now:new Date(),
-  document:{createElement:()=>({setAttribute(){},querySelector:()=>null})},
+  document:{createElement:()=>({setAttribute(){},querySelector:()=>null,addEventListener(){}})},
   capitalize:x=>x,escapeHtml:x=>String(x),safeEmojiText:x=>x||'',
   getPersonEmoji:w=>w.emoji,getShiftEmoji:w=>w.night?'🌙':'☀️',getDutyPeriod:w=>w.night?'night':'day',
   getDutyStartTime:()=> '20:00',getDutyEndTime:()=> '08:00',

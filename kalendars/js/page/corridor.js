@@ -340,7 +340,7 @@
   list.addEventListener('scroll', function () { rests = null; setHot(null); }, { passive: true });
   // the roster is rebuilt on a day switch: placed before that frame is painted (no flying in);
   // the root's class only matters when the radio opens or closes
-  new MutationObserver(function () { if (frame) { cancelAnimationFrame(frame); frame = 0; } place(true); verifySoon(); }).observe(list, { childList: true });
+  list.addEventListener('rg:patched', function () { if (frame) { cancelAnimationFrame(frame); frame = 0; } place(true); verifySoon(); });
   var radio = root.classList.contains('host-radio-open');
   new MutationObserver(function () {
     var now = root.classList.contains('host-radio-open');

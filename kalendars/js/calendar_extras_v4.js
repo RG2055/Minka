@@ -95,15 +95,19 @@
         shiftFontSize = Math.max(24, Math.min(56, Math.round(cardH * 0.34)));
       }
       const signature = [cols, cardH, shiftFontSize, occupiedSlots, wide].join('|');
-      if (grid.dataset.mkSizeSignature === signature) return;
-      grid.dataset.mkSizeSignature = signature;
-      grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-      if (wide > 7) grid.style.setProperty('grid-template-columns', `repeat(${wide}, minmax(0, 1fr))`, 'important');
+      if (grid.dataset.mkSizeSignature !== signature) {
+        grid.dataset.mkSizeSignature = signature;
+        grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+        if (wide > 7) grid.style.setProperty('grid-template-columns', `repeat(${wide}, minmax(0, 1fr))`, 'important');
+      }
+      // RG Engine keeps the cards that stay: only the new ones (or all, when the size changed) are written
+      const minH = cardH + 'px', fontPx = shiftFontSize + 'px';
       cards.forEach(card => {
+        if (card.style.minHeight === minH && card.style.aspectRatio) return;
         card.style.aspectRatio = '1 / 0.82';
-        card.style.minHeight = cardH + 'px';
+        card.style.minHeight = minH;
         const shiftEl = card.querySelector('.card-shift');
-        if (shiftEl) shiftEl.style.fontSize = shiftFontSize + 'px';
+        if (shiftEl && shiftEl.style.fontSize !== fontPx) shiftEl.style.fontSize = fontPx;
       });
     });
   }
@@ -121,7 +125,8 @@
     const ro = new ResizeObserver(() => autoSizeCards());
     ro.observe(container);
 
-    const mo = new MutationObserver(() => {
+    // RG Engine says when it wrote the card list (rg:patched).
+    container.addEventListener('rg:patched', () => {
       // The normal day-switch path now sizes every new grid synchronously.
       // Only queue another layout pass for legacy/initial renders whose grids
       // do not yet carry the sizing signature.
@@ -131,7 +136,6 @@
       if (needsSizing) requestAnimationFrame(() => autoSizeCards());
       requestAnimationFrame(applyStaffAccents);
     });
-    mo.observe(container, { childList: true, subtree: false });
 
     autoSizeCards();
   }

@@ -4230,6 +4230,10 @@
       return;
     }
     if(window.__nsOverlayOpen!==true){
+      // RG Engine: a closed panel is not rebuilt on every day switch (617 elements nobody sees);
+      // it is built once while idle after the start, and again when it opens (night-overlay.js
+      // asks isStale() and builds before the panel grows).
+      if(panel && panel.querySelector('.ns-panel-head')){ _nsPendingRenderKey=nextKey; return; }
       scheduleIdleRender(nextKey);
       return;
     }
@@ -4276,6 +4280,8 @@
     warmImages: warmImages,
     closeTimeWheel: function(){ closeTimeWheel(false); },
     _update: update,
+    // the panel shows another day than the one picked (it was closed while days changed)
+    isStale: function(){ return !!_nsPendingRenderKey && _nsPendingRenderKey!==_nsLastRenderKey; },
     getPlan:getPublicPlan,
     // Read only, for the mood gallery's night room: who sleeps in which bed
     // (ROOM_BED_KEYS order, as the room picture shows them) and each one's colour.

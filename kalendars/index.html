@@ -958,33 +958,38 @@ function _mkToast(msg, type) {
 <script src="js/night-plan-history.js?v=20261022ot1"></script>
 <script src="js/page/mk-outline.js?v=20261124ch2"></script>
 <script src="js/page/mk-side-faces.js?v=20261124ch2"></script>
-<script src="js/calendar.js?v=20261126pf1"></script>
+<script src="js/rg-engine.js?v=20261126rg1"></script>
+<script src="js/calendar.js?v=20261126rg1"></script>
 <script src="js/page/coffee-fx.js?v=20261116gc7" defer></script>
 <script src="js/page/coffee-gold.js?v=20261116gc1" defer></script>
 <script src="js/depth-cards.js?v=20261022hv1" defer></script>
 <script src="js/daily-cat.js?v=20261124fl2" defer></script>
 <script src="js/header-weather.js?v=20261110ds1" defer></script>
-<script src="js/calendar_extras_v4.js?v=20261124id1"></script>
+<script src="js/calendar_extras_v4.js?v=20261126rg1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
-<script src="js/fatigue.js?v=20261122fa3"></script>
+<script src="js/fatigue.js?v=20261126rg1"></script>
 <script src="js/nakts-pets.js?v=20261110ds1" defer></script>
-<script src="js/nightsplit.js?v=20261124en2" defer></script>
+<script src="js/nightsplit.js?v=20261126rg1" defer></script>
 <script src="js/page/card-initials-dither.js?v=20261126pf1" defer></script>
 <script src="js/monthcal.js?v=20261008hol1" defer></script>
-<script src="js/design_v1.js?v=20260924perf3" defer></script>
+<script src="js/design_v1.js?v=20261126rg1" defer></script>
 <script src="js/theme.js?v=20261006mb2" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
-<script src="js/emoji.js?v=20261109cl68" defer></script>
+<script src="js/emoji.js?v=20261126rg1" defer></script>
 <script src="js/page/card-pictures-warm.js?v=20261001pw5" defer></script>
 <style>
-/* Day switch (calendar.js g_selectDay): the old day is held until the new one
-   is ready, then swapped in one frame. No animation for this transition only;
+/* Day switch (calendar.js g_selectDayHeld): a day RG Engine did not prepare is
+   held until it is ready (a View Transition on #grafiks-app, or the document),
+   then swapped in one frame. No animation for this transition only;
    other view transitions in the app keep theirs. */
 :root.mk-day-vt::view-transition-group(*),
 :root.mk-day-vt::view-transition-old(*),
-:root.mk-day-vt::view-transition-new(*) { animation: none !important; }
+:root.mk-day-vt::view-transition-new(*),
+:root.mk-day-vt #grafiks-app::view-transition-group(*),
+:root.mk-day-vt #grafiks-app::view-transition-old(*),
+:root.mk-day-vt #grafiks-app::view-transition-new(*) { animation: none !important; }
 </style>
 <link rel="stylesheet" href="css/daybook.css?v=20261018tp2">
 <script src="js/daybook-model.js?v=20260928perf1" defer></script>
@@ -1106,7 +1111,7 @@ document.addEventListener('keydown', (e) => {
   </div>
 </div>
 
-<script src="js/page/night-overlay.js?v=20261124op2"></script>
+<script src="js/page/night-overlay.js?v=20261126rg1"></script>
 <!-- /rad night (radiologists, residents, beds); does nothing for the radiographers -->
 <script src="js/rad-night.js?v=20260926rn14"></script>
 
@@ -1135,7 +1140,7 @@ document.addEventListener('keydown', (e) => {
 
 
 
-<script src="js/page/nameday-highlight.js?v=20260924perf1"></script>
+<script src="js/page/nameday-highlight.js?v=20261126rg1"></script>
 
 
 <script src="js/page/assistant-feed.js?v=20261011pf2"></script>
@@ -1219,6 +1224,9 @@ window.addEventListener('message', function(e) {
     el.style.background = 'rgba(8,12,20,' + panelAlpha.toFixed(3) + ')';
   });
   document.querySelectorAll('.schedule-card, .day-card, .staff-card, .doctor-card, .info-card, .timeline, .next-box, .card, .duty-block, .month-select, .view-btn, .arrow, .tk-bg-card, .tk-preview, .tk-preview-card, .tk-seg-btn, .tk-swatch').forEach(function(el) {
+    // the day's cards: RG Engine keeps them across days, and a rebuilt card never had this (it came
+    // once, at the start); left out so every card of every day looks the same
+    if (el.closest('#grafiks-list')) return;
     el.style.background = 'rgba(8,12,20,' + cardAlpha.toFixed(3) + ')';
     el.style.borderColor = 'rgba(255,255,255,' + cardBorderAlpha.toFixed(3) + ')';
   });
@@ -1988,7 +1996,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 <script id="mk-integrated-duty-header-js-v1" src="js/page/mk-integrated-duty-header.js?v=20261121wg4"></script>
 <!-- Cover Flow: the roster as one turning row of square cards while the radio is open (desktop). -->
 <link rel="stylesheet" id="mk-radio-coverflow" href="css/page/radio-coverflow.css?v=20261109cl68">
-<script src="js/page/radio-coverflow.js?v=20261109cl68" defer></script>
+<script src="js/page/radio-coverflow.js?v=20261126rg1" defer></script>
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
@@ -2057,7 +2065,7 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <link rel="stylesheet" id="mk-mood-m3" href="css/page/mk-mood-m3.css?v=20261124ch2">
 <link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261123mb2">
 <link rel="stylesheet" href="css/page/card-layout.css?v=20261124en2">
-<script src="js/page/card-layout.js?v=20261124en2" defer></script>
-<script src="js/page/corridor.js?v=20261125ce2" defer></script>
+<script src="js/page/card-layout.js?v=20261126rg1" defer></script>
+<script src="js/page/corridor.js?v=20261126rg1" defer></script>
 </body>
 </html>

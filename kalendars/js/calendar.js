@@ -2036,16 +2036,16 @@ function filterFullList(btn) {
     return `${dd}.${mm}.${m[3]}`;
   }
 
-  /* A day switch is shown in one piece. The old day stays on screen (a View
-     Transition, with no animation at all) until the new day's card effects,
-     decorations and emoji pictures are ready, at most DAY_HOLD_MS, then the
-     whole page swaps in one frame. Usually everything is ready at once and
-     nothing is held; a picture seen for the first time on this computer
-     (fetched from the server) no longer pops in a moment after its card.
-     A day already shown complete in this session skips the hold entirely.
-     Only for days a person picks (a day pill, the mini calendar); data
-     refreshes and the automatic step at a shift's end call g_selectDay()
-     directly, as before, because their next lines read the new day at once. */
+  /* A day switch is shown in one piece. RG Engine prepares the days next to the shown one while the
+     page is idle (their cards built apart, their pictures fetched and decoded, nothing shown), and the
+     list is morphed in place (js/rg-engine.js): a prepared day, or one already shown complete in this
+     session, is drawn at once in the frame of the click. Only a day that was not prepared (a jump in
+     the mini calendar) is held: the old day stays on screen (a View Transition on the calendar
+     element where the browser has it, else on the document, with no animation) until the new day's
+     card effects, decorations and emoji pictures are ready, at most DAY_HOLD_MS.
+     Only for days a person picks (a day pill, the mini calendar); data refreshes and the automatic
+     step at a shift's end call g_selectDay() directly, as before, because their next lines read the
+     new day at once. */
   const DAY_HOLD_MS = 300;
   let g_dayVT = null;
   // Something on the new day's cards still on its way: an effect or lens not
@@ -2096,21 +2096,62 @@ function filterFullList(btn) {
       if (normalizeDateStr(activeDateStr) === normalizeDateStr(date) && !g_dayMissing()) g_dayComplete.add(g_dayKey(date));
     });
   }
+  // Days next to the shown one, built apart while idle; their pictures fetched and decoded.
+  let g_preparing = false;
+  const g_dayPrepared = new Set();
+  function g_prepareDay(date) {
+    const key = g_dayKey(date);
+    if (g_dayPrepared.has(key) || g_dayComplete.has(key)) return;
+    const was = activeDateStr, wasWin = window.__activeDateStr;
+    let frag = null;
+    try { activeDateStr = date; window.__activeDateStr = date; g_preparing = true; frag = g_updateList(); }
+    catch (_e) { frag = null; }
+    finally { g_preparing = false; activeDateStr = was; window.__activeDateStr = wasWin; }
+    if (!frag || !frag.querySelectorAll) return;
+    const urls = new Set(), F = window.MinkaEmojiFilm;
+    frag.querySelectorAll('img[src]').forEach(img => urls.add(img.getAttribute('src')));
+    frag.querySelectorAll('[style*="url("]').forEach(el => { for (const m of el.getAttribute('style').matchAll(/url\((['"]?)(.*?)\1\)/g)) urls.add(m[2]); });
+    if (F && F.staticSrc) frag.querySelectorAll('.mk-emoji-side, .mk-mid-person-emoji, .mk-mid-meta-emoji-fly').forEach(el => { const u = F.staticSrc((el.textContent || '').trim()); if (u) urls.add(u); });
+    Promise.all(RGEngine.decode([...urls])).then(() => g_dayPrepared.add(key));
+  }
+  let g_prepareToken = 0;
+  function g_prepareAround(date) {
+    const token = ++g_prepareToken;
+    const p = String(normalizeDateStr(date)).split('.').map(Number);
+    if (p.length !== 3) return;
+    [1, -1].forEach(delta => {
+      const d = new Date(p[2], p[1] - 1, p[0] + delta);
+      const ds = String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+      RGEngine.idle(() => { if (token === g_prepareToken && !document.hidden) g_prepareDay(ds); }, 3000);
+    });
+  }
+  // What the frame-batched modules would do in the next frame, done now: the new day's first frame
+  // already has its card effects, decorations and emoji still frames.
+  function g_dayFxNow() {
+    try { if (window.MinkaDither && window.MinkaDither.flush) window.MinkaDither.flush(); } catch (_e) {}
+    try { if (window.MinkaEmojiFilm && window.MinkaEmojiFilm.apply) window.MinkaEmojiFilm.apply(); } catch (_e) {}
+  }
   function g_selectDayHeld(date) {
     const root = document.documentElement;
+    const key = g_dayKey(date);
     // Phones switch at once: the hold kept the old day's snapshot (and the old
     // pill highlight) on screen while pictures came over the mobile network, so
     // a tap looked ignored, and full-screen snapshots are heavy for a phone GPU.
-    if (typeof document.startViewTransition !== 'function' || document.hidden || root.classList.contains('mk-schedule-booting')
-      || root.classList.contains('mk-mobile-shell') || g_dayComplete.has(g_dayKey(date))) {
+    const app = document.getElementById('grafiks-app');
+    const vtHost = app && typeof app.startViewTransition === 'function' ? app : (typeof document.startViewTransition === 'function' ? document : null);
+    if (!vtHost || document.hidden || root.classList.contains('mk-schedule-booting')
+      || root.classList.contains('mk-mobile-shell') || g_dayComplete.has(key) || g_dayPrepared.has(key)) {
+      if (g_dayVT) { try { g_dayVT.skipTransition(); } catch (_e) {} }
       g_selectDay(date);
+      g_dayFxNow();
       g_noteDayComplete(date);
+      g_prepareAround(date);
       return;
     }
     // A newer click wins: the previous hold ends at once.
     if (g_dayVT) { try { g_dayVT.skipTransition(); } catch (_e) {} }
     root.classList.add('mk-day-vt');
-    const vt = g_dayVT = document.startViewTransition(() => { g_selectDay(date); return g_dayReady(); });
+    const vt = g_dayVT = vtHost.startViewTransition(() => { g_selectDay(date); return g_dayReady(); });
     // A held switch must never outlive its hold: while the transition lives, its
     // layer takes every touch, so a stuck one reads as a frozen app. Past the
     // hold plus a generous margin it is cut and the new day shows at once.
@@ -2121,6 +2162,7 @@ function filterFullList(btn) {
       g_dayVT = null;
       root.classList.remove('mk-day-vt');
       g_noteDayComplete(date);
+      g_prepareAround(date);
     });
   }
   function g_selectDay(date) {
@@ -6187,16 +6229,18 @@ function filterFullList(btn) {
       g_rosterWidthObs.observe(container);
     }
     const rosterWidth = Math.max(0, (g_rosterWidth != null ? g_rosterWidth : container.clientWidth) || 0);
-    // The feedback card contains the largest DOM/SVG subtree in the roster and
-    // does not belong to a specific employee. Reuse it across day changes
-    // instead of parsing and constructing the same markup on every click.
-    const reusableFeedbackCard = container.querySelector('.rg-feedback-card');
-    if (reusableFeedbackCard) {
-      reusableFeedbackCard.remove();
-      window.__minkaReusableFeedbackCard = reusableFeedbackCard;
-    }
-    container.replaceChildren();
-    container.className = isGridView ? 'grid-view' : 'list-view';
+    // RG Engine: the new day is built apart (frag) and morphed into the page; cards that stay keep
+    // their nodes. The mood card is not part of the build: it stays where it is, and is kept for
+    // mount() if its section goes.
+    const moodCard = container.querySelector('.rg-feedback-card');
+    const frag = document.createDocumentFragment();
+    const listClass = isGridView ? 'grid-view' : 'list-view';
+    if (!g_preparing && container.className !== listClass) container.className = listClass;
+    const putDay = () => {
+      const out = RGEngine.morph(container, frag, { quiet: true });
+      if (moodCard && !container.contains(moodCard)) { moodCard.remove(); window.__minkaReusableFeedbackCard = moodCard; }
+      return out;
+    };
 
     const isToday = (activeDateStr === g_todayStr);
     const now = g_now();
@@ -6215,7 +6259,9 @@ function filterFullList(btn) {
     g_rolloverPreviewTrace('list:' + activeDateStr + ':rg=' + visibleRgWorkers.length + ':rd=' + visibleRdWorkers.length + ':empty=' + ((!hasRg && !hasRd) ? '1' : '0'));
 
     if (!hasRg && !hasRd) {
-      container.innerHTML = "<div style='color:#666;width:100%;text-align:center;margin-top:50px;'>Nav datu</div>";
+      frag.appendChild(document.createRange().createContextualFragment("<div style='color:#666;width:100%;text-align:center;margin-top:50px;'>Nav datu</div>"));
+      if (g_preparing) return frag;
+      RGEngine.notify(container, putDay());
       return;
     }
 
@@ -7679,7 +7725,9 @@ function filterFullList(btn) {
         card.setAttribute('data-worker', w.name);
         card.setAttribute('data-shift', w.shift);
         if (w.type) card.setAttribute('data-type', w.type);
-        card.onclick = (e) => { e.stopPropagation(); showWorkerSchedule(w.name, w.shift); };
+        // RG Engine keeps a card that stays on the next day and only updates it: every handler reads
+        // the card it is on, as it is now, never the build it came from.
+        card.onclick = (e) => { e.stopPropagation(); const c = e.currentTarget; showWorkerSchedule(c.dataset.worker || w.name, c.dataset.shift || w.shift); };
         const roleClass = isRd ? ' mk-mid-card-rd' : ' mk-mid-card-rg';
         const fatigueLevel = !hasFatigueScore ? 'none' : fatigueScore > 66 ? 'hi' : fatigueScore >= 33 ? 'mid' : 'low';
         const bcHours = probe ? performance.now() : 0;
@@ -7723,28 +7771,31 @@ function filterFullList(btn) {
         const _wSkin = (typeof window.mkGetWorkerSkin === 'function') ? window.mkGetWorkerSkin(w.name) : null;
         if (typeof window.mkApplySkinToEl === 'function') window.mkApplySkinToEl(card, _wSkin);
 
-        const coffeeBtn = card.querySelector('.mk-coffee-add');
+        const cardOf = (e) => e.currentTarget.closest('.card[data-worker]') || card;
         const coffeeIcon = card.querySelector('.mk-coffee-mid');
         if(coffeeIcon)coffeeIcon.onclick=(e)=>{
           e.preventDefault();e.stopPropagation();
-          if(card.dataset.coffeeMode==='icon'){
+          const host=cardOf(e), icon=e.currentTarget;
+          if(host.dataset.coffeeMode==='icon'){
             // Desktop uses the whole card's hover area; taps/keyboard can toggle.
             if(window.matchMedia('(hover: hover)').matches&&e.detail>0)return;
-            const expanded=card.dataset.coffeeExpanded!=='true';
-            card.dataset.coffeeExpanded=String(expanded);
-            coffeeIcon.setAttribute('aria-expanded',String(expanded));
-            coffeeIcon.setAttribute('aria-label',expanded?'Sakļaut kafijas pogas':'Atvērt kafijas pogas');
-          }else showCoffeePicker(w.name,card,coffeeIcon);
+            const expanded=host.dataset.coffeeExpanded!=='true';
+            host.dataset.coffeeExpanded=String(expanded);
+            icon.setAttribute('aria-expanded',String(expanded));
+            icon.setAttribute('aria-label',expanded?'Sakļaut kafijas pogas':'Atvērt kafijas pogas');
+          }else showCoffeePicker(host.dataset.worker||w.name,host,icon);
         };
-        if(coffeeIcon){
-          card.addEventListener('pointerenter',()=>{if(card.dataset.coffeeMode==='icon'&&window.matchMedia('(hover: hover)').matches)coffeeIcon.setAttribute('aria-expanded','true');});
-          card.addEventListener('pointerleave',()=>{if(card.dataset.coffeeMode==='icon')coffeeIcon.setAttribute('aria-expanded',String(card.dataset.coffeeExpanded==='true'));});
+        {
+          card.addEventListener('pointerenter',(e)=>{const c=e.currentTarget,icon=c.querySelector('.mk-coffee-mid');if(icon&&c.dataset.coffeeMode==='icon'&&window.matchMedia('(hover: hover)').matches)icon.setAttribute('aria-expanded','true');});
+          card.addEventListener('pointerleave',(e)=>{const c=e.currentTarget,icon=c.querySelector('.mk-coffee-mid');if(icon&&c.dataset.coffeeMode==='icon')icon.setAttribute('aria-expanded',String(c.dataset.coffeeExpanded==='true'));});
         }
+        const coffeeBtn = card.querySelector('.mk-coffee-add');
         if (coffeeBtn) {
           coffeeBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            showCoffeePicker(w.name, card, coffeeBtn);
+            const host = cardOf(e);
+            showCoffeePicker(host.dataset.worker || w.name, host, e.currentTarget);
           };
         }
         const coffeeSub = card.querySelector('.mk-coffee-sub');
@@ -7752,23 +7803,25 @@ function filterFullList(btn) {
           coffeeSub.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (getCoffeeCount(w.name) <= 0) return;
-            const removedSrc = removeCoffeeDetail(w.name);
+            const host = cardOf(e), name = host.dataset.worker || w.name;
+            if (getCoffeeCount(name) <= 0) return;
+            const removedSrc = removeCoffeeDetail(name);
             const remEq = removedSrc ? coffeeEq(removedSrc) : 1;
-            setCoffeeCount(w.name, Math.max(0, getCoffeeCount(w.name) - remEq));
-            updateCoffeeRow(card, w.name);
+            setCoffeeCount(name, Math.max(0, getCoffeeCount(name) - remEq));
+            updateCoffeeRow(host, name);
             notifyCoffeeChanged();
-            postCoffeeDelta(w.name, -remEq, card, removedSrc ? { source: removedSrc } : null);
+            postCoffeeDelta(name, -remEq, host, removedSrc ? { source: removedSrc } : null);
           };
         }
         // − and + are small (14–16 px): a mouse click that just misses one, or lands on a label
         // some faces draw over it, presses that button instead of opening the card. Desktop
         // only: on the phone the pill sits in the card's middle, where a tap must open the card.
-        if (coffeeBtn || coffeeSub) card.addEventListener('click', (e) => {
-          if (card.classList.contains('wf-editing') || document.documentElement.classList.contains('mk-mobile-shell') || !window.matchMedia('(pointer: fine)').matches) return;
+        card.addEventListener('click', (e) => {
+          const c = e.currentTarget;
+          if (c.classList.contains('wf-editing') || document.documentElement.classList.contains('mk-mobile-shell') || !window.matchMedia('(pointer: fine)').matches) return;
           if (e.target.closest('button, a, input, select, textarea, label')) return;
           let near = null, best = 11;
-          for (const b of [coffeeSub, coffeeBtn]) {
+          for (const b of [c.querySelector('.mk-coffee-sub'), c.querySelector('.mk-coffee-add')]) {
             const r = b && b.getBoundingClientRect();
             if (!r || !r.width) continue;
             const d = Math.hypot(Math.max(r.left - e.clientX, 0, e.clientX - r.right), Math.max(r.top - e.clientY, 0, e.clientY - r.bottom));
@@ -7782,14 +7835,14 @@ function filterFullList(btn) {
         row.className = 'list-row' + (isRd ? ' list-row-rd' : '');
         row.setAttribute('data-worker', w.name);
         row.setAttribute('data-shift', w.shift);
-        row.onclick = (e) => { e.stopPropagation(); showWorkerSchedule(w.name, w.shift); };
+        row.onclick = (e) => { e.stopPropagation(); const c = e.currentTarget; showWorkerSchedule(c.dataset.worker || w.name, c.dataset.shift || w.shift); };
         row.innerHTML = `<b style="font-size:16px;">${isRd?'<span style="color:#ff6b6b;font-size:10px;margin-right:4px;">RD</span>':''}${escapeHtml(firstName)} ${escapeHtml(surname)}</b><span style="font-weight:900;color:${isRd?'#ff6b6b':'var(--accent)'};font-size:18px;">${escapeHtml(w.shift)}</span>`;
         return row;
       }
     }
 
     // Refresh fatigue bars after render (async, fatigue data may not be ready yet)
-    setTimeout(function() {
+    if (!g_preparing) setTimeout(function() {
       if (window.__refreshFatigueBars) window.__refreshFatigueBars();
     }, 200);
 
@@ -7799,7 +7852,7 @@ function filterFullList(btn) {
       d.className = 'cards-divider';
       d.style.cssText = `grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:4px 0 2px;font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:${color};opacity:.7;`;
       d.innerHTML = `<span style="width:20px;height:1px;background:currentColor;opacity:.4;display:block;flex-shrink:0;"></span>${label}<span style="flex:1;height:1px;background:currentColor;opacity:.15;display:block;"></span>`;
-      container.appendChild(d);
+      frag.appendChild(d);
     }
 
     // The skin editor can open for a worker who is not on the selected day (e.g.
@@ -7830,6 +7883,7 @@ function filterFullList(btn) {
       if (isGridView) {
         const sec = document.createElement('div');
         sec.className = 'cards-section';
+        sec.setAttribute('data-rg-key', 'rd');
         const lbl = document.createElement('div');
         lbl.className = 'cards-section-label cards-section-label-rd';
         lbl.style.cssText = '';
@@ -7842,10 +7896,10 @@ function filterFullList(btn) {
         visibleRdWorkers
           .forEach(w => { grid.appendChild(buildCard(w, true)); });
         sec.appendChild(grid);
-        container.appendChild(sec);
+        frag.appendChild(sec);
       } else {
         visibleRdWorkers
-          .forEach(w => { container.appendChild(buildCard(w, true)); });
+          .forEach(w => { frag.appendChild(buildCard(w, true)); });
       }
     }
 
@@ -7854,6 +7908,7 @@ function filterFullList(btn) {
       if (isGridView) {
         const sec = document.createElement('div');
         sec.className = 'cards-section';
+        sec.setAttribute('data-rg-key', 'rg');
         const lbl = document.createElement('div');
         lbl.className = 'cards-section-label cards-section-label-rg';
         lbl.style.cssText = '';
@@ -7866,10 +7921,10 @@ function filterFullList(btn) {
         visibleRgWorkers
           .forEach(w => { grid.appendChild(buildCard(w, false)); });
         sec.appendChild(grid);
-        container.appendChild(sec);
+        frag.appendChild(sec);
       } else {
         visibleRgWorkers
-          .forEach(w => { container.appendChild(buildCard(w, false)); });
+          .forEach(w => { frag.appendChild(buildCard(w, false)); });
       }
     }
 
@@ -7878,7 +7933,9 @@ function filterFullList(btn) {
     // paints. On a day switch that briefly pushed the radiographer cards down
     // before snapping them back. When the integration hook is available,
     // finalize the complete roster atomically inside this render.
+    if (g_preparing) return frag;     // a day prepared ahead: built, not shown
     const pt2 = probe ? performance.now() : 0;
+    const patched = putDay();
     try {
       if (typeof window.__minkaFinalizeRosterCards === 'function') {
         window.__minkaFinalizeRosterCards(rosterWidth);
@@ -7896,6 +7953,7 @@ function filterFullList(btn) {
       probe.coffeeMs = +(performance.now() - pt3).toFixed(2);
       (window.__minkaListProbeLog ||= []).push(Object.assign({}, probe));
     }
+    RGEngine.notify(container, patched);
     g_maybePreviewRollover();
   }
 

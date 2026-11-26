@@ -239,7 +239,7 @@
 
   new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['class'] });
   // Roster rebuilt (day switch, refresh): the nav buttons are thrown out with it.
-  new MutationObserver(scheduleCollect).observe(list, { childList: true });
+  list.addEventListener('rg:patched', scheduleCollect);
   // The radio's height arrives here as a style on the list.
   new MutationObserver(function () { if (on) { measure(); schedulePlace(); } }).observe(list, { attributes: true, attributeFilter: ['style'] });
 

@@ -428,7 +428,7 @@
   // cards glide for ~0.5 s), scrolling the corridor, the radio; and its own height
   var moodRO = typeof ResizeObserver === 'function' ? new ResizeObserver(schedulePlace) : null, moodSeen = null;
   function watchMood() { var m = list.querySelector('.rg-feedback-card'); if (moodRO && m && m !== moodSeen) { if (moodSeen) moodRO.unobserve(moodSeen); moodRO.observe(m); moodSeen = m; } schedulePlace(); }
-  new MutationObserver(watchMood).observe(list, { childList: true });
+  list.addEventListener('rg:patched', watchMood);   // the roster written by RG Engine
   // <html>'s class changes for many reasons (the night panel, a dialog, the weather); only these
   // move the mood card. Placing reads a dozen boxes, which costs a whole layout when the page has
   // just changed, so it is not done for the others.

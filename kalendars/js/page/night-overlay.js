@@ -88,7 +88,8 @@
       // Opened before its idle build (soon after a load): build it now, before it grows. Built during the
       // growth, it froze the animation twice and seemed to open twice (the user); after that it is ready.
       var content=document.getElementById('nsPanelContent');
-      if(content && !content.querySelector('.ns-panel-head') && window.__ns && typeof window.__ns._update==='function'){
+      var stale = !!(window.__ns && typeof window.__ns.isStale==='function' && window.__ns.isStale());
+      if(content && (!content.querySelector('.ns-panel-head') || stale) && window.__ns && typeof window.__ns._update==='function'){
         window.__nsOverlayOpen = true;   // update() builds at once only for an open panel
         try { window.__ns._update(); } catch(_e) {}
         window.__nsOverlayOpen = false;

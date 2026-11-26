@@ -88,23 +88,17 @@
     if (!document.hidden) applyLiveClasses();
   }, { passive: true });
 
-  // Also re-run whenever the calendar re-renders (grafiks-list changes)
-  if (window.MutationObserver) {
-    let liveDebounce = null;
-    const observer = new MutationObserver(() => {
+  // Also re-run whenever the calendar re-renders (RG Engine wrote the card list)
+  let liveDebounce = null;
+  function attachListener() {
+    const list = document.getElementById('grafiks-list');
+    if (!list) { setTimeout(attachListener, 500); return; }
+    list.addEventListener('rg:patched', () => {
       clearTimeout(liveDebounce);
       liveDebounce = setTimeout(applyLiveClasses, 400);
     });
-    function attachObserver() {
-      const list = document.getElementById('grafiks-list');
-      if (list) {
-        observer.observe(list, { childList: true, subtree: false });
-      } else {
-        setTimeout(attachObserver, 500);
-      }
-    }
-    attachObserver();
   }
+  attachListener();
 
 
   /* ──────────────────────────────────────────────────────────────

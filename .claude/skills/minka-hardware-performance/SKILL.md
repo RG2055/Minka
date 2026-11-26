@@ -84,6 +84,7 @@ Talk to the user in Latvian. Code, comments and commit text stay in English.
 | `spectrum-bench.js` | radio playing: per-process CPU, main busy, commits; per-skin screenshots with a fixed analyser | `SKIN=`, `LABEL=` |
 | `dither-bench.js` | initials-dither frame: drawImage per cell vs JS blit vs Rust/WASM, ms and pixel diff | `WASM=<.wasm>`, `RATE=` |
 | `css-prune.js` | EXPERIMENT: copies of the calendar CSS without never-live style rules + ROUTES, to size the cascade's share | never ship output |
+| `dom-compare.js` | the card list and side columns after the same clicks on two servers (old code on `A=8013`, new on `B=8012`): attributes, class tokens, inline style properties, text | `SEQ=`, `DAY=`; run the old tree with `MINKA_AUDIT_PORT=8013` |
 | `shot.js` + `pixdiff.py` | seeded day screenshots (radio closed/open) and a pixel compare with counts per threshold | compare against a 2nd base run |
 | `field-probe.js` | **on the PC**: LoAF, interaction latency split, CPU pressure, heap/DOM over time | paste in DevTools |
 

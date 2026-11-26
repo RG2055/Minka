@@ -144,6 +144,29 @@ keyed framework silently showed a stale card when the key was not unique (fixed 
 retains detached nodes: not usable for a 24 h app. Leptos (WASM DOM glue, full rewrite) and ArrowJS (small, young)
 were assessed, not built.
 
+## RG Engine 1.0 in the app (2026-11-26, cloud, target navigator, branch rg-engine-1)
+
+`kalendars/js/rg-engine.js`: the day's card list is built apart (`g_updateList` into a fragment) and morphed into
+`#grafiks-list` against the previous build (a detached shadow copy): only changed attributes, class tokens, inline
+style properties, text and nodes are written; what other modules added is left alone; a card whose builder content a
+module rewrote is replaced whole. `rg:patched` (microtask, after the finaliser) replaces the list-level
+MutationObservers of corridor, coverflow, card-layout, calendar_extras_v4, design_v1, emoji, nameday, fatigue.
+Neighbour days built while idle with their pictures decoded; the hold (`DAY_HOLD_MS`) only for an unprepared day, on
+`#grafiks-app.startViewTransition` where it exists. The closed night panel is no longer rebuilt on a switch.
+
+| x4 unless noted | before (stage 0 in tree) | RG Engine 1.0 |
+|---|---|---|
+| day switch radio closed, median / p90 (dayswitch.js) | 654 / 877 ms | 250 / 888 ms |
+| radio open / spectrum, median | 370 / 394 ms | 193 / 196 ms |
+| task / style / layout per switch | 868 / 319 / 71 ms | 626 / 161 / 39 ms |
+| elements restyled per switch, passes, style ms x1 (switch-restyle.js) | 1537, 79.3, 78.7 ms | 767, 72.5, 46.2 ms |
+| card hover (hover-radio.js WIGGLE=1) | dropped 22.1-23.0/s | 21.3-24.2/s (unchanged: hover is not the engine's) |
+| night panel rebuilt while closed, 3 switches | 3 | 0 |
+DOM after the same clicks equal to the old code (dom-compare.js; ids of generated SVG masks aside); screenshot after
+switching: 31 px over 8 vs 198 between two runs of the old code. Found on the way: the inline glass-tint script in
+kalendars/index.html painted the cards present at start only (a rebuild dropped it); the day's cards are now left out.
+p90 stays high: a switch before the neighbour is prepared (clicks 0.7 s apart at x4) takes the held path.
+
 ## Radio
 
 789 KB JS, 505 KB never ran on desktop; CSS 264 KB, 208 KB unused. Engine `js/radio.js` 303 KB.

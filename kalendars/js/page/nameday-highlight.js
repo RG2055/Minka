@@ -143,7 +143,8 @@
       if (!el) return;
       // Only a rebuilt card list needs another highlight pass. Watching the
       // whole subtree also catches every one-second timer text replacement.
-      new MutationObserver(() => queueNamedayHighlight(40)).observe(el, { childList: true });
+      if (id === 'grafiks-list') el.addEventListener('rg:patched', () => queueNamedayHighlight(40));   // written by RG Engine
+      else new MutationObserver(() => queueNamedayHighlight(40)).observe(el, { childList: true });
     });
   }
 

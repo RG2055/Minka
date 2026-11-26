@@ -1793,8 +1793,7 @@
   function observeCards() {
     const el = document.getElementById('grafiks-list');
     if (!el) return;
-    new MutationObserver(() => queueBridgeNotify(120))
-      .observe(el, { childList: true });
+    el.addEventListener('rg:patched', () => queueBridgeNotify(120));   // written by RG Engine
   }
 
   function notifyMinkaBridge() {
