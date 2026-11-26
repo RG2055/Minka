@@ -294,16 +294,24 @@
   document.addEventListener('mousemove', function (e) { lastX = e.clientX; lastY = e.clientY; },
                             { passive: true });
 
-  var pending = false;
-  var observer = new MutationObserver(function () {
-    /* Sinhrona izsaukšana te bija kļūda: appa maina DOM nepārtraukti (pulkstenis
-       tikšķ katru sekundi), un applyStatics pati pievieno mezglus, tāpēc lapa
-       nokārās. Paliek rAF ar `pending` slēdzi — viena pārbaude uz kadru. */
+  var pending = false, fresh = [];
+  var observer = new MutationObserver(function (records) {
+    /* Only added elements that are (or hold) an emoji are looked at, and the replay only while one plays: the
+       clock's text ticks and every other change in the page used to cost a whole-document search each second
+       (RG Engine no longer rebuilds the cards; measured 35 ms / 10 s idle on an M5). */
+    var SEL = '.' + HOVER_ON.join(', .');
+    for (var i = 0; i < records.length; i++) {
+      var add = records[i].addedNodes;
+      for (var j = 0; j < add.length; j++) { var n = add[j]; if (n.nodeType === 1 && (n.matches(SEL) || n.querySelector(SEL))) fresh.push(n); }
+    }
+    if (!fresh.length && !playing && !nudging) return;
+    /* Sinhrona izsaukšana te bija kļūda: applyStatics pati pievieno mezglus. Viena pārbaude uz kadru. */
     if (pending) return;
     pending = true;
     requestAnimationFrame(function () {
       pending = false;
-      applyStatics();
+      var got = fresh; fresh = [];
+      if (got.length) applyStatics(got);
       // a picture emoji redrawn inside the same element: play the new one
       if (playing && document.contains(playing) && playing.__mkPic && !playing.contains(playing.__mkPic)) {
         var again = playing; playing.__mkPic = null; playing = null; start(again); return;
@@ -323,11 +331,13 @@
      pamana MutationObserver un izsauc to vēlreiz — un, tā kā tagad tas notiek
      sinhroni, bez šī karoga sanāca bezgalīgs cikls, kas nokāra lapu. */
   var applying = false;
-  function applyStatics() {
+  function applyStatics(roots) {   // roots: only these (added) elements; none = the whole page (start, manifest)
     if (applying || !manifest || !manifest.emoji) return;
     applying = true;
     try {
-      document.querySelectorAll('.' + HOVER_ON.join(', .')).forEach(ensureStatic);
+      var SEL = '.' + HOVER_ON.join(', .');
+      if (!roots) document.querySelectorAll(SEL).forEach(ensureStatic);
+      else roots.forEach(function (r) { if (!r.isConnected) return; if (r.matches(SEL)) ensureStatic(r); r.querySelectorAll(SEL).forEach(ensureStatic); });
     } finally {
       applying = false;
     }

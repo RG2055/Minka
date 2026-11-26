@@ -1717,9 +1717,10 @@
       scheduleAddonPortals(180);
     }
   }, { passive: true });
+  // only a tilting card (depth-cards.js) moves with the pointer; elsewhere pointerover/out cover the lift
   document.addEventListener('pointermove', function(event) {
     if (event.target && event.target.closest
-      && event.target.closest('#grafiks-list .card.mk-addon-group-charm')) {
+      && event.target.closest('#grafiks-list .card.mk-addon-group-charm.mk-depth-live')) {
       scheduleAddonPortals(0);
     }
   }, { passive: true });

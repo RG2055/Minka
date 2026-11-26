@@ -149,6 +149,8 @@
       }
     }
     modal.style.display = 'flex';
+    // A modal <dialog>: top layer (no z-index race), the page behind is inert.
+    if (!modal.open) modal.showModal();
     modal.dataset.state = 'open';
     modal.setAttribute('aria-hidden', 'false');
     const sheet = modal.querySelector('.mk-stats-sheet');
@@ -156,7 +158,8 @@
     // Focus moves into the dialog: the selected tab, else the close button.
     const target = modal.querySelector('#stats-table-wrap [role="tab"][aria-selected="true"]') || modal.querySelector('.mk-stats-close');
     // No ring for a mouse open: the ring appears once the keyboard is used.
-    if (target) { try { target.focus({ preventScroll: true, focusVisible: false }); } catch (_e) {} }
+    // showModal() may already have focused it with a ring: focus it again without.
+    if (target) { try { if (document.activeElement === target) target.blur(); target.focus({ preventScroll: true, focusVisible: false }); } catch (_e) {} }
     try { window.parent && window.parent.postMessage({ type: 'mk_stats_opened' }, window.location.origin); } catch(_e) {}
   };
 
@@ -165,6 +168,8 @@
     if (!m || m.dataset.state === 'closing' || m.style.display === 'none') return;
     m.dataset.state = 'closing';
     m.setAttribute('aria-hidden', 'true');
+    // Out of the top layer at once; the inline display keeps it painted while it plays out.
+    if (m.open) m.close();
     try { window.parent && window.parent.postMessage({ type: 'mk_stats_closed' }, window.location.origin); } catch(_e) {}
     const back = opener;
     opener = null;
@@ -183,6 +188,10 @@
     if (window.MinkaMotion && sheet) window.MinkaMotion.closeSurface(sheet, { key: 'stats', origin: origin, scrim: m }, finish);
     else finish();
   };
+
+  // A close request the keydown below did not take (the phone's back): play our close.
+  const statsEl = document.getElementById('stats-modal');
+  if (statsEl) statsEl.addEventListener('close', () => { if (isOpen(statsEl)) window.closeStatsModal(); });
 
   document.addEventListener('keydown', e => {
     const m = document.getElementById('stats-modal');

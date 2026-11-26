@@ -59,7 +59,6 @@
       uniforms: { smokeAmount: 1, smokeHeight: .8, smokeScale: 1, smokeWind: .2 } } },
     { id: 'ripples', name: 'Apļi', note: 'Apļi uz ūdens', fx: { field: 'ripples', shares: [0, .45, 1], t0: 5,
       uniforms: { ripplesA: [.3, .36, .72, .68], ripplesB: [.3, .36, .3, .36], ripplesCount: 2, ripplesDecay: 1, ripplesIntensity: 1, ripplesRings: 12 } } },
-    { id: 'storm', name: 'Kaķis', note: 'Kaķis ar zobenu dejo lietū', fx: { field: 'cat', img: 'center-g-cat.webp', shares: [0, .5, 1], uniforms: {} } },
     { id: 'mines', name: 'Mīnas', note: 'Mīnas noskaņas krāsā, spēlē uzreiz', icon: '💣', game: 'mines' },
     { id: 'candy', name: 'Konfektes', note: 'Konfektes 98 no galerijas, ar līmeņiem', icon: '🍬', game: 'candy' },
     { id: 'runner', name: 'Skrējiens', note: 'Nogurumiņš lec pāri krūzēm, katrs līmenis citā tonī', icon: '🏃', game: 'runner' },
@@ -150,15 +149,18 @@
   // The game asks for just what it uses: the board is square and as tall as the box allows, the panel
   // stands at its side (mood-gallery-pc.js SW), so its width is the board's height plus the panel. Wider
   // would only leave empty bands beside the board and make the cards smaller for nothing.
-  function gameOn() { return centerNow() === 'candy' && current().mood !== false; }
+  function gameOn() { var c = centerNow(); return (c === 'candy' || c === 'runner') && current().mood !== false; }   // both games get the room (the runner stayed mood-card small)
   function gameSpan() {
-    var Hb = header && header.getBoundingClientRect(), top = Hb && Hb.height ? Hb.bottom + 8 : 4, h = window.innerHeight - 64 - top;
+    // (the host ends this frame above its dock already: a further 64 px "for the dock" left an empty band under the game, as
+    // it did under the walls, f07f8134)
+    var Hb = header && header.getBoundingClientRect(), top = Hb && Hb.height ? Hb.bottom + 8 : 4, h = window.innerHeight - 8 - top;
     // what is not the game in the box (the mood's line and the rating row), as last measured
     var gb = centerEl.querySelector('.mk-cl-game-box'), over = !centerEl.hidden && gb && gb.offsetHeight ? centerEl.offsetHeight - gb.offsetHeight : 150;
     // the board as tall as what is left under the strip (78), plus the picture's padding; never
     // narrower than the rating row under it
     // nine columns of the rows' cell size at most (mood-gallery-pc.js NX): the board may be wider than tall
-    return { top: top, h: h, w: Math.max(460, Math.round(Math.max(240, h - over - 78) * 9 / 7) + 36) };
+    // a square board as tall as the box, its HUD in its corners or one row over it (mood-gallery-pc.js): no wider
+    return { top: top, h: h, w: Math.max(320, Math.round(Math.max(240, h - over - 4)) + 36) };
   }
   window.MkCardLayout = { list: LAYOUTS, current: function () {
     var l = current(), mood = gameOn() && list.querySelector('.rg-feedback-card'), mw = mood && mood.offsetWidth;
@@ -175,7 +177,7 @@
   function centreRect(M) {
     if (!M || !M.width || !gameOn()) return M;
     var span = gameSpan(), cor = root.classList.contains('mk-corridor'), L = list.getBoundingClientRect();
-    var top = cor ? Math.max(L.top + 4, span.top) : M.top, bot = cor ? window.innerHeight - 64 : M.bottom;
+    var top = cor ? Math.max(L.top + 4, span.top) : M.top, bot = cor ? window.innerHeight - 8 : M.bottom;
     var cx = M.left + M.width / 2, lo = Math.max(L.left + 8, 8), hi = Math.min(L.right - 8, window.innerWidth - 8);
     [].forEach.call(list.querySelectorAll('.card.mk-mid-card:not(.rg-feedback-card), .cards-section-label'), function (c) {
       var r = c.getBoundingClientRect();
@@ -393,7 +395,8 @@
     // card's own row (on a day not yet begun a line of words stands under the row: the switch must not land on
     // it). After placeCenter: only then is it known which of the two rows is on show.
     if (!off && M3DOCK && bar.classList.contains('is-docked')) {
-      var dockHost = (!centerEl.hidden && centerEl.querySelector('.mk-cl-moodrow')) || (mood && mood.querySelector('.rg-pulse-taps'));
+      // inside the row itself, the copy's as the card's: the switch is the toolbar's second row (its buttons join the row's own flex box)
+      var dockHost = (!centerEl.hidden && (centerEl.querySelector('.mk-cl-moodrow .rg-pulse-taps') || centerEl.querySelector('.mk-cl-moodrow'))) || (mood && mood.querySelector('.rg-pulse-taps'));
       if (dockHost && bar.parentNode !== dockHost) dockHost.appendChild(bar);
       dockInd();
     }
@@ -491,7 +494,7 @@
     '<div class="mk-cl-cshow" role="group" aria-label="Rādīt arī">' +
       '<label class="mk-cl-switch" title="Rādīt maiņas nogurumu"><input type="checkbox" role="switch" data-chip-on="fatigue"><span>' + BOLT + 'Nogurums</span></label>' +
       '<label class="mk-cl-switch" title="Rādīt dežūras kafiju"><input type="checkbox" role="switch" data-chip-on="coffee"><span>' + CUP + 'Kafija</span></label>' +
-      '<label class="mk-cl-switch" title="Rādīt kaķi"><input type="checkbox" role="switch" data-chip-on="cat"><span>' + PAW + 'Kaķis</span></label></div>' +
+      '</div>' +   // (no cat switch: the cats are gone)
     '</section>';
   document.body.appendChild(panel);
   var ownBox = panel.querySelector('.mk-cl-own');
@@ -700,7 +703,7 @@
   function moodNow(mood) {
     var st = mood && mood.querySelector('.rg-mood-stage'), face = mood && mood.querySelector('.rg-mood-fluent-face');
     var key = st ? st.dataset.rgMood : 'none';
-    return { key: key, word: MOOD_WORD[key] || 'Vēl nav vērtējumu', face: face ? face.textContent.trim() : '🙂',
+    return { key: key, word: MOOD_WORD[key] || '',   // no words for no rating (the user: room for the game) face: face ? face.textContent.trim() : '🙂',
       c1: st && st.style.getPropertyValue('--rg-mood-primary') || '', c2: st && st.style.getPropertyValue('--rg-mood-secondary') || '' };
   }
   // The rating row: the mood card's own row, copied, and dressed by the mood card's own rules: they
@@ -762,9 +765,9 @@
     // the card's own custom properties (sizes, colours) on the host
     var cs = getComputedStyle(mood);
     for (var i = 0; i < cs.length; i++) { var p = cs[i]; if (p.charCodeAt(0) === 45 && p.charCodeAt(1) === 45 && /^--(rg|mx|mk-mx|tap|pulse|md-sys|m3-|mb-)/.test(p)) host.style.setProperty(p, cs.getPropertyValue(p)); }   // (md-sys, m3, mb: the M3 look's tones)
-    var docked = host.querySelector(':scope > .mk-cl-bar');   // the layout switch docked under the row stays (M3)
+    var docked = host.querySelector('.mk-cl-bar');   // the layout switch docked in the row stays (M3), in the new copy
     host.replaceChildren(copy);
-    if (docked) host.appendChild(docked);
+    if (docked) copy.appendChild(docked);
   }
   // the mood line: its face and word, then the shift's fatigue and coffee as on the mood card (each
   // can be switched off in the menu); the coffee chip opens the coffee statistics, as there
@@ -803,7 +806,8 @@
   }
   function centerHtml(id, mood) {
     var c = byCenter(id);
-    if (c.game) return '<div class="mk-cl-art mk-cl-game" data-c="' + id + '"><div class="mk-cl-game-box"></div>' + moodLine() + rateRow() + '</div>';
+    // a game: no mood line (the user: its height to the game; the face and energy are on the rating row and the cards)
+    if (c.game) return '<div class="mk-cl-art mk-cl-game" data-c="' + id + '"><div class="mk-cl-game-box"></div>' + rateRow() + '</div>';
     if (c.widget) return '<div class="mk-cl-art mk-cl-widget" data-c="' + id + '"><div class="mk-cl-wbox"></div>' + moodLine() + rateRow() + '</div>';
     var art = "<canvas class='mk-cl-fx' aria-hidden='true'></canvas>";
     if (id === 'storm') art += '<div class="mk-cl-rain" aria-hidden="true"></div>';
@@ -858,7 +862,7 @@
     var gameGrid = on && id === 'candy' && !root.classList.contains('mk-corridor');
     if (root.classList.contains('mk-cl-game-grid') !== gameGrid) root.classList.toggle('mk-cl-game-grid', gameGrid);
     if (mood) {
-      var mh = gameGrid ? Math.max(0, Math.round(window.innerHeight - 64 - mood.getBoundingClientRect().top)) + 'px' : '';
+      var mh = gameGrid ? Math.max(0, Math.round(window.innerHeight - 8 - mood.getBoundingClientRect().top)) + 'px' : '';
       if (mood.style.getPropertyValue('min-height') !== mh) { if (mh) mood.style.setProperty('min-height', mh, 'important'); else mood.style.removeProperty('min-height'); }
     }
     if (on !== root.classList.contains('mk-cl-center-on')) document.dispatchEvent(new CustomEvent('mk-mood-covered', { detail: on }));
@@ -900,8 +904,8 @@
   var centerMood = null, centerBox = '', settleUntil = 0, settleTimer = 0;
   function settled() { settleUntil = 0; centerEl.classList.remove('is-settling'); }
   // the games: the gallery's own Windows 98 (js/page/mood-gallery-pc.js), one game mounted in the box
-  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261124ng1', pcLoad = null, game = null;
-  var RUN_SRC = 'js/page/mk-runner.js?v=20261124rn3', runLoad = null;
+  var PC_SRC = 'js/page/mood-gallery-pc.js?v=20261126hd3', pcLoad = null, game = null;
+  var RUN_SRC = 'js/page/mk-runner.js?v=20261126nc1', runLoad = null;
   function mountGame(app) {
     var box = centerEl.querySelector('.mk-cl-game-box');
     if (app === 'runner') {   // its own small file, fetched on the first opening; it keeps the mood card's own size

@@ -350,10 +350,11 @@
     align-items: flex-start !important;
     gap: 0 !important;
     box-sizing: border-box !important;
-    width: 310px !important;                /* (the row came 322 wide and ran out of the card on the right) */
-    height: 86px !important;                /* two rows: the ratings, and under them the layout switch */
-    margin: 6px 0 0 4px !important;
-    padding: 4px !important;
+    width: auto !important;                 /* the card's width less its margins: a fixed 310 ran out of a narrower card */
+    margin-right: 4px !important;
+    height: 90px !important;                /* two rows: the ratings, and under them the layout switch (+4 for the badges' room) */
+    margin: 6px 4px 0 4px !important;
+    padding: 6px 8px 4px 6px !important;    /* room over the buttons for their count badges; off the round right corner */
     border-radius: 24px !important;
     background: var(--md-sys-color-surface-container) !important;
     overflow: visible !important;
@@ -381,14 +382,11 @@
     scale: 1;
     transition: border-radius var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), background-color var(--m3-effects), scale var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)) !important;
   }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse] { flex-grow: 1.12 !important; }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-tap:hover > span:first-child { rotate: none !important; }
+    :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-tap:hover > span:first-child { rotate: none !important; }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):active { border-radius: 14px !important; background: var(--md-sys-color-surface-container-highest) !important; scale: .94; translate: none; }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected,
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected:hover,
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected:active { background: none !important; }   /* (its shape is the row's flowing pill) */
-  /* without the motion helper (it should always be there) the chosen one still has its shape */
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps:not(:has(> .m3-ind)) > .rg-pulse-tap.is-selected { background: var(--md-sys-color-primary-fixed) !important; }
+  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.is-selected:active { background: var(--md-sys-color-primary-fixed) !important; border-radius: 20px !important; }
   /* (B's round under each button and its ring on the chosen one are not drawn here) */
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card :is(.rg-pulse-tap:not(.rg-pulse-own), .rg-pulse-write--comment)::before { content: none !important; display: none !important; }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-tap:not(.rg-pulse-own) > span:first-child { font-size: 23px !important; scale: 1; transition: scale var(--mk-dur-spring-default, 560ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), rotate 0s !important; }
@@ -396,8 +394,9 @@
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps:has(.rg-pulse-tap.is-selected) .rg-pulse-tap[data-rg-pulse]:not(.is-selected) > span:first-child { opacity: .8 !important; }
   /* a rating's vote count: a small badge on the face's shoulder, whole inside the button (it was cut off at the top) */
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-count {
-    left: calc(50% + 6px) !important;
-    top: 0 !important;
+    left: auto !important;
+    right: -6px !important;                 /* on the button's corner, off the face (it covered the chosen one) */
+    top: -4px !important;
     min-width: 16px !important;
     height: 16px !important;
     padding: 0 3px !important;
@@ -415,22 +414,7 @@
   }
   :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-write--comment .rg-comment-icon::before { font-size: 9.5px; }
 
-  /* --- alive, in the app's own way (the user: natural and fluid; js/mk-motion.js liquid with css/mk-sys.css, as
-     the dock and the tabs elsewhere): the shape under the chosen rating is ONE pill for the whole row. It flows
-     from the old choice to the new with its leading edge ahead and its trailing edge behind, so it stretches on
-     the way and settles; the chosen face grows a little on the same spring. A press gives slightly and comes
-     back (the app's spring, about 1 % over; no bounce). Nothing moves by itself or under the pointer --- */
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .m3-ind {
-    top: 4px;
-    height: 40px;
-    z-index: 0;
-    border-radius: 20px;
-    background: var(--md-sys-color-primary-fixed);
-    opacity: 0;
-    pointer-events: none;
-  }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .m3-ind.is-on { opacity: 1; }
-  :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment) { z-index: 1; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment) { z-index: 1; }
 
   /* --- Material Web's ripple and focus ring (mood-feedback.js m3Web): no tint under the pointer (the user), a
      ripple on the press, the ring for the keyboard; both in the button's own shape --- */
@@ -481,3 +465,209 @@
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-candy svg { filter: none; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-candy-halo { display: none; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-run { box-shadow: none; }
+
+@layer mk-mx {   /* inside the layer: the older rules it replaces are layered !important, which outranks unlayered ones */
+/* ============ The rating toolbar, measured from Compose Material 3 1.5.0 (androidx tokens), not interpreted ============
+   FloatingToolbar (standard): surface container, items 4 apart, 8 inside (less only when the card is narrower).
+   Row 1: ConnectedButtonGroup Small of the five faces (40 high, 2 apart, outer corners full, inner 8, pressed inner 4,
+   checked fully round), then IconButton Small: own face (filled), comments and gallery (standard, no container).
+   Row 2 (the layout switch, card-layout.js docks it here): the same columns, a connected group of the three layouts
+   over the faces, then three icon toggles (selected: the round shape turns 12 px square, its tonal container).
+   Icon buttons narrow 32 = 4 + 24 + 4 (comments: wide 52 = 14 + 24 + 14, so its 3-digit badge ends in the gap). One 4 px grid.
+   Badge + BadgedBox: 16 high, min 16 wide, 4 inside, labelSmall, error / on-error, its start 12 px before the icon's
+   end and 14 px down over the icon's top; nothing round it. ============ */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps {
+  --rg-tb-pad: clamp(0px, calc((100% - 296px) / 2), 8px);
+  --rg-tb-tonal: var(--md-sys-color-surface-container-highest);
+  --rg-tb-checked: var(--md-sys-color-primary-fixed);
+  --rg-tb-filled: var(--md-sys-color-primary);
+  --rg-tb-on-filled: #241400;
+  --rg-badge: var(--md-sys-color-primary);   /* the RG theme's own tone (red is for warnings only) */
+  --rg-on-badge: var(--md-sys-color-on-primary, color-mix(in srgb, var(--md-sys-color-primary) 16%, #000));
+  width: auto !important; height: 100px !important; margin: 6px 0 0 !important;
+  padding: 8px var(--rg-tb-pad) 8px !important;
+  justify-content: center !important; align-items: flex-start !important; gap: 0 !important;
+  border-radius: 28px !important; background: var(--md-sys-color-surface-container) !important; box-shadow: none !important;
+  overflow: visible !important;
+}
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):hover {
+  flex: 0 0 32px !important; width: 32px !important; min-width: 0 !important; max-width: none !important; height: 40px !important;
+  margin: 0 0 0 4px !important; padding: 0 !important; display: grid !important; place-items: center !important;
+  border-radius: 16px !important; background: transparent !important; overflow: visible !important; scale: 1 !important;
+}
+/* the connected group */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse],
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:hover { margin-left: 2px !important; border-radius: 8px !important; background: var(--rg-tb-tonal) !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse="excellent"]:is(*, :hover) { margin-left: 0 !important; border-radius: 16px 8px 8px 16px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse="terrible"]:is(*, :hover) { border-radius: 8px 16px 16px 8px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:active { border-radius: 4px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse="excellent"]:active { border-radius: 16px 4px 4px 16px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse="terrible"]:active { border-radius: 4px 16px 16px 4px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse].is-selected,
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse].is-selected:is(:hover, :active) { border-radius: 16px !important; background: var(--rg-tb-checked) !important; }
+/* icon buttons: own face filled, comments and gallery standard */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.rg-pulse-own,
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.rg-pulse-own:hover { background: var(--rg-tb-filled) !important; color: var(--rg-tb-on-filled) !important; -webkit-text-fill-color: var(--rg-tb-on-filled) !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap.rg-pulse-own, .rg-pulse-write--comment, .mx-draw-tap):active { border-radius: 8px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment,
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment:hover { flex: 0 1 52px !important; width: auto !important; min-width: 32px !important; }
+/* the icon: 24 px, in the middle (mxCenterFaces still takes off the emoji font's own offset); no grow, no dimming */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap > span:first-child { font-size: 24px !important; line-height: 24px !important; width: auto !important; height: 24px !important; scale: 1 !important; opacity: 1 !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.rg-pulse-own > span:first-child { width: 24px !important; height: 24px !important; flex-basis: 24px !important; }
+/* comments: the chat bubble as a plain icon; its number goes into the badge */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-pulse-write--comment .rg-comment-icon { width: 22px !important; min-width: 0 !important; height: 17px !important; padding: 0 !important; margin-bottom: 3px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-pulse-write--comment .rg-comment-icon::before { content: '\2022\2022\2022' !important; font-size: 7px !important; letter-spacing: 1px !important; }
+/* Badge: one geometry for all three (a face's votes, comments, gallery) */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps :is(.rg-pulse-count, .rg-feedback-action-count, .rg-feedback-new-count, .mx-draw-count) {
+  position: absolute !important; z-index: 3 !important; inset: auto auto auto auto !important; grid-area: auto !important;   /* (in a grid area its box was the cell, not the button) */
+  left: calc(50% - 12px + 12px) !important; top: 6px !important; translate: none !important; transform: none !important; scale: none !important;
+  display: grid !important; place-items: center !important; box-sizing: border-box !important;
+  min-width: 16px !important; width: auto !important; height: 16px !important; margin: 0 !important; padding: 0 4px !important;
+  border: 0 !important; border-radius: 8px !important; box-shadow: none !important; outline: 0 !important;
+  background: var(--rg-badge) !important; color: var(--rg-on-badge) !important; -webkit-text-fill-color: var(--rg-on-badge) !important;
+  font: 500 11px/16px 'Google Sans', 'Geist Sans', system-ui, sans-serif !important; letter-spacing: .5px !important; font-variant-numeric: tabular-nums !important;
+  animation: none !important;
+}
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps :is(.rg-pulse-count, .rg-feedback-action-count, .rg-feedback-new-count, .mx-draw-count):empty { display: none !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-pulse-write--comment .rg-feedback-action-count:not(:empty) { display: grid !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-feedback-badges:has(.rg-feedback-new-count:not(:empty)) .rg-feedback-action-count { display: none !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-feedback-badges { position: static !important; display: contents !important; }
+/* row 2: the same columns */
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked { left: 0 !important; right: 0 !important; width: auto !important; margin-left: 0 !important; bottom: 8px !important; height: 40px !important;
+  padding: 0 var(--rg-tb-pad, 8px) !important; justify-content: center !important; gap: 0 !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked > .m3-ind { display: none !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-quick { flex: 0 0 168px !important; gap: 2px !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run),
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):hover { height: 40px !important; margin: 0 !important; padding: 0 !important; border-radius: 16px !important; background: transparent !important; scale: 1 !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q, :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q:hover { flex: 1 1 0 !important; border-radius: 8px !important; background: var(--md-sys-color-surface-container-highest) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q:first-child:is(*, :hover) { border-radius: 16px 8px 8px 16px !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q:last-child:is(*, :hover) { border-radius: 8px 16px 16px 8px !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q:active { border-radius: 4px !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"], :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"]:is(:hover, :active) { flex-grow: 1 !important; border-radius: 16px !important; background: var(--md-sys-color-primary-fixed) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q > :not(svg) { display: none !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more, .mk-cl-candy, .mk-cl-run):is(*, :hover) { flex: 0 0 32px !important; width: 32px !important; margin-left: 4px !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-candy:is(*, :hover) { flex: 0 1 52px !important; width: auto !important; min-width: 32px !important; }   /* under the comments (wide 52, narrower only in a narrow card, as they do): both rows on the same columns */
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more[aria-expanded="true"], .mk-cl-candy[aria-pressed="true"], .mk-cl-run[aria-pressed="true"]) { border-radius: 12px !important; background: var(--md-sys-color-surface-container-highest) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more, .mk-cl-candy, .mk-cl-run):active { border-radius: 8px !important; }
+/* PlainTooltip (Compose M3 tokens): inverse surface, inverse on-surface, 4 px corners, bodySmall 12/16, 4 x 8 inside,
+   24-56 high, 40-320 wide, 4 px over its button. It read dark on dark before. */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-own:is(:hover, :focus-visible) .rg-pulse-name {
+  display: block !important; position: absolute !important; z-index: 6 !important;
+  left: 50% !important; right: auto !important; top: auto !important; bottom: calc(100% + 4px) !important; translate: -50% 0 !important; transform: none !important;
+  box-sizing: border-box !important; min-width: 40px !important; max-width: 320px !important; min-height: 24px !important; max-height: 56px !important;
+  margin: 0 !important; padding: 4px 8px !important; border: 0 !important; border-radius: 4px !important; box-shadow: none !important; opacity: 1 !important;
+  background: var(--md-sys-color-inverse-surface, #e2e3de) !important;
+  color: var(--md-sys-color-inverse-on-surface, #2f312e) !important; -webkit-text-fill-color: var(--md-sys-color-inverse-on-surface, #2f312e) !important;
+  font: 400 12px/16px 'Google Sans Text', 'Google Sans', system-ui, sans-serif !important; letter-spacing: .4px !important; white-space: nowrap !important; text-transform: none !important;
+}
+/* --- the reference toolbar: one tinted surface; buttons have no container of their own (transparent), only the chosen
+   one carries one; hover is the M3 state layer (on-surface 8 %, pressed 10 %) on the button's own shape, nothing moves
+   or grows; the pressed shape morph stays (pressed/selected only). Overrides the tonal faces, the filled "+" and the
+   row-2 press scale above. --- */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):not(.is-selected),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):not(.is-selected):hover,
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):not([aria-pressed="true"], [aria-expanded="true"]),
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):not([aria-pressed="true"], [aria-expanded="true"]):hover {
+  background: transparent !important; color: var(--md-sys-color-on-surface-variant, #c4c7c5) !important; -webkit-text-fill-color: currentColor !important;
+}
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):is(*, :hover),
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):is(*, :hover) {
+  scale: 1 !important; translate: none !important; transform: none !important;
+  transition: border-radius var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1)), background-color 150ms linear, box-shadow 150ms linear !important;
+}
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):is(:hover, :active),
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):is(:hover, :active) { scale: 1 !important; translate: none !important; }
+/* the state layer: an inset fill over whatever the button shows, on its own shape (box-shadow: no box, no layout) */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):hover,
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):hover { box-shadow: inset 0 0 0 40px color-mix(in srgb, var(--md-sys-color-on-surface, #e3e3e3) 8%, transparent) !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):active,
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-q, .mk-cl-more, .mk-cl-candy, .mk-cl-run):active { box-shadow: inset 0 0 0 40px color-mix(in srgb, var(--md-sys-color-on-surface, #e3e3e3) 10%, transparent) !important; }
+/* the chosen layout and the open row-2 toggles: the checked container (as the chosen face) */
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more[aria-expanded="true"], .mk-cl-candy[aria-pressed="true"], .mk-cl-run[aria-pressed="true"]) { background: var(--md-sys-color-primary-fixed) !important; }
+/* Material Web's ripple: no hover tint of its own (the state layer above is it), the pressed ripple in on-surface */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps md-ripple { --md-ripple-hover-opacity: 0; --md-ripple-pressed-opacity: .1; --md-ripple-pressed-color: var(--md-sys-color-on-surface, #e3e3e3); }
+
+/* --- the two rows by purpose (the user's reference): row 1 = the mood (five faces, your own, the gallery at its end);
+   a hairline; row 2 = the layouts (a connected group in its own pill) and the other functions (more, comments with
+   the count beside the icon, the sweets game, the runner). One wrapping flex box: the docked switch gives its children
+   to it (display: contents) and `order` places everything, so nothing moves in the DOM; each row spreads its buttons
+   with equal gaps. --- */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps { flex-wrap: wrap !important; align-content: flex-start !important; justify-content: space-between !important; row-gap: 0 !important; height: 105px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps::after { content: '' !important; order: 10 !important; flex: 0 0 100% !important; height: 1px !important; margin: 4px 0 !important; background: var(--md-sys-color-outline-variant, rgba(196, 199, 197, .22)) !important; display: block !important; position: static !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):is(*, :hover),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:is(*, :hover, :active),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:is([data-rg-pulse="excellent"], [data-rg-pulse="terrible"]):is(*, :hover, :active) { margin: 0 !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap:is(*, :hover) { flex: 0 1 40px !important; width: 40px !important; min-width: 32px !important; height: 40px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:is(*, :hover, :active),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse="excellent"]:is(*, :hover, :active),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse="terrible"]:is(*, :hover, :active),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-own, .mx-draw-tap):is(*, :hover, :active) { border-radius: 20px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse].is-selected:is(*, :hover, :active) { border-radius: 20px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap.rg-pulse-own { order: 6 !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .mx-draw-tap { order: 7 !important; }
+/* row 2 */
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked:is(*, :hover) { display: contents !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-quick { order: 11 !important; flex: 0 0 auto !important; display: flex !important; gap: 4px !important; height: 40px !important; padding: 4px !important; box-sizing: border-box !important;
+  border-radius: 20px !important; background: color-mix(in srgb, var(--md-sys-color-surface-container) 62%, #000) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q:is(*, :hover, :active, :first-child, :last-child) { flex: 0 0 32px !important; width: 32px !important; height: 32px !important; border-radius: 16px !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q:not([aria-pressed="true"]):is(*, :hover) { background: transparent !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-more { order: 12 !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment { order: 13 !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-candy { order: 14 !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-run { order: 15 !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more, .mk-cl-candy, .mk-cl-run):is(*, :hover, :active) { flex: 0 1 40px !important; width: 40px !important; min-width: 32px !important; margin: 0 !important; border-radius: 20px !important; }
+/* comments: the bubble icon, the count beside it (Badge, not over the icon) */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment:is(*, :hover) { flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; height: 40px !important; padding: 0 8px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px !important; border-radius: 20px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment > :is(span:not(.rg-feedback-badges), .rg-comment-preview) { display: none !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-pulse-write--comment .rg-comment-icon { margin: 0 !important; flex: 0 0 auto !important; grid-area: auto !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-pulse-write--comment :is(.rg-feedback-action-count, .rg-feedback-new-count) { position: static !important; left: auto !important; top: auto !important;  align-self: center !important; margin: 0 !important; }
+
+/* --- row 2 fits one line (the runner wrapped under it): more, sweets and runner as narrow icon buttons (32 = 4+24+4),
+   the comments' sides 4. Stronger colours (the user: pale, hard to read): the icons in on-surface, the chosen layout
+   and the chosen face in the primary; each layout names itself on hover / focus (PlainTooltip). --- */
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more, .mk-cl-candy, .mk-cl-run):is(*, :hover, :active) { flex: 0 0 32px !important; width: 32px !important; min-width: 32px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment:is(*, :hover) { padding: 0 4px !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q .mk-cl-cards { fill: var(--md-sys-color-on-surface, #e3e3e3) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] .mk-cl-cards { fill: var(--rg-tb-on-filled, #241400) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] .mk-cl-mood { fill: var(--rg-tb-on-filled, #241400) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"]:is(*, :hover, :active),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse].is-selected:is(*, :hover, :active) { background: var(--md-sys-color-primary) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-more { color: var(--md-sys-color-on-surface, #e3e3e3) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q { position: relative !important; overflow: visible !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q:is(:hover, :focus-visible) > span {
+  display: block !important; position: absolute !important; z-index: 6 !important; left: 50% !important; bottom: calc(100% + 8px) !important; translate: -50% 0 !important;
+  box-sizing: border-box !important; min-width: 40px !important; min-height: 24px !important; padding: 4px 8px !important; border-radius: 4px !important;
+  background: var(--md-sys-color-inverse-surface, #e2e3de) !important; color: var(--md-sys-color-inverse-on-surface, #2f312e) !important; -webkit-text-fill-color: var(--md-sys-color-inverse-on-surface, #2f312e) !important;
+  font: 400 12px/16px 'Google Sans Text', 'Google Sans', system-ui, sans-serif !important; letter-spacing: .4px !important; white-space: nowrap !important; pointer-events: none !important;
+}
+
+/* --- the selected state, tonal (the user's pick): one 1:1 container of the button's own size, 12 px corners (M3's selected
+   round icon button: Medium), the secondary-container tone; selected and unselected the same outer size; only the
+   colour and the corners animate, the icon neither grows nor moves. Row 2's buttons are 32 x 32 (they were 32 x 40, so
+   a chosen one read as an egg). --- */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps { --rg-tb-selected: var(--md-sys-color-secondary-container, color-mix(in srgb, var(--md-sys-color-on-surface, #e3e3e3) 18%, var(--md-sys-color-surface-container))); --rg-tb-on-selected: var(--md-sys-color-on-secondary-container, var(--md-sys-color-on-surface, #e3e3e3)); align-items: center !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse].is-selected:is(*, :hover, :active),
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"]:is(*, :hover, :active),
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more[aria-expanded="true"], .mk-cl-candy[aria-pressed="true"], .mk-cl-run[aria-pressed="true"]):is(*, :hover, :active) { background: var(--rg-tb-selected) !important; color: var(--rg-tb-on-selected) !important; border-radius: 12px !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] :is(.mk-cl-cards, .mk-cl-mood) { fill: var(--rg-tb-on-selected) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] .mk-cl-mood { fill: var(--md-sys-color-primary) !important; }
+:root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more, .mk-cl-candy, .mk-cl-run):is(*, :hover, :active) { height: 32px !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment:is(*, :hover) { height: 32px !important; border-radius: 16px !important; }
+
+/* the badge on the button's container, its top-right corner, off the emoji (the user's reference): the 40 px button's
+   icon spans 8-32, the badge 30-46 and -6-10, so it never covers the face; it is absolute, so it changes no size or gap */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps > .rg-pulse-tap :is(.rg-pulse-count, .mx-draw-count) { left: auto !important; right: -6px !important; top: -6px !important; }
+
+/* the badge anchored to the icon itself (the user's reference): every icon sits in its button's middle, so its top-right
+   is the middle + (12, -12); the 16 px badge's corner goes 3 px over the icon's edge there: left = middle + 3, top =
+   middle - 19 (40 px button: 23, 1). One rule for the faces, the gallery and the comments; the comments' count is
+   a badge on the bubble now, not a pill beside it, and the bubble sits in its button's middle as the other icons. */
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps > .rg-pulse-tap :is(.rg-pulse-count, .mx-draw-count),
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-pulse-write--comment :is(.rg-feedback-action-count, .rg-feedback-new-count) {
+  position: absolute !important; left: calc(50% + 3px) !important; right: auto !important; top: calc(50% - 19px) !important; align-self: auto !important; margin: 0 !important;
+}
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment:is(*, :hover) { flex: 0 0 40px !important; width: 40px !important; height: 40px !important; padding: 0 !important; display: grid !important; place-items: center !important; position: relative !important; border-radius: 20px !important; overflow: visible !important; }
+
+}

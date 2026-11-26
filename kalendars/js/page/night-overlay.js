@@ -6,7 +6,11 @@
   overlay.classList.add('ns-parked');
 
   function setNightWalkerMotion(running){
-    running = running && !document.hidden && !document.documentElement.classList.contains('minka-ambient-active') && !document.documentElement.classList.contains('minka-visuals-hidden');
+    running = running && !document.documentElement.classList.contains('minka-ambient-active') && !document.documentElement.classList.contains('minka-visuals-hidden');
+    // the cats' bed's dancers (nightsplit.js bedCarePerchHTML): their CSS animation exists only with this class. Not
+    // gated on document.hidden (the panel can report hidden while shown); a hidden tab draws no frames anyway.
+    overlay.classList.toggle('ns-nb-dance', !!running);
+    running = running && !document.hidden;
     try{
       overlay.querySelectorAll('.ns-room-walker').forEach(function(svg){
         if(!running){
@@ -89,14 +93,14 @@
       // growth, it froze the animation twice and seemed to open twice (the user); after that it is ready.
       var content=document.getElementById('nsPanelContent');
       var stale = !!(window.__ns && typeof window.__ns.isStale==='function' && window.__ns.isStale());
-      if(content && (!content.querySelector('.ns-panel-head') || stale) && window.__ns && typeof window.__ns._update==='function'){
+      if(!(opts && opts._nsBuilt) && content && (!content.querySelector('.ns-panel-head') || stale) && window.__ns && typeof window.__ns._update==='function'){
         window.__nsOverlayOpen = true;   // update() builds at once only for an open panel
         try { window.__ns._update(); } catch(_e) {}
         window.__nsOverlayOpen = false;
         // and it opens once the new content has been laid out and painted unseen (its first frame froze the growth)
         _nsOpen = wasOpen;
         var go = _nsDeferOpen = {};
-        requestAnimationFrame(function(){ requestAnimationFrame(function(){ if(_nsDeferOpen===go) toggleNsOverlay(true, opts); }); });
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ if(_nsDeferOpen===go) toggleNsOverlay(true, Object.assign({}, opts, {_nsBuilt:true})); }); });   // built once: open even if it still looks stale
         return;
       }
     }

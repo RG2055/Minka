@@ -58,30 +58,20 @@
   var OFF = [0, 1, 2];   // each dancer's phrase is (phrase + OFF[i]) % 4: three different ones at once; a press changes its own
   var bpm = 116, beat = 0, phrase = 0, close = false, energy = 0, longE = 0, an = null, bins = null, lastRead = 0, pull = 0;
   var onsets = [], lastOnset = 0, flux = 0;
-  function radioGraph() {
-    // radio.js keeps its graph in script globals (aCtx, masterGain); RG Music's player is another site's frame
-    try { return document.getElementById('radioMini') && !document.getElementById('radioMini').hidden && typeof aCtx !== 'undefined' && aCtx && typeof masterGain !== 'undefined' && masterGain ? { ctx: aCtx, out: masterGain } : null; } catch (_e) { return null; }
-  }
   function listen(on) {
-    var g = on && !LOW && radioGraph();
-    if (g && !an) {
-      an = g.ctx.createAnalyser();
-      an.fftSize = 256;
-      an.smoothingTimeConstant = 0;
-      bins = new Uint8Array(an.frequencyBinCount);
-      try { g.out.connect(an); } catch (_e) { an = null; }
-    } else if (!g && an) {
-      try { an.disconnect(); } catch (_e) {}
-      try { radioGraph() && radioGraph().out.disconnect(an); } catch (_e) {}
-      an = null;
-    }
+    // the radio's own analyser (js/radio.js, window.__mkRadioAnalyser): one per audio graph, read here too; RG Music's
+    // player is another site's frame and has none
+    var mini = document.getElementById('radioMini');
+    an = on && !LOW && mini && !mini.hidden && window.__mkRadioAnalyser ? window.__mkRadioAnalyser() : null;
   }
   function hear(now) {
     if (!an || now - lastRead < 50) return;
     lastRead = now;
+    if (!bins || bins.length !== an.frequencyBinCount) bins = new Uint8Array(an.frequencyBinCount);   // its size follows the radio's spectrum style
     an.getByteFrequencyData(bins);
+    // the bass: the bins under 160 Hz, at least the first (a 256-point analysis has 187 Hz bins, so none is under it)
     var hz = an.context.sampleRate / an.fftSize, b = 0, n = 0;
-    for (var i = 1; i * hz < 160; i++) { b += bins[i] * bins[i]; n++; }
+    for (var i = 1; i === 1 || i * hz < 160; i++) { b += bins[i] * bins[i]; n++; }
     var e = n ? Math.sqrt(b / n) / 255 : 0;
     var rise = Math.max(0, e - energy);
     energy = e;

@@ -103,7 +103,7 @@
     var moodH = g.moods[kind] * (grow || ms), moodHalf = g.moodHalf * ms;
     // on whole pixels (the user: it looked blurry): the card is its own layer, centred by -50 % of an odd height
     var mcy = base + moodH / 2 + 4, mh = Math.round(g.moods[kind] || 0);   // (the height as kept for this kind of day: steady while the card is being redrawn)
-    list.style.setProperty('--cor-mcy', (Math.round(mcy - mh / 2) + mh / 2).toFixed(1) + 'px');
+    list.style.setProperty('--cor-mcy', (Math.round(mcy - mh * (ms || 1) / 2) + mh * (ms || 1) / 2).toFixed(2) + 'px');
     // The wall runs from beside the mood card to the list's edge. Its nearest (outer) card stands
     // at the screen's depth and the others go back into it, so the wall's width is exactly what it
     // takes on screen: cards as large as the usual grid's fit beside the mood card.
@@ -317,9 +317,12 @@
   var rests = null, hot = null;
   function setHot(card) {
     if (card === hot) return;
+    var charm = (hot && hot.classList.contains('mk-addon-group-charm')) || (card && card.classList.contains('mk-addon-group-charm'));
     if (hot) hot.classList.remove('mk-cor-hot');
     hot = card;
     if (hot) hot.classList.add('mk-cor-hot');
+    // a charm's copy follows its card through the 520 ms lift (card-addons.js no longer syncs on every move)
+    if (charm && window.MinkaCardAddons) window.MinkaCardAddons.refreshPortals(560);
   }
   list.addEventListener('pointermove', function (e) {
     if (!root.classList.contains('mk-corridor')) return;

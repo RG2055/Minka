@@ -2592,3 +2592,15 @@ html[data-motion="reduced"] #nsPanel .ns-room-bed.ns-bed-rumble .ns-room-bed-car
     translate: 0 -50%;
   }
 }
+/* Where the cats were: the bed by the chalkboard (nightsplit.js bedCarePerchHTML). The mood's three dancers on its
+   duvet, each its own 8-beat phrase at 116 a minute: one box with one strip of 48 frames (night-dancers.webp, cut from
+   their dance sheets: pufs, koro in front, antenas mirrored) stepped across it on transform, so the compositor steps
+   it and the main thread does nothing. Animated only while the open panel is seen (#nsOverlay.ns-nb-dance,
+   night-overlay.js): closed or parked, the animation does not exist. A weak PC: 24 frames, under 6 a second. */
+#nsPanel .ns-bed-nb {position:absolute;z-index:4;left:50%;top:37%;width:84%;aspect-ratio:224/73;overflow:hidden;pointer-events:none;transform:translateX(-50%);}
+#nsPanel .ns-bed-nb > i {position:absolute;left:0;top:0;width:4800%;height:100%;background:url(../assets/butnes/night-dancers.webp?v=nd1) no-repeat 0 0/100% 100%;}
+#nsOverlay.ns-nb-dance #nsPanel .ns-bed-nb > i {animation:ns-nb-dance 4.138s steps(48,jump-none) infinite;}
+html.mk-low-spec #nsOverlay.ns-nb-dance #nsPanel .ns-bed-nb > i {animation-name:ns-nb-dance-low;animation-timing-function:steps(24,jump-none);}
+html[data-motion="reduced"] #nsOverlay #nsPanel .ns-bed-nb > i {animation:none !important;}
+@keyframes ns-nb-dance {to{transform:translateX(-97.9167%);}}
+@keyframes ns-nb-dance-low {to{transform:translateX(-95.8333%);}}

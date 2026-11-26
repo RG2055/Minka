@@ -847,38 +847,35 @@ function openFullListModal(ev) {
 
   modal.classList.remove('fl-closing');
   modal.classList.add('open');
+  // Top layer; Escape and a tap outside close it (closedby="any").
+  if (!modal.open) {
+    modal.showModal();
+    // showModal() focuses the ✕ with a ring; keep the focus, drop the ring.
+    const f = document.activeElement;
+    if (f && f !== modal && modal.contains(f)) { f.blur(); f.focus({ preventScroll: true, focusVisible: false }); }
+  }
   // Grows out of the control that opened it (js/mk-motion.js).
   if (window.MinkaMotion) {
     fullListOrigin = window.MinkaMotion.recentLauncher();
     window.MinkaMotion.openSurface(modal, { key: 'fulllist', origin: fullListOrigin });
   }
   notifyBuddyNumbers(true);
-  setTimeout(() => {
-    document.addEventListener('click', outsideFullListClose);
-  }, 0);
 }
-
-function outsideFullListClose(e) {
-  const modal = document.getElementById('full-list-modal');
-  if (modal.classList.contains('open') && !modal.contains(e.target)) {
-    // Don't close if clicked on the button itself
-    const btn = document.querySelector('.full-list-btn');
-    if (btn && btn.contains(e.target)) return;
-    closeFullListModal();
-    document.removeEventListener('click', outsideFullListClose);
-  }
-}
+// The <dialog> closed itself (Escape, a tap outside): play our close.
+document.getElementById('full-list-modal')?.addEventListener('close', () => {
+  if (document.getElementById('full-list-modal').classList.contains('open')) closeFullListModal();
+});
 let fullListOrigin = null;
 function closeFullListModal() {
   const modal = document.getElementById('full-list-modal');
   const wasOpen = modal.classList.contains('open');
   modal.classList.remove('open');
+  if (modal.open) modal.close();   // .fl-closing keeps it painted while it shrinks
   if (window.MinkaMotion && wasOpen) {
     modal.classList.add('fl-closing');
     window.MinkaMotion.closeSurface(modal, { key: 'fulllist', origin: fullListOrigin }, () => modal.classList.remove('fl-closing'));
   }
   notifyBuddyNumbers(false);
-  document.removeEventListener('click', outsideFullListClose);
 }
 function filterFullList(btn) {
   if (!btn) return;
@@ -3834,7 +3831,7 @@ function filterFullList(btn) {
   }
   /* The side cards' faces (js/page/mk-side-faces.js and its sheet, fetched on the first need: a card that has a
      face, or a press on a card's plus). With a card: open the picker for it; without: repaint the chosen faces. */
-  const SIDE_FACES_V = '20261124ns1';
+  const SIDE_FACES_V = '20261126rg2';
   let sideFacesLoad = 0, sideFacesCard = null;
   function sideFaces(card) {
     if (window.MkSideFaces) return card ? window.MkSideFaces.open(card) : window.MkSideFaces.sync();
@@ -3978,7 +3975,10 @@ function filterFullList(btn) {
      they are; where only the fatigue moved, it is written in place. */
   // A drink logged or taken away (here or on another device, when it arrives): the side cards follow at once: the
   // drink in the creature's paw, the caffeine mark, the number.
-  document.addEventListener('minka:coffee-changed', () => {
+  // Also every minute (__minkaCoffeeAuraRefresh): the caffeine keeps rising for an hour after the drink, and a card
+  // that kept the energy from the moment of drinking made the next ↓ look like it did nothing (the boost gained since
+  // cancelled the −5).
+  function refreshSideCaffeine() {
     let moved = false;
     document.querySelectorAll(':is(#radiographers-duty, #radiologists-duty) > .mk-side-card[data-worker]').forEach(card => {
       let now = null;
@@ -3987,7 +3987,8 @@ function filterFullList(btn) {
       patchSideFatigue(card, now); moved = true;
     });
     if (moved) window.__minkaSideFaces?.();
-  });
+  }
+  document.addEventListener('minka:coffee-changed', refreshSideCaffeine);
   // the drink in the person's hands now: "source,points,mg" (js/page/mk-side-faces.js stands it by the creature)
   const sideCafAttr = caf => caf.src + ',' + caf.pts + ',' + caf.mg;
   const SIDE_NO_FATIGUE = { score: 0, key: '', label: '', color: '', contextLabel: '' };
@@ -7448,7 +7449,7 @@ function filterFullList(btn) {
       if (row.hidden !== !a) row.hidden = !a;
       if (row.dataset.mg !== mg) { row.dataset.mg = mg; row.lastElementChild.innerHTML = a ? '<b>' + mg + '</b><small>mg</small>' : ''; }
     });
-    window.__minkaCoffeeAuraRefresh = () => { document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => updateCoffeeAura(card, card.getAttribute('data-worker') || '')); window.__minkaSideCaf(); if (window.__minkaSideFaces) window.__minkaSideFaces(); };
+    window.__minkaCoffeeAuraRefresh = () => { document.querySelectorAll('#grafiks-list.grid-view .mk-mid-card[data-worker]').forEach(card => updateCoffeeAura(card, card.getAttribute('data-worker') || '')); window.__minkaSideCaf(); refreshSideCaffeine(); if (window.__minkaSideFaces) window.__minkaSideFaces(); };
     window.__minkaCoffeeEq = coffeeEq;
     // drinks per kind on the shown duty day, while it is the running one (js/page/coffee-gold.js)
     window.__minkaCoffeeTodayDrinks = name => {
@@ -8544,14 +8545,13 @@ function filterFullList(btn) {
 let modalCurrentYear = null, modalCurrentMonth = null;
 let modalWorkerDates = [];
 let modalListReady = false, modalCalendarReady = false;
-let workerModalCloseTimer, workerModalOutsideTimer;
+let workerModalCloseTimer;
 
 function showWorkerSchedule(workerName, currentShift, opts) {
   // The fatigue curve opens on the month, or on the shift day when the
   // window was opened from a side card's fatigue (see below).
   try { if (window.__fatigue && window.__fatigue.setCurveRange) window.__fatigue.setCurveRange(opts && opts.fatigueRange || 'month'); } catch (_e) {}
   clearTimeout(workerModalCloseTimer);
-  clearTimeout(workerModalOutsideTimer);
   window.__wmWorkerName = String(workerName || '').trim();
   if (window.MinkaCardLock) { window.MinkaCardLock.sync(); window.MinkaCardLock.load(); }
   const stores = [window.__grafiksStore || {}, window.__grafiksStoreRad || {}];
@@ -8667,6 +8667,9 @@ function showWorkerSchedule(workerName, currentShift, opts) {
 
   modal.classList.remove('wm-closing');
   modal.classList.add('open');
+  // Top layer: no z-index fights; the dialog owns Escape, the outside click
+  // (closedby="any"), the focus trap and returning focus to the opener.
+  if (!modal.open) modal.showModal();
   const bd = document.getElementById('worker-modal-backdrop');
   if (bd) bd.classList.add('open');
   // M3 container transform: the window grows out of the card that was
@@ -8676,10 +8679,6 @@ function showWorkerSchedule(workerName, currentShift, opts) {
     window.MinkaMotion.openSurface(modal, { key: 'worker', origin: workerModalOrigin, scrim: bd });
   }
   setWorkerModalBuddyFlag(true);
-
-  workerModalOutsideTimer = setTimeout(() => {
-    document.addEventListener('click', outsideModalClose);
-  }, 100);
 }
 
 
@@ -8771,18 +8770,6 @@ function updateModalTotalHours() {
     row.innerHTML =
       '<span>Norma<b>' + norm + 'h</b></span>' +
       '<span>Nostrādāts<b>' + total + 'h</b></span>' + ot;
-  }
-}
-
-function outsideModalClose(e) {
-  const modal = document.getElementById('worker-modal');
-  // A click in a window opened from this one (the drawing editor, a picker) is not
-  // "outside"; neither is one on something that removed itself on that click (its ✕).
-  const t = e.target;
-  if (!t || !t.isConnected || (t.closest && t.closest('.mk-draw-overlay, [aria-modal="true"]'))) return;
-  if (modal.classList.contains('open') && !modal.contains(t)) {
-    closeWorkerModal();
-    document.removeEventListener('click', outsideModalClose);
   }
 }
 
@@ -9137,7 +9124,6 @@ function showModalView(view) {
 let workerModalOrigin = null;
 function closeWorkerModal() {
   if (window.MinkaEmoji && window.MinkaEmoji.flush) window.MinkaEmoji.flush();
-  clearTimeout(workerModalOutsideTimer);
   clearTimeout(workerModalCloseTimer);
   setWorkerModalBuddyFlag(false);
   const modal = document.getElementById('worker-modal');
@@ -9145,6 +9131,9 @@ function closeWorkerModal() {
   if (modal) {
     const wasOpen = modal.classList.contains('open');
     modal.classList.remove('open');
+    // Out of the top layer at once (the page is usable again, focus goes back
+    // to the opener); the CSS keeps it painted while it shrinks into its card.
+    if (modal.open) modal.close();
     if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.detach(bd);
     const reset = () => {
       modal.classList.remove('wm-closing');
@@ -9166,7 +9155,6 @@ function closeWorkerModal() {
     }
   }
   if (bd) bd.classList.remove('open');
-  document.removeEventListener('click', outsideModalClose);
   releaseSkinViewSoon();
 }
 
@@ -9207,6 +9195,8 @@ function __initWorkerModalWindowing(){
 
   const modal = document.getElementById('worker-modal');
   if (!modal) return;
+  // Escape or a click outside closed the <dialog> natively: play our close.
+  modal.addEventListener('close', () => { if (modal.classList.contains('open')) closeWorkerModal(); });
 
   // ── Drag to move (header bar only) ──
   let dragging = false;

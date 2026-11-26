@@ -94,7 +94,9 @@
       return '<label class="dr-slider ' + cls + '"><input type="range" min="' + min + '" max="' + max + '" step="1" value="' + value + '" aria-label="' + label + '">'
         + '<span class="dr-slider-fill" aria-hidden="true"></span><span class="dr-slider-label">' + label + '</span><output>' + value + unit + '</output></label>';
     };
-    var overlay = document.createElement('div');
+    // A modal <dialog>: top layer, so it sits above any open window (the card
+    // window is one too) without a z-index race.
+    var overlay = document.createElement('dialog');
     overlay.className = 'mk-draw-overlay' + (chalkboardMode ? ' is-chalkboard' : '') + (skyMode ? ' is-sky' : '');
     overlay.innerHTML = ''
       + '<section class="mk-draw-dialog" role="dialog" aria-modal="true" aria-labelledby="mkDrawTitle">'
@@ -150,6 +152,8 @@
       });
     }
     document.body.appendChild(overlay);
+    overlay.showModal();
+    overlay.addEventListener('close', function () { close(); });
     // round the editor the same dithered work on blue as round the gallery (js/dither-backdrop.js)
     if (window.MinkaDitherBackdrop) window.MinkaDitherBackdrop.attach(overlay, { box: overlay.querySelector('.mk-draw-dialog') });
 
@@ -431,7 +435,7 @@
     }
     function onKeyDown(event) {
       // Escape closes this editor only, never the card window under it
-      if (event.key === 'Escape') { event.stopPropagation(); close(); return; }
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(); return; }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault(); event.stopPropagation();
         if (event.shiftKey) redo(); else undo();

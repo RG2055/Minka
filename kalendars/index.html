@@ -2,7 +2,7 @@
 <html lang="lv">
 <head>
 <!-- Dark first paint: prevents white flash and hides the incomplete data layout. -->
-<style>/* Galvene X un Noskaņa X: slāņi deklarēti pirmie, lai to !important labojumi (css/page/mk-header-x.css, mk-mood-x.css) pārspēj vecos slāņus. */@layer mk-hx, mk-mx, mk-fx;html{background:#060b13;}body{background:#060b13;}html.mk-schedule-booting #grafiks-app{visibility:hidden!important;}</style>
+<style>/* Galvene X un Noskaņa X: slāņi deklarēti pirmie, lai to !important labojumi (css/page/mk-header-x.css, mk-mood-x.css) pārspēj vecos slāņus. */@layer mk-ua, mk-hx, mk-mx, mk-fx;html{background:#060b13;}body{background:#060b13;}html.mk-schedule-booting #grafiks-app{visibility:hidden!important;}</style>
 <script>
 document.documentElement.classList.add('mk-schedule-booting');
 // Safety net only: calendar.js reveals the page once it is parsed, styled and has fonts.
@@ -245,19 +245,18 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
 <!-- The UI font is declared by geist-ui.css at the very end of the page; fetch it now so it is ready when the calendar is first shown. -->
 <link rel="preload" as="font" type="font/woff2" href="../assets/fonts/geist/Geist-Variable.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="../assets/fonts/geist/GeistMono-Variable.woff2" crossorigin>
-<link rel="stylesheet" href="css/bundle.css?v=20261124id1">
+<link rel="stylesheet" href="css/bundle.css?v=20261126cs1">
 <link rel="stylesheet" href="../css/mk-sys.css?v=20260926sp1">
 <script src="../js/mk-motion.js?v=20260928mx11"></script>
-<link rel="stylesheet" href="css/skin-draw.css?v=20261002mx43">
+<link rel="stylesheet" href="css/skin-draw.css?v=20261126dg1">
 <link rel="stylesheet" href="css/card-addons.css?v=20261001tp2">
 <script src="js/emoji3d.js?v=20261010pic1"></script>
-<script src="js/card-addons.js?v=20261115s20" defer></script>
+<script src="js/card-addons.js?v=20261126fx1" defer></script>
 <script src="js/skin-organize.js?v=20261010hd1" defer></script>
 <script src="js/skin-builder.js?v=20261010ec1" defer></script>
 <link rel="stylesheet" href="css/side-cards-v2.css?v=20261001fit2">
 <link rel="stylesheet" href="css/header-weather.css?v=20260923wm10">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20260820fmood16">
-<link rel="stylesheet" href="css/daily-cat.css?v=20261002mx43">
 <link rel="stylesheet" href="css/depth-cards.css?v=20260912faces17">
 
 <!-- Fluent Emoji webfont (fluentmoji, MIT) — neblokējoši, tāpat kā pārējie fonti.
@@ -321,7 +320,7 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
 </style>
 
 <link rel="stylesheet" id="mk-emoji-anim-v1" href="css/page/mk-emoji-anim-v1.css?v=20261010pic1">
-<script src="js/page/emoji-hover-animation.js?v=20261010pic1"></script>
+<script src="js/page/emoji-hover-animation.js?v=20261126id1"></script>
 <!-- Fonts and icons: served from this site (scripts/build-fonts.mjs), so no
      visitor IP goes to Google; non-blocking preload swap. -->
 <link rel="preload" as="style" href="../assets/fonts/web/calendar.css?v=20261001sec1" onload="this.onload=null;this.rel='stylesheet'">
@@ -698,7 +697,7 @@ body.stars-active #stars-overlay{display:block;}
 <!-- STATS MODAL: M3 dialog. Styles: css/page/stats-m3.css; open/close,
      focus and motion: js/page/shift-stats-modal.js. The outer element is the
      scrim (a click on it closes), the sheet is the dialog surface. -->
-<div id="stats-modal" class="mk-stats" data-state="closed" style="display:none" onclick="if(event.target===this)closeStatsModal()">
+<dialog id="stats-modal" class="mk-stats" data-state="closed" style="display:none" aria-labelledby="stats-title" onclick="if(event.target===this)closeStatsModal()">
   <div class="mk-stats-sheet" role="dialog" aria-modal="true" aria-labelledby="stats-title">
     <header class="mk-stats-head">
       <span class="mk-stats-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-5"/></svg></span>
@@ -710,15 +709,16 @@ body.stars-active #stars-overlay{display:block;}
     </header>
     <div id="stats-table-wrap"></div>
   </div>
-</div>
+</dialog>
 
 <link rel="stylesheet" id="mk-stx-css" href="css/page/stats-leaderboard.css?v=20260924perf1">
 
 <!-- WORKER MODAL BACKDROP -->
-<div id="worker-modal-backdrop" onclick="closeWorkerModal()"></div>
+<div id="worker-modal-backdrop"></div>
 
-<!-- WORKER MODAL - bottom sheet -->
-<div id="worker-modal" onclick="event.stopPropagation()">
+<!-- WORKER MODAL: a modal <dialog> (top layer). Escape and a click outside close it
+     (closedby="any"), focus stays inside and returns to the opener. -->
+<dialog id="worker-modal" closedby="any" aria-labelledby="modal-worker-name" onclick="event.stopPropagation()">
   <div class="modal-header">
     <div class="modal-avatar" id="modal-avatar-initials">??</div>
     <div class="modal-header-text">
@@ -771,7 +771,19 @@ body.stars-active #stars-overlay{display:block;}
       <!-- Aizpilda MinkaSkins -->
     </div>
   </div>
-</div>
+</dialog>
+<style>
+/* <dialog> UA defaults back to what the old <div> had, in the lowest layer
+   (mk-ua) so every existing rule still wins; the dims stay their own
+   (#worker-modal-backdrop, the stats scrim: cheap, no blur), no focus ring
+   on the window itself. */
+@layer mk-ua {
+  #worker-modal, #stats-modal, #mcal-overlay, #tk-panel, #full-list-modal { inset: auto; width: auto; height: auto; max-width: none; max-height: none; margin: 0; padding: 0; border: 0 none; overflow: visible; color: inherit; background: transparent; user-select: auto; }
+  #worker-modal:focus, #stats-modal:focus, #mcal-overlay:focus, #tk-panel:focus, #full-list-modal:focus { outline: none; }
+  #tk-panel { display: block; }  /* closed = transparent, as the old <div>: its fade still plays */
+}
+#worker-modal::backdrop, #stats-modal::backdrop, #mcal-overlay::backdrop, #tk-panel::backdrop, #full-list-modal::backdrop { background: transparent; }
+</style>
 
 <style>
 /* ── Month norm / overtime strip (LV darba stundu norma) ── */
@@ -799,13 +811,13 @@ body.stars-active #stars-overlay{display:block;}
 </style>
 
 <!-- FULL LIST MODAL -->
-<div id="full-list-modal" onclick="event.stopPropagation()">
+<dialog id="full-list-modal" closedby="any" aria-label="Visi numuri" onclick="event.stopPropagation()">
   <div class="full-list-header">
     <h2>📞 Visi numuri</h2>
     <button class="full-list-close" type="button" aria-label="Aizvērt" onclick="closeFullListModal()">✕</button>
   </div>
   <div class="full-list-content" id="full-list-content"></div>
-</div>
+</dialog>
 <style id="fll-list-skin">
   /* Phone directory: clean single-column list (was a card grid), close button
      parked at the top-right corner. */
@@ -957,25 +969,22 @@ function _mkToast(msg, type) {
 <script src="js/page/card-lock.js?v=20261027pl5"></script>
 <script src="js/night-plan-history.js?v=20261022ot1"></script>
 <script src="js/page/mk-outline.js?v=20261124ch2"></script>
-<script src="js/page/mk-side-faces.js?v=20261124ch2"></script>
+<script src="js/page/mk-side-faces.js?v=20261126cf1"></script>
 <script src="js/rg-engine.js?v=20261126rg1"></script>
-<script src="js/calendar.js?v=20261126rg1"></script>
+<script src="js/calendar.js?v=20261126dg2"></script>
 <script src="js/page/coffee-fx.js?v=20261116gc7" defer></script>
 <script src="js/page/coffee-gold.js?v=20261116gc1" defer></script>
 <script src="js/depth-cards.js?v=20261022hv1" defer></script>
-<script src="js/daily-cat.js?v=20261124fl2" defer></script>
 <script src="js/header-weather.js?v=20261110ds1" defer></script>
 <script src="js/calendar_extras_v4.js?v=20261126rg1"></script>
 <script src="js/sleep-model.js?v=20260907sleep1"></script>
 <script src="js/light-model.js?v=20260908light1"></script>
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20261126rg1"></script>
-<script src="js/nakts-pets.js?v=20261110ds1" defer></script>
-<script src="js/nightsplit.js?v=20261126rg1" defer></script>
-<script src="js/page/card-initials-dither.js?v=20261126pf1" defer></script>
-<script src="js/monthcal.js?v=20261008hol1" defer></script>
+<script src="js/nightsplit.js?v=20261126nd1" defer></script>
+<script src="js/monthcal.js?v=20261126dg2" defer></script>
 <script src="js/design_v1.js?v=20261126rg1" defer></script>
-<script src="js/theme.js?v=20261006mb2" defer></script>
+<script src="js/theme.js?v=20261126dg2" defer></script>
 <script src="js/minka.sync.config.js" defer></script>
 <script src="js/emoji.js?v=20261126rg1" defer></script>
 <script src="js/page/card-pictures-warm.js?v=20261001pw5" defer></script>
@@ -1067,14 +1076,6 @@ window.__minkaLocalBuild = '20261012ld2';
 
 // ï¿½ï¿½ï¿½ï¿½ Keyboard shortcut: ESC closes modals ï¿½ï¿½ï¿½ï¿½
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (document.getElementById('worker-modal')?.classList.contains('open')) {
-      if (typeof closeWorkerModal === 'function') closeWorkerModal();
-    }
-    if (document.getElementById('full-list-modal')?.classList.contains('open')) {
-      if (typeof closeFullListModal === 'function') closeFullListModal();
-    }
-  }
   // Ctrl+F / Cmd+F opens the header search (Galvene X). Without it the
   // browser's own Find stays available; the old handler blocked it and then
   // focused a search box that no longer exists.
@@ -1111,7 +1112,7 @@ document.addEventListener('keydown', (e) => {
   </div>
 </div>
 
-<script src="js/page/night-overlay.js?v=20261126rg1"></script>
+<script src="js/page/night-overlay.js?v=20261126nd1"></script>
 <!-- /rad night (radiologists, residents, beds); does nothing for the radiographers -->
 <script src="js/rad-night.js?v=20260926rn14"></script>
 
@@ -1164,7 +1165,7 @@ document.addEventListener('keydown', (e) => {
 <script src="js/page/header-search.js?v=20261011pf1"></script>
 
 
-<script src="js/page/shift-stats-modal.js?v=20260926rad1"></script>
+<script src="js/page/shift-stats-modal.js?v=20261126dg1"></script>
 
 
 <script>
@@ -1458,7 +1459,7 @@ window.addEventListener('message', function(e) {
   document.addEventListener('click', function(){ requestAnimationFrame(syncSearchOverlay); }, true);
 })();
 </script>
-<link rel="stylesheet" id="mk-layer-fix-v1" href="css/page/mk-layer-fix-v1.css?v=20261113ch2">
+<link rel="stylesheet" id="mk-layer-fix-v1" href="css/page/mk-layer-fix-v1.css?v=20261126cs1">
 <script src="js/page/header-groups.js?v=20260928hx2"></script>
 <script>
 /* Mobile: make the statistics launcher resilient to transformed bottom nav taps. */
@@ -1593,7 +1594,7 @@ window.addEventListener('message', function(e) {
 </style>
 
 <script src="js/dither-backdrop.js?v=20261013pf1"></script>
-<script src="js/skin-draw.js?v=20261002mx43"></script>
+<script src="js/skin-draw.js?v=20261126dg1"></script>
 
 
 <link rel="stylesheet" id="mk-skins" href="css/page/mk-skins.css?v=20261010hd1">
@@ -1741,8 +1742,8 @@ window.addEventListener('message', function(e) {
 
 <link rel="stylesheet" id="mk-rg-pulse-v2" href="css/page/mk-rg-pulse-v2.css?v=20260926mg1">
 
-<script src="js/page/mood-feedback.js?v=20261124ch2"></script>
-<script src="js/page/mood-trend.js?v=20261124cw8" defer></script>
+<script src="js/page/mood-feedback.js?v=20261126fx1"></script>
+<script src="js/page/mood-trend.js?v=20261126bx1" defer></script>
 
 <link rel="stylesheet" id="mk-mid-card-focus-v1" href="css/page/mk-mid-card-focus-v1.css?v=20261010ch2">
 
@@ -2000,7 +2001,7 @@ html:root.host-radio-open body #grafiks-list.grid-view .rg-feedback-card.card.mk
 
 <!-- Loaded last on purpose: the night split is an overlay and this small,
      local stylesheet replaces the older visual layers without touching logic. -->
-<link rel="stylesheet" href="css/nightsplit-brand.css?v=20261113big9">
+<link rel="stylesheet" href="css/nightsplit-brand.css?v=20261126nd1">
 <link rel="stylesheet" href="css/role-headings.css?v=20261010hop2">
 
 <link rel="stylesheet" href="css/fatigue-health.css?v=20260924perf1">
@@ -2062,10 +2063,10 @@ html:root body #grafiks-app #minkaBarWrap #shift-progress-wrap[hidden] {
 <!-- Noskaņa B: Noskaņa X vienkāršāk un vieglāk (html.mk-mb, sk. <head>). -->
 <link rel="stylesheet" id="mk-mood-b" href="css/page/mk-mood-b.css?v=20261124mb28">
 <!-- Noskaņa M3: Noskaņa B Material 3 Expressive veidolā (html.mk-m3, sk. <head>). -->
-<link rel="stylesheet" id="mk-mood-m3" href="css/page/mk-mood-m3.css?v=20261124ch2">
-<link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261123mb2">
-<link rel="stylesheet" href="css/page/card-layout.css?v=20261124en2">
-<script src="js/page/card-layout.js?v=20261126rg1" defer></script>
-<script src="js/page/corridor.js?v=20261126rg1" defer></script>
+<link rel="stylesheet" id="mk-mood-m3" href="css/page/mk-mood-m3.css?v=20261126td2">
+<link rel="stylesheet" id="mk-corridor" href="css/page/corridor.css?v=20261126bx1">
+<link rel="stylesheet" href="css/page/card-layout.css?v=20261126hd7">
+<script src="js/page/card-layout.js?v=20261126hd1" defer></script>
+<script src="js/page/corridor.js?v=20261126fx1" defer></script>
 </body>
 </html>

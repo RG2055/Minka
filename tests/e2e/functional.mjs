@@ -35,6 +35,51 @@ await test('worker modal opens from a card and closes with Escape', async()=>{ c
   await p.keyboard.press('Escape'); ok(await waitFor(async()=>!(await shown(p,'#worker-modal'))),'modal did not close');
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return 'modal text '+t.length+' chars'; });
 
+await test('worker modal <dialog>: top layer, outside click closes, its close button closes, Tab stays inside, focus returns', async()=>{ const p=await cal();
+  const isOpen=()=>p.evaluate(()=>document.getElementById('worker-modal').classList.contains('open'));
+  await p.locator('#grafiks-list .card.card-rd').first().click();
+  ok(await waitFor(()=>shown(p,'#worker-modal')),'modal not shown');
+  ok(await p.evaluate(()=>document.getElementById('worker-modal').matches('dialog:modal')),'not a modal dialog in the top layer');
+  await p.waitForTimeout(600); await p.mouse.click(40,450);
+  ok(await waitFor(async()=>!(await isOpen())),'outside click did not close');
+  ok(await waitFor(async()=>!(await shown(p,'#worker-modal'))),'still painted after the outside click');
+  await p.locator('#grafiks-list .card.card-rd').first().click(); ok(await waitFor(isOpen),'did not reopen');
+  await p.waitForTimeout(600); await p.click('#worker-modal .modal-close'); ok(await waitFor(async()=>!(await isOpen())),'close button did not close');
+  // opened from a focused control (as the header search does): Tab is trapped, Escape gives focus back
+  await p.evaluate(()=>{const b=document.querySelector('#grafiks-list .card button'); b.focus(); window.__opener=b; window.showWorkerSchedule('ALPHA TEST','24');});
+  ok(await waitFor(isOpen),'did not open from script');
+  for(let i=0;i<6;i++) await p.keyboard.press('Tab');
+  ok(await p.evaluate(()=>document.getElementById('worker-modal').contains(document.activeElement)),'Tab left the window');
+  await p.keyboard.press('Escape'); ok(await waitFor(async()=>!(await isOpen())),'Escape did not close');
+  ok(await p.evaluate(()=>document.activeElement===window.__opener),'focus did not return to the opener');
+  ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); });
+
+await test('drawing editor opens above the worker modal; Escape closes only the editor', async()=>{ const p=await cal();
+  await p.locator('#grafiks-list .card.card-rd').first().click(); ok(await waitFor(()=>shown(p,'#worker-modal')),'modal not shown');
+  await p.click('#toggle-skin'); await p.waitForTimeout(800);
+  await p.locator('#worker-modal .mk-skin-art-open').first().evaluate(e=>e.click());
+  ok(await waitFor(()=>p.evaluate(()=>{const d=document.querySelector('.mk-draw-dialog'); if(!d)return false; const r=d.getBoundingClientRect(); const e=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2); return !!(e&&e.closest('.mk-draw-overlay'));})),'editor not on top');
+  await p.keyboard.press('Escape');
+  ok(await waitFor(()=>p.evaluate(()=>!document.querySelector('.mk-draw-overlay'))),'editor did not close');
+  await p.waitForTimeout(400); ok(await p.evaluate(()=>document.getElementById('worker-modal').classList.contains('open')),'Escape also closed the card window');
+  ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); });
+
+await test('statistics <dialog>: top layer, scrim click and Escape close, focus returns, no ring on a mouse open', async()=>{ const p=await cal();
+  const state=()=>p.evaluate(()=>document.getElementById('stats-modal').dataset.state);
+  await p.evaluate(()=>{const b=document.querySelector('#grafiks-list .card button'); b.focus(); window.__opener=b; window.openStatsModal();});
+  ok(await waitFor(async()=>(await state())==='open'),'stats did not open');
+  ok(await p.evaluate(()=>document.getElementById('stats-modal').matches('dialog:modal')),'not a modal dialog in the top layer');
+  ok(await p.evaluate(()=>!document.activeElement.matches(':focus-visible')),'focus ring on open');
+  await p.waitForTimeout(600); await p.keyboard.press('Escape');
+  ok(await waitFor(async()=>(await state())==='closed'),'Escape did not close');
+  ok(await p.evaluate(()=>document.activeElement===window.__opener),'focus did not return to the opener');
+  await p.evaluate(()=>window.openStatsModal()); ok(await waitFor(async()=>(await state())==='open'),'did not reopen');
+  await p.waitForTimeout(600);
+  const pt=await p.evaluate(()=>{const m=document.getElementById('stats-modal').getBoundingClientRect(); for(const [x,y] of [[m.x+3,m.y+3],[m.right-3,m.y+3],[m.x+3,m.bottom-3]]){ if(document.elementFromPoint(x,y)===document.getElementById('stats-modal')) return [x,y]; } return null;});
+  if(pt){ await p.mouse.click(pt[0],pt[1]); ok(await waitFor(async()=>(await state())==='closed'),'scrim click did not close'); }
+  else { await p.click('#stats-modal .mk-stats-close'); ok(await waitFor(async()=>(await state())==='closed'),'close button did not close'); }
+  ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return pt?'scrim click':'close button'; });
+
 await test('coffee picker opens from a card', async()=>{ const p=await cal();
   await p.locator('button.mk-coffee-mid').first().click();
   ok(await waitFor(()=>p.evaluate(()=>!!document.querySelector('.mk-coffee-picker'))),'no coffee picker');
@@ -105,13 +150,7 @@ await test('shift timer: calendar.js colours a timer that ends in 4 min (warning
   const txt=await p.evaluate(()=>document.querySelector('.test-timer').textContent);
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return 'date '+date+' text '+txt; });
 
-await test('daily cat: pet is visible and its sprite animates', async()=>{ const ctx=await b.newContext({viewport:{width:1440,height:900},timezoneId:TZ}); const p=await ctx.newPage(); p.__errs=[]; p.on('pageerror',e=>p.__errs.push(e.message));
-  await p.goto(BASE+'/kalendars/index.html',{waitUntil:'load'}); await p.waitForTimeout(5000);
-  ok(await shown(p,'.mk-daily-cat-pet'),'cat not visible');
-  const frames=new Set(); for(let i=0;i<24;i++){ frames.add(await p.evaluate(()=>document.querySelector('.mk-daily-cat-sprite:not(.mk-daily-cat-sprite-ghost)')?.style.backgroundPosition||'')); await p.waitForTimeout(250); }
-  ok(frames.size>=2,'sprite frame never changed in 6 s: '+[...frames].join(' / '));
-  ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await ctx.close(); return frames.size+' distinct frames in 6 s'; });
-
+// (the daily cat test is gone with the cats, 2026-11-26)
 await test('night panel opens and shows night stats rows', async()=>{ const p=await cal();
   await p.evaluate(()=>window.toggleNsOverlay(true));
   ok(await waitFor(()=>p.evaluate(()=>window.__nsOverlayOpen===true)),'overlay flag not set');
@@ -152,6 +191,48 @@ await test('month calendar opens, navigates, closes', async()=>{ const p=await c
   const nodes=await p.evaluate(()=>document.getElementsByTagName('*').length);
   await p.evaluate(()=>window.MinkaMonthCal.close()); ok(await waitFor(()=>p.evaluate(()=>!window.MinkaMonthCal.isOpen())),'not closed');
   ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); return 'nodes while open '+nodes; });
+
+await test('month calendar <dialog>: top layer, Escape closes a panel first, then the calendar, focus returns, close button', async()=>{ const p=await cal();
+  const isOpen=()=>p.evaluate(()=>window.MinkaMonthCal.isOpen());
+  await p.evaluate(()=>{const b=document.querySelector('#grafiks-list .card button'); b.focus(); window.__opener=b; window.MinkaMonthCal.open();});
+  ok(await waitFor(isOpen),'not open');
+  ok(await p.evaluate(()=>document.getElementById('mcal-overlay').matches('dialog:modal')),'not a modal dialog in the top layer');
+  await p.waitForTimeout(600); await p.locator('#mcal-overlay .mcal-actbtn').first().click();
+  ok(await waitFor(()=>p.evaluate(()=>getComputedStyle(document.querySelector('#mcal-overlay .mcal-panelwrap')).display!=='none')),'panel did not open');
+  await p.keyboard.press('Escape');
+  ok(await waitFor(()=>p.evaluate(()=>getComputedStyle(document.querySelector('#mcal-overlay .mcal-panelwrap')).display==='none')),'Escape did not close the panel');
+  await p.waitForTimeout(300); ok(await isOpen(),'Escape on the panel also closed the calendar');
+  await p.keyboard.press('Escape'); ok(await waitFor(async()=>!(await isOpen())),'Escape did not close the calendar');
+  ok(await p.evaluate(()=>document.activeElement===window.__opener),'focus did not return to the opener');
+  await p.evaluate(()=>window.MinkaMonthCal.open()); ok(await waitFor(isOpen),'did not reopen'); await p.waitForTimeout(600);
+  await p.click('#mcal-overlay .mcal-close'); ok(await waitFor(async()=>!(await isOpen())),'close button did not close');
+  ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); });
+
+await test('settings (Par sistēmu) <dialog>: top layer, outside click, Escape and ✕ close, focus returns', async()=>{ const p=await cal();
+  const vis=()=>p.evaluate(()=>{const e=document.getElementById('tk-panel'); return !!e&&e.classList.contains('visible');});
+  await p.evaluate(()=>{const b=document.querySelector('#grafiks-list .card button'); b.focus(); window.__opener=b; window.__themeEngine.showPanel();});
+  ok(await waitFor(vis),'not open'); ok(await p.evaluate(()=>document.getElementById('tk-panel').matches('dialog:modal')),'not a modal dialog in the top layer');
+  ok(await p.evaluate(()=>!document.activeElement.matches(':focus-visible')),'focus ring on open');
+  await p.keyboard.press('Escape'); ok(await waitFor(async()=>!(await vis())),'Escape did not close');
+  ok(await p.evaluate(()=>document.activeElement===window.__opener),'focus did not return to the opener');
+  await p.evaluate(()=>window.__themeEngine.showPanel()); ok(await waitFor(vis),'did not reopen'); await p.waitForTimeout(300);
+  await p.mouse.click(60,450); ok(await waitFor(async()=>!(await vis())),'outside click did not close');
+  await p.evaluate(()=>window.__themeEngine.showPanel()); ok(await waitFor(vis),'did not reopen'); await p.waitForTimeout(300);
+  await p.click('#tkClose'); ok(await waitFor(async()=>!(await vis())),'close button did not close');
+  ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); });
+
+await test('phone list (?mobile=1) <dialog>: opens from its button, top layer, Escape, tap outside and ✕ close, focus returns', async()=>{ const p=await fresh('/kalendars/index.html?mobile=1',{width:390,height:844});
+  const isOpen=()=>p.evaluate(()=>document.getElementById('full-list-modal').classList.contains('open'));
+  await p.click('#minkaBarMenu'); ok(await waitFor(isOpen),'not open');
+  ok(await p.evaluate(()=>document.getElementById('full-list-modal').matches('dialog:modal')),'not a modal dialog in the top layer');
+  ok(await p.evaluate(()=>!document.activeElement.matches(':focus-visible')),'focus ring on open');
+  await p.keyboard.press('Escape'); ok(await waitFor(async()=>!(await isOpen())),'Escape did not close');
+  ok(await p.evaluate(()=>document.activeElement===document.getElementById('minkaBarMenu')),'focus did not return to its button');
+  await p.click('#minkaBarMenu'); ok(await waitFor(isOpen),'did not reopen'); await p.waitForTimeout(500);
+  await p.mouse.click(195,10); ok(await waitFor(async()=>!(await isOpen())),'tap outside did not close');
+  await p.click('#minkaBarMenu'); ok(await waitFor(isOpen),'did not reopen'); await p.waitForTimeout(500);
+  await p.click('#full-list-modal .full-list-close'); ok(await waitFor(async()=>!(await isOpen())),'close button did not close');
+  ok(!p.__errs.length,'errors: '+p.__errs.join(' | ')); await p.context().close(); });
 
 await test('mood panel: fatigue (NOGURUMS) or energy (ENERĢIJA) chip eventually shows', async()=>{ const p=await cal();
   ok(await waitFor(()=>p.evaluate(()=>/NOGURUMS|ENERĢIJA/i.test(document.querySelector('.card.mk-mid-card-rd')?.innerText||'')),10000),'no NOGURUMS / ENERĢIJA in mood card'); await p.context().close(); });

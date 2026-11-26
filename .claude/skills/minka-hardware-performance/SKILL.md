@@ -106,3 +106,11 @@ NOCLOCK=1 node idle-loops.js
 - `references/minka-findings.md`: measured baseline and hot spots (2026-11), app device tiers.
 - `references/playbook.md`: optimisation patterns with Minka examples, safe deletion protocol, what was
   tested and rejected, external expert sources and how far each applies.
+
+## RG Engine gate (2026-11-26)
+
+Every RG Engine / RG 2.0 change must pass the local Performance Lab before release: `node tools/perf-lab/lab.mjs`
+(see tools/perf-lab/README.md; real Chrome with GPU, real data, original RG on :8041 vs the working tree on :8028) and
+stay within references/rg-engine-budget.md. Report the report.html numbers (p50/p95/p99, frames, CPU, memory, soak,
+visual diff) with the change. A replaced implementation is deleted in the same change: no parallel renderers,
+fallbacks, duplicate CSS or dead listeners. Less code is the goal.

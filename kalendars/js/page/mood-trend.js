@@ -1244,6 +1244,7 @@
   var coffeeRepaint = 0;
   function repaintSoon() { clearTimeout(coffeeRepaint); coffeeRepaint = setTimeout(function () { paint(); }, 950); }   // a saved coffee's icon lands on the curve at ~0.9 s (calendar.js flyCoffeeToCurve)
   document.addEventListener('minka:coffee-changed', repaintSoon);
+  window.addEventListener('minka:coffee-store-written', repaintSoon);   // the month's cups arrived (mood-feedback.js, Statistics)
   // the switch over the team's number (energy or fatigue) turns the curve's line too; a fatigue model that changed redraws it
   window.addEventListener('mk-energy-view', function () { scape.sig = ''; paint(); });
   document.addEventListener('minka:fatigue-updated', function () { team.key = ''; repaintSoon(); });

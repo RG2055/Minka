@@ -598,10 +598,14 @@
     var tip = ' Paliek, līdz to maini; redz visi.';
     // data-d: where the shown number goes. With the energy shown, down is "more tired" (the person's correction
     // to the fatigue, d.adj, goes up by 5) and up is "less tired"; with the fatigue shown it is the other way round
-    if (!EN()) return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāks nogurums" title="Jūtos mazāk noguris: −5.' + tip + '"' + (d.adj <= -30 ? ' disabled' : '') + '>↓</button>'
-      + '<button type="button" data-d="5" aria-label="Lielāks nogurums" title="Jūtos vairāk noguris: +5.' + tip + '"' + (d.adj >= 30 ? ' disabled' : '') + '>↑</button></div>';
-    return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāk enerģijas" title="Jūtos vairāk noguris: enerģija −5.' + tip + '"' + (d.adj >= 30 ? ' disabled' : '') + '>↓</button>'
-      + '<button type="button" data-d="5" aria-label="Vairāk enerģijas" title="Jūtos mazāk noguris: enerģija +5.' + tip + '"' + (d.adj <= -30 ? ' disabled' : '') + '>↑</button></div>';
+    // A press that cannot move the shown number is not offered: the fatigue is capped at 100 before the caffeine is
+    // taken off (so at the top "more tired" changed nothing: the user's "with coffee ↓ does not lower the energy"),
+    // and at 0 "less tired" changed nothing either.
+    var cf = d.cf && +d.cf.pts || 0, noMore = d.adj >= 30 || (+d.score || 0) + cf >= 100, noLess = d.adj <= -30 || (+d.score || 0) <= 0;
+    if (!EN()) return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāks nogurums" title="Jūtos mazāk noguris: −5.' + tip + '"' + (noLess ? ' disabled' : '') + '>↓</button>'
+      + '<button type="button" data-d="5" aria-label="Lielāks nogurums" title="Jūtos vairāk noguris: +5.' + tip + '"' + (noMore ? ' disabled' : '') + '>↑</button></div>';
+    return '<div class="sf-adj"><button type="button" data-d="-5" aria-label="Mazāk enerģijas" title="Jūtos vairāk noguris: enerģija −5.' + tip + '"' + (noMore ? ' disabled' : '') + '>↓</button>'
+      + '<button type="button" data-d="5" aria-label="Vairāk enerģijas" title="Jūtos mazāk noguris: enerģija +5.' + tip + '"' + (noLess ? ' disabled' : '') + '>↑</button></div>';
   }
   /* A drink (calendar.js playCoffeeAddedEffect). The latest drink is in the creature's paw for as long as its
      caffeine works (pet() above). When it is added, the creature takes a sip and answers in the drink's own way. sip (every coffee): it leans back, content; buzz (the energy drinks): it

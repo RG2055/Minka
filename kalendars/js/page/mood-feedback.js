@@ -464,6 +464,7 @@
         }
         writeJson('minkaCoffeeCountsV1', all);
         writeJson('minkaCoffeeDetailsV1', det);
+        try { window.dispatchEvent(new Event('minka:coffee-store-written')); } catch (_e) {}   // the curve's beans follow (it heard nothing and kept grey beans)
         paintMonth(true);
       })
       .catch(function () {});
@@ -485,7 +486,7 @@
       return fetch(base + '/api/coffee?date=' + key, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (v) {
         if (!v || !v.ok) return;
         var all = readJson('minkaCoffeeCountsV1', {}); all[key] = C.counts(v.counts); writeJson('minkaCoffeeCountsV1', all);
-        var det = readJson('minkaCoffeeDetailsV1', {}); det[key] = C.details(v.details); writeJson('minkaCoffeeDetailsV1', det);
+        var det = readJson('minkaCoffeeDetailsV1', {}); det[key] = C.details(v.details); writeJson('minkaCoffeeDetailsV1', det); try { window.dispatchEvent(new Event('minka:coffee-store-written')); } catch (_e) {}
       }).catch(function () {}).then(next);
     }
     Promise.all([next(), next()]).then(function () { paintMonth(true); });
@@ -2333,7 +2334,7 @@
   // The pop acknowledges the user's own tap only. Switching days or a sync
   // changes the mood too, but then it simply shows (no bounce, no forced layout).
   var moodPopNext = false;
-  function updateMoodBlob(key, preview) {
+  function updateMoodBlob(key, preview, faceOnly) {
     var refs = moodRefs();
     if (!refs) return;
     var stage = refs.stage;
@@ -2380,7 +2381,7 @@
       el.setAttribute('opacity', moodPartOpacity(part, visual));
     });
     syncMoodBoredState(key, preview, refs);
-    paintMoodCoffee();
+    if (!faceOnly) paintMoodCoffee();   // a hover preview changes the face only: no coffee/month repaint, no forced layout
   }
   function syncMoodBoredState(key, preview, refs) {
     var day = shiftDayKey();
@@ -2440,13 +2441,16 @@
     wrap.classList.add('is-pop');
   }
   function previewMoodBlob(key) {
-    if (!key || key === moodBlobKey) return;
+    if (!key) return;
+    if (key === moodBlobKey) { if (moodPreviewing) endMoodBlobPreview(); return; }
+    if (moodPreviewing && key === moodRenderedKey) return;   // the pointer crossed a child of the same tap
     moodPreviewing = true;
-    updateMoodBlob(key, true);
+    updateMoodBlob(key, true, true);
   }
   function endMoodBlobPreview() {
+    if (!moodPreviewing) return;
     moodPreviewing = false;
-    updateMoodBlob(moodBlobKey, false);
+    updateMoodBlob(moodBlobKey, false, true);
   }
   var moodSectionLayoutFrame = 0;
   var moodSectionLayoutBusy = false;
@@ -2824,7 +2828,6 @@
      with the M3 look); until then, and without it, everything works as it did. */
   function m3Web(card) {
     if (!M3) return;
-    m3Ind(card || (list && list.querySelector('.rg-feedback-card')));
     if (!window.__mdWebMood) {
       window.__mdWebMood = 1;
       var load = function () {
@@ -2842,31 +2845,6 @@
       el.appendChild(document.createElement('md-ripple'));        // both attach to their parent by themselves
       el.appendChild(document.createElement('md-focus-ring'));
     });
-  }
-  /* Alive, the app's own way (the user: natural and fluid): the shape under the chosen rating is one pill for the
-     row, moved by MinkaMotion.liquid (js/mk-motion.js): it flows from the old choice to the new, stretching on the
-     way. Placed without motion when the card is drawn; it flows only when the choice changes in a card on show.
-     One observer per card on the row's own class changes; it reads the layout only when the choice is another. */
-  function m3Ind(card) {
-    var MM = window.MinkaMotion, row = card && card.querySelector('.rg-pulse-taps');
-    if (!row || !MM || !MM.liquid) return;
-    var ind = row.querySelector(':scope > .m3-ind');
-    if (!ind) {
-      ind = document.createElement('i');
-      ind.className = 'm3-ind';
-      ind.setAttribute('aria-hidden', 'true');
-      row.insertBefore(ind, row.firstChild);
-      new MutationObserver(function () { place(true); }).observe(row, { attributes: true, attributeFilter: ['class'], subtree: true });
-    }
-    function place(flow) {
-      var sel = row.querySelector(':scope > .rg-pulse-tap.is-selected'), at = sel ? [].indexOf.call(row.children, sel) : -1;
-      if (ind.__at === at) return;
-      var was = ind.__at;
-      ind.__at = at;
-      if (!sel) { ind.classList.remove('is-on'); return; }
-      if (MM.liquid(ind, row, sel, { animate: !!flow && was > 0 })) ind.classList.add('is-on'); else ind.__at = -2;   // (not laid out yet: tried again at the next change)
-    }
-    place(false);
   }
   var mbDayT = 0;
   function mbDayNight() {
@@ -5885,7 +5863,9 @@
   });
   list.addEventListener('pointerout', function (event) {
     var tap = event.target.closest('[data-rg-pulse]');
-    if (tap && !tap.contains(event.relatedTarget)) endMoodBlobPreview();
+    // straight onto another tap: its pointerover previews that one (no detour through the saved face)
+    var next = event.relatedTarget && event.relatedTarget.closest && event.relatedTarget.closest('[data-rg-pulse]');
+    if (tap && !tap.contains(event.relatedTarget) && !next) endMoodBlobPreview();
   });
   list.addEventListener('pointercancel', endMoodBlobPreview);
   // Noskaņa X: the held tap is sent as soon as its day is left or the page

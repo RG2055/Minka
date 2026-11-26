@@ -191,7 +191,9 @@
     function pause() { if (raf) { cancelAnimationFrame(raf); raf = 0; } last = 0; }
     function resume() { if (state === 'run' && !raf && !document.hidden) loop(); }
 
-    function down(e) { e.preventDefault(); cv.focus({ preventScroll: true }); press(); }
+    // a click gives the focus without the focus outline (it drew a blue frame round the game); Tab still shows it
+    function down(e) { e.preventDefault(); cv.style.outline = 'none'; cv.focus({ preventScroll: true }); press(); }
+    cv.addEventListener('blur', function () { cv.style.outline = ''; });
     function key(e) {
       if (e.code !== 'Space' && e.code !== 'ArrowUp') return;
       var t = e.target;

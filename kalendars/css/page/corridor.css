@@ -43,7 +43,7 @@ html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-
   html.mk-corridor body #grafiks-app #grafiks-list#grafiks-list.grid-view:not(.mk-skin-preview-list) .card.rg-feedback-card {
     position: absolute !important; top: var(--cor-mcy, 50%) !important; left: calc(50% + var(--cor-mx, 0px)) !important; margin: 0 !important;
     width: 326px !important; grid-row: auto !important; grid-column: auto !important; z-index: 20 !important;
-    transform: translate(-50%, -50%) translateZ(0) !important;
+    transform: translate(-50%, -50%) !important;   /* no layer of its own: scaled as a layer it was drawn soft at 100-125 % screens (Windows) */
   }
 }
 @media (prefers-reduced-motion: reduce) {

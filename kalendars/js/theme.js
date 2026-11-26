@@ -219,7 +219,7 @@
 
   function buildPanel() {
     return `
-      <div id="tk-panel" role="dialog" aria-label="Par sistēmu">
+      <dialog id="tk-panel" closedby="any" aria-label="Par sistēmu">
         <div class="tk-panel-header">
           <div><div class="tk-heading">Par sistēmu</div><div class="tk-subheading">Būvējums un stāvoklis</div></div>
           <button class="tk-close" id="tkClose" aria-label="Aizvērt">✕</button>
@@ -247,7 +247,7 @@
 
         <button type="button" class="tk-reload" id="tkReload">Pārlādēt un atjaunot</button>
         <div class="tk-note">Notīra saglabāto kopiju un ielādē jaunāko versiju.</div>
-      </div>`;
+      </dialog>`;
   }
 
   // Values are read once per open — no timers, no polling.
@@ -354,18 +354,6 @@
     document.head.appendChild(style);
   }
 
-  function initGlobalListeners() {
-    document.addEventListener('click', (e) => {
-      if (!panelVisible) return;
-      const wrap = document.getElementById('tk-wrap');
-      if (!wrap) return;
-      if (!wrap.contains(e.target) && !e.target.closest('#tk-gear-btn')) hidePanel();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && panelVisible) hidePanel();
-    });
-  }
-
   function updateUI() {
     // Nothing to sync — the panel is read-only now. Values are filled on open
     // by fillInfo(), so there is no state to reflect back into controls.
@@ -453,7 +441,9 @@
         try { target.location.reload(); } catch (e2) { window.location.reload(); }
       }
     });
-    // Outside-click and Escape are bound once globally (see initGlobalListeners)
+    // Outside click and Escape: the <dialog> itself (closedby="any") closes, we follow.
+    const panel = wrap.querySelector('#tk-panel');
+    if (panel) panel.addEventListener('close', () => { if (panelVisible) hidePanel(); });
   }
 
   function mountPanel() {
@@ -479,6 +469,13 @@
     if (!panel) return;
     panel.style.pointerEvents = 'auto';
     panel.classList.add('visible');
+    // Top layer instead of z-index; the page behind is inert while it is open.
+    if (!panel.open) {
+      panel.showModal();
+      // showModal() focuses the ✕ with a ring; keep the focus there, without the ring (as before).
+      const f = document.activeElement;
+      if (f && f !== panel && panel.contains(f)) { f.blur(); f.focus({ preventScroll: true, focusVisible: false }); }
+    }
     if (gear) gear.classList.add('active');
     panelVisible = true;
     fillInfo();
@@ -490,6 +487,7 @@
     const gear = document.getElementById('tk-gear-btn');
     if (panel) {
       panel.classList.remove('visible');
+      if (panel.open) panel.close();   // stays painted (display:block) while it fades
       // Disable pointer-events after transition so invisible panel doesn't block clicks
       setTimeout(() => {
         if (!panelVisible && panel) panel.style.pointerEvents = 'none';
@@ -502,7 +500,6 @@
 
   function init() {
     load();
-    initGlobalListeners();
     const tryMount = () => {
       const topRow = document.querySelector('.top-row');
       if (!topRow) return void setTimeout(tryMount, 120);

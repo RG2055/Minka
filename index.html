@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261125ce2';
+  var CALENDAR_BUILD = '20261126rg2';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1174,20 +1174,26 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWind
 html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radio-skin]>:is(.radio-win-body,#radioSourceBar){display:none!important;}
 #radioWindow[data-radio-skin]>#rmx{display:grid;}
 }}
-#rmx{--rmx-surface:#0c1216;--rmx-tile-r:14px;--rmx-art-r:14px;--rmx-acc:color-mix(in srgb,rgb(var(--radio-accent-rgb,158,224,187)) 74%,#fff 26%);--rmx-ink:#eef2f6;--rmx-sub:#a7b2bd;--rmx-well:color-mix(in srgb,var(--rmx-ink) 8%,transparent);--rmx-on:color-mix(in srgb,var(--rmx-acc) 26%,transparent);--rmx-on-ink:var(--rmx-ink);--rmx-rail:color-mix(in srgb,var(--rmx-ink) 16%,transparent);--rmx-font:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;--rmx-label:var(--rmx-font);
+/* M3 tones from one source colour, the station's or album's accent (--radio-accent-rgb): every surface and tonal key
+   is that colour mixed into the skin's dark base (--rmx-base), the play key is the primary itself. A warm accent
+   (js/radio-max.js) tints the surfaces from a cool grey instead (--rmx-tsrc): orange into dark reads as brown. A skin changes the
+   base, how much colour each tone takes, the shapes and the type. */
+#rmx{--rmx-src:rgb(var(--radio-accent-rgb,158,224,187));--rmx-tsrc:var(--rmx-src);--rmx-base:#0a0d0c;--rmx-tile-r:14px;--rmx-art-r:14px;
+  --rmx-acc:color-mix(in oklab,var(--rmx-src) 74%,#fff);--rmx-surface:color-mix(in oklab,var(--rmx-tsrc) 14%,var(--rmx-base));--rmx-well:color-mix(in oklab,var(--rmx-tsrc) 24%,var(--rmx-base));--rmx-on:color-mix(in oklab,var(--rmx-tsrc) 42%,var(--rmx-base));--rmx-on-ink:color-mix(in oklab,var(--rmx-tsrc) 16%,#fff);--rmx-menu:color-mix(in oklab,var(--rmx-tsrc) 19%,var(--rmx-base));
+  --rmx-play-bg:var(--rmx-acc);--rmx-play-ink:color-mix(in oklab,var(--rmx-src) 30%,#000);--rmx-ink:color-mix(in oklab,var(--rmx-tsrc) 7%,#f2f4f3);--rmx-sub:color-mix(in oklab,var(--rmx-tsrc) 28%,#a9b0ad);--rmx-rail:color-mix(in oklab,var(--rmx-tsrc) 32%,var(--rmx-base));--rmx-bg:color-mix(in srgb,var(--rmx-surface) 86%,transparent);--rmx-font:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;--rmx-label:var(--rmx-font);
   position:relative;z-index:6;box-sizing:border-box;height:238px;width:100%;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:52px minmax(0,1fr) 44px;row-gap:10px;padding:16px 20px;
-  color:var(--rmx-ink);font-family:var(--rmx-font);background:var(--rmx-bg,linear-gradient(180deg,rgba(6,10,14,.42),rgba(6,10,14,.66)));border-radius:inherit;}
+  color:var(--rmx-ink);font-family:var(--rmx-font);background:var(--rmx-bg);border-radius:inherit;}
 #rmx *{box-sizing:border-box}
 #rmx button{margin:0;border:0;padding:0;background:none;color:inherit;font:inherit;cursor:pointer;}
-#rmx button:focus-visible,#rmx input:focus-visible{outline:2px solid var(--rmx-acc);outline-offset:2px;}
+#rmx button:focus-visible,#rmx input:focus-visible{outline:2px solid var(--rmx-acc)!important;outline-offset:2px!important;box-shadow:none!important}
 #rmx svg{display:block;fill:currentColor}
 /* band 1: the song, its cover beside it; the toolbar top right */
 #rmx .rmx-meta{grid-column:1;grid-row:1;display:flex;align-items:center;gap:14px;min-width:0}
 #rmx .rmx-art{width:52px;height:52px;flex:none;border-radius:var(--rmx-art-r);overflow:hidden;background:var(--rmx-well);display:grid;place-items:center;color:var(--rmx-sub)}
 #rmx .rmx-art img{width:100%;height:100%;object-fit:cover;display:block}
-#rmx .rmx-art img:not([src]),#rmx .rmx-art img[src=""]{display:none}
+#rmx .rmx-art img:not([src]),#rmx .rmx-art img[src=""],#rmx .rmx-art img[src$="radio-default.svg"]{display:none}
 #rmx .rmx-art svg{width:24px;height:24px}
-#rmx .rmx-art:has(img[src]:not([src=""])) svg{display:none}
+#rmx .rmx-art:has(img[src]:not([src=""]):not([src$="radio-default.svg"])) svg{display:none}
 #rmx .rmx-lines{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
 #rmx .rmx-station{font:500 11.5px/15px var(--rmx-label);color:var(--rmx-sub);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);white-space:nowrap;overflow:hidden}
 #rmx .rmx-song{white-space:nowrap;overflow:hidden}
@@ -1204,58 +1210,64 @@ html.mk-low-spec #rmx .rmx-song.rmx-run>i{animation-iteration-count:2}
 #rmx .rmx-artist{font-size:15px;line-height:26px;font-weight:400;color:var(--rmx-sub);margin-left:.6em}
 #rmx .rmx-artist:empty{display:none}
 #rmx .rmx-top{grid-column:2;grid-row:1;align-self:start;display:flex;align-items:center;gap:8px}
-#rmx .rmx-top .rmx-btn{height:38px;border-radius:19px}
-#rmx .rmx-tools{display:flex;gap:2px;padding:3px;border-radius:20px;background:var(--rmx-well)}
-#rmx .rmx-tool{width:32px;height:32px;border-radius:16px;display:grid;place-items:center;color:var(--rmx-sub)}
+#rmx .rmx-top .rmx-btn{height:38px;border-radius:var(--rmx-kr,19px)}
+#rmx .rmx-tools{display:flex;gap:var(--rmx-tg,2px);padding:var(--rmx-tp,3px);border-radius:var(--rmx-kr,20px);background:var(--rmx-tools,var(--rmx-well))}
+#rmx .rmx-tool{width:32px;height:32px;border-radius:var(--rmx-tr,16px);display:grid;place-items:center;color:var(--rmx-sub);background:var(--rmx-tool,none)}
 #rmx .rmx-tool svg{width:17px;height:17px}
 /* band 2: the spectrum. It folds onto its line on pause (one transition, nothing runs while paused). */
 #rmx .rmx-viz{grid-column:1 / 3;grid-row:2;min-height:0;position:relative}
-#rmx .rmx-viz canvas{position:absolute;inset:0;width:100%;height:100%;transform-origin:50% 100%;scale:1 .1;transition:scale 420ms cubic-bezier(.2,0,0,1);color:var(--rmx-acc)}
+#rmx .rmx-viz canvas{position:absolute;inset:0;width:100%;height:100%;transform-origin:50% 50%;scale:1 .1;transition:scale 420ms cubic-bezier(.2,0,0,1);color:var(--rmx-acc)}
 #rmx.rmx-playing .rmx-viz canvas{scale:1 1}
 /* band 3: one strip */
 #rmx .rmx-strip{grid-column:1 / 3;grid-row:3;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:16px}
 #rmx .rmx-left{display:flex;gap:8px;align-items:center;min-width:0}
-#rmx .rmx-btn{width:120px;justify-content:center;height:36px;border-radius:18px;padding:0 10px;display:inline-flex;align-items:center;gap:8px;overflow:hidden;background:var(--rmx-well);font:600 13px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);white-space:nowrap}
+#rmx .rmx-btn{width:120px;justify-content:center;height:36px;border-radius:var(--rmx-kr,18px);padding:0 10px;display:inline-flex;align-items:center;gap:8px;overflow:hidden;background:var(--rmx-well);font:600 13px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);white-space:nowrap}
 #rmx .rmx-btn svg{width:17px;height:17px;flex:none}
 #rmx .rmx-btn b{font-weight:600;color:var(--rmx-acc)}
 #rmx .rmx-btn .rmx-dd{width:14px;height:14px;opacity:.7;margin-left:-3px}
 #rmx .rmx-btn[aria-expanded="true"]{background:var(--rmx-on);color:var(--rmx-on-ink)}
 #rmx .rmx-tr{display:flex;align-items:center;gap:12px}
-#rmx .rmx-key{width:40px;height:40px;border-radius:20px;display:grid;place-items:center;background:var(--rmx-well)}
+#rmx .rmx-key{width:40px;height:40px;border-radius:var(--rmx-kr,20px);display:grid;place-items:center;background:var(--rmx-well)}
 #rmx .rmx-key svg{width:20px;height:20px}
-#rmx .rmx-play{width:var(--rmx-play-w,52px);height:44px;border-radius:var(--rmx-play-r,22px);background:var(--rmx-on);color:var(--rmx-on-ink)}
+#rmx .rmx-play{width:var(--rmx-play-w,52px);height:44px;border-radius:var(--rmx-play-r,22px);background:var(--rmx-play-bg);color:var(--rmx-play-ink)}
 #rmx .rmx-play svg{width:22px;height:22px}
 #rmx .rmx-play .rmx-pause,#rmx.rmx-playing .rmx-play .rmx-go{display:none}
 #rmx.rmx-playing .rmx-play .rmx-pause{display:block}
 #rmx.rmx-wait .rmx-play{opacity:.65}
 #rmx .rmx-right{min-width:0;display:flex;justify-content:flex-end;align-items:center;gap:10px;color:var(--rmx-sub)}
-#rmx .rmx-mute{width:32px;height:32px;border-radius:16px;display:grid;place-items:center}
+#rmx .rmx-mute{width:32px;height:32px;border-radius:var(--rmx-tr,16px);display:grid;place-items:center}
 #rmx .rmx-mute svg{width:18px;height:18px}
 #rmx .rmx-mute .rmx-off,#rmx .rmx-mute[aria-pressed="true"] .rmx-on{display:none}
 #rmx .rmx-mute[aria-pressed="true"] .rmx-off{display:block}
 #rmx .rmx-vol{-webkit-appearance:none;appearance:none;width:200px;min-width:96px;flex:0 1 200px;height:20px;margin:0;background:transparent;--v:70%}
 #rmx .rmx-vol::-webkit-slider-runnable-track{height:var(--rmx-vt,4px);border-radius:3px;background:linear-gradient(90deg,var(--rmx-acc) var(--v),transparent var(--v)),var(--rmx-rail)}
 #rmx .rmx-vol::-moz-range-track{height:var(--rmx-vt,4px);border-radius:3px;background:linear-gradient(90deg,var(--rmx-acc) var(--v),transparent var(--v)),var(--rmx-rail)}
-#rmx .rmx-vol::-webkit-slider-thumb{-webkit-appearance:none;width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);margin-top:calc((var(--rmx-vt,4px) - var(--rmx-kh,18px)) / 2);border-radius:3px;background:var(--rmx-ink);border:0}
-#rmx .rmx-vol::-moz-range-thumb{width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);border-radius:3px;background:var(--rmx-ink);border:0}
+#rmx .rmx-vol::-webkit-slider-thumb{-webkit-appearance:none;width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);margin-top:calc((var(--rmx-vt,4px) - var(--rmx-kh,18px)) / 2);border-radius:3px;background:var(--rmx-acc);border:0}
+#rmx .rmx-vol::-moz-range-thumb{width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);border-radius:3px;background:var(--rmx-acc);border:0}
 /* the EQ presets: a compact menu over the spectrum, above its button */
-#rmx .rmx-eq{position:absolute;left:20px;bottom:66px;z-index:3;display:grid;grid-template-columns:repeat(6,auto);gap:4px;padding:6px;border-radius:18px;background:var(--rmx-menu,#151a20);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#rmx .rmx-eq{position:absolute;left:20px;bottom:66px;z-index:3;display:grid;grid-template-columns:repeat(6,auto);gap:4px;padding:6px;border-radius:calc(var(--rmx-kr,16px) + 2px);background:var(--rmx-menu,#151a20);box-shadow:0 8px 24px rgba(0,0,0,.35)}
 #rmx .rmx-eq[hidden]{display:none}
-#rmx .rmx-eq button{height:32px;padding:0 12px;border-radius:16px;font:600 12px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);color:var(--rmx-sub)}
+#rmx .rmx-eq button{height:32px;padding:0 12px;border-radius:var(--rmx-kr,16px);font:600 12px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);color:var(--rmx-sub)}
 #rmx .rmx-eq button[aria-checked="true"]{background:var(--rmx-on);color:var(--rmx-on-ink)}
 /* ---------- skins: material, type, shapes; the spectrum's drawing is chosen in js by data-radio-skin ---------- */
-/* Klasiskais / Jauns: the chosen background shows through a dark wash; Jauns a cooler glass. */
-#radioWindow[data-radio-skin="clean"] #rmx{--rmx-surface:#0e131a;--rmx-tile-r:16px;--rmx-art-r:16px;--rmx-bg:linear-gradient(100deg,rgba(14,19,26,.5),rgba(14,19,26,.72))}
-/* Pixel: Material 3 Expressive, the album palette surface, big soft shapes, the wide pill play key. */
-#radioWindow[data-radio-skin="pixel"] #rmx{--rmx-surface:var(--pixel-surface,#1b2420);--rmx-tile-r:24px;--rmx-art-r:26px;--rmx-bg:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.22));--rmx-play-r:16px;--rmx-on:var(--rmx-acc);--rmx-on-ink:color-mix(in srgb,var(--rmx-acc) 22%,#071009);--rmx-vt:6px;--rmx-kw:6px;--rmx-kh:22px;--rmx-title-w:500}
-/* Pioneer: a network player's OLED. Blue-black, ice, labels in tracked caps, a tick-marked volume. */
-#radioWindow[data-radio-skin="pioneer"] #rmx{--rmx-surface:#06090c;--rmx-tile-r:8px;--rmx-art-r:6px;--rmx-bg:linear-gradient(180deg,#0b1116,#06090c);--rmx-acc:color-mix(in srgb,rgb(var(--radio-accent-rgb,191,230,255)) 80%,#fff 20%);--rmx-ink:#e6f4ff;--rmx-sub:#7f9bb0;--rmx-rail:repeating-linear-gradient(90deg,rgba(191,230,255,.3) 0 1px,transparent 1px 8px);--rmx-vt:8px;--rmx-kw:3px;--rmx-kh:20px;--rmx-track:.14em;--rmx-case:uppercase;--rmx-title-w:500;--rmx-menu:#0e151b}
+/* Klasiskais: mint by default, the deep tone; the chosen background shows faintly through the surface. */
+/* Jauns: a lighter, cleaner tone (surface-container-high), round keys each on its own, a wide pill play key. */
+#radioWindow[data-radio-skin="clean"] #rmx{--rmx-base:#1a1e23;--rmx-surface:color-mix(in oklab,var(--rmx-tsrc) 16%,var(--rmx-base));--rmx-well:color-mix(in oklab,var(--rmx-tsrc) 27%,var(--rmx-base));--rmx-on:color-mix(in oklab,var(--rmx-tsrc) 46%,var(--rmx-base));--rmx-menu:var(--rmx-surface);--rmx-tile-r:18px;--rmx-art-r:22px;--rmx-play-w:68px;--rmx-title-w:500;--rmx-tools:none;--rmx-tool:var(--rmx-well);--rmx-tg:6px;--rmx-tp:0}
+/* Pixel: Material 3 Expressive at full colour, the most tinted tones, a round cover, pill keys, the rounded-square play key. */
+#radioWindow[data-radio-skin="pixel"] #rmx{--rmx-base:#0e110f;--rmx-surface:color-mix(in oklab,var(--rmx-tsrc) 26%,var(--rmx-base));--rmx-well:color-mix(in oklab,var(--rmx-tsrc) 36%,var(--rmx-base));--rmx-on:color-mix(in oklab,var(--rmx-tsrc) 56%,var(--rmx-base));--rmx-menu:color-mix(in oklab,var(--rmx-tsrc) 30%,var(--rmx-base));--rmx-bg:var(--rmx-surface);--rmx-sub:color-mix(in oklab,var(--rmx-tsrc) 30%,#c3cac6);--rmx-tile-r:24px;--rmx-art-r:50%;--rmx-play-r:16px;--rmx-play-w:60px;--rmx-vt:6px;--rmx-kw:6px;--rmx-kh:22px;--rmx-title-w:500}
+/* Pioneer: a network player's OLED. True black lit by ice, labels in tracked caps, square keys, a tick-marked volume. */
+#radioWindow[data-radio-skin="pioneer"] #rmx{--rmx-src:rgb(var(--radio-accent-rgb,191,230,255));--rmx-base:#000;--rmx-surface:color-mix(in oklab,var(--rmx-tsrc) 5%,#000);--rmx-well:color-mix(in oklab,var(--rmx-tsrc) 12%,#000);--rmx-on:color-mix(in oklab,var(--rmx-tsrc) 28%,#000);--rmx-menu:var(--rmx-well);--rmx-bg:var(--rmx-surface);--rmx-acc:color-mix(in oklab,var(--rmx-src) 80%,#fff);--rmx-ink:#e6f4ff;--rmx-sub:#7f9bb0;--rmx-tile-r:8px;--rmx-art-r:6px;--rmx-kr:8px;--rmx-tr:6px;--rmx-play-r:8px;--rmx-play-w:56px;--rmx-rail:repeating-linear-gradient(90deg,rgba(191,230,255,.3) 0 1px,transparent 1px 8px);--rmx-vt:8px;--rmx-kw:3px;--rmx-kh:20px;--rmx-track:.14em;--rmx-case:uppercase;--rmx-title-w:500}
 #radioWindow[data-radio-skin="pioneer"] #rmx .rmx-btn{font-size:11.5px}
-/* Amp: Winamp as an instrument. Graphite, the station in the LED display face, bars with falling caps. */
-#radioWindow[data-radio-skin="amp"] #rmx{--rmx-surface:#0e100f;--rmx-tile-r:8px;--rmx-art-r:6px;--rmx-bg:linear-gradient(180deg,#141716,#0e100f);--rmx-ink:#eceeed;--rmx-sub:#9ba19e;--rmx-well:rgba(255,255,255,.06);--rmx-rail:rgba(255,255,255,.12);--rmx-menu:#181b1a}
+/* Amp: Winamp as an instrument. Graphite tinted green, small square keys, the station in the LED display face. */
+#radioWindow[data-radio-skin="amp"] #rmx{--rmx-base:#090b09;--rmx-surface:color-mix(in oklab,var(--rmx-tsrc) 9%,var(--rmx-base));--rmx-well:color-mix(in oklab,var(--rmx-tsrc) 18%,var(--rmx-base));--rmx-on:color-mix(in oklab,var(--rmx-tsrc) 34%,var(--rmx-base));--rmx-menu:var(--rmx-well);--rmx-bg:var(--rmx-surface);--rmx-ink:#e8eee8;--rmx-sub:color-mix(in oklab,var(--rmx-tsrc) 24%,#9ba19e);--rmx-tile-r:4px;--rmx-art-r:4px;--rmx-kr:4px;--rmx-tr:3px;--rmx-play-r:4px;--rmx-play-w:56px;--rmx-vt:6px;--rmx-kw:4px;--rmx-kh:16px}
 #radioWindow[data-radio-skin="amp"] #rmx .rmx-station{font:400 15px/15px 'Digital-7 Mono','JetBrains Mono',ui-monospace,monospace;color:var(--rmx-acc);letter-spacing:.04em}
-/* Dither: 1-bit. Paper black, one ink, the cover in grey pixels, digital mono type, dotted spectrum and volume. */
-#radioWindow[data-radio-skin="dither"] #rmx{--rmx-surface:#060606;--rmx-tile-r:2px;--rmx-art-r:2px;--rmx-bg:#060606;--rmx-acc:rgb(var(--dth-ink-rgb,var(--radio-accent-rgb,120,220,200)));--rmx-ink:#f4f3ec;--rmx-sub:#a9a89f;--rmx-well:color-mix(in srgb,var(--rmx-acc) 11%,transparent);--rmx-on:color-mix(in srgb,var(--rmx-acc) 30%,transparent);--rmx-rail:repeating-linear-gradient(90deg,rgba(244,243,236,.35) 0 2px,transparent 2px 4px);--rmx-kw:4px;--rmx-kh:14px;--rmx-font:'JetBrains Mono',ui-monospace,monospace;--rmx-case:uppercase;--rmx-track:.03em;--rmx-menu:#0d0d0d}
+#radioWindow[data-radio-skin="amp"] #rmx .rmx-song{font-family:'JetBrains Mono',ui-monospace,monospace}
+#radioWindow[data-radio-skin="amp"] #rmx .rmx-title{font-size:17px;font-weight:500;color:var(--rmx-acc)}
+/* Dither: 1-bit. Paper black and one ink: keys drawn in a 1 px ink line, the play key and the chosen key solid ink
+   with black on it, the cover in grey pixels, mono type, dotted volume. */
+#radioWindow[data-radio-skin="dither"] #rmx{--rmx-src:rgb(var(--dth-ink-rgb,var(--radio-accent-rgb,120,220,200)));--rmx-base:#050505;--rmx-surface:#050505;--rmx-bg:#050505;--rmx-acc:var(--rmx-src);--rmx-well:color-mix(in oklab,var(--rmx-tsrc) 12%,#050505);--rmx-on:var(--rmx-src);--rmx-on-ink:#050505;--rmx-play-ink:#050505;--rmx-menu:#050505;--rmx-ink:#f4f3ec;--rmx-sub:#a9a89f;--rmx-tile-r:2px;--rmx-art-r:2px;--rmx-kr:2px;--rmx-tr:2px;--rmx-play-r:2px;--rmx-rail:repeating-linear-gradient(90deg,rgba(244,243,236,.35) 0 2px,transparent 2px 4px);--rmx-kw:4px;--rmx-kh:14px;--rmx-font:'JetBrains Mono',ui-monospace,monospace;--rmx-case:uppercase;--rmx-track:.03em}
+#radioWindow[data-radio-skin="dither"] #rmx :is(.rmx-btn:not([aria-expanded="true"]),.rmx-key:not(.rmx-play),.rmx-tools,.rmx-eq){background:#050505;box-shadow:inset 0 0 0 1px var(--rmx-acc)}
+#radioWindow[data-radio-skin="dither"] #rmx .rmx-btn[aria-expanded="true"] b{color:inherit}
 #radioWindow[data-radio-skin="dither"] #rmx .rmx-art img{image-rendering:pixelated;filter:grayscale(1) contrast(1.5)}
 #radioWindow[data-radio-skin="dither"] #rmx .rmx-title{font-size:18px}
 #radioWindow[data-radio-skin="dither"] #rmx .rmx-artist{font-size:13px}
@@ -1304,9 +1316,22 @@ html.mk-cdock body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#
 /* The drag handle stays above the skeleton; the look sheet's spectrum frame and position belonged to the old display. */
 #radioWindow[data-radio-skin]>.radio-drag-strip{z-index:7}
 #radioWindow[data-radio-skin]~#themePanel .rb-page[data-step="more-b"],#radioWindow[data-radio-skin]~#themePanel #pioneerMetalControls,#radioWindow[data-radio-skin]~#themePanel #ampVisControls,#radioWindow[data-radio-skin]~#themePanel #ditherVisControls,#radioWindow[data-radio-skin]~#themePanel #pioneerDisplayControls{display:none!important}
+/* Half as tall (the user: 238 -> 136): the cover and title in 44, the wavy spectrum in a 24 px band, the keys in 40
+   (M3 small buttons); the same parts and places, nothing dropped. */
+#rmx{height:136px;grid-template-rows:44px minmax(0,1fr) 40px;row-gap:4px;padding:10px 16px}
+#rmx .rmx-art{width:44px;height:44px}
+#rmx .rmx-title{font-size:18px;line-height:22px}
+#rmx .rmx-artist{font-size:14px;line-height:22px}
+#rmx .rmx-top .rmx-btn{height:36px;border-radius:var(--rmx-kr,18px)}
+#rmx .rmx-play{height:40px;border-radius:var(--rmx-play-r,20px)}
+#rmx .rmx-eq{bottom:50px}
 @media (prefers-reduced-motion:reduce){#rmx .rmx-viz canvas{transition:none}}
 </style>
 <div id="radioWindow" style="display:none;">
+<script>/* the skin before radio.js loads (lazily): without it the old radio layout under the one skeleton showed for a moment (the user) */
+(function(){try{var rw=document.getElementById('radioWindow');if(matchMedia('(max-width: 760px), (pointer: coarse) and (max-width: 950px)').matches)return;
+var a=JSON.parse(localStorage.getItem('rg_radio_appearance_v1')||localStorage.getItem('rg_radio_guest_look_v1')||'{}')||{},s=a.layout;
+rw.dataset.radioSkin=['classic','clean','pioneer','pixel','amp','dither'].indexOf(s)>=0?s:'classic';rw.dataset.radioLayout='classic';}catch(e){}})();</script>
   <div class="radio-drag-strip" id="radioWinHeader" title="Drag"></div>
   <div id="rmx" role="group" aria-label="Radio atskaņotājs">
     <div class="rmx-meta">
@@ -1547,8 +1572,8 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261126pf1']);
-  await loadAny(['js/radio-max.js?v=20261126pf1']);
+  await loadAny(['js/radio.js?v=20261126rs1']);
+  await loadAny(['js/radio-max.js?v=20261126ws1']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
@@ -3539,15 +3564,16 @@ html.mk-low-spec #radioMini .rgm-run>i{animation-iteration-count:2;}
 #radioMini .rgm-wave{grid-column:1 / 4;grid-row:2;align-self:end;height:17px;width:100%;overflow:hidden;}
 #radioMini .rgm-wave>*{position:absolute;inset:0;}
 #radioMini .rgm-tr{transform:translateX(0);}
-#radioMini .rgm-tr::before{content:'';position:absolute;left:6px;right:0;top:13.5px;height:2px;border-radius:1px;background:var(--rgm-sub);opacity:.3;}
+#radioMini .rgm-tr::before{content:'';position:absolute;left:6px;right:0;top:8.5px;height:2px;border-radius:1px;background:var(--rgm-sub);opacity:.3;}
 #radioMini .rgm-pw{overflow:hidden;transform:translateX(-100%);}
 #radioMini .rgm-pw>i,#radioMini .rgm-pw>i>b{position:absolute;inset:0;}
 #radioMini .rgm-pw>i{transform:translateX(100%);}
-#radioMini .rgm-pw>i>b::before{content:'';position:absolute;left:0;right:0;top:13.5px;height:2px;border-radius:1px;background:var(--rgm-acc);opacity:.9;transition:background-color 500ms cubic-bezier(.2,0,0,1);}
-#radioMini .rgm-sp{position:absolute;left:0;top:0;width:100%;height:14px;color:var(--rgm-acc);transform-origin:50% 100%;scale:1 .1;transition:scale 400ms cubic-bezier(.2,0,0,1);}
+#radioMini .rgm-pw>i>b::before{content:'';position:absolute;left:0;right:0;top:8.5px;height:2px;border-radius:1px;background:var(--rgm-acc);opacity:.9;transition:background-color 500ms cubic-bezier(.2,0,0,1);}
+#radioMini .rgm-sp{position:absolute;left:0;top:0;width:100%;height:17px;color:var(--rgm-acc);transform-origin:50% 9.5px;scale:1 0;transition:scale 400ms cubic-bezier(.2,0,0,1);}
 #radioMini.rgm-playing .rgm-sp{scale:1 1;}
+#radioMini.rgm-playing .rgm-pw>i>b::before{opacity:0;}
 #radioMini .rgm-th{grid-column:1 / 4;grid-row:2;align-self:end;height:17px;pointer-events:none;transform:translateX(0);}
-#radioMini .rgm-th::after{content:'';position:absolute;left:-4px;top:10.5px;width:8px;height:8px;border-radius:50%;background:var(--rgm-acc);transition:background-color 500ms cubic-bezier(.2,0,0,1);}
+#radioMini .rgm-th::after{content:'';position:absolute;left:-4px;top:5.5px;width:8px;height:8px;border-radius:50%;background:var(--rgm-acc);transition:background-color 500ms cubic-bezier(.2,0,0,1);}
 /* Narrow: the same build without the time. */
 #radioMini.rgm-tiny .rgm-ctrls{grid-template-columns:0 24px 24px 24px minmax(24px,1fr);column-gap:8px;}
 #radioMini.rgm-tiny .rgm-times{display:none;}
@@ -4739,6 +4765,120 @@ function mkSheetClose(sheet, panel, key, btn, done) {
   });
 })();
 
+/* The radio's spectrum (the big radio, js/radio-max.js, and the radio's mini player below): the M3 Expressive wavy
+   progress line (Compose WavyProgressIndicator: one round-capped stroke, each half wave a quadratic curve whose
+   control point is twice the amplitude, the wave travelling a wavelength a second, the amplitude ramped in and out)
+   played by the music. 24 bands, bass on the left: a band's level sets the wave's height there (fast attack, slower
+   release) and, more slowly, its length (the bass long, the highs short and fine). The phase is summed along the
+   line (half waves = sum of dx / (wavelength/2)), so a changing wavelength never breaks it; the wave travels faster
+   with the music's energy and jumps ahead on a bass hit; in silence it straightens. No trig: one quadratic curve a half wave
+   (about 50 on the big radio), from an 8 px walk of additions. o: { long, short } wavelengths in CSS px at the bass and treble ends.
+   Calm on purpose (the user: per-band spikes looked chaotic): bands blurred along the line, slow release, narrow
+   wavelengths, a speed near M3's own. */
+window.__mkWavy = function (o) {
+  var N = 24, amp = new Float32Array(N), len = new Float32Array(N), raw = new Float32Array(N), tmp = new Float32Array(N), t2 = new Float32Array(N), LO = new Int32Array(N), HI = new Int32Array(N), edgesFor = 0, data = null, top = .12;
+  var STILL = [.22, .38, .52, .46, .68, .9, .76, .58, .64, .86, 1, .82, .6, .52, .66, .78, .58, .44, .5, .38, .3, .25, .18, .1];
+  var gain = 0, aim = 0, travel = 0, energy = 0, bassAvg = 0, kick = 0, lastT = 0;
+  var ease = function (dt, tau) { return 1 - Math.exp(-dt / tau); };
+  function blur() {
+    for (var i = 0; i < N; i++) {
+      var a = tmp[Math.max(0, i - 2)], b = tmp[Math.max(0, i - 1)], c = tmp[Math.min(N - 1, i + 1)], e = tmp[Math.min(N - 1, i + 2)];
+      t2[i] = (a + 4 * b + 6 * tmp[i] + 4 * c + e) / 16;
+    }
+    tmp.set(t2);
+  }
+  var speed = 2;
+  // Fills the bands from the analyser; null (no access, or paused): the still shape, at full height.
+  function read(a, t) {
+    var dt = lastT ? Math.min(.25, (t - lastT) / 1000) : .033, i;
+    lastT = t;
+    if (!a) { for (i = 0; i < N; i++) { amp[i] = STILL[i] * .7; len[i] = STILL[(i + 3) % N] * .85; } gain = aim = 1; return; }
+    if (!data || data.length !== a.frequencyBinCount) data = new Uint8Array(a.frequencyBinCount);
+    a.getByteFrequencyData(data);
+    // Bands spaced as we hear (50 Hz to 14 kHz, log), each its loudest bin; about 3 dB an octave added (music is
+    // quieter up high), then each measured from the quietest band up to a slowly falling running maximum.
+    var ny = (a.context.sampleRate || 48000) / 2, L = data.length, m = 0, f = 1, loud = 0, bass = 0;
+    if (edgesFor !== L * ny) {   // each band's bins, once per analyser size
+      edgesFor = L * ny;
+      for (i = 0; i < N; i++) { LO[i] = Math.floor(L * 50 * Math.pow(280, i / N) / ny); HI[i] = Math.max(LO[i] + 1, Math.floor(L * 50 * Math.pow(280, (i + 1) / N) / ny)); }
+    }
+    for (i = 0; i < N; i++) {
+      var v = 0;
+      for (var j = LO[i]; j < HI[i] && j < L; j++) if (data[j] > v) v = data[j];
+      v /= 255;
+      if (v > loud) loud = v;
+      if (i < 6) bass += v / 6;
+      raw[i] = v + i / N * .26;
+      if (raw[i] > m) m = raw[i];
+      if (raw[i] < f) f = raw[i];
+    }
+    top = Math.max(m - f, top * .97, .12);
+    // Across the line: each band blurred with its neighbours twice (1 4 6 4 1), so the height swells gently along it.
+    for (i = 0; i < N; i++) tmp[i] = Math.pow(Math.max(0, raw[i] - f) / top, 1.6);
+    blur(); blur();
+    // In time: about .25 a frame (30 fps) towards a louder level, .06 towards a quieter one, and never more than
+    // .08 a frame either way; the wavelength's own level much slower still (about 1.2 s).
+    var up = ease(dt, .115), down = ease(dt, .53), cap = .08 * dt / .033, slow = ease(dt, 1.2);
+    for (i = 0; i < N; i++) {
+      var w = tmp[i], s = (w - amp[i]) * (w > amp[i] ? up : down);
+      amp[i] += Math.max(-cap, Math.min(cap, s));
+      len[i] += (w - len[i]) * slow;
+    }
+    // The M3 amplitude ramp (500 ms in, 500 ms out): silence (all bands near nothing) lays the line flat.
+    aim = Math.max(0, Math.min(1, (loud - .12) / .2));   // (the analyser's own smoothing leaves a faint tail)
+    gain += (aim - gain) * ease(dt, aim > gain ? .15 : .2);
+    // The beat: a jump in the bass kicks the wave ahead; the overall energy sets its cruising speed.
+    if (bass - bassAvg > .08) kick = 1;
+    bassAvg += (bass - bassAvg) * ease(dt, .3);
+    kick *= 1 - ease(dt, .18);
+    energy += (loud - energy) * ease(dt, .4);
+    // half waves a second: M3 travels one wavelength (two halves) a second; the music nudges it within 1.7 to 3,
+    // smoothed, always forwards
+    speed += (2 * (.85 + .35 * energy + .25 * kick) - speed) * ease(dt, .4);
+    travel += dt * speed * gain;
+    if (travel > 1e6) travel %= 2;
+  }
+  var at = function (lv, f) { var p = f * (N - 1), i = Math.floor(p), t = p - i; return lv[i] * (1 - t) + lv[Math.min(N - 1, i + 1)] * t; };
+  // One path from x0 to x1 (device px) around cy; ampMax and d (device px per CSS px). The phase is summed on an
+  // 8 px walk (at least two steps a half wave); each half wave is one quadratic curve. No allocation per frame.
+  var X0 = 0, SPAN = 1, CY = 0, AMP = 0, D = 1, KNEE = 1 - Math.exp(-2.2), C = null, xa = 0, k = 0, first = true;
+  // The wavelength within .75 to 1.5 of M3's (o.long at the bass end, o.short at the treble end), a band's level
+  // lengthening it by up to 16 %; the height a calm part of the room with a soft knee, never at the edges.
+  function lam(f) { return (o.long + (o.short - o.long) * f) * (.92 + .16 * at(len, f)) * D; }
+  function height(x) {
+    var f = Math.min(1, Math.max(0, (x - X0) / SPAN)), l = Math.min(1.5, at(amp, f));
+    return AMP * .72 * gain * (.3 + .7 * Math.min(1, (1 - Math.exp(-2.2 * l)) / KNEE));
+  }
+  // The half wave from xa to xb (its ends on the centre line, its control point twice its height), from t0 to t1.
+  function half(xb, t0, t1) {
+    var xm = (xa + xb) / 2, ym = CY + ((k & 1) ? -2 : 2) * height(xm), dx = xb - xa, dy = ym - CY;
+    if (first) { C.moveTo(xa + dx * t0, CY + dy * 2 * t0 * (1 - t0)); first = false; }
+    // the control point of the part from t0 to t1 of a quadratic (its blossom)
+    var u = (1 - t0) * t1 + t0 * (1 - t1);
+    C.quadraticCurveTo(xa * (1 - t0) * (1 - t1) + xm * u + xb * t0 * t1, CY + dy * u, xa + dx * t1, CY + dy * 2 * t1 * (1 - t1));
+  }
+  function path(ctx, x0, x1, cy, ampMax, d) {
+    C = ctx; X0 = x0; SPAN = x1 - x0; CY = cy; AMP = ampMax; D = d; first = true;
+    var step = 8 * d, h = -travel;
+    k = Math.floor(h); xa = x0 - (h - k) * lam(0) / 2;
+    ctx.beginPath();
+    for (var x = x0; x < x1;) {
+      var s = Math.min(step, x1 - x), dh = s / (lam((x + s / 2 - x0) / SPAN) / 2);
+      while (Math.floor(h + dh) > k) {   // a crossing of the centre line in this step
+        var xc = x + (k + 1 - h) / dh * s;
+        half(xc, first ? Math.max(0, (x0 - xa) / (xc - xa)) : 0, 1);
+        xa = xc; k++;
+      }
+      h += dh; x += s;
+    }
+    var frac = h - k;   // the last half wave, as far as the line goes
+    if (frac > 1e-3) { var xb = xa + (x1 - xa) / frac; half(xb, first ? Math.max(0, (x0 - xa) / (xb - xa)) : 0, frac); }
+    if (first) { ctx.moveTo(x0, cy); ctx.lineTo(x1, cy); }
+    C = null;
+  }
+  return { read: read, path: path, flat: function () { return gain < .002 && aim === 0; } };
+};
+
 /* The dock row's mini players (RG Music, radio). Each sits beside the dock and is as tall as it: nothing else is
    drawn in that row (the calendar, with however many people in its side columns, ends above it). The first that
    wants a place gets the right side, a second the left; with no room on a free side a mini stays hidden rather than
@@ -4801,76 +4941,39 @@ window.__mkMiniDock = (function () {
       if (live && x < dur) el.__tick = setTimeout(tick, (1 - x % 1) * 1000 / rate + 20);
     })();
   }
-  // The spectrum over the played line: three see-through layers of rounded hills on the line, each a little apart
-  // so their peaks never stack: the falling peaks (back), the slow level (middle) and the level now (front).
+  // The spectrum is the played line itself, drawn as the M3 wavy line (draw() below).
   // source() gives an AnalyserNode (real audio) or null (no access: one still shape). Drawn at ~30 fps only while
-  // it plays and shows, never on a weak computer (there one still frame); on pause CSS folds it onto the line.
+  // it plays and shows, on every computer (15 fps looked jerky), sleeping on a timer between frames like the big
+  // radio's loop (js/radio-max.js) instead of waking on every vsync; on pause CSS folds it onto the line.
   // Returns update(), called on every render of the mini.
   function spectrum(el, source) {
     var cv = el.querySelector('.rgm-sp');
     if (!cv) return function () {};
-    var N = 24, ctx = cv.getContext('2d'), now = new Float32Array(N), slow = new Float32Array(N), peak = new Float32Array(N);
-    var raf = 0, last = 0, data = null, fills = [], top = .12;
-    var STILL = [.18, .3, .42, .35, .5, .72, .6, .45, .55, .8, 1, .85, .62, .5, .58, .7, .52, .4, .46, .35, .28, .22, .16, .1];
-    function running() { return !el.hidden && el.classList.contains('rgm-playing') && !document.documentElement.classList.contains('mk-low-spec'); }
-    function read() {
-      var a = source();
-      if (!a) { for (var k = 0; k < N; k++) { now[k] = STILL[k] * .7; slow[k] = STILL[(k + 3) % N] * .85; peak[k] = STILL[(k + 7) % N]; } return; }
-      if (!data || data.length !== a.frequencyBinCount) data = new Uint8Array(a.frequencyBinCount);
-      a.getByteFrequencyData(data);
-      // Bands spaced as we hear (50 Hz to 14 kHz, log), each the loudest bin in it.
-      // Quiet or loud, broad or thin, the shape spans the height: each band is measured from the quietest one up to
-      // a slowly falling running maximum, so there are always peaks and valleys.
-      var ny = (a.context.sampleRate || 48000) / 2, L = data.length, lv = [], m = 0, f = 1;
-      for (var i = 0; i < N; i++) {
-        var lo = Math.floor(L * 50 * Math.pow(280, i / N) / ny), hi = Math.max(lo + 1, Math.floor(L * 50 * Math.pow(280, (i + 1) / N) / ny)), v = 0;
-        for (var j = lo; j < hi && j < L; j++) if (data[j] > v) v = data[j];
-        // Music is quieter up high: the levels are decibels, so the tilt is added (about 3 dB an octave).
-        lv[i] = v / 255 + i / N * .26;
-        if (lv[i] > m) m = lv[i];
-        if (lv[i] < f) f = lv[i];
-      }
-      top = Math.max(m - f, top * .97, .12);
-      for (i = 0; i < N; i++) {
-        var v = Math.pow(Math.max(0, lv[i] - f) / top, 1.6) * .95;
-        now[i] = now[i] * .45 + v * .55;
-        slow[i] = slow[i] * .88 + v * .12;
-        peak[i] = Math.max(now[i], peak[i] - .012);
-      }
+    var ctx = cv.getContext('2d'), wave = window.__mkWavy({ long: 32, short: 19 });
+    var raf = 0, wake = 0, last = 0, ink = '#fff', W = 0, H = 0, d = 1;
+    function running() { return !el.hidden && el.classList.contains('rgm-playing'); }
+    // The canvas's size is measured on a resize or a render, never in a frame.
+    function size() {
+      d = Math.min(2, window.devicePixelRatio || 1); W = Math.round(cv.clientWidth * d); H = Math.round(17 * d);
+      if (W && (cv.width !== W || cv.height !== H)) { cv.width = W; cv.height = H; }
     }
-    // A closed hill line through the band levels, its points shifted by `off` of a band.
-    function hills(lv, off, W, H) {
-      ctx.beginPath();
-      ctx.moveTo(0, H);
-      var px = 0, py = H;
-      for (var i = 0; i <= N; i++) {
-        var x = i < N ? Math.min(W, (i + .5 + off) / N * W) : W, y = i < N ? H - Math.min(1, lv[i]) * (H - 1) : H;
-        ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2);
-        px = x; py = y;
-      }
-      ctx.lineTo(W, H);
-      ctx.fill();
-    }
+    if ('ResizeObserver' in window) new ResizeObserver(function () { size(); if (!running() && !el.hidden) draw(); }).observe(cv);
+    // One stroke along the played line, the mini's own 2.5 px.
     function draw() {
-      var d = Math.min(2, window.devicePixelRatio || 1), W = Math.round(cv.clientWidth * d), H = Math.round(14 * d);
       if (!W) return;
-      if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = fills[0]; ctx.globalAlpha = fills[3]; hills(peak, .45, W, H);
-      ctx.fillStyle = fills[1]; ctx.globalAlpha = fills[4]; hills(slow, -.3, W, H);
-      ctx.fillStyle = fills[2]; ctx.globalAlpha = fills[5]; hills(now, 0, W, H);
-      // The OLED look: the level now also as a bright edge on its hills.
-      if (fills[6]) { ctx.globalAlpha = 1; ctx.strokeStyle = fills[2]; ctx.lineWidth = d; ctx.stroke(); }
-      ctx.globalAlpha = 1;
+      wave.path(ctx, 2 * d, W - 2 * d, 9.5 * d, 5.5 * d, d);
+      ctx.strokeStyle = ink; ctx.lineWidth = 2.5 * d; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.stroke();
     }
     function frame(ts) {
       raf = 0;
       if (!running() || !source()) return;
-      raf = requestAnimationFrame(frame);
-      if (ts - last < 32) return;
-      last = ts;
-      read();
-      draw();
+      if (ts - last >= 32) { last = ts; wave.read(source(), ts); draw(); }
+      // asks for the vsync only 12 ms before the next frame is due
+      var wait = Math.max(0, last + 32 - ts - 12);
+      if (!wait) raf = requestAnimationFrame(frame);
+      else wake = setTimeout(function () { wake = 0; if (!raf) raf = requestAnimationFrame(frame); }, wait);
     }
     // A fill of ink dots, one in every `step` pixels, for the 1-bit look.
     function dots(c, step) {
@@ -4879,12 +4982,12 @@ window.__mkMiniDock = (function () {
       return ctx.createPattern(t, 'repeat');
     }
     return function update() {
-      // Colours once per render: the accent in three strengths, or for the 1-bit look three densities of ink dots.
+      // Colours and size once per render: the accent, or for the 1-bit look ink dots.
       var c = getComputedStyle(cv).color;
-      fills = el.dataset.look === 'dither' ? [dots(c, 4), dots(c, 3), dots(c, 2), 1, 1, 1] :
-        el.dataset.look === 'pioneer' ? [c, c, c, .12, .2, .3, true] : [c, c, c, .22, .34, .62];
-      if (running() && source()) { if (!raf) raf = requestAnimationFrame(frame); }
-      else if (!el.hidden) { read(); draw(); }
+      ink = el.dataset.look === 'dither' ? dots(c, 2) : c;
+      size();
+      if (running() && source()) { if (!raf && !wake) raf = requestAnimationFrame(frame); }
+      else if (!el.hidden) { wave.read(null, performance.now()); draw(); }
     };
   }
   // The volume key: a click mutes (the owner's click handler), a drag across or up, the wheel or the arrow keys
@@ -5590,7 +5693,7 @@ window.addEventListener('message', function(e) {
 </script>
 
 <script src="js/app-update.js?v=20260927ns1"></script>
-<script defer src="js/radio-dancers.js?v=20261124dn19"></script>
+<script defer src="js/radio-dancers.js?v=20261126rs1"></script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/i.test(location.protocol)) {
   const MINKA_APP_VERSION = '2026.09.14-winamp-lcd';

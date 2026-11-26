@@ -857,10 +857,15 @@
   function ensureOverlay(){
     if (_overlay) return;
     injectStyles();
-    _overlay = document.createElement('div');
+    // A modal <dialog>: top layer instead of a z-index (the inline 240000 only
+    // still matters while it shrinks away after close()).
+    _overlay = document.createElement('dialog');
     _overlay.id = 'mcal-overlay';
+    _overlay.setAttribute('aria-label', 'Mēneša kalendārs');
     _overlay.innerHTML = '<div class="mcal-inner"></div><div class="mcal-panelwrap"></div>';
     document.body.appendChild(_overlay);
+    // A close request the Escape handler below did not take (the phone's back).
+    _overlay.addEventListener('close', function(){ if (isOpen()) close(); });
 
     _overlay.addEventListener('click', function(e){
       var t = e.target;
@@ -946,6 +951,7 @@
     if (!wasOpen) _origin = (opts && opts.origin) || (MM && MM.recentLauncher()) || null;
     _overlay.classList.remove('is-closing');
     _overlay.classList.add('is-open');
+    if (!_overlay.open) _overlay.showModal();
     render(month || window.__activeMonth || _curMonth);
     if (!wasOpen) loadAbsences();
     if (MM && !wasOpen) MM.openSurface(_overlay, { key: 'monthcal', origin: _origin });
@@ -956,6 +962,7 @@
       var wasOpen = _overlay.classList.contains('is-open');
       closePanel(true);
       _overlay.classList.remove('is-open');
+      if (_overlay.open) _overlay.close();
       var MM = window.MinkaMotion;
       if (MM && wasOpen) {
         _overlay.classList.add('is-closing');
@@ -1129,7 +1136,8 @@
     if (isOpen()) close(); else open(e.data.month);
   });
   window.addEventListener('keydown', function(e){
-    if (e.key === 'Escape'){ if (_bdayPopEl){ closeBdayPop(); } else if (panelOpen()){ closePanel(); } else if (isOpen()){ close(); } }
+    // preventDefault: the dialog must not also take this Escape as its own close
+    if (e.key === 'Escape'){ if (_bdayPopEl){ e.preventDefault(); closeBdayPop(); } else if (panelOpen()){ e.preventDefault(); closePanel(); } else if (isOpen()){ e.preventDefault(); close(); } }
   });
   window.addEventListener('resize', function(){ if (isOpen()) scheduleFit(); });
   document.addEventListener('minka:auth-ok', loadBirthdays);

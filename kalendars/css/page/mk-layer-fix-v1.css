@@ -189,10 +189,6 @@
 .side-panel.mini-duty .duty-done-badge {
   font-size: 9px !important;
 }
-.side-panel.mini-duty .side-fat-bar-wrap {
-  height: 2px !important;
-  margin-top: 4px !important;
-}
 .side-panel.mini-duty .next-box,
 .side-panel.mini-duty #radiographers-next-container,
 .side-panel.mini-duty #radiologists-next-container {
@@ -338,19 +334,6 @@
 .mk-search-date-meta .mk-info-chip[hidden] {
   display: none !important;
 }
-.mk-search-date-icon {
-  display: none !important;
-}
-.mk-search-date-icon {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 18px !important;
-  height: 18px !important;
-  flex: 0 0 18px !important;
-  color: rgba(56,189,248,0.92) !important;
-  filter: drop-shadow(0 0 7px rgba(56,189,248,0.58)) !important;
-}
 .mk-search-weekday {
   display: inline-flex !important;
   align-items: center !important;
@@ -476,7 +459,6 @@
   box-shadow: none !important;
   flex-shrink: 0 !important;
 }
-#minkaBarMute { display: none !important; }
 #minkaNamedayChip {
   min-height: 30px !important;
   padding: 0 12px !important;
@@ -789,9 +771,6 @@
   max-height: none !important;
   aspect-ratio: 1 / 1 !important;
 }
-:root.host-radio-open .card .card-top {
-  padding: 5px 6px 0 !important;
-}
 :root.host-radio-open .card .card-shift {
   font-size: clamp(18px, 1.6vw, 26px) !important;
   line-height: 0.94 !important;
@@ -852,13 +831,6 @@
   color: #c8d8ff !important;
   border-color: rgba(140,180,255,0.60) !important;
 }
-#ns-bar-toggle .ns-moon {
-  display: inline-block !important;
-  filter: drop-shadow(0 0 calc(var(--mg,0)*8px) rgba(180,210,255,0.95))
-          drop-shadow(0 0 calc(var(--mg,0)*18px) rgba(140,180,255,0.60)) !important;
-  animation: moon-pulse var(--mg-spd, 99s) ease-in-out infinite !important;
-  transition: filter 1.5s ease !important;
-}
 @keyframes moon-pulse {
   0%,100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(calc(1 + var(--mg,0)*0.25)); opacity: calc(0.75 + var(--mg,0)*0.25); }
@@ -900,38 +872,6 @@
   display: inline-block;
   min-width: 6.5ch;
   text-align: left;
-}
-/* keep old classes functional for any external references */
-.shift-elapsed, .shift-remaining { display: none !important; }
-.shift-progress-times { display: none !important; }
-.shift-time-label {
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  letter-spacing: .02em !important;
-  color: rgba(255,255,255,0.26) !important;
-}
-#shift-start-label {
-  justify-self: start !important;
-  text-align: left !important;
-  visibility: hidden !important;
-}
-#shift-end-label {
-  justify-self: end !important;
-  text-align: right !important;
-  padding-right: 10px !important;
-  visibility: hidden !important;
-}
-/* old .shift-elapsed rule removed — superseded by new header CSS above */
-.shift-remaining,
-.shift-remaining[data-urgency],
-.shift-remaining[data-urgency="ok"],
-.shift-remaining[data-urgency="warn"],
-.shift-remaining[data-urgency="crit"] {
-  font: 700 13px/1 'Space Grotesk', system-ui !important;
-  color: rgba(255,255,255,0.92) !important;
-  letter-spacing: -.01em !important;
-  text-shadow: none !important;
-  animation: none !important;
 }
 /* Bottom ruler hidden — ticks live in sl-ruler above */
 #shift-bar-ruler { display: none !important; }
@@ -1290,7 +1230,6 @@
   z-index: 4;
   pointer-events: none;
 }
-.sl-ns-time-moon     { color: rgba(125,211,252,0.75) !important; }
 /* ── Shift lanes (grouped by shift type) ── */
 .shift-lanes-wrap {
   position: relative;
@@ -1651,23 +1590,6 @@
   overflow: visible !important;
   flex-shrink: 0 !important;
 }
-/* Name labels inside below row */
-.shift-progress-time-label {
-  position: absolute !important;
-  top: 4px !important;
-  transform: translateX(-50%) !important;
-  font-size: 9px !important;
-  font-weight: 700 !important;
-  color: rgba(255,255,255,0.38) !important;
-  letter-spacing: 0 !important;
-  white-space: nowrap !important;
-  line-height: 1 !important;
-}
-.shift-progress-time-label.is-start { transform: none !important; }
-.shift-progress-time-label.is-end   { transform: translateX(-100%) !important; }
-/* Hide start/end time labels when night overlay is active to avoid clash with worker names */
-#shift-progress-wrap.ns-bar-active #shift-start-label,
-#shift-progress-wrap.ns-bar-active #shift-end-label { opacity: 0 !important; pointer-events: none !important; }
 /* Hide duplicate ruler bar when night split is active */
 #shift-progress-wrap.ns-bar-active .sl-ruler { display: none !important; }
 /* Ghost drag element */
@@ -1811,26 +1733,9 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 .shift-progress-seg-label {
   filter: none !important;
 }
-.minka-orb-mini .sec,
-.ns-flow-live {
-  box-shadow: none !important;
-}
 .shift-progress-seg-label {
   text-shadow: none !important;
 }
-/* Live pozīcijas marķieris uz timeline = pikseļu buddy (nevis sarkans punkts).
-   Viegls, statisks (bez pulsa/glow) — vienkārši stāv un pārvietojas ar laiku. */
-.ns-flow-live {
-  background: transparent !important;
-  border: none !important;
-  width: auto !important;
-  height: auto !important;
-  box-shadow: none !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;  /* centrēts UZ pašas joslas */
-}
-.ns-flow-live::before, .ns-flow-live::after { display: none !important; content: none !important; }
-.ns-flow-ghost { width: 22px; height: 16px; display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
 /* Pagājušais laiks — tumšs pārklājs no sākuma līdz tagadnei (redz, ka pagāja). */
 .ns-flow-spent {
   position: absolute !important; left: 0; top: 0; bottom: 0; z-index: 6;
@@ -1839,65 +1744,6 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
 }
 /* Atlikušais aktīvajā daļā: laiks (HH:MM:SS) pa kreisi, procenti pa labi —
    tieši pie buddy, pārvietojas līdzi. */
-.ns-flow-time, .ns-flow-pct {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  font: 900 9.5px/1 'JetBrains Mono', ui-monospace, monospace; letter-spacing: .02em;
-  white-space: nowrap; pointer-events: none;
-  padding: 2px 5px;
-  border-radius: 7px;
-  color: rgba(232,244,255,.98);
-  background: rgba(3,7,14,.78);
-  border: 1px solid rgba(205,226,244,.28);
-  box-shadow: 0 1px 5px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.07);
-  text-shadow: 0 1px 2px rgba(0,0,0,.92);
-}
-.ns-flow-time { right: 100%; margin-right: 5px; }
-.ns-flow-pct  { left: 100%;  margin-left: 5px; color: #aeeeff; }
-.ns-flow-worker {
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  transform: translate(-50%, -4px);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  max-width: 86px;
-  padding: 2px 6px;
-  border-radius: 8px;
-  color: rgba(232,244,255,.98);
-  background: rgba(3,7,14,.82);
-  border: 1px solid rgba(125,211,252,.28);
-  box-shadow: 0 1px 6px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06);
-  font: 900 8.5px/1 Inter, system-ui, sans-serif;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  pointer-events: none;
-  text-shadow: 0 1px 2px rgba(0,0,0,.95);
-}
-.ns-flow-worker.is-left-edge {
-  left: 100%;
-  transform: translate(6px, -4px);
-  max-width: 78px;
-  justify-content: flex-start;
-}
-.ns-flow-worker.is-right-edge {
-  left: 0;
-  transform: translate(calc(-100% - 6px), -4px);
-  max-width: 78px;
-  justify-content: flex-end;
-}
-.ns-flow-worker-emoji {
-  font-size: 9px;
-  line-height: 1;
-  text-transform: none;
-}
-.ns-flow-worker-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .ns-panel-head { position: relative !important; }
 /* Card wrapper — column so checklist sits below the card */
 .ns-cards-row { align-items: flex-start !important; }
@@ -1968,15 +1814,6 @@ html.mk-no-anim * { animation: none !important; transition: none !important; }
   padding-right: 2px !important;
 }
 
-.ns-room-head {
-  margin-bottom: 4px !important;
-  color: rgba(255,255,255,0.82) !important;
-  font-size: 9px !important;
-  font-weight: 800 !important;
-  letter-spacing: .08em !important;
-  text-transform: uppercase !important;
-  line-height: 1 !important;
-}
 
 .ns-room-stage {
   display: flex !important;
@@ -2849,10 +2686,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   color: rgba(125,211,252,1) !important;
   box-shadow: 0 0 18px rgba(56,189,248,0.28), 0 0 6px rgba(56,189,248,0.18) !important;
 }
-#sl-ns-slot #ns-bar-toggle .ns-moon {
-  font-size: 11px !important;
-  margin-right: 4px !important;
-}
 #sl-ns-slot {
   display: inline-flex !important;
   align-items: center !important;
@@ -3119,11 +2952,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   white-space: nowrap !important;
 }
 
-:root.mk-mobile-shell .duty-timer .ghost {
-  left: 6px !important;
-  right: 6px !important;
-  top: 2px !important;
-}
 
 :root.mk-mobile-shell .duty-12h,
 :root.mk-mobile-shell .duty-15h,
@@ -3260,9 +3088,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   font-size: 16px !important;
 }
 
-:root.mk-mobile-shell #minkaBarMute {
-  display: none !important;
-}
 
 :root.mk-mobile-shell #minkaAiPanel {
   margin-top: 6px !important;
@@ -3452,9 +3277,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   aspect-ratio: 1 / .72 !important;
 }
 
-:root.mk-mobile-shell .card .card-top {
-  padding: 3px 4px 0 !important;
-}
 
 :root.mk-mobile-shell .card .card-shift {
   font-size: clamp(8px, 2.2vw, 11px) !important;
@@ -3481,12 +3303,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   font-size: 10px !important;
 }
 
-:root.mk-mobile-shell .shift-progress-times {
-  justify-content: flex-start !important;
-  padding-left: 4px !important;
-  gap: 8px !important;
-  margin-bottom: 2px !important;
-}
 
 :root.mk-mobile-shell .shift-progress-segments {
   height: 14px !important;
@@ -3516,11 +3332,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   max-width: 26% !important;
 }
 
-:root.mk-mobile-shell .shift-progress-time-label {
-  font-size: 7px !important;
-  top: 1px !important;
-  opacity: .7 !important;
-}
 
 :root.mk-mobile-shell .ns-btn-row {
   gap: 4px !important;
@@ -3531,27 +3342,9 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   width: 22px !important;
 }
 
-:root.mk-mobile-shell .shift-time-label {
-  font-size: 8px !important;
-}
 
-:root.mk-mobile-shell .shift-progress-center {
-  gap: 1px !important;
-}
 
-:root.mk-mobile-shell .shift-elapsed {
-  font-size: 9px !important;
-  line-height: 1.05 !important;
-  white-space: nowrap !important;
-}
 
-:root.mk-mobile-shell .shift-remaining,
-:root.mk-mobile-shell #grafiks-countdown {
-  font-size: 11px !important;
-  line-height: 1.05 !important;
-  white-space: nowrap !important;
-  letter-spacing: -.02em !important;
-}
 
 :root.mk-mobile-shell #stats-modal > div {
   width: min(96vw, 720px) !important;
@@ -3707,11 +3500,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
   border-radius: 12px !important;
 }
 
-:root.mk-mobile-shell .ns-room-head {
-  margin-bottom: 3px !important;
-  font-size: 7px !important;
-  line-height: 1 !important;
-}
 
 :root.mk-mobile-shell .ns-room-stage {
   display: grid !important;
@@ -4051,9 +3839,6 @@ html.mk-low-spec #ns-bar-toggle .ns-moon {
     max-width: 20% !important;
   }
 
-  :root.mk-mobile-shell .shift-progress-time-label {
-    display: none !important;
-  }
 
   :root.mk-mobile-shell #nsPanel {
     width: min(calc(100vw - 12px), 420px) !important;
@@ -4983,19 +4768,6 @@ html body #grafiks-app #radiologists-duty .mk-side-nfoot--split.mk-side-nfoot--s
 .mk-nfoot-split i b { font-weight: 800 !important; font-size: 10.5px !important; color: #fff !important; -webkit-text-fill-color: #fff !important; text-shadow: 0 1px 1px rgba(0,0,0,.6) !important; }
 .mk-nfoot-split i span { font-weight: 700 !important; opacity: .8 !important; }
 /* watermark initials */
-.mk-side-wm {
-  position: absolute !important;
-  right: 8px !important;
-  bottom: 6px !important;
-  font-size: 38px !important;
-  font-weight: 900 !important;
-  letter-spacing: -.05em !important;
-  color: rgba(255,255,255,.052) !important;
-  pointer-events: none !important;
-  line-height: 1 !important;
-  z-index: 1 !important;
-  user-select: none !important;
-}
 .mk-side-ring span small {
   font-size: 4.8px !important;
   letter-spacing: -.02em !important;
@@ -5207,14 +4979,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #radiographers-duty .mk-side-nfoot dd em,
 #radiologists-duty .mk-side-nfoot dd em {
   font-size: 9px !important;
-}
-#radiographers-duty .mk-side-wm,
-#radiologists-duty .mk-side-wm {
-  right: 8px !important;
-  bottom: -1px !important;
-  font-size: 64px !important;
-  color: rgba(255,255,255,.07) !important;
-  z-index: 1 !important;
 }
 :root.mk-mobile-shell .mk-side-card,
 .side-panel.compact-duty .mk-side-card,
@@ -5491,9 +5255,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 :root.mk-mobile-shell .date-title-wrap {
   display: none !important;
 }
-.mk-search-date-icon {
-  display: none !important;
-}
 :root:not(.mk-mobile-shell) #minkaBarInner {
   height: 72px !important;
   min-height: 72px !important;
@@ -5714,9 +5475,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   font-size: 10px !important;
 }
 :root.mk-mobile-shell .mk-search-today[hidden] {
-  display: none !important;
-}
-:root.mk-mobile-shell .mk-search-date-icon {
   display: none !important;
 }
 :root.mk-mobile-shell .mk-bar-icon-btn {
@@ -6065,17 +5823,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   min-width: 0 !important;
   padding-top: 0 !important;
   border-top: 0 !important;
-}
-#grafiks-list.grid-view .mk-coffee-cups {
-  display: flex !important;
-  align-items: center !important;
-  gap: clamp(1px, 1cqw, 3px) !important;
-  /* basis 0 — the mug strip gives way FIRST so the stepper never clips,
-     even with a 2-digit count on narrow cards */
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
-  overflow: hidden !important;
-  justify-content: flex-start !important;
 }
 #grafiks-list.grid-view .mk-coffee-cup {
   display: block !important;
@@ -6594,9 +6341,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   gap: 2px !important;
   padding-top: 0 !important;
 }
-:root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-cups {
-  gap: 1px !important;
-}
 :root.mk-mobile-shell #grafiks-list.grid-view .mk-coffee-cup {
   width: 7px !important;
   height: 7px !important;
@@ -7071,12 +6815,6 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
 #worker-modal .worked .shift-label,
 #worker-modal .wl-shift {
   color: #34d399 !important;
-}
-#worker-modal .fatigue-reason-icon {
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 50% !important;
-  background: #60a5fa !important;
 }
 @media (max-width: 760px) {
   #worker-modal .mk-detail-stats {

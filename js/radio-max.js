@@ -38,6 +38,14 @@
   /* ---------- play state, mute and volume: the engine reports them with rg-radio-state ---------- */
   const vol = $('.rmx-vol');
   function paintVol(v) { vol.value = String(v); vol.style.setProperty('--v', Math.round(v * 100) + '%'); }
+  function isWarm(c) {
+    const v = (String(c).match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    if (v.length < 3) return false;
+    const [r, g, b] = v, mx_ = Math.max(r, g, b), mn = Math.min(r, g, b);
+    if (mx_ - mn < 8) return false;   // a true grey stays grey
+    const h = mx_ === r ? (60 * (g - b) / (mx_ - mn) + 360) % 360 : mx_ === g ? 60 * (b - r) / (mx_ - mn) + 120 : 60 * (r - g) / (mx_ - mn) + 240;
+    return h < 50 || h >= 345;
+  }
   function render() {
     const playing = state === 'playing' || state === 'loading';
     mx.classList.toggle('rmx-playing', playing);
@@ -55,6 +63,10 @@
     const rgb = getComputedStyle(rw).getPropertyValue('--radio-accent-rgb').trim();
     const violet = !!rgb && window.__mkMiniDock && window.__mkMiniDock.violet(rgb);
     if (violet !== (mx.dataset.violet === '1')) { mx.dataset.violet = violet ? '1' : ''; if (violet) mx.style.setProperty('--radio-accent-rgb', '200,222,238'); else mx.style.removeProperty('--radio-accent-rgb'); }
+    // House rule: no brown. A warm accent (red, orange, amber, brown: hue under 50 or from 345) mixed into the dark
+    // surfaces reads as brown, so those tones take a cool grey (index.html --rmx-tsrc); the wave, play key and volume keep it.
+    const warm = isWarm(getComputedStyle(mx).getPropertyValue('--rmx-src'));
+    if (warm !== (mx.dataset.warm === '1')) { mx.dataset.warm = warm ? '1' : ''; if (warm) mx.style.setProperty('--rmx-tsrc', '#8c9aa8'); else mx.style.removeProperty('--rmx-tsrc'); }
     spectrum.update();
     skinList();
   }
@@ -147,142 +159,57 @@
     }
   });
 
-  /* ---------- the spectrum: each skin draws the same analysed bands its own way ---------- */
+  /* ---------- the spectrum: the M3 wavy line played by the music (index.html window.__mkWavy) ---------- */
   const spectrum = (function () {
     const cv = $('.rmx-viz canvas'), ctx = cv.getContext('2d');
-    const N = 24, now = new Float32Array(N), slow = new Float32Array(N), peak = new Float32Array(N), caps = new Float32Array(96);
-    const STILL = [.22, .38, .52, .46, .68, .9, .76, .58, .64, .86, 1, .82, .6, .52, .66, .78, .58, .44, .5, .38, .3, .25, .18, .1];
-    let raf = 0, last = 0, data = null, top = .12, W = 0, H = 0, d = 1, acc = '#fff', ink = '#fff', dots = [];
-    const lowSpec = () => document.documentElement.classList.contains('mk-low-spec');
-    const shown = () => !!mx.offsetWidth && !(typeof radioVisualsInactive === 'function' && radioVisualsInactive());
+    let raf = 0, wake = 0, last = 0, W = 0, H = 0, d = 1, seen = false, ink = '#fff', wave = null;
     const analyser = () => (window.__mkRadioAnalyser ? window.__mkRadioAnalyser() : null);
+    // Size and visibility are measured on a resize or a change (update), never in a frame.
+    const shown = () => seen && !(typeof radioVisualsInactive === 'function' && radioVisualsInactive());
     const running = () => mx.classList.contains('rmx-playing') && shown() && !!analyser();
-    function read() {
-      const a = analyser();
-      if (!a || !mx.classList.contains('rmx-playing')) { for (let k = 0; k < N; k++) { now[k] = STILL[k] * .7; slow[k] = STILL[(k + 3) % N] * .85; peak[k] = STILL[(k + 7) % N]; } return; }
-      if (!data || data.length !== a.frequencyBinCount) data = new Uint8Array(a.frequencyBinCount);
-      a.getByteFrequencyData(data);
-      // Bands spaced as we hear (50 Hz to 14 kHz, log), each its loudest bin; music is quieter up high, so the levels
-      // (decibels) get about 3 dB an octave; then each is measured from the quietest band up to a slowly falling
-      // running maximum, so quiet or loud, broad or thin, there are always peaks and valleys.
-      const ny = (a.context.sampleRate || 48000) / 2, L = data.length, lv = [];
-      let m = 0, f = 1;
-      for (let i = 0; i < N; i++) {
-        const lo = Math.floor(L * 50 * Math.pow(280, i / N) / ny), hi = Math.max(lo + 1, Math.floor(L * 50 * Math.pow(280, (i + 1) / N) / ny));
-        let v = 0;
-        for (let j = lo; j < hi && j < L; j++) if (data[j] > v) v = data[j];
-        lv[i] = v / 255 + i / N * .26;
-        if (lv[i] > m) m = lv[i];
-        if (lv[i] < f) f = lv[i];
-      }
-      top = Math.max(m - f, top * .97, .12);
-      for (let i = 0; i < N; i++) {
-        const v = Math.pow(Math.max(0, lv[i] - f) / top, 1.6) * .95;
-        now[i] = now[i] * .45 + v * .55;
-        slow[i] = slow[i] * .88 + v * .12;
-        peak[i] = Math.max(now[i], peak[i] - .012);
-      }
-    }
-    // The level at a fraction of the width, between bands.
-    const at = (lv, x) => { const p = x * (N - 1), i = Math.floor(p), t = p - i; return lv[i] * (1 - t) + lv[Math.min(N - 1, i + 1)] * t; };
-    function hills(lv, off, base) {
-      ctx.beginPath(); ctx.moveTo(0, base);
-      let px = 0, py = base;
-      for (let i = 0; i <= N; i++) {
-        const x = i < N ? Math.min(W, (i + .5 + off) / N * W) : W, y = i < N ? base - Math.min(1, lv[i]) * (base - 2 * d) : base;
-        ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2); px = x; py = y;
-      }
-      ctx.lineTo(W, base);
-    }
-    const line = (base, h) => { ctx.globalAlpha = .9; ctx.fillStyle = acc; ctx.fillRect(0, base, W, h); ctx.globalAlpha = 1; };
-    const SKINS = {
-      // Klasiskais, Jauns: the minimized player's layered hills, full width.
-      hills() {
-        const base = H - 2 * d;
-        ctx.fillStyle = acc;
-        [[peak, .45, .2], [slow, -.3, .32], [now, 0, .6]].forEach(([lv, off, a]) => { ctx.globalAlpha = a; hills(lv, off, base); ctx.fill(); });
-        line(base, 2 * d);
-      },
-      // Pixel: soft capsules, each as round as it is wide, stronger the louder.
-      pixel() {
-        const n = 40, bw = W / n, w = bw - 6 * d;
-        ctx.fillStyle = acc;
-        for (let i = 0; i < n; i++) {
-          const v = at(now, i / (n - 1)), h = Math.max(w, v * (H - 2 * d)), x = i * bw + 3 * d;
-          ctx.globalAlpha = .45 + .5 * v;
-          ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, H - h, w, h, w / 2) : ctx.rect(x, H - h, w, h); ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-      },
-      // Pioneer: an OLED VU, lit segments in columns under a hairline of the falling peaks.
-      pioneer() {
-        const base = H - d, n = Math.max(24, Math.round(W / (12.5 * d))), bw = W / n, seg = 6.4 * d, rows = Math.floor((base - 4 * d) / seg);
-        ctx.fillStyle = acc;
-        for (let i = 0; i < n; i++) {
-          const lit = Math.round(at(now, i / (n - 1)) * rows);
-          for (let k = 0; k < lit; k++) { ctx.globalAlpha = .3 + .7 * (k / rows); ctx.fillRect(i * bw + d, base - 6 * d - k * seg, bw - 3 * d, 3.4 * d); }
-        }
-        ctx.globalAlpha = .5; ctx.strokeStyle = acc; ctx.lineWidth = d; hills(peak, .45, base); ctx.stroke();
-        ctx.globalAlpha = 1; ctx.fillRect(0, base, W, d);
-      },
-      // Amp: Winamp's bars, dark to light in the one green, with caps that fall slower than the bars.
-      amp() {
-        const base = H - 2 * d, n = Math.min(96, Math.max(24, Math.round(W / (20 * d)))), bw = W / n;
-        const g = ctx.createLinearGradient(0, base, 0, 0); g.addColorStop(0, 'rgba(60,140,90,.95)'); g.addColorStop(1, acc);
-        for (let i = 0; i < n; i++) {
-          const v = at(now, i / (n - 1)), h = v * (base - 8 * d), x = i * bw + 1.5 * d, w = bw - 4 * d;
-          caps[i] = Math.max(v, caps[i] - .01);
-          ctx.fillStyle = g; ctx.fillRect(x, base - h, w, h);
-          ctx.fillStyle = ink; ctx.globalAlpha = .85; ctx.fillRect(x, base - caps[i] * (base - 8 * d) - 6 * d, w, 2 * d); ctx.globalAlpha = 1;
-        }
-        line(base, 2 * d);
-      },
-      // Dither: three layers of 1-bit dots on one ink, crisp.
-      dither() {
-        const base = H - 2 * d;
-        [[peak, .45, dots[2]], [slow, -.3, dots[1]], [now, 0, dots[0]]].forEach(([lv, off, fill]) => { ctx.fillStyle = fill; hills(lv, off, base); ctx.fill(); });
-        ctx.fillStyle = acc; ctx.fillRect(0, base, W, 2 * d);
-      }
-    };
-    function draw() {
+    function size() {
       d = Math.min(2, window.devicePixelRatio || 1);
-      W = Math.round(cv.clientWidth * d); H = Math.round(cv.clientHeight * d);
-      if (!W || !H) return;
-      if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-      ctx.clearRect(0, 0, W, H);
-      const skin = rw.dataset.radioSkin;
-      (SKINS[skin === 'classic' || skin === 'clean' ? 'hills' : skin] || SKINS.hills)();
+      W = Math.round(cv.clientWidth * d); H = Math.round(cv.clientHeight * d); seen = !!(W && H);
+      if (seen && (cv.width !== W || cv.height !== H)) { cv.width = W; cv.height = H; }
     }
-    /* About 30 frames a second; a weak computer gets 15. The loop sleeps on a timer between drawn frames
-       and asks for the vsync only shortly before the next one is due: a requestAnimationFrame every vsync
-       woke the page 60 times a second (and read the layout through shown() each time) to draw 15, on the
-       main thread the calendar's card hover shares with this page. Same frames, same moments. */
-    let wake = 0;
-    const gap = () => (lowSpec() ? 66 : 32);
+    // Every skin: one 4 px round-capped stroke (M3's active thickness) in its accent; dither in its ink dots.
+    function draw() {
+      if (!W || !H || !wave) return;
+      ctx.clearRect(0, 0, W, H);
+      wave.path(ctx, 3 * d, W - 3 * d, H / 2, Math.max(1, H / 2 - 3 * d), d);
+      ctx.strokeStyle = ink; ctx.lineWidth = 4 * d; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
+    /* About 30 frames a second on every computer (15 on a weak one looked jerky). The loop sleeps on a timer between
+       drawn frames and asks for the vsync only shortly before the next one is due: a requestAnimationFrame every
+       vsync woke the page 60 times a second to draw 30, on the main thread the calendar's card hover shares with
+       this page. */
     function later(ts) {
       // 12 ms early, so the frame that follows is the one due (vsync 16.7 ms; a late timer costs one frame)
-      const wait = Math.max(0, last + gap() - ts - 12);
+      const wait = Math.max(0, last + 32 - ts - 12);
       if (!wait) { raf = requestAnimationFrame(frame); return; }
       wake = setTimeout(() => { wake = 0; if (!raf) raf = requestAnimationFrame(frame); }, wait);
     }
     function frame(ts) {
       raf = 0;
       if (!running()) return;
-      if (ts - last >= gap()) { last = ts; read(); draw(); }
+      if (ts - last >= 32) { last = ts; wave.read(analyser(), ts); draw(); }
       later(ts);
     }
-    function dotFill(step, size) {
-      const t = document.createElement('canvas'); t.width = t.height = step;
-      const c = t.getContext('2d'); c.fillStyle = acc; c.fillRect(0, 0, size, size); if (step === 2) c.fillRect(1, 1, 1, 1);
+    function dotFill(c) {
+      const t = document.createElement('canvas'); t.width = t.height = 2;
+      const x = t.getContext('2d'); x.fillStyle = c; x.fillRect(0, 0, 1, 1); x.fillRect(1, 1, 1, 1);
       return ctx.createPattern(t, 'repeat');
     }
     return {
-      // Colours once per change, then the loop runs only while it plays and shows (one still frame otherwise).
+      // Colours and size once per change, then the loop runs only while it plays and shows (one still frame otherwise).
       update() {
-        const cs = getComputedStyle(cv);
-        acc = cs.color; ink = getComputedStyle(mx).color;
-        if (rw.dataset.radioSkin === 'dither') dots = [dotFill(2, 1), dotFill(4, 2), dotFill(3, 1)];
-        if (running()) { if (!raf && !wake) raf = requestAnimationFrame(frame); } else if (shown()) { read(); draw(); }
+        if (!wave && window.__mkWavy) wave = window.__mkWavy({ long: 54, short: 32 });
+        if (!wave) return;
+        ink = rw.dataset.radioSkin === 'dither' ? dotFill(getComputedStyle(cv).color) : getComputedStyle(cv).color;
+        size();
+        if (running()) { if (!raf && !wake) raf = requestAnimationFrame(frame); }
+        else if (shown()) { wave.read(null, performance.now()); draw(); }
       }
     };
   })();

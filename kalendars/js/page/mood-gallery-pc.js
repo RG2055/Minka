@@ -458,13 +458,14 @@
       // SW: the panel stands at the board's side (the board takes the whole height), SIDE px wide
       // (wider with a taller board, up to 176 px: the panel grows with the board instead of leaving a gap)
       var sideFor = function (h) { return Math.round(Math.max(132, Math.min(176, h * 0.26))); }, SIDE = sideFor(rr0.height);
-      // the panel is a strip over the board (74 px), the board takes the width
-      // (always now: the strip over the board in every view, as liked in the usual grid)
-      var vertFor = function () { return true; }, VERT = SW && vertFor(rr0);
+      // SW: no panels (the user: one game, not three windows): the level, moves, goal, points and buttons stand in the
+      // board's own empty corners when the level's shape leaves two cells free in each (HUDIN, set per level in
+      // newLevel), else in one 44 px row over the board. The board is N x N: the game takes no more width than it needs.
+      var RAIL = 0, BAND = 48, HUDIN = false, vertFor = function () { return false; }, VERT = false;
       // SW: as many columns as the width gives (7 to 9) at the rows' cell size: a wider box, a wider board
       var NX = N, NY = N;
-      if (SW) NX = Math.max(N, Math.min(9, Math.floor((rr0.width - 4) / Math.max(1, (rr0.height - 78) / N))));
-      var cellFor = function (r) { return Math.max(24, Math.floor(VERT ? Math.min((r.width - 4) / NX, (r.height - 78) / NY) : Math.min(r.width - SIDE - 30, r.height - 4) / N)); };
+
+      var cellFor = function (r) { return Math.max(24, Math.floor(VERT ? Math.min((r.width - 4) / NX, (r.height - 78) / NY) : Math.min(r.width - 4, r.height - (HUDIN ? 4 : BAND + 4)) / N)); };
       CELL = SW ? cellFor(rr0)
         : embed ? Math.max(24, Math.floor(Math.min(rr0.width - 14, rr0.height - 52) / N))
         : Math.max(36, Math.min(80, Math.floor(Math.min(rr0.width - 60, rr0.height - 236) / N)));
@@ -474,7 +475,7 @@
       var ICON = function (d) { return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"/></svg>'; };
       var w = SW ? win('candy', 'Konfektes', 'candy',
         '<div class="pc98-candy sw-candy"><aside class="sw-side">'
-        + '<div class="sw-lvpill" title="Līmenis"><small>Līm.</small><b class="sw-lvn">1</b></div>'
+        + '<div class="sw-lvpill" title="Līmenis"><small>Līmenis</small><b class="sw-lvn">1</b></div>'
         + '<b class="pc98-lvl sw-title">Līmenis 1</b>'
         + '<div class="sw-path" aria-label="Līmeņi"></div>'
         + '<div class="sw-moves" title="Atlikušie gājieni"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44"/><circle class="sw-ring" cx="50" cy="50" r="44"/></svg>'
@@ -490,7 +491,7 @@
         + '<button type="button" class="pc98-btn" data-c="help" hidden></button><button type="button" class="pc98-btn pc98-mbtn" data-c="music" hidden></button></div>'
         + '<div class="pc98-cstat" hidden>' + STAT + '</div></aside>'
         + '<div class="pc98-well"><canvas class="pc98-board" width="' + size + '" height="' + sizeH + '"></canvas></div></div>',
-        VERT ? size + 4 : size + SIDE + 10, 0, 0)
+        size + 4, 0, 0)
       : win('candy', 'Konfektes 98', 'candy',
         '<div class="pc98-candy"><div class="pc98-cbar"><span>' + (opts.endless ? '<em class="pc98-lvl" style="font-style:normal">Līmenis 1</em>' : 'Punkti') + ' <b class="pc98-score">0</b></span><span>Gājieni <b class="pc98-moves">' + MOVES + '</b></span>'
         + '<span class="pc98-goal" title="Dienas mērķis"><i class="pc98-gico"></i><b class="pc98-gnum">0/0</b></span><span class="pc98-jelly" title="Želeja"><i class="pc98-jico"></i><b class="pc98-jnum">0</b></span></div>'
@@ -498,15 +499,14 @@
         + '<div class="pc98-well"><canvas class="pc98-board" width="' + size + '" height="' + sizeH + '"></canvas></div>'
         + '<div class="pc98-cfoot">' + BTNS + '</div><div class="pc98-cstat">' + STAT + '</div></div>',
         size + 34, Math.max(100, (rr0.width - size - 34) / 2), Math.max(6, (rr0.height - size - 216) / 2));
-      if (SW) { w.el.classList.add('sw-win'); w.el.style.setProperty('--sw-side', (SIDE - 10) + 'px'); w.el.querySelector('.sw-candy').classList.toggle('sw-vert', VERT); }
+      if (SW) { w.el.classList.add('sw-win'); w.el.style.setProperty('--sw-side', (SIDE - 10) + 'px'); w.el.querySelector('.sw-candy').classList.add('sw-hud'); w.el.style.setProperty('--sw-cell', CELL + 'px'); w.el.style.setProperty('--sw-n', NX); }
       // SW: the box the game sits in grows with the walls making room: the board is laid out again for it
       // (the cells are counted in CELL, so nothing else moves)
       if (SW) w.refit = function () {
         var rr = root.getBoundingClientRect(); if (!rr.height) return;
         SIDE = sideFor(rr.height); w.el.style.setProperty('--sw-side', (SIDE - 10) + 'px');
-        var v2 = vertFor(rr); if (v2 !== VERT) { VERT = v2; w.el.querySelector('.sw-candy').classList.toggle('sw-vert', VERT); CELL = 0; }
         var c2 = cellFor(rr); if (c2 === CELL) return;
-        CELL = c2; size = NX * CELL; sizeH = NY * CELL; cv.width = size * K; cv.height = sizeH * K; w.el.style.width = (VERT ? size + 4 : size + SIDE + 10) + 'px'; draw();
+        CELL = c2; size = NX * CELL; sizeH = NY * CELL; cv.width = size * K; cv.height = sizeH * K; w.el.style.width = (size + 4) + 'px'; w.el.style.setProperty('--sw-cell', CELL + 'px'); draw();
       };
       // drawn at two or three times the cell's size and scaled down by the page: sharp pieces on any screen
       // SW: drawn at the screen's own density (1 on the work PCs: a quarter of the pixels of 2, no lag)
@@ -518,7 +518,7 @@
       var best = 0; try { var b0 = JSON.parse(localStorage.getItem(BEST_KEY) || '{}'); best = b0.day === today ? b0.score : 0; } catch (_e) {}
       w.el.querySelector('.pc98-best').textContent = best;
       function newGame() {
-        if (SW && HQ) { newLevel(); return; }
+        if (SW && HQ) { newLevel(); if (w.refit) w.refit(); return; }
         // the day's board for everyone in the gallery's game; with levels every game is a new one
         var r = rng(opts.endless ? (Math.random() * 4294967296) >>> 0 : seedOf('candy:' + today));
         var rule = CANDY_RULES[new Date(today + 'T12:00:00Z').getUTCDay()], rx = rule[2];
@@ -958,7 +958,7 @@
         if (G.def && why === 'bomb') {
           blip(110, 0.3, 'sawtooth', 0.06); fx.flash = 0.4; kick();
           sheet('<span class="sw-eyebrow">Līmenis ' + G.level + '</span><b class="sw-head">Bumba uzsprāga</b><span class="sw-note">Taimeris nonāca līdz nullei. Saliec bumbas konfekti, pirms tas notiek.</span><button type="button" class="sw-go" data-x="again">Mēģināt vēlreiz</button>',
-            function () { newLevel(); kick(); });
+            function () { newLevel(); if (w.refit) w.refit(); kick(); });
           return;
         }
         if (G.def) {   // a level: how much of its goals is left
@@ -967,7 +967,7 @@
           blip(close ? 523 : 330, 0.2, 'triangle', 0.05);
           sheet(close ? '<span class="sw-eyebrow">Līmenis ' + G.level + '</span><b class="sw-head">Tik tuvu!</b><span class="sw-note">Trūka tikai: ' + left.join(', ') + '</span><button type="button" class="sw-go" data-x="more">+5 gājieni</button><button type="button" class="sw-ghost" data-x="again">Sākt līmeni no jauna</button>'
             : '<span class="sw-eyebrow">Līmenis ' + G.level + '</span><b class="sw-head">Gājieni beigušies</b><span class="sw-note">Vēl trūka: ' + left.join(', ') + '</span><button type="button" class="sw-go" data-x="again">Mēģināt vēlreiz</button>',
-            function (x) { if (x === 'more') { G.extraUsed = true; G.over = false; G.moves += 5; paintBar(); fx.word = { text: '+5 gājieni', life: 1 }; kick(); } else { newLevel(); kick(); } });
+            function (x) { if (x === 'more') { G.extraUsed = true; G.over = false; G.moves += 5; paintBar(); fx.word = { text: '+5 gājieni', life: 1 }; kick(); } else { newLevel(); if (w.refit) w.refit(); kick(); } });
           return;
         }
         var got = G.score - G.lvFrom, need = G.lvNeed, near = got / need >= 0.7 && !G.extraUsed;
@@ -1040,6 +1040,11 @@
         G.lvNeed = G.starAt[0];   // (G.def is set once the board is laid: fresh() deals beans and countdowns only in play)
         var has = function (k) { return d.goals.indexOf(k) >= 0; }, holeAt = SHAPES[d.shape] || SHAPES.full, y, x;
         for (y = 0; y < NY; y++) { G.hole.push([]); for (x = 0; x < NX; x++) G.hole[y].push(!!holeAt(x, y)); }
+        if (SW) {   // the HUD in the board's corners only where each leaves two free cells (else the row over the board)
+          var run = function (row, dir) { var k = 0; for (var xx = dir > 0 ? 0 : NX - 1; xx >= 0 && xx < NX && row[xx]; xx += dir) k++; return k; };
+          var free = Math.min(run(G.hole[0], 1), run(G.hole[0], -1), run(G.hole[NY - 1], 1), run(G.hole[NY - 1], -1));
+          HUDIN = free >= 2; w.el.querySelector('.sw-candy').classList.toggle('sw-hud-in', HUDIN);
+        }
         for (y = 0; y < NY; y++) { G.jelly.push([]); for (x = 0; x < NX; x++) { var j = has('jelly') && !G.hole[y][x] && JELLY[d.jelly || 'all'](x, y) ? 1 : 0; G.jelly[y].push(j); G.jellyLeft += j; } }
         G.jellyDone = !G.jellyLeft;
         for (y = 0; y < NY; y++) { G.board.push([]); for (x = 0; x < NX; x++) G.board[y].push(G.hole[y][x] ? { t: HOLE, s: '', dy: 0, k: 1, a: 1, sq: 0 } : fresh(x, y, true)); }
@@ -1161,7 +1166,7 @@
         social.post(total);
         blip(659, 0.1, 'triangle', 0.06); setTimeout(function () { blip(880, 0.1, 'triangle', 0.06); }, 110); setTimeout(function () { blip(1175, 0.2, 'triangle', 0.06); }, 220);
         sheet('<span class="sw-eyebrow">Līmenis ' + G.level + '</span><b class="sw-head">Izdevās!</b><p class="sw-big-stars">' + [0, 1, 2].map(function (i) { return '<i class="' + (i < n ? 'on' : '') + '" style="--d:' + (i * 180) + 'ms">★</i>'; }).join('') + '</p>'
-          + '<span class="sw-note">' + G.score + ' punkti</span><button type="button" class="sw-go" data-x="next">Nākamais līmenis</button>', function () { newLevel(); kick(); });
+          + '<span class="sw-note">' + G.score + ' punkti</span><button type="button" class="sw-go" data-x="next">Nākamais līmenis</button>', function () { newLevel(); if (w.refit) w.refit(); kick(); });
       }
       function iceCrack(x, y, gone) {
         for (var i = 0; i < (gone ? 12 : 6); i++) { var an = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 3; fx.parts.push({ x: (x + 0.5) * CELL, y: (y + 0.5) * CELL, vx: Math.cos(an) * sp, vy: Math.sin(an) * sp - 2, life: 1, col: '#e8f8ff', s: 2 + (Math.random() * 3 | 0), star: false }); }

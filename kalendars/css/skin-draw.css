@@ -13,6 +13,9 @@
   font-family: var(--dr-font);
   color: var(--pp-on);
 }
+/* it is a <dialog> now: drop the UA box the old <div> did not have */
+dialog.mk-draw-overlay { width: auto; height: auto; max-width: none; max-height: none; margin: 0; border: 0; overflow: visible; user-select: auto; outline: none; }
+dialog.mk-draw-overlay::backdrop { background: transparent; }
 .mk-draw-overlay * { box-sizing: border-box; font-family: inherit; }
 .mk-draw-overlay button { cursor: pointer; }
 .mk-draw-overlay svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

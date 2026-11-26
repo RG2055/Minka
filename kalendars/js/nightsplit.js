@@ -980,6 +980,9 @@
     return '<div class="ns-bedcare-perch" role="button" tabindex="0" aria-expanded="false" aria-label="'+escHtml(bedCareAriaLabel(ts))+'">'
       +'<span class="ns-bedcare-bed" aria-hidden="true">'+roomBedPicture('neutral')
       +'<span class="ns-room-bed-devices"><span class="ns-room-device is-feature dev-0"></span><span class="ns-room-device is-smart dev-1"></span><span class="ns-room-device is-feature dev-2"></span><span class="ns-room-device is-smart dev-3"></span></span>'
+      // where the cats were: the mood's three dancers (js/radio-dancers.js) dance on this bed while the panel is
+      // open, one strip of 48 frames (assets/butnes/night-dancers.webp); only CSS moves it (night-overlay.js .ns-nb-dance)
+      +(window.MINKA_APP==='rad'?'':'<i class="ns-bed-nb"><i></i></i>')   // RG's creatures (not /rad, as radio-dancers.js)
       +'</span>'
       +'<span class="ns-bedcare-perch-copy"><small>Gultas veļa</small><span class="ns-bedcare-date-line"><svg class="ns-bedcare-calendar" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h3m2 0h3"/></svg><b>'+escHtml(bedCareExactDateLabel(ts))+'</b></span><span class="ns-bedcare-footer"><span class="ns-bedcare-age">'+escHtml(bedCareAgeLabel(ts))+'</span><span class="ns-bedcare-action">Atzīmēt <span aria-hidden="true">↗</span></span></span></span>'
       +'</div>';
@@ -2908,6 +2911,7 @@
   }
 
   function roomWalker(roomType){
+    return '';   // no cats in the rooms (the user: the cats out altogether, 2026-11-26); the old walker below stays unused
     var cats=roomFluentCats(roomType);
     var cat=cats[0];
     var black=cats[1]||null;
@@ -4210,7 +4214,7 @@
     if(dk) pullRoomState(dk, function(){ if(dk===activeDateKey() && window.__nsOverlayOpen===true) render(); });
     resetColours(); // reset colour map each time we re-compute for new day
     var wk=getW();
-    if(wk.length<2){st=null;_nsLastRenderKey='';render();return;}
+    if(wk.length<2){st=null;_nsLastRenderKey='';_nsPendingRenderKey='';render();return;}
     var fallbackSh=st?st.sh:0, fallbackEi=st?(st.ei||0):0;
     var applied=applySavedDayState(fat(wk), fallbackSh, fallbackEi);
     var next={dateKey:dk,sh:applied.sh,ei:applied.ei,sl:calc(applied.workers,applied.sh,applied.ei)};
@@ -4220,6 +4224,7 @@
     var panel=document.getElementById('nsPanelContent');
     st=next;
     if(nextKey===_nsLastRenderKey && panel && panel.querySelector('.ns-panel-head')){
+      _nsPendingRenderKey='';   // back on the built day: nothing waits (a key left here kept isStale() true and the panel never opened)
       scheduleFitRoomBlocks(panel);
       // Reopening reuses the panel DOM; still retry expired/failed history.
       nsRenderStats(st.sl);
@@ -4243,6 +4248,7 @@
       _nsIdleRender=0;
     }
     _nsLastRenderKey=nextKey;
+    _nsPendingRenderKey='';
     render();
   }
 
