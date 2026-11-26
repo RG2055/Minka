@@ -96,6 +96,11 @@
   pointer-events: none;
 }
 #hxTop > * { pointer-events: auto; }
+/* Its box never depends on what is inside (top/left/right/height above), so the browser may lay it out on
+   its own: the wings and tiles measure themselves a few times per day switch (fitWing, fitTiles), and
+   without containment each of those reads laid out the whole calendar again. No position:fixed lives
+   inside (the popovers go to #minkaBarWrap), so layout containment changes nothing on screen. */
+:root.mk-hx:not(.mk-mobile-shell) #hxTop { contain: layout size; }
 .hx-ic { display: block; flex-shrink: 0; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ── Spārni: kas dežūrā ──────────────────────────────────────────────── */

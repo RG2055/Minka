@@ -24,6 +24,10 @@ html.minka-mobile-frame.minka-auth-locked #minka-auth-overlay { display: none; }
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* Held after it ends (bundle.css: fill both), the reveal kept the whole calendar on a compositor layer with an
+   opacity surface of its own for the life of the page: every change inside was drawn twice. Its end value is
+   the calendar's own opacity (1), so letting go of it after the end changes no pixel. */
+html #grafiks-app { animation-fill-mode: backwards !important; }
 html.mk-low-spec #grafiks-app,
 html.mk-low-spec .side-panel,
 html.mk-low-spec .main-panel {

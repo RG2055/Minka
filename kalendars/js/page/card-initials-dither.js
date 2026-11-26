@@ -49,9 +49,9 @@
   var SEL = KINDS.map(function (k) { return k.sel; }).join(',');
   function kindOf(card) { for (var i = 0; i < KINDS.length; i++) if (card.matches(KINDS[i].sel)) return KINDS[i]; return null; }
 
-  function reduced() {
-    try { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_e) { return false; }
-  }
+  var RM = null;
+  try { RM = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null; } catch (_e) {}
+  function reduced() { return !!(RM && RM.matches); }
   function initialsOf(name) {
     var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
     var s = ((parts[0] || '').charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toUpperCase();
@@ -188,8 +188,25 @@
     return st;
   }
 
+  /* The pointer as the last move left it, taken up once per frame here: the moves only note it. Measuring
+     the card in the move handler forced a style and layout pass in the middle of the hover's other handlers
+     (the 3D tilt writes its transform just before), once per move; here it is read once per frame, after
+     every handler has written. A card is set up when the pointer enters it, not again on every move. */
+  var pend = null;
+  function take() {
+    var p = pend; pend = null;
+    if (!p || !p.card.isConnected) return;
+    var card = p.card, st = states.get(card);
+    if (card !== active || !st || !st.canvas.isConnected) st = setup(card);
+    var r = card.getBoundingClientRect();
+    if (active && active !== card) { var prev = states.get(active); if (prev) clear(prev); }
+    active = card;
+    // screen px to the card's own px (a scaled or zoomed card)
+    st.px = (p.x - r.left) * (st.w / (r.width || st.w)); st.py = (p.y - r.top) * (st.h / (r.height || st.h)); st.inside = p.inside; st.still = 0;
+  }
   function frame() {
     raf = 0;
+    take();
     var card = active, st = card && states.get(card);
     if (!st || !card.isConnected || document.hidden) { if (st) clear(st); active = null; return; }
     var A = st.atlas, cols = st.cols, rows = st.rows, heat = st.heat, light = st.light, any = false;
@@ -253,18 +270,16 @@
     if (e.pointerType === 'touch' || reduced()) return;
     var card = e.target && e.target.closest ? e.target.closest(SEL) : null;
     if (active && active !== card) { var old = states.get(active); if (old) old.inside = false; }
-    if (!card) { if (active) run(); return; }
-    var st = setup(card), r = card.getBoundingClientRect();
-    if (active && active !== card) { var prev = states.get(active); if (prev) clear(prev); }
-    active = card;
-    // screen px to the card's own px (a scaled or zoomed card)
-    st.px = (e.clientX - r.left) * (st.w / (r.width || st.w)); st.py = (e.clientY - r.top) * (st.h / (r.height || st.h)); st.inside = true; st.still = 0;
+    if (!card) { pend = null; if (active) run(); return; }
+    pend = { card: card, x: e.clientX, y: e.clientY, inside: true };
     run();
   }, { passive: true });
   document.addEventListener('pointerout', function (e) {
+    // left a card whose move is still waiting for the frame: it arrives as left
+    if (pend && e.target && pend.card.contains(e.target) && !(e.relatedTarget && pend.card.contains(e.relatedTarget))) { pend.inside = false; run(); }
     if (!active) return;
     if (e.relatedTarget && active.contains(e.relatedTarget)) return;
     if (e.target && active.contains(e.target)) { var st = states.get(active); if (st) st.inside = false; run(); }
   }, { passive: true });
-  document.addEventListener('visibilitychange', function () { if (document.hidden && active) { var st = states.get(active); if (st) clear(st); active = null; } });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) pend = null; if (document.hidden && active) { var st = states.get(active); if (st) clear(st); active = null; } });
 })();

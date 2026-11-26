@@ -1547,8 +1547,8 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261125cd2']);
-  await loadAny(['js/radio-max.js?v=20261125fl2']);
+  await loadAny(['js/radio.js?v=20261126pf1']);
+  await loadAny(['js/radio-max.js?v=20261126pf1']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
@@ -2769,8 +2769,10 @@ window.addEventListener('DOMContentLoaded', () => {
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    /* backwards, not both: after the rise its end values are the bar's own (opacity 1, no offset), and a held
+       finished animation kept the dock on a compositor layer of its own with an opacity surface for good. */
     #bottomBtnBar {
-      animation: dockRise .45s cubic-bezier(.22,1,.36,1) both !important;
+      animation: dockRise .45s cubic-bezier(.22,1,.36,1) backwards !important;
       animation-delay: .15s !important;
     }
 

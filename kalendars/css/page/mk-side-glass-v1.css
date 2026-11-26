@@ -225,7 +225,8 @@
    Kartītes izkārtojums nemainās nemaz: ja tās neietilpst, katru kartīti
    vienmērīgi samazina (zoom) kā mazāku tās pašas kartītes kopiju, tāpēc
    nekas nepārbīdās un nepārklājas. Bez JS mērīšanas: kolonna ir izmēra
-   konteiners, kartīšu skaitu dod :has(), un mērogs ir
+   konteiners, kartīšu skaitu dod #grafiks-app[data-mk-side-n] (calendar.js g_syncSideCount; agrāk :has(),
+   kas katrā DOM izmaiņā lietotnē lika pārrēķināt visa #grafiks-app stilu), un mērogs ir
    ((kolonnas augstums − atstarpes) / n) / kartītes augstums. Kad viss
    ietilpst, mērogs ir .68 abās kolonnās (vienāds kartīšu izmērs, un galvā
    blakus lielajam emoji un gredzenam vārdam ar stundām pietiek vietas). Citu dienu
@@ -239,13 +240,13 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
   -webkit-mask-image: linear-gradient(#000, #000 calc(100% - 8px), transparent) !important;
           mask-image: linear-gradient(#000, #000 calc(100% - 8px), transparent) !important;
 }
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app:has(:is(#radiographers-duty, #radiologists-duty) > :nth-child(2 of .mk-side-card)) .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 2; }
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app:has(:is(#radiographers-duty, #radiologists-duty) > :nth-child(3 of .mk-side-card)) .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 3; }
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app:has(:is(#radiographers-duty, #radiologists-duty) > :nth-child(4 of .mk-side-card)) .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 4; }
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app:has(:is(#radiographers-duty, #radiologists-duty) > :nth-child(5 of .mk-side-card)) .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 5; }
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app:has(:is(#radiographers-duty, #radiologists-duty) > :nth-child(6 of .mk-side-card)) .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 6; }
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app:has(:is(#radiographers-duty, #radiologists-duty) > :nth-child(7 of .mk-side-card)) .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 7; }
-html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app:has(:is(#radiographers-duty, #radiologists-duty) > :nth-child(8 of .mk-side-card)) .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 8; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app[data-mk-side-n="2"] .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 2; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app[data-mk-side-n="3"] .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 3; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app[data-mk-side-n="4"] .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 4; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app[data-mk-side-n="5"] .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 5; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app[data-mk-side-n="6"] .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 6; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app[data-mk-side-n="7"] .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 7; }
+html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app[data-mk-side-n="8"] .side-panel.side-panel.side-panel.side-panel :is(#radiographers-duty, #radiologists-duty) { --mk-side-n: 8; }
 /* Abās kolonnās viens kartīšu izmērs: n ir pilnākās kolonnas kartīšu skaits (lietotājs: ar mazāk kartītēm
    kolonna tās nedrīkst izplest lielākas par otras kolonnas kartītēm). */
 /* Starp kartītēm 6 px kolonnas atstarpe + 3 px mala. */

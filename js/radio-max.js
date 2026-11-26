@@ -253,13 +253,23 @@
       const skin = rw.dataset.radioSkin;
       (SKINS[skin === 'classic' || skin === 'clean' ? 'hills' : skin] || SKINS.hills)();
     }
+    /* About 30 frames a second; a weak computer gets 15. The loop sleeps on a timer between drawn frames
+       and asks for the vsync only shortly before the next one is due: a requestAnimationFrame every vsync
+       woke the page 60 times a second (and read the layout through shown() each time) to draw 15, on the
+       main thread the calendar's card hover shares with this page. Same frames, same moments. */
+    let wake = 0;
+    const gap = () => (lowSpec() ? 66 : 32);
+    function later(ts) {
+      // 12 ms early, so the frame that follows is the one due (vsync 16.7 ms; a late timer costs one frame)
+      const wait = Math.max(0, last + gap() - ts - 12);
+      if (!wait) { raf = requestAnimationFrame(frame); return; }
+      wake = setTimeout(() => { wake = 0; if (!raf) raf = requestAnimationFrame(frame); }, wait);
+    }
     function frame(ts) {
       raf = 0;
       if (!running()) return;
-      raf = requestAnimationFrame(frame);
-      // About 30 frames a second; a weak computer gets 15.
-      if (ts - last < (lowSpec() ? 66 : 32)) return;
-      last = ts; read(); draw();
+      if (ts - last >= gap()) { last = ts; read(); draw(); }
+      later(ts);
     }
     function dotFill(step, size) {
       const t = document.createElement('canvas'); t.width = t.height = step;
@@ -272,7 +282,7 @@
         const cs = getComputedStyle(cv);
         acc = cs.color; ink = getComputedStyle(mx).color;
         if (rw.dataset.radioSkin === 'dither') dots = [dotFill(2, 1), dotFill(4, 2), dotFill(3, 1)];
-        if (running()) { if (!raf) raf = requestAnimationFrame(frame); } else if (shown()) { read(); draw(); }
+        if (running()) { if (!raf && !wake) raf = requestAnimationFrame(frame); } else if (shown()) { read(); draw(); }
       }
     };
   })();

@@ -2001,11 +2001,25 @@ function filterFullList(btn) {
       else if (isWeekend) pillClass += ' weekend-pill';
       div.className = pillClass;
       div.id = 'p-' + dateStr.replace(/\./g, '-');
-      div.onclick = () => {
+      const pick = () => {
         if (document.activeElement && document.activeElement.tagName === 'INPUT') {
           document.activeElement.blur();
         }
         g_selectDayHeld(dateStr);
+      };
+      // A mouse press already picks the day: it is drawn while the button is
+      // still on its way up, 80–150 ms sooner than on click. The strip has no
+      // mouse dragging (the wheel scrolls it), so a press always means this day.
+      // Touch and pen keep the click: a finger scrolls the strip.
+      div.onpointerdown = (e) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+        div.__mkPressedAt = performance.now();
+        pick();
+      };
+      div.onclick = () => {
+        // The click that ends that press: the day is already there.
+        if (div.__mkPressedAt && performance.now() - div.__mkPressedAt < 1000) { div.__mkPressedAt = 0; return; }
+        pick();
       };
 
       div.innerHTML = `<span class="weekday">${weekday}</span><span>${d}</span>`;
@@ -4082,9 +4096,45 @@ function filterFullList(btn) {
       el.__mkSideCore = items[i].core;
       el.__mkSideShape = items[i].shape;
     });
+    g_syncSideCount();
     scheduleSideTicks(container, options);
     if (window.__minkaSideCaf) window.__minkaSideCaf();
     sideFaces();
+  }
+
+  /* The side columns size their cards by the fuller column's card count
+     (css/page/mk-side-glass-v1.css, --mk-side-n). That count used to come from
+     #grafiks-app:has(... > :nth-child(N of .mk-side-card)): a :has() on the app
+     root made every DOM change anywhere in the calendar (a header word, a mood
+     emoji) restyle the whole app, 350+ elements, a dozen times per day switch.
+     The count is now written here, once per change, as data-mk-side-n on
+     #grafiks-app; only the two columns restyle when it changes. The observer
+     keeps it right whatever else adds or removes a side card. */
+  const G_SIDE_COLUMNS = ['radiographers-duty', 'radiologists-duty'];
+  let g_sideCountObs = null;
+  function g_syncSideCount() {
+    const app = document.getElementById('grafiks-app');
+    if (!app) return;
+    let n = 0;
+    G_SIDE_COLUMNS.forEach(id => {
+      const col = document.getElementById(id);
+      if (!col) return;
+      let k = 0;
+      for (const child of col.children) if (child.classList.contains('mk-side-card')) k++;
+      if (k > n) n = k;
+    });
+    const value = n >= 2 ? String(Math.min(8, n)) : null;
+    if (app.getAttribute('data-mk-side-n') !== value) {
+      if (value) app.setAttribute('data-mk-side-n', value);
+      else app.removeAttribute('data-mk-side-n');
+    }
+    if (!g_sideCountObs && typeof MutationObserver === 'function') {
+      g_sideCountObs = new MutationObserver(g_syncSideCount);
+      G_SIDE_COLUMNS.forEach(id => {
+        const col = document.getElementById(id);
+        if (col) g_sideCountObs.observe(col, { childList: true });
+      });
+    }
   }
 
   /* /rad left column: residents are many (duties + rotation, up to ~15 on a

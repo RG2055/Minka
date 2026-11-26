@@ -3188,24 +3188,10 @@ function focusRadio(){
   }
 })();
 
-/* MacScape: subtle background parallax (non-breaking) */
-(function(){
-  const enableParallax = window.matchMedia && window.matchMedia('(pointer: fine)').matches && window.innerWidth > 900 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!enableParallax) return;
-  const root = document.documentElement;
-  let raf = null;
-  function onMove(e){
-    const mx = Math.max(0, Math.min(1, e.clientX / window.innerWidth));
-    const my = Math.max(0, Math.min(1, e.clientY / window.innerHeight));
-    if (raf) return;
-    raf = requestAnimationFrame(()=>{
-      raf = null;
-      root.style.setProperty('--mx', mx.toFixed(4));
-      root.style.setProperty('--my', my.toFixed(4));
-    });
-  }
-  window.addEventListener('mousemove', onMove, {passive:true});
-})();
+/* The MacScape parallax (--mx/--my on this page's <html> from the mouse) is gone: its only reader, the
+   orbs of #macscapeBg, live in the calendar's own document (where these variables never arrive) and are
+   display:none there. Each mouse frame over the radio or the dock restyled this whole page (354 elements)
+   for nothing, competing with the cards' hover on the same main thread. */
 
 
 
