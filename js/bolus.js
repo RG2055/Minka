@@ -1297,6 +1297,12 @@
       var fresh = !!(st.changedAt && (now - st.changedAt) < WARN_MS);
       var pctRoom = st.changedAt ? Math.min((now - st.changedAt) / WARN_MS * 100, 100) : 100;
       var roomLevel = !fresh ? 'stale' : pctRoom >= 80 ? 'warn' : pctRoom >= 60 ? 'caution' : 'fresh';
+      // the dock's outline for this room (index.html .bolus-ring): it fills as the 24 h pass (full = change it now)
+      var usedRoom = fresh ? Math.min(100, pctRoom) : 100;
+      btn.style.setProperty('--bo-' + r.id, usedRoom.toFixed(1));
+      btn.classList.toggle('bo-out-' + r.id, usedRoom < 1);
+      btn.classList.toggle('bo-warn-' + r.id, roomLevel === 'warn');
+      btn.classList.toggle('bo-end-' + r.id, roomLevel === 'stale');
       var seg = document.getElementById(r.id === 'ge' ? 'bolusSegGe' : 'bolusSegPh');
       if (seg) {
         seg.classList.toggle('is-fresh', roomLevel === 'fresh');
@@ -1323,7 +1329,6 @@
     var col = isAlert ? '#ff3b30' : (isWarn ? '#ff9500' : '#34d399');
     if (led) {
       led.style.background = col;
-      led.style.boxShadow  = '0 0 8px ' + col;
     }
     btn.classList.toggle('bolus-alert', isAlert);
     btn.classList.toggle('bolus-warn',  isWarn);
@@ -1461,11 +1466,8 @@
       '#bolusDocBtn{position:relative!important;overflow:visible!important;border-radius:18px!important;}'+
       '#bolusDocBtn>*{position:relative;z-index:1;}'+
       '#bolusDocBtn::before{content:"";position:absolute;inset:-2px;border-radius:20px;padding:2px;background:conic-gradient(from -90deg,var(--bp-col,transparent) var(--bp-pct,0%),rgba(255,255,255,0.05) 0%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask-composite:exclude;pointer-events:none;z-index:0;opacity:var(--bp-vis,0);transition:opacity 1.2s;}'+
-      '#bolusDocBtn.bolus-warn{border-color:rgba(255,150,0,0.7)!important;box-shadow:0 0 18px rgba(255,150,0,.45),0 2px 12px rgba(0,0,0,.45)!important;}'+
+      '#bolusDocBtn.bolus-warn{border-color:rgba(255,150,0,0.7)!important;}'+
       '#bolusDocBtn.bolus-alert{border-color:rgba(255,59,48,0.62)!important;border-width:1px!important;animation:none!important;}'+
-      '@keyframes bap{0%,100%{background:rgba(255,30,0,0.06);box-shadow:0 2px 12px rgba(0,0,0,.45),0 0 6px rgba(255,59,48,.25),0 0 14px rgba(255,59,48,.10);}50%{background:rgba(255,30,0,0.38);box-shadow:0 2px 12px rgba(0,0,0,.45),0 0 22px rgba(255,59,48,.95),0 0 50px rgba(255,59,48,.55),0 0 80px rgba(255,59,48,.22);}}'+
-      '@keyframes ledBap{0%,100%{box-shadow:0 0 5px rgba(255,59,48,.6);}50%{box-shadow:0 0 12px rgba(255,59,48,1),0 0 22px rgba(255,59,48,.5);}}'+
-      '#bolusDocBtn.bolus-alert #bolusLed{animation:ledBap 1.5s ease-in-out infinite!important;}'+
       /* ── Ghost date / time pickers ── */
       '.bnm-prow{display:flex;gap:5px;align-items:center;width:100%;}'+
       '.bnm-dpick,.bnm-tpick{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:8px;color:rgba(255,255,255,0.65);font-size:10px;font-weight:700;padding:6px 4px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s;white-space:nowrap;}'+

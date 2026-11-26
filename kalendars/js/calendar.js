@@ -3187,6 +3187,7 @@ function filterFullList(btn) {
   const MK_LINE_ICONS = {
     moon: '<path d="M19.5 14.6A7.8 7.8 0 1 1 9.4 4.5a6.3 6.3 0 0 0 10.1 10.1Z"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.8v1.9M12 19.3v1.9M5.5 5.5l1.3 1.3M17.2 17.2l1.3 1.3M2.8 12h1.9M19.3 12h1.9M5.5 18.5l1.3-1.3M17.2 6.8l1.3-1.3"/>',
+    clock: '<circle cx="12" cy="12" r="8.2"/><path d="M12 7.6V12l3 2"/>',
     crew: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6"/><circle cx="17.2" cy="9.2" r="2.4"/><path d="M16.6 14.6c2.1.3 3.5 1.7 3.9 3.9"/>'
   };
   function mkLineIcon(name) {
@@ -3513,6 +3514,7 @@ function filterFullList(btn) {
       const is24 = hours >= 24 || type === 'DIENNAKTS';
       const isNight = type === 'NAKTS' || w.isNight === true;
       const shiftIcon = is24 ? '' : mkLineIcon(isNight ? 'moon' : 'sun');
+      const timeIcon = mkLineIcon(is24 ? 'clock' : (isNight ? 'moon' : 'sun'));
       const kind = is24 ? 'is-24h' : (isNight ? 'is-night' : 'is-day');
       const kindLabel = is24 ? '24 stundu maiņa' : (isNight ? 'Nakts maiņa' : 'Dienas maiņa');
       const emojiHtml = shiftIcon ? '<span class="mk-next-person-emoji" aria-hidden="true">' + shiftIcon + '</span>' : '';
@@ -3521,11 +3523,11 @@ function filterFullList(btn) {
       const initials = String(w && w.name || first || '--').trim().charAt(0).toUpperCase();
       const avatar = personEmoji || initials;
       const avatarClass = personEmoji ? '' : ' is-initial';
-      const compactTime = hours > 0 ? hours + 'H' : '';
+      const compactTime = hours > 0 ? hours + ' h' : '';
       return '<span class="mk-next-person ' + kind + ' mk-next-person-avatar-card" data-next-worker="' + mkEscAttr(String(w.name || '').trim()) + '" title="' + mkEscAttr(first + ' ' + kindLabel) + '">'
         + '<span class="mk-next-size-proxy" aria-hidden="true">' + emojiHtml + '<b>' + mkEscAttr(first) + '</b>' + hoursHtml + '</span>'
-        + '<span class="mk-next-person-visual"><span class="mk-next-person-avatar' + avatarClass + '" aria-hidden="true">' + mkEscAttr(avatar) + '</span>'
-        + '<span class="mk-next-person-copy"><b>' + mkEscAttr(first) + '</b><small>' + mkEscAttr(compactTime) + shiftIcon + '</small></span></span>'
+        + '<span class="mk-next-person-visual"><span class="mk-next-person-copy"><b>' + mkEscAttr(first) + '</b><small>' + timeIcon + mkEscAttr(compactTime) + '</small></span>'
+        + '<span class="mk-next-person-avatar' + avatarClass + '" aria-hidden="true">' + mkEscAttr(avatar) + '</span></span>'
         + '</span>';
     }).join('');
     if (typeof window.mkGetWorkerSkin === 'function' && typeof window.mkApplySkinToEl === 'function') {

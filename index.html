@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261126lk1';
+  var CALENDAR_BUILD = '20261126dk1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1913,7 +1913,7 @@ function toggleRadio() {
     const rw = document.getElementById('radioWindow');
     if (rw) rw.style.display = '';
     // Update toggle label
-    document.getElementById('radioToggleLabel').textContent = 'RADIO';
+    document.getElementById('radioToggleLabel').textContent = 'Radio';
     document.getElementById('radioToggleIcon').innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     // Pre-warm normally has the scripts in (no wait); a cold open loads first.
     if (_radioScriptsLoaded && window.rgTheme) mkRadioReveal.run(true);
@@ -3069,21 +3069,18 @@ window.addEventListener('DOMContentLoaded', () => {
     <button id="nsToggleBtnParent" onclick="toggleNsFromParent()" title="Nakts Sadalījums">
       <div id="nsLedParent" style="width:7px;height:7px;border-radius:50%;background:#6488ff;box-shadow:0 0 7px #6488ff;flex-shrink:0;animation:rledPulse 2.5s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 10 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="3" y="0" width="4.04" height="1.04" fill="#c7d2fe"/><rect x="1" y="1" width="2.04" height="1.04" fill="#c7d2fe"/><rect x="3" y="1" width="2.04" height="1.04" fill="#818cf8"/><rect x="1" y="2" width="2.04" height="1.04" fill="#818cf8"/><rect x="8" y="2" width="1.04" height="1.04" fill="#fbbf24"/><rect x="0" y="3" width="2.04" height="1.04" fill="#818cf8"/><rect x="7" y="3" width="3.04" height="1.04" fill="#fbbf24"/><rect x="0" y="4" width="2.04" height="1.04" fill="#818cf8"/><rect x="8" y="4" width="1.04" height="1.04" fill="#fbbf24"/><rect x="0" y="5" width="2.04" height="1.04" fill="#818cf8"/><rect x="1" y="6" width="2.04" height="1.04" fill="#818cf8"/><rect x="7" y="6" width="1.04" height="1.04" fill="#fbbf24"/><rect x="1" y="7" width="3.04" height="1.04" fill="#818cf8"/><rect x="3" y="8" width="4.04" height="1.04" fill="#818cf8"/></svg>
-      <span>NAKTS</span>
+      <span>Nakts</span>
+      <b class="dk-count" id="nsCountBadge" hidden></b>
       <span class="dock-emoji" style="font-size:11px;">🌙</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
     <button id="bolusDocBtn" onclick="toggleBolus()" title="Bolusa maiņa">
-      <div id="bolusLed" style="width:7px;height:7px;border-radius:50%;background:#00c8ff;box-shadow:0 0 7px #00c8ff;flex-shrink:0;animation:rledPulse 2.8s ease-in-out infinite;"></div>
-      <span class="bolus-pattern" aria-hidden="true"></span>
-      <span class="bolus-top" aria-hidden="true"><svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1.04" height="1.04" fill="#2dd4bf"/><rect x="3" y="1" width="3.04" height="1.04" fill="#2dd4bf"/><rect x="3" y="2" width="3.04" height="1.04" fill="#2dd4bf"/><rect x="2" y="3" width="5.04" height="1.04" fill="#2dd4bf"/><rect x="1" y="4" width="7.04" height="1.04" fill="#2dd4bf"/><rect x="1" y="5" width="1.04" height="1.04" fill="#2dd4bf"/><rect x="2" y="5" width="1.04" height="1.04" fill="#99f6e4"/><rect x="3" y="5" width="5.04" height="1.04" fill="#2dd4bf"/><rect x="1" y="6" width="1.04" height="1.04" fill="#2dd4bf"/><rect x="2" y="6" width="1.04" height="1.04" fill="#99f6e4"/><rect x="3" y="6" width="5.04" height="1.04" fill="#2dd4bf"/><rect x="2" y="7" width="5.04" height="1.04" fill="#2dd4bf"/><rect x="3" y="8" width="3.04" height="1.04" fill="#2dd4bf"/></svg>
-      <span class="bolus-room-row" aria-hidden="true">
-        <span id="bolusSegGe" class="bolus-room-seg" data-room="ge">GE</span>
-        <span id="bolusSegPh" class="bolus-room-seg" data-room="philips">PH</span>
-      </span></span>
-      <span class="bolus-dock-title">BOLUS</span>
-      <span id="bolusCrownTag" class="bolus-crown" aria-hidden="true"></span>
+      <!-- the two rooms' 24 h as two halves of the side cards' outline: GE the left in blue, PH the right in green,
+           each rising from the bottom's middle to the top's as the hours pass (js/bolus.js sets --bo-ge / --bo-philips) -->
+      <svg class="bolus-ring" viewBox="0 0 104 56" aria-hidden="true"><path class="br-t" d="M49 53H24A21 21 0 0 1 3 32V24A21 21 0 0 1 24 3H49"/><path class="br-t" d="M55 53H80A21 21 0 0 0 101 32V24A21 21 0 0 0 80 3H55"/><path class="br-l br-ge" d="M49 53H24A21 21 0 0 1 3 32V24A21 21 0 0 1 24 3H49" pathLength="100"/><path class="br-l br-ph" d="M55 53H80A21 21 0 0 0 101 32V24A21 21 0 0 0 80 3H55" pathLength="100"/><text class="br-k br-ge" x="15" y="28">GE</text><text class="br-k br-ph" x="89" y="28">PH</text></svg>
+      <span class="bolus-top" aria-hidden="true"><svg class="dock-px" width="26" height="30" viewBox="0 0 13 15" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="0" width="3.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="1" y="1" width="2.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="4" y="1" width="1.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="5" y="1" width="1.04" height="1.04" fill="#8fd8f7" data-t="l"/><rect x="6" y="1" width="3.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="10" y="1" width="2.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="0" y="2" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="1" y="2" width="1.04" height="1.04" fill="#ffe08a" data-t="l"/><rect x="2" y="2" width="1.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="3" y="2" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="4" y="2" width="1.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="5" y="2" width="1.04" height="1.04" fill="#8fd8f7" data-t="l"/><rect x="6" y="2" width="3.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="9" y="2" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="10" y="2" width="1.04" height="1.04" fill="#ffe08a" data-t="l"/><rect x="11" y="2" width="1.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="12" y="2" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="0" y="3" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="1" y="3" width="2.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="3" y="3" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="4" y="3" width="5.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="9" y="3" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="10" y="3" width="2.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="12" y="3" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="0" y="4" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="1" y="4" width="2.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="3" y="4" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="5" y="4" width="3.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="9" y="4" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="10" y="4" width="2.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="12" y="4" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="0" y="5" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="1" y="5" width="2.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="3" y="5" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="5" y="5" width="3.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="9" y="5" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="10" y="5" width="2.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="12" y="5" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="0" y="6" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="1" y="6" width="2.04" height="1.04" fill="#eef1f4" data-t="d"/><rect x="3" y="6" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="6" y="6" width="1.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="9" y="6" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="10" y="6" width="2.04" height="1.04" fill="#eef1f4" data-t="d"/><rect x="12" y="6" width="1.04" height="1.04" fill="#1560b8" data-t="m"/><rect x="0" y="7" width="1.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="1" y="7" width="1.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="2" y="7" width="4.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="6" y="7" width="1.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="7" y="7" width="4.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="11" y="7" width="1.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="12" y="7" width="1.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="0" y="8" width="2.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="2" y="8" width="1.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="3" y="8" width="3.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="6" y="8" width="1.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="7" y="8" width="3.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="10" y="8" width="1.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="11" y="8" width="2.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="1" y="9" width="2.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="3" y="9" width="1.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="4" y="9" width="2.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="6" y="9" width="1.04" height="1.04" fill="#2fb0e8" data-t="l"/><rect x="7" y="9" width="2.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="9" y="9" width="1.04" height="1.04" fill="#f7b923" data-t="l"/><rect x="10" y="9" width="2.04" height="1.04" fill="#eef1f4" data-t="m"/><rect x="2" y="10" width="9.04" height="1.04" fill="#1560b8" data-t="l"/><rect x="2" y="11" width="2.04" height="1.04" fill="#1560b8" data-t="l"/><rect x="4" y="11" width="5.04" height="1.04" fill="#eef1f4" data-t="d"/><rect x="9" y="11" width="2.04" height="1.04" fill="#1560b8" data-t="l"/><rect x="1" y="12" width="1.04" height="1.04" fill="#c3cad2" data-t="m"/><rect x="3" y="12" width="7.04" height="1.04" fill="#1560b8" data-t="l"/><rect x="11" y="12" width="1.04" height="1.04" fill="#c3cad2" data-t="m"/><rect x="2" y="13" width="1.04" height="1.04" fill="#c3cad2" data-t="m"/><rect x="3" y="13" width="7.04" height="1.04" fill="#1560b8" data-t="l"/><rect x="10" y="13" width="1.04" height="1.04" fill="#c3cad2" data-t="m"/><rect x="3" y="14" width="7.04" height="1.04" fill="#c3cad2" data-t="m"/></svg></span>
+      <span class="bolus-dock-title">Bolus</span>
     </button>
 
     <div id="dockSep" role="separator" aria-hidden="true"></div>
@@ -3091,7 +3088,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <button id="monthCalDocBtn" onclick="openMonthCalFromDock()" title="Mēneša kalendārs">
       <div style="width:7px;height:7px;border-radius:50%;background:#38bdf8;box-shadow:0 0 7px #38bdf8;flex-shrink:0;animation:rledPulse 3.1s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="0" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="6" y="0" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="0" y="1" width="9.04" height="2.04" fill="#38bdf8"/><rect x="0" y="3" width="9.04" height="6.04" fill="#1b2740"/><rect x="1" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="3" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="7" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="6" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="3" y="6" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="6" width="1.04" height="1.04" fill="#38bdf8"/><rect x="7" y="6" width="1.04" height="1.04" fill="#7dd3fc"/></svg>
-      <span>KALEND&#256;RS</span>
+      <span>Kalend&#257;rs</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
@@ -3108,7 +3105,7 @@ window.addEventListener('DOMContentLoaded', () => {
         <rect x="1" y="7" width="3.04" height="1.04" fill="#38bdf8"/>
         <rect x="5" y="7" width="3.04" height="1.04" fill="#22344a"/>
       </svg>
-      <span>PL&#256;NOT&#256;JS</span>
+      <span>Pl&#257;not&#257;js</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
@@ -3116,14 +3113,14 @@ window.addEventListener('DOMContentLoaded', () => {
     <button id="statsDocBtn" onclick="openStatsFromDock()" title="Statistika &amp; Leaderboard">
       <div style="width:7px;height:7px;border-radius:50%;background:#1fe091;box-shadow:0 0 7px #1fe091;flex-shrink:0;animation:rledPulse 3s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="6" y="0" width="2.04" height="1.04" fill="#1fe091"/><rect x="6" y="1" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="2" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="2" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="3" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="3" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="4" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="4" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="4" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="5" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="5" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="5" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="6" width="2.04" height="1.04" fill="#1fe091"/><rect x="3" y="6" width="2.04" height="1.04" fill="#86efac"/><rect x="6" y="6" width="2.04" height="1.04" fill="#1fe091"/><rect x="0" y="7" width="9.04" height="1.04" fill="#475569"/></svg>
-      <span>STATISTIKA</span>
+      <span>Statistika</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
     <button id="settingsDockBtn" onclick="openSettingsFromDock()" title="Par sistēmu un atjauninājumiem">
       <div style="width:7px;height:7px;border-radius:50%;background:#ffd666;box-shadow:0 0 7px #ffd666;flex-shrink:0;animation:rledPulse 3.2s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="0" width="1.04" height="1.04" fill="#fbbf24"/><rect x="1" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="1" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="1" width="1.04" height="1.04" fill="#fbbf24"/><rect x="2" y="2" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="3" width="2.04" height="1.04" fill="#fbbf24"/><rect x="0" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="4" y="4" width="1.04" height="1.04" fill="#fde68a"/><rect x="6" y="4" width="3.04" height="1.04" fill="#fbbf24"/><rect x="1" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="6" y="5" width="2.04" height="1.04" fill="#fbbf24"/><rect x="2" y="6" width="5.04" height="1.04" fill="#fbbf24"/><rect x="1" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="3" y="7" width="3.04" height="1.04" fill="#fbbf24"/><rect x="7" y="7" width="1.04" height="1.04" fill="#fbbf24"/><rect x="4" y="8" width="1.04" height="1.04" fill="#fbbf24"/></svg>
-      <span>SISTĒMA</span>
+      <span>Sistēma</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
@@ -3131,7 +3128,7 @@ window.addEventListener('DOMContentLoaded', () => {
     <button id="mobileDockBtn" onclick="toggleMobileQrModal()" title="Atvērt mobile QR">
       <div style="width:7px;height:7px;border-radius:50%;background:#64d2ff;box-shadow:0 0 7px #64d2ff;flex-shrink:0;animation:rledPulse 2.9s ease-in-out infinite;"></div>
       <svg class="dock-px" width="17" height="22" viewBox="0 0 7 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="0" width="5.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="1" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="2" y="1" width="3.04" height="1.04" fill="#cbeeff"/><rect x="5" y="1" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="2" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="2" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="3" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="3" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="4" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="5" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="5" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="6" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="5" y="6" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="7" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="3" y="7" width="1.04" height="1.04" fill="#38bdf8"/><rect x="5" y="7" width="1.04" height="1.04" fill="#7dd3fc"/><rect x="1" y="8" width="5.04" height="1.04" fill="#7dd3fc"/></svg>
-      <span>MOBILE</span>
+      <span>Mobile</span>
     </button>
 
     <div style="width:1px;height:22px;background:rgba(255,255,255,0.12);border-radius:999px;flex-shrink:0;margin:0 2px;"></div>
@@ -3141,29 +3138,29 @@ window.addEventListener('DOMContentLoaded', () => {
     <button id="pusdienasDockBtn" onclick="openPusdienasLauncher(event)" title="Pusdienas">
       <svg class="dock-px" width="17" height="17" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="0" width="1.04" height="4.04" fill="#fde68a"/><rect x="3" y="0" width="1.04" height="4.04" fill="#fde68a"/><rect x="1" y="3" width="3.04" height="1.04" fill="#fbbf24"/><rect x="2" y="4" width="1.04" height="5.04" fill="#f59e0b"/><rect x="6" y="0" width="2.04" height="1.04" fill="#fbbf24"/><rect x="5" y="1" width="3.04" height="4.04" fill="#fbbf24"/><rect x="7" y="5" width="1.04" height="4.04" fill="#f59e0b"/></svg>
       <span class="pd-counts" aria-hidden="true"><b class="pd-nv" id="pdCountNv" data-mode="narvesen" hidden></b><b class="pd-wolt" id="pdCountWolt" data-mode="wolt" hidden></b></span>
-      <span>PUSDIENAS</span>
+      <span>Pusdienas</span>
     </button>
     <button id="radioIdleBtn" onclick="radioIdleClick()" title="RG Radio" aria-label="RG Radio">
       <div class="rtog-led" style="background:#00ff88;box-shadow:none;"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="1.04" height="1.04" fill="#34d399"/><rect x="6" y="1" width="1.04" height="1.04" fill="#34d399"/><rect x="5" y="2" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="3" width="9.04" height="1.04" fill="#34d399"/><rect x="0" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="8" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="5" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="6" y="5" width="1.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="6" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="7" width="9.04" height="1.04" fill="#34d399"/></svg>
-      <span>RADIO</span>
+      <span>Radio</span>
       <span class="dock-emoji" style="font-size:11px;">♪</span>
     </button>
     <button id="radioToggle" onclick="toggleRadio()" title="Paslēpt/Rādīt Radio">
       <div class="rtog-led"></div>
       <svg class="dock-px" width="17" height="15" viewBox="0 0 9 8" shape-rendering="crispEdges" aria-hidden="true"><rect x="7" y="0" width="1.04" height="1.04" fill="#34d399"/><rect x="6" y="1" width="1.04" height="1.04" fill="#34d399"/><rect x="5" y="2" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="3" width="9.04" height="1.04" fill="#34d399"/><rect x="0" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="8" y="4" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="5" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="6" y="5" width="1.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="5" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="2" y="6" width="2.04" height="1.04" fill="#a7f3d0"/><rect x="8" y="6" width="1.04" height="1.04" fill="#34d399"/><rect x="0" y="7" width="9.04" height="1.04" fill="#34d399"/></svg>
-      <span id="radioToggleLabel">RADIO</span>
+      <span id="radioToggleLabel">Radio</span>
       <span id="radioToggleIcon"><svg width="10" height="10" viewBox="0 0 24 24" style="opacity:.7;vertical-align:middle" aria-hidden="true"><path d="M4 8l8 8 8-8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     </button>
     <!-- RG Music: a YouTube Music player on a home server (music.rgapp.page), opened in the
          same sheet as Plānotājs (#rgMusicSheet below). -->
     <button id="rgMusicDockBtn" onclick="openRgMusic()" title="RG Music" aria-label="RG Music">
       <svg class="rgm-logo" width="22" height="22" viewBox="-0.5 -0.5 25 25" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#ff0000"/><g fill="#ffffff"><rect x="5.25" y="10.5" width="1.5" height="3"/><rect x="8.25" y="7.5" width="1.5" height="9"/><rect x="11.25" y="4.5" width="1.5" height="15"/><rect x="14.25" y="7.5" width="1.5" height="9"/><rect x="17.25" y="10.5" width="1.5" height="3"/></g></svg>
-      <span>RG MUSIC</span>
+      <span>RG Music</span>
     </button>
     <button id="dockMoreBtn" type="button" aria-expanded="false" aria-controls="dockMoreMenu" title="Pārējie rīki">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-      <span>VAIRĀK</span>
+      <span>Vairāk</span>
       <i aria-hidden="true"></i>
     </button>
   </div><!-- end #bottomBtnBar -->
@@ -3290,38 +3287,35 @@ html:not(.has-wallpaper-bg) body #calendarEmbed::before {display: none !importan
    window's item the neutral surface container with on-surface text. The
    palette is the header's (--hxr-surface / --hxr-accent, set by
    kalendars/js/page/mk-header-x.js); before it comes, the plain dark bar. */
-html #dockShelf #bottomBtnBar{background:color-mix(in srgb,var(--hxr-surface,#141922) 78%,#0b0e13)!important;transition:background-color 400ms cubic-bezier(.2,0,0,1)!important}
-html #dockShelf#dockShelf #bottomBtnBar{position:relative!important;isolation:isolate;display:flex!important;align-items:center!important;gap:4px!important;padding:6px!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:32px!important;box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.045)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){position:relative!important;z-index:1!important;flex:0 0 auto!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:5px!important;width:80px!important;min-width:80px!important;max-width:none!important;height:64px!important;min-height:64px!important;padding:6px 4px 0!important;margin:0!important;background:transparent!important;transform:none!important;overflow:visible!important;outline:none;color:#a7b1c0!important;font:750 10.5px/1 'Space Grotesk',system-ui,sans-serif!important;letter-spacing:.07em!important;animation:none!important;transition:color var(--mk-dur-effects-default,200ms) var(--mk-ease-effects,ease)!important;-webkit-tap-highlight-color:transparent}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){border:0!important;border-radius:26px!important;box-shadow:none!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::before,html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::after{display:none!important}
-html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{position:relative!important;z-index:1!important;align-self:center!important}
-/* BOLUS keeps its frame, but its surface follows the bar like the others (the
-   old dock painted it navy on hover, under the tint) */
-html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{background:transparent!important;transition:background-color 200ms cubic-bezier(.2,0,0,1)!important}
-html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:hover{background:color-mix(in srgb,var(--hxr-accent,#fff) 8%,transparent)!important}
-html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:active{background:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent)!important;transition-duration:50ms!important}
-/* Themed icons (as Android's): at rest every icon is drawn in the header picture's
-   tones — a pixel icon keeps its details as three tones by its own lightness (light,
-   mid, dark: data-t, set by the dock script below) — and under the pointer, when
-   pressed or when its window is open, it shows its own colours again. Colour only,
-   200 ms on the effects curve. The other icon sets take the light tone. RADIO is
-   not toned: it always wears the player's own colour (album / skin, --radio-accent). */
-html #dockShelf#dockShelf #bottomBtnBar .dock-px rect {transition: fill 200ms cubic-bezier(.2,0,0,1);}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="l"] {fill: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 92%, #fff) !important;}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="m"] {fill: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 58%, var(--hxr-surface, #2a2f36)) !important;}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="d"] {fill: color-mix(in oklab, var(--hxr-surface, #2a2f36) 72%, #000) !important;}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-alt {--dock-ico: color-mix(in oklab, var(--hxr-accent, #c8d3e2) 92%, #fff) !important;}
-html #dockShelf#dockShelf #bottomBtnBar>button .dock-alt {transition: background-color 200ms cubic-bezier(.2,0,0,1);}
-/* the open window's item takes the colour of its icon */
-html #dockShelf#dockShelf #bottomBtnBar>#nsToggleBtnParent{--dk-acc:#7ea6ff}
-html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{--dk-acc:#2dd4bf}
-html #dockShelf#dockShelf #bottomBtnBar>#monthCalDocBtn{--dk-acc:#38bdf8}
-html #dockShelf#dockShelf #bottomBtnBar>#planotajsDockBtn{--dk-acc:#38bdf8}
-html #dockShelf#dockShelf #bottomBtnBar>#statsDocBtn{--dk-acc:#1fe091}
-html #dockShelf#dockShelf #bottomBtnBar>:is(#radioIdleBtn,#radioToggle){--dk-acc:var(--radio-accent,#ff8a5c)}
-html #dockShelf#dockShelf #bottomBtnBar>#pusdienasDockBtn{--dk-acc:#ffa53d}
-html #dockShelf#dockShelf #bottomBtnBar>#rgMusicDockBtn{--dk-acc:#ff3b30}
+/* Dock tokens (M3 Expressive floating toolbar, compact desktop): one place for every size and colour of the dock. */
+html #dockShelf#dockShelf #bottomBtnBar{--dk-h:64px;--dk-pad:4px;--dk-item-h:56px;--dk-item-w:80px;--dk-r:24px;--dk-r-on:16px;--dk-icon:24px;--dk-gap:4px;--dk-type:600 13px/16px 'Geist Sans',system-ui,sans-serif;--dk-top:6px;--dk-bar:color-mix(in srgb,var(--hxr-surface,#141922) 78%,#0b0e13);--dk-fg:color-mix(in srgb,var(--hxr-accent,#a7b1c0) 80%,#fff);--dk-tone:color-mix(in srgb,var(--hxr-accent,#8fb4ff) 24%,var(--dk-bar));--dk-state:color-mix(in srgb,var(--hxr-accent,#fff) 8%,transparent);--dk-press:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent);--dk-eff:200ms cubic-bezier(.2,0,0,1)}
+/* the bar: one surface, its height the tokens' (64 = 4 + 56 + 4), no frame */
+html #dockShelf#dockShelf #bottomBtnBar{position:relative!important;isolation:isolate;box-sizing:border-box!important;display:flex!important;align-items:center!important;gap:var(--dk-pad)!important;height:var(--dk-h)!important;padding:var(--dk-pad)!important;border:0!important;border-radius:calc(var(--dk-h)/2)!important;background:var(--dk-bar)!important;box-shadow:0 12px 32px rgba(0,0,0,.5)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;transition:background-color 400ms cubic-bezier(.2,0,0,1)!important}
+/* an item: icon over label, centred as a block in the item (6 + 24 + 4 + 16 + 6 = 56) */
+html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)){position:relative!important;z-index:1!important;flex:0 0 auto!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:var(--dk-gap)!important;box-sizing:border-box!important;width:var(--dk-item-w)!important;min-width:var(--dk-item-w)!important;max-width:none!important;height:var(--dk-item-h)!important;min-height:var(--dk-item-h)!important;padding:var(--dk-top) 4px 0!important;margin:0!important;border:0!important;border-radius:var(--dk-r)!important;background:transparent!important;box-shadow:none!important;transform:none!important;overflow:visible!important;outline:none;color:var(--dk-fg)!important;font:var(--dk-type)!important;letter-spacing:0!important;text-transform:none!important;animation:none!important;-webkit-tap-highlight-color:transparent;transition:background-color var(--dk-eff),color var(--dk-eff),border-radius var(--mk-dur-spring-fast,420ms) var(--mk-ease-spring,cubic-bezier(.2,.9,.25,1)),scale 150ms cubic-bezier(.2,0,0,1)!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn))::before,html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn)::after,html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn::after{display:none!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn))>span{font:inherit!important;letter-spacing:0!important;line-height:16px!important;margin:0!important;padding:0!important}
+/* states: a state layer under the pointer and pressed; the open window's item a tonal fill whose corners tighten */
+html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)):hover{background:var(--dk-state)!important;color:#fff!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)):active{background:var(--dk-press)!important;transition-duration:50ms!important}
+@media (prefers-reduced-motion:no-preference){html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)):active{scale:.96!important}}
+html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)):focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important;color:#fff!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on,html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn.bolus-open{background:var(--dk-tone)!important;color:#fff!important;border-radius:var(--dk-r-on)!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on:hover,html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn.bolus-open:hover{background:color-mix(in srgb,var(--hxr-accent,#8fb4ff) 30%,var(--dk-bar))!important}
+/* every icon one 24 x 24 box (the pixel art centred in it), so all labels share one line */
+html #dockShelf#dockShelf #bottomBtnBar>button :is(.dock-px,.dock-alt,.rgm-logo),html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:var(--dk-icon)!important;height:var(--dk-icon)!important;max-height:var(--dk-icon)!important;margin:0!important;filter:none!important;transform:none}
+html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>i{right:20px!important;top:var(--dk-top)!important}
+/* Themed icons (as Android's): at rest every pixel icon is drawn in the header picture's tones (three by each pixel's
+   own lightness, data-t, set by the dock script below, or the icon's own); under the pointer, pressed or open, its own
+   colours. RADIO always wears the player's colour (--radio-accent). */
+html #dockShelf#dockShelf #bottomBtnBar .dock-px rect{transition:fill var(--dk-eff)}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="l"]{fill:color-mix(in oklab,var(--hxr-accent,#c8d3e2) 92%,#fff)!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="m"]{fill:color-mix(in oklab,var(--hxr-accent,#c8d3e2) 58%,var(--hxr-surface,#2a2f36))!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-px rect[data-t="d"]{fill:color-mix(in oklab,var(--hxr-surface,#2a2f36) 72%,#000)!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(:hover):not(:focus-visible):not(.dk-on):not(#radioToggle):not(#radioIdleBtn) .dock-alt{--dock-ico:color-mix(in oklab,var(--hxr-accent,#c8d3e2) 92%,#fff)!important}
+html #dockShelf#dockShelf #bottomBtnBar>button .dock-alt{transition:background-color var(--dk-eff)}
+/* RG Music keeps its own red tile in every dock icon set (it is the player's logo, not a dock glyph) */
+#bottomBtnBar #rgMusicDockBtn .rgm-logo,#bottomBtnBar #rgMusicDockBtn:is(:hover,:active,:focus) .rgm-logo{display:block;opacity:1!important;filter:none!important;transform:none!important}
 /* While RG Music plays (also with its sheet closed) the bars bounce, like YouTube's now-playing mark */
 #bottomBtnBar #rgMusicDockBtn .rgm-logo rect:not(:first-child){transform-box:fill-box;transform-origin:center}
 #bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect{animation:rgmEq .9s cubic-bezier(.45,0,.55,1) infinite alternate}
@@ -3332,36 +3326,49 @@ html #dockShelf#dockShelf #bottomBtnBar>#rgMusicDockBtn{--dk-acc:#ff3b30}
 #bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect:nth-child(5){animation-delay:-.5s}
 @keyframes rgmEq{0%{transform:scaleY(.35)}100%{transform:scaleY(1.25)}}
 @media (prefers-reduced-motion:reduce){#bottomBtnBar #rgMusicDockBtn.rgmusic-playing .rgm-logo g rect{animation:none}}
-/* RG Music keeps its own red tile in every dock icon set (it is the player's logo, not a dock glyph) */
-#bottomBtnBar #rgMusicDockBtn .rgm-logo,#bottomBtnBar #rgMusicDockBtn:is(:hover,:active,:focus) .rgm-logo{display:block;opacity:1!important;filter:none!important;transform:none!important}
-/* Pusdienas: today's deal counts beside the icon in each brand's own colours, Narvesen yellow on
-   the left, Wolt blue on the right (from pusdieninas.pages.dev/api/counts; hidden until known or when zero) */
-#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts{position:absolute!important;z-index:2!important;left:0;right:0;top:0;height:44px;display:block!important;pointer-events:none}
-#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b{position:absolute;top:15px;display:block;min-width:20px;height:14px;padding:0 4px;border-radius:7px;font:800 9.5px/14px 'Space Grotesk',system-ui,sans-serif;letter-spacing:0;text-align:center;font-variant-numeric:tabular-nums;cursor:pointer;pointer-events:auto;transition:filter 150ms cubic-bezier(.2,0,0,1)}
-#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b[hidden]{display:none}
+/* Counters: one M3 badge (16 px, the dock's type at 11 px) beside its icon's top, 2 px clear of it, absolute (no item
+   moves for it). Nakts: tonight's head count; Pusdienas: Narvesen left, Wolt right in their own colours. */
+html #dockShelf#dockShelf #bottomBtnBar :is(.dk-count,.pd-counts b){position:absolute;z-index:2;top:var(--dk-top);display:block;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:8px;font:700 11px/16px 'Geist Sans',system-ui,sans-serif;letter-spacing:0;text-align:center;font-variant-numeric:tabular-nums}
+html #dockShelf#dockShelf #bottomBtnBar :is(.dk-count,.pd-counts b)[hidden]{display:none}
+#nsToggleBtnParent .dk-count{left:calc(50% + var(--dk-icon)/2 + 2px);background:color-mix(in oklab,var(--hxr-accent,#c8d3e2) 88%,#fff);color:color-mix(in srgb,var(--hxr-surface,#141922) 40%,#000);pointer-events:none}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts{position:absolute!important;z-index:2!important;inset:0;display:block!important;pointer-events:none}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b{cursor:pointer;pointer-events:auto;transition:filter 150ms cubic-bezier(.2,0,0,1)}
 #dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b:hover{filter:brightness(1.25)}
-#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-nv{right:calc(50% + 14px);background:#ffd23f;color:#1b365d}
-#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-wolt{left:calc(50% + 14px);background:#009de0;color:#fff}
-@media(max-width:720px){#dockShelf #bottomBtnBar>#pusdienasDockBtn>.pd-counts{display:block!important;height:56px}#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-counts b{top:21px;min-width:16px;padding:0 3px;font-size:8.5px}#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-nv{right:calc(50% + 12px)}#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-wolt{left:calc(50% + 12px)}}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover,html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{color:#eef3fa!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{color:#fff!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){color:color-mix(in srgb,var(--hxr-accent,#a7b1c0) 80%,#fff)!important;transition:background-color 200ms cubic-bezier(.2,0,0,1),color 200ms cubic-bezier(.2,0,0,1)!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):hover{background:color-mix(in srgb,var(--hxr-accent,#fff) 8%,transparent)!important;color:#fff!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):active{background:color-mix(in srgb,var(--hxr-accent,#fff) 12%,transparent)!important;transition-duration:50ms!important}
-/* Pressed feel: the button gives a little under the click (scale only, composited; nothing runs at rest) */
-@media (prefers-reduced-motion:no-preference){html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)){transition-property:background-color,color,scale!important}html #dockShelf#dockShelf #bottomBtnBar>button:is(#bolusDocBtn,:not(#bolusDocBtn)):active{scale:.96!important}}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on{background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#12151b)!important;color:#fff!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn).dk-on:hover{background:color-mix(in srgb,var(--hxr-surface,#141922) 30%,#1a1e26)!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn):focus-visible{outline:2px solid rgba(125,211,252,.55)!important;outline-offset:-2px!important}
-/* the icon centred in the 32 px zone */
-/* Every dock icon gets the same 22 px box (the art is centred in it), so all labels share one line */
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt,.rgm-logo),html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{position:relative;z-index:1;flex:0 0 auto!important;width:22px!important;height:22px!important;max-height:22px!important;margin:5px 0!important;filter:none!important;transform:none}
-html #dockShelf#dockShelf #bottomBtnBar>button .dock-alt{height:22px!important}
-html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{height:22px!important}
-html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>i{right:20px!important;top:8px!important}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-nv{right:calc(50% + var(--dk-icon)/2 + 2px);background:#ffd23f;color:#1b365d}
+#dockShelf #bottomBtnBar #pusdienasDockBtn .pd-wolt{left:calc(50% + var(--dk-icon)/2 + 2px);background:#009de0;color:#fff}
+/* Bolus: the same item, wider for its two rooms' 24 h drawn round it as the side cards' outline split in two halves
+   (GE the left in blue, PH the right in green), each rising from the bottom's middle as the hours pass, named at its
+   side's middle; 4 px, inside the item's edge, clear of the icon and the label */
+html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn#bolusDocBtn{width:104px!important;min-width:104px!important}
+#bolusDocBtn .bolus-top{display:flex!important;flex:0 0 auto!important;margin:0!important;padding:0!important;line-height:0!important}
+/* optical: the device narrows at its foot, so at the measured 4 px its name read as further off than the others' */
+#bolusDocBtn .bolus-top{translate:0 2px}
+html body #bolusDocBtn#bolusDocBtn .bolus-dock-title{display:block!important;flex:none!important;margin:0!important;color:inherit!important;font:inherit!important;letter-spacing:0!important;text-transform:none!important;text-align:center!important}
+#bolusDocBtn .bolus-ring{position:absolute;inset:0;width:104px;height:56px;overflow:visible;pointer-events:none;z-index:0}
+#bolusDocBtn .bolus-ring .br-t{fill:none;stroke:rgba(255,255,255,.08);stroke-width:4;stroke-linecap:round}
+#bolusDocBtn .bolus-ring .br-l{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dasharray 600ms cubic-bezier(.2,0,0,1),stroke 600ms cubic-bezier(.2,0,0,1)}
+/* the room's own colour, red-orange over the last fifth of the 24 h, red once it must be changed (steps: blue
+   blended toward red passed through pink) */
+#bolusDocBtn{--br-ge:#5aa9ff;--br-ph:#4fd18b}
+#bolusDocBtn.bo-warn-ge{--br-ge:#ff7a45}#bolusDocBtn.bo-warn-philips{--br-ph:#ff7a45}
+#bolusDocBtn.bo-end-ge{--br-ge:#ff4d4f}#bolusDocBtn.bo-end-philips{--br-ph:#ff4d4f}
+#bolusDocBtn .bolus-ring path.br-ge{stroke:var(--br-ge);stroke-dasharray:var(--bo-ge,0) 100}
+#bolusDocBtn .bolus-ring path.br-ph{stroke:var(--br-ph);stroke-dasharray:var(--bo-philips,0) 100}
+#bolusDocBtn.bo-out-ge .bolus-ring path.br-ge,#bolusDocBtn.bo-out-philips .bolus-ring path.br-ph{opacity:0}
+/* each half's room name beside its line, inside the item */
+#bolusDocBtn:is(.bo-end-ge,.bo-end-philips){--br-cut:color-mix(in srgb,#ff4d4f 16%,var(--dk-bar))}
+#bolusDocBtn.bo-end-ge.bo-end-philips{--br-cut:color-mix(in srgb,#ff4d4f 28%,var(--dk-bar))}
+#bolusDocBtn .bolus-ring .br-k{font:800 9px/1 'Geist Sans',system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}
+#bolusDocBtn .bolus-ring text.br-ge{fill:var(--br-ge)}
+#bolusDocBtn .bolus-ring text.br-ph{fill:var(--br-ph)}
+/* a room past its 24 h tints the whole item toward red, both rooms more (a tonal fill, no glow) */
+html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:is(.bo-end-ge,.bo-end-philips):is(*,:hover){background:var(--br-cut)!important}
+html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn:is(.bo-end-ge,.bo-end-philips):hover{box-shadow:inset 0 0 0 64px var(--dk-state)!important}
+@media (prefers-reduced-motion:reduce){#bolusDocBtn .bolus-ring .br-l{transition:none}}
+/* the open window's item takes the colour of its icon (where a part reads --dk-acc) */
+html #dockShelf#dockShelf #bottomBtnBar>#nsToggleBtnParent{--dk-acc:#7ea6ff}html #dockShelf#dockShelf #bottomBtnBar>#bolusDocBtn{--dk-acc:#2dd4bf}html #dockShelf#dockShelf #bottomBtnBar>:is(#monthCalDocBtn,#planotajsDockBtn){--dk-acc:#38bdf8}html #dockShelf#dockShelf #bottomBtnBar>#statsDocBtn{--dk-acc:#1fe091}html #dockShelf#dockShelf #bottomBtnBar>:is(#radioIdleBtn,#radioToggle){--dk-acc:var(--radio-accent,#ff8a5c)}html #dockShelf#dockShelf #bottomBtnBar>#pusdienasDockBtn{--dk-acc:#ffa53d}html #dockShelf#dockShelf #bottomBtnBar>#rgMusicDockBtn{--dk-acc:#ff3b30}
 @media(max-width:720px){
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){width:56px!important;min-width:56px!important;height:56px!important;min-height:56px!important;padding:0!important;justify-content:center!important}
-html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.dock-alt),html #dockShelf#dockShelf #bottomBtnBar>#dockMoreBtn>svg{margin:0!important}
+html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn){--dk-item-w:56px;padding:0!important;justify-content:center!important}
 }
 </style>
 <script>
@@ -3373,12 +3380,20 @@ html #dockShelf#dockShelf #bottomBtnBar>button:not(#bolusDocBtn) :is(.dock-px,.d
   function tones() {
     Array.prototype.forEach.call(bar.querySelectorAll('.dock-px rect[fill]'), function (r) {
       var m = /^#([0-9a-f]{6})$/i.exec(r.getAttribute('fill') || ''), n, l;
-      if (!m) return;
+      if (!m || r.hasAttribute('data-t')) return;   // an icon may carry its own tones (Bolus: its parts stay apart)
       n = parseInt(m[1], 16); l = (((n >> 16) & 255) * .2126 + ((n >> 8) & 255) * .7152 + (n & 255) * .0722) / 255;
       r.setAttribute('data-t', l > .55 ? 'l' : l > .2 ? 'm' : 'd');
     });
   }
   tones();
+  // Nakts: the night's head count from the calendar (kalendars/js/nightsplit.js nsPublishCount)
+  window.addEventListener('message', function (e) {
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'nsCount') return;
+    var b = document.getElementById('nsCountBadge'), n = +e.data.n || 0;
+    if (!b) return;
+    b.textContent = n; b.hidden = n < 1;
+    var btn = document.getElementById('nsToggleBtnParent'); if (btn) btn.title = 'Nakts sadalījums' + (n ? ': ' + n + ' naktī' : '');
+  });
   // BOLUS has its own frame (progress ring, warning colours): not marked.
   var ACTIVE = /(^|\s)(ns-open|stats-open|planotajs-open|rgmusic-open|mc-open|pusdienas-open)(\s|$)/;
   function sync() {
@@ -3738,7 +3753,7 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWind
 
 /* Bolus key, minimal polish (the user prefers the original key): its BOLUS label in the other dock labels' own type
    (it was 8 px blue-grey beside their 10.5 px), everything else as it was. */
-html body #bolusDocBtn#bolusDocBtn .bolus-dock-title{font:750 10.5px/1 'Geist Sans',system-ui,sans-serif!important;letter-spacing:.07em!important;color:color-mix(in srgb,var(--hxr-accent,#a7b1c0) 80%,#fff)!important;}
+html body #bolusDocBtn#bolusDocBtn .bolus-dock-title{font:600 12px/16px 'Geist Sans',system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:inherit!important;}
 
 /* Classic: the look editor key reads as a button, not a logo next to "RG RADIO" (palette + "Izskats", the same
    tonal pill as Ielogoties). The text is the visible name; aria-label stays the full one. */
@@ -4195,7 +4210,7 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow[data-radi
 @keyframes mobileQrSpin{to{transform:rotate(360deg)}}
 </style>
 
-<script src="js/bolus.js?v=20261124gp1" defer></script>
+<script src="js/bolus.js?v=20261126bo3" defer></script>
 
 <script>
 var _nsOpen = false;

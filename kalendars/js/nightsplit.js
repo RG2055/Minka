@@ -4214,6 +4214,7 @@
     if(dk) pullRoomState(dk, function(){ if(dk===activeDateKey() && window.__nsOverlayOpen===true) render(); });
     resetColours(); // reset colour map each time we re-compute for new day
     var wk=getW();
+    nsPublishCount(wk.length);
     if(wk.length<2){st=null;_nsLastRenderKey='';_nsPendingRenderKey='';render();return;}
     var fallbackSh=st?st.sh:0, fallbackEi=st?(st.ei||0):0;
     var applied=applySavedDayState(fat(wk), fallbackSh, fallbackEi);
@@ -4250,6 +4251,13 @@
     _nsLastRenderKey=nextKey;
     _nsPendingRenderKey='';
     render();
+  }
+
+  // The dock's Nakts button shows how many share the night before it is opened (index.html, message nsCount).
+  function nsPublishCount(n){
+    if(n===nsPublishCount.sent)return;
+    nsPublishCount.sent=n;
+    try{ if(window.parent!==window) window.parent.postMessage({type:'nsCount',n:n},location.origin); }catch(e){}
   }
 
   function init(){

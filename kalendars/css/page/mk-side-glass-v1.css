@@ -768,7 +768,6 @@ html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .sid
 /* The side panel's line icons (calendar.js mkLineIcon): the header's drawing style, coloured by the text around them. */
 .mk-line-ic { display: inline-block; flex: none; width: 1.1em; height: 1.1em; vertical-align: -.17em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .mk-next-shift-summary .mk-line-ic { width: 14px; height: 14px; }
-.mk-next-person-copy small .mk-line-ic { margin-left: 3px; }
 html:not(.mk-mobile-shell):not(.mk-side-plain):not(.minka-rad) #grafiks-app .side-panel :is(#radiographers-next-container, #radiologists-next-container).mk-next-shift-card {
   display: flex !important;
   flex-wrap: wrap !important;
