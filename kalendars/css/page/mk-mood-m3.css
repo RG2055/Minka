@@ -593,8 +593,8 @@
    the count beside the icon, the sweets game, the runner). One wrapping flex box: the docked switch gives its children
    to it (display: contents) and `order` places everything, so nothing moves in the DOM; each row spreads its buttons
    with equal gaps. --- */
-:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps { flex-wrap: wrap !important; align-content: flex-start !important; justify-content: space-between !important; row-gap: 0 !important; height: 105px !important; }
-:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps::after { content: '' !important; order: 10 !important; flex: 0 0 100% !important; height: 1px !important; margin: 4px 0 !important; background: var(--md-sys-color-outline-variant, rgba(196, 199, 197, .22)) !important; display: block !important; position: static !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps { flex-wrap: wrap !important; align-content: flex-start !important; justify-content: space-between !important; row-gap: 0 !important; }
+:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps::after { content: '' !important; order: 10 !important; flex: 0 0 100% !important; height: 1px !important; margin: 2px 0 !important; background: var(--md-sys-color-outline-variant, rgba(196, 199, 197, .22)) !important; display: block !important; position: static !important; }
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > :is(.rg-pulse-tap, .rg-pulse-write--comment):is(*, :hover),
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:is(*, :hover, :active),
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:is([data-rg-pulse="excellent"], [data-rg-pulse="terrible"]):is(*, :hover, :active) { margin: 0 !important; }
@@ -617,18 +617,13 @@
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-candy { order: 14 !important; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-run { order: 15 !important; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more, .mk-cl-candy, .mk-cl-run):is(*, :hover, :active) { flex: 0 1 40px !important; width: 40px !important; min-width: 32px !important; margin: 0 !important; border-radius: 20px !important; }
-/* comments: the bubble icon, the count beside it (Badge, not over the icon) */
-:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment:is(*, :hover) { flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; height: 40px !important; padding: 0 8px !important;
-  display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px !important; border-radius: 20px !important; }
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment > :is(span:not(.rg-feedback-badges), .rg-comment-preview) { display: none !important; }
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-pulse-write--comment .rg-comment-icon { margin: 0 !important; flex: 0 0 auto !important; grid-area: auto !important; }
-:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps .rg-pulse-write--comment :is(.rg-feedback-action-count, .rg-feedback-new-count) { position: static !important; left: auto !important; top: auto !important;  align-self: center !important; margin: 0 !important; }
 
 /* --- row 2 fits one line (the runner wrapped under it): more, sweets and runner as narrow icon buttons (32 = 4+24+4),
    the comments' sides 4. Stronger colours (the user: pale, hard to read): the icons in on-surface, the chosen layout
    and the chosen face in the primary; each layout names itself on hover / focus (PlainTooltip). --- */
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more, .mk-cl-candy, .mk-cl-run):is(*, :hover, :active) { flex: 0 0 32px !important; width: 32px !important; min-width: 32px !important; }
-:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment:is(*, :hover) { padding: 0 4px !important; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q .mk-cl-cards { fill: var(--md-sys-color-on-surface, #e3e3e3) !important; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] .mk-cl-cards { fill: var(--rg-tb-on-filled, #241400) !important; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] .mk-cl-mood { fill: var(--rg-tb-on-filled, #241400) !important; }
@@ -654,11 +649,6 @@
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] :is(.mk-cl-cards, .mk-cl-mood) { fill: var(--rg-tb-on-selected) !important; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked .mk-cl-q[aria-pressed="true"] .mk-cl-mood { fill: var(--md-sys-color-primary) !important; }
 :root.mk-m3 :is(.rg-feedback-card, .mk-cl-moodrow) .mk-cl-bar.is-docked :is(.mk-cl-more, .mk-cl-candy, .mk-cl-run):is(*, :hover, :active) { height: 32px !important; }
-:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-write--comment:is(*, :hover) { height: 32px !important; border-radius: 16px !important; }
-
-/* the badge on the button's container, its top-right corner, off the emoji (the user's reference): the 40 px button's
-   icon spans 8-32, the badge 30-46 and -6-10, so it never covers the face; it is absolute, so it changes no size or gap */
-:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card.mx-compact .rg-pulse-taps > .rg-pulse-tap :is(.rg-pulse-count, .mx-draw-count) { left: auto !important; right: -6px !important; top: -6px !important; }
 
 /* the badge anchored to the icon itself (the user's reference): every icon sits in its button's middle, so its top-right
    is the middle + (12, -12); the 16 px badge's corner goes 3 px over the icon's edge there: left = middle + 3, top =
@@ -674,7 +664,6 @@
    32 px buttons, 20 px icons; 4 px inside; the hairline 1 px with 2 px each side; M3 corners kept (selected 10 px on a
    32 px button, the layouts' pill 16). Its size never depends on the radio. --- */
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps { height: 77px !important; padding-top: 4px !important; padding-bottom: 4px !important; border-radius: 22px !important; }
-:root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps::after { margin: 2px 0 !important; }
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap:is(*, :hover) { flex: 0 1 32px !important; width: 32px !important; min-width: 28px !important; height: 32px !important; }
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:is(*, :hover, :active),
 :root.mk-mx.mk-mb.mk-m3 #grafiks-list .rg-feedback-card .rg-pulse-taps > .rg-pulse-tap[data-rg-pulse]:is([data-rg-pulse="excellent"], [data-rg-pulse="terrible"]):is(*, :hover, :active),

@@ -47,16 +47,13 @@ var hospitalDatabase = window.hospitalDatabase;
   const MIX_POOL = [
     // Engraved classical panoramas, made at the header's own size (1894x170 on a Full HD screen), so they fit
     // without stretch; on a narrower window the sides crop around the subject.
-    { id: 'desert-helmet', periods: ['morning', 'day'], position: '65% 50%' },
     { id: 'classical-garden', periods: ['morning', 'day'], position: '50% 50%' },
     { id: 'stone-bridge', periods: ['day'], position: '50% 50%' },
     { id: 'golden-temple', periods: ['morning', 'day'], position: '75% 50%' },
     { id: 'underground-sanctuary', periods: ['night'], position: '53% 50%' },
     { id: 'roman-night', periods: ['night'], position: '26% 50%' },
-    { id: 'equestrian-statue', periods: ['sunset'], position: '67% 50%' },
     { id: 'snowy-temple', periods: ['morning', 'day'], position: '60% 50%' },
     { id: 'colosseum', periods: ['sunset', 'night'], position: '58% 50%' },
-    { id: 'poseidon-harbor', periods: ['sunset'], position: '35% 50%' },
     { id: 'pantheon', periods: ['day'], position: '67% 50%' },
     { id: 'lakeside-temple', periods: ['morning', 'sunset'], position: '40% 50%' },
     { id: 'triumphal-arch', periods: ['morning', 'day'], position: '69% 50%' },
@@ -64,7 +61,6 @@ var hospitalDatabase = window.hospitalDatabase;
     { id: 'pyramid-sunset', periods: ['sunset'], position: '26% 50%' },
     { id: 'pink-atrium', periods: ['day', 'sunset'], position: '50% 50%' },
     { id: 'volcano', periods: ['sunset', 'night'], position: '75% 50%' },
-    { id: 'athena-clouds', periods: ['morning', 'day'], position: '31% 50%' },
     { id: 'ancient-aqueduct', periods: ['day', 'sunset'], position: '60% 50%' },
     { id: 'island-temple', periods: ['sunset'], position: '41% 50%' }
   ].map(item => ({ ...item, src: 'data/header-backgrounds/pool/' + item.id + '.webp' }));
