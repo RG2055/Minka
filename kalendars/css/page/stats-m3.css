@@ -68,7 +68,7 @@
 /* Same icon as the dock button (window.parent.__mkDockIcon), no tinted tile. */
 .mk-stats-mark.is-dock-icon { width: 28px; height: 28px; padding: 0; border-radius: 0; background: none; }
 .mk-stats-mark.is-dock-icon svg { width: 100%; height: 100%; fill: initial; stroke: none; image-rendering: pixelated; }
-#stats-title { margin: 0; font: var(--mk-type-title-l); font-size: 20px; letter-spacing: -.01em; color: var(--mk-sys-on-surface); }
+#stats-title { margin: 0; font: 700 40px/48px var(--mk-font-plain, 'Geist Sans'), system-ui, sans-serif; letter-spacing: -.03em; color: var(--mk-sys-on-surface); }
 #stats-modal #stats-month-label { display: none; }
 
 /* Icon buttons: 40px visual, 48px target, M3 state layer. */
@@ -92,9 +92,11 @@
 /* Card charms that hang past the roster's edge are lifted to the document (card-addons.js, z 60000):
    with the statistics over the whole frame they would hang over it, so they hide while it is open. */
 html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon.mk-card-addon-portal.is-visible { display: none !important; }
-/* The close is the calendar's: a filled round 40 px button, 16/20 px in from the corner (head padding). */
-.mk-stats-close { margin-left: auto; background: var(--mk-sys-surface-container-high) !important; color: var(--mk-sys-on-surface) !important; transition: border-radius 350ms cubic-bezier(.42, 1.67, .21, .9); }
-.mk-stats-close:active { border-radius: 12px !important; }
+/* The close: the same big tinted pill with a cross and the word in every window (colleagues who do not see well
+   must find it at once, and it must not pass for the PWA window's own small close in the corner). */
+.mk-stats-close { display: inline-flex !important; gap: 10px; width: auto !important; height: 56px !important; margin-left: auto !important; padding: 0 26px 0 18px !important; border-radius: 28px !important; background: #a8dcc1 !important; color: #0f2b20 !important; font: 700 20px/1 'Google Sans', system-ui, sans-serif; transition: border-radius 350ms cubic-bezier(.42, 1.67, .21, .9); }
+.mk-stats-close:active { border-radius: 18px !important; }
+.mk-stats-close svg { width: 30px !important; height: 30px !important; }
 .mk-stats-close::after,
 #stats-modal .db-icon-btn::after {
   content: '';
@@ -118,7 +120,7 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 .mk-stats-close:active::before,
 #stats-modal .db-icon-btn:active::before { opacity: var(--mk-state-pressed); }
 .mk-stats-close svg,
-#stats-modal .db-icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#stats-modal .db-icon-btn svg { width: 24px; height: 24px; fill: currentColor; stroke: none; }
 #stats-modal :focus-visible {
   outline: var(--mk-focus-ring) !important;
   outline-offset: var(--mk-focus-offset) !important;
@@ -165,35 +167,33 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
   text-transform: none;
   color: var(--mk-sys-on-surface);
 }
-/* M3 filter chips: 32px, 8px shape, outline; selected = secondary container
-   with a leading check. */
-#stats-modal .db-chips { gap: 8px; }
+/* M3 Expressive connected button group (small, 40 dp): 2 dp gaps, inner corners 8, the group's ends round; the chosen
+   one turns round (the shape change, on the spatial spring) and tonal (secondary-container) with a leading check. */
+#stats-modal .db-chips { display: flex; gap: 2px; }
 #stats-modal .db-chips button {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--mk-sys-outline-variant);
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
   border-radius: var(--mk-shape-sm);
-  background: transparent;
+  background: var(--mk-sys-surface-container-high);
   color: var(--mk-sys-on-surface-variant);
   font: var(--mk-type-label-l);
-  letter-spacing: .01em;
+  letter-spacing: 0;
   isolation: isolate;
-  transition: background-color var(--mk-dur-effects-default) var(--mk-ease-effects), color var(--mk-dur-effects-default) var(--mk-ease-effects), border-color var(--mk-dur-effects-default) var(--mk-ease-effects), padding var(--mk-dur-effects-fast) var(--mk-ease-effects);
+  transition: background-color var(--mk-dur-effects-default) var(--mk-ease-effects), color var(--mk-dur-effects-default) var(--mk-ease-effects), border-radius var(--mk-dur-spring-fast, 420ms) var(--mk-ease-spring, cubic-bezier(.2, .9, .25, 1));
 }
+#stats-modal .db-chips button:first-child { border-radius: 20px var(--mk-shape-sm) var(--mk-shape-sm) 20px; }
+#stats-modal .db-chips button:last-child { border-radius: var(--mk-shape-sm) 20px 20px var(--mk-shape-sm); }
 #stats-modal .db-chips button svg {
   display: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   margin-left: -4px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  fill: currentColor;
 }
 #stats-modal .db-chips button::before {
   content: '';
@@ -206,76 +206,127 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
   transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
 }
 #stats-modal .db-chips button:hover::before { opacity: var(--mk-state-hover); }
+#stats-modal .db-chips button:active::before { opacity: var(--mk-state-pressed); }
 #stats-modal .db-chips button[aria-pressed="true"] {
-  padding-left: 10px;
-  border-color: transparent;
+  border-radius: 20px;
   background: var(--mk-sys-secondary-container);
   color: var(--mk-sys-on-secondary-container);
 }
 #stats-modal .db-chips button[aria-pressed="true"] svg { display: block; }
-#stats-modal .db-personpick select {
-  height: 40px;
-  min-width: 170px;
-  padding: 0 36px 0 14px;
-  border: 1px solid var(--mk-sys-outline-variant);
-  border-radius: var(--mk-shape-sm);
-  background-color: transparent;
-  color: var(--mk-sys-on-surface);
-  font: var(--mk-type-body-m);
-}
-#stats-modal .db-personpick select:hover { border-color: var(--mk-sys-outline); }
+/* M3 search bar: 56 dp, full shape, surface-container-high, a leading search symbol, the names suggested as you type */
+#stats-modal .db-search { position: relative; display: flex; align-items: center; gap: 12px; width: 300px; height: 56px; padding: 0 20px 0 16px; border-radius: var(--mk-shape-full); background: var(--mk-sys-surface-container-high); color: var(--mk-sys-on-surface-variant); cursor: text; isolation: isolate; }
+#stats-modal .db-search::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--mk-sys-on-surface); opacity: 0; transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects); }
+#stats-modal .db-search:hover::before { opacity: var(--mk-state-hover); }
+#stats-modal .db-search:focus-within { background: var(--mk-sys-surface-container-highest); }
+#stats-modal .db-search > svg { flex: none; width: 24px; height: 24px; fill: currentColor; }
+#stats-modal .db-search input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: var(--mk-sys-on-surface); font: var(--mk-type-body-l); }
+#stats-modal .db-search input::placeholder { color: var(--mk-sys-on-surface-variant); opacity: 1; }
 
-/* ── M3 primary tabs with a sliding indicator ───────────────────────────── */
-#stats-modal .db-tabs {
-  position: relative;
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 0;
-  margin: 0 -24px;
-  padding: 0 12px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  border-bottom: 1px solid var(--mk-sys-outline-variant);
-  background: var(--mk-sys-surface-container-low);
+/* ── M3 dynamic colour: the dialog's system colours from the header picture's tones (the app's theme: --hxr-accent
+   light tone, --hxr-surface dark tone; mk-header-x.js), so every surface and role inside is tinted by it, the
+   details too. Mood, shift and room colours stay semantic. ────────────────────────────────────────────── */
+#stats-modal.mk-stats {
+  --st-font: 'Google Sans', var(--mk-font-plain, 'Geist Sans'), system-ui, sans-serif;
+  --st-seed: var(--hxr-accent, #9fd8c0);
+  --st-dark: var(--hxr-surface, #20262b);
+  --mk-sys-surface-container-lowest: color-mix(in oklab, var(--st-dark) 14%, #0b0c0e);
+  --mk-sys-surface-container-low: color-mix(in oklab, var(--st-dark) 24%, #101214);
+  --mk-sys-surface-container: color-mix(in oklab, var(--st-seed) 7%, color-mix(in oklab, var(--st-dark) 30%, #15171a));
+  --mk-sys-surface-container-high: color-mix(in oklab, var(--st-seed) 10%, color-mix(in oklab, var(--st-dark) 34%, #1b1e22));
+  --mk-sys-surface-container-highest: color-mix(in oklab, var(--st-seed) 13%, color-mix(in oklab, var(--st-dark) 38%, #22252a));
+  --mk-sys-primary: color-mix(in oklab, var(--st-seed) 88%, #fff);
+  --mk-sys-on-primary: color-mix(in oklab, var(--st-seed) 18%, #050506);
+  --mk-sys-primary-container: color-mix(in oklab, var(--st-seed) 32%, #17191c);
+  --mk-sys-on-primary-container: color-mix(in oklab, var(--st-seed) 55%, #fff);
+  --mk-sys-secondary-container: color-mix(in oklab, var(--st-seed) 22%, #22252a);
+  --mk-sys-on-secondary-container: color-mix(in oklab, var(--st-seed) 40%, #fff);
+  --mk-sys-outline-variant: color-mix(in oklab, var(--st-seed) 14%, #33373d);
+  /* tertiary: the seed pulled toward a sea green (a hue turn could land on violet, which the app never uses) */
+  --st-ter: color-mix(in oklab, var(--st-seed) 30%, #3fa592);
+  --mk-sys-tertiary-container: color-mix(in oklab, var(--st-ter) 40%, #15171a);
+  --mk-sys-on-tertiary-container: color-mix(in oklab, var(--st-ter) 40%, #fff);
+  --mk-sys-tertiary: color-mix(in oklab, var(--st-ter) 80%, #fff);
+  --mk-sys-on-surface-variant: color-mix(in oklab, var(--st-seed) 18%, #c2c6cc);
 }
-#stats-modal .db-tabs::-webkit-scrollbar { display: none; }
-#stats-modal .db-tabs button {
-  position: relative;
-  flex: none;
-  height: 48px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--mk-sys-on-surface-variant);
-  font: var(--mk-type-label-l);
-  font-size: 14px;
-  letter-spacing: .01em;
-  isolation: isolate;
-  transition: color var(--mk-dur-effects-default) var(--mk-ease-effects);
-}
-#stats-modal .db-tabs button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: currentColor;
-  opacity: 0;
-  transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects);
-}
-#stats-modal .db-tabs button:hover::before { opacity: var(--mk-state-hover); }
-#stats-modal .db-tabs button[aria-selected="true"] { color: var(--mk-sys-primary); }
-/* Liquid underline: left/right written once per switch by
-   MinkaMotion.liquid; the two edges ride different springs (.mk-liquid in
-   css/mk-sys.css), so it stretches toward the new tab and settles. */
-#stats-modal .db-tab-indicator {
-  position: absolute;
-  bottom: 0;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--mk-sys-primary);
-  pointer-events: none;
-}
+
+/* ── The answers page (the user's mockup, second image): organic cards drawn as static SVG shapes (BLOB in
+   daybook-stats.js, stretched to each card), a lighter lobe behind two of them, muted tonal colours from the theme,
+   Google Sans (the app's own copy) in big expressive weights, the dock's pixel icons at 44 px. Then hours against the
+   norm as its own full-width part (the third image), then a compact row: coffee, radio, nights. No gradient, glow,
+   blur or motion loop. ── */
+#stats-modal .db-cards { --st-font: 'Google Sans', var(--mk-font-plain, 'Geist Sans'), system-ui, sans-serif; position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+#stats-modal .db-card { --c: var(--mk-sys-surface-container); --on: var(--mk-sys-on-surface); --lobe: color-mix(in oklab, var(--c) 70%, var(--on)); grid-column: span 4; position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0;
+  padding: 30px 36px 28px; border: 0; background: none; color: var(--on); text-align: left; cursor: pointer; isolation: isolate; font-family: var(--st-font); }
+/* the card's surface and its state layer on ::before (on the M3 shape scale: 48 / 32 / full, set per card below), so a
+   lobe can sit behind it */
+#stats-modal .db-card { border-radius: 48px; }
+#stats-modal .db-card::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--c); transition: background-color var(--mk-dur-effects-fast) var(--mk-ease-effects); }
+#stats-modal .db-card:hover::before { background: color-mix(in srgb, var(--on) 7%, var(--c)); }
+#stats-modal .db-card:active::before { background: color-mix(in srgb, var(--on) 11%, var(--c)); }
+#stats-modal .db-card:focus-visible { outline: 3px solid var(--mk-sys-primary); outline-offset: 3px; }
+#stats-modal .db-card-lobe { position: absolute; z-index: -2; right: -12px; top: -22px; width: 132px; height: 132px; border-radius: 50%; background: var(--lobe); }
+/* muted tonal roles: the theme's tone, a little of each meaning's hue */
+#stats-modal .db-card.is-mood { --c: #1d3a2f; --on: #eef7f1; --lobe: #6fae8c; }
+#stats-modal .db-card.is-bolus { --c: #1e3a4f; --on: #eaf2fb; }
+#stats-modal .db-card.is-fatigue { --c: #b05a3c; --on: #fff1e8; --lobe: #e99673; }
+/* the second row as in the mockup: the hours (half), coffee, the two pills stacked */
+#stats-modal .db-card.is-people { grid-column: span 6; --c: #1c3a2f; --on: #eef7f1; padding: 30px 36px 28px; border-radius: 32px; }
+#stats-modal .db-card.is-coffee { grid-column: span 3; --c: #a8dcc1; --on: #0f2b20; }
+#stats-modal .db-stack { grid-column: span 3; display: flex; flex-direction: column; gap: 16px; }
+/* Radio and nights: two tiles sharing the row's height, a big icon in its shape, the title and its number */
+#stats-modal .db-card.is-pill { --c: #1d3a33; --on: #eef7f1; flex: 1 1 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto; align-content: center; align-items: center; gap: 4px 20px; padding: 22px 28px; border-radius: 48px; }
+#stats-modal .db-card.is-pill .db-card-head { display: contents; }
+#stats-modal .db-card.is-pill .db-badge { grid-row: 1 / 3; width: 112px; height: 112px; }
+#stats-modal .db-card.is-pill .db-badge > :not(.db-badge-shape) { width: 60px !important; height: 60px !important; }
+#stats-modal .db-card.is-pill .db-card-head b { grid-column: 2; align-self: end; font-size: 40px; line-height: 46px; }
+#stats-modal .db-card.is-pill .db-card-sub { grid-column: 2; grid-row: 2; align-self: start; font-size: 22px; line-height: 28px; }
+#stats-modal .db-card.is-pill .db-card-head > svg:last-child { grid-column: 3; grid-row: 1 / 3; width: 32px; height: 32px; }
+#stats-modal .db-card-head { display: flex; align-items: center; gap: 14px; width: 100%; min-width: 0; }
+#stats-modal .db-card-ic { flex: none; width: 44px; height: 44px; display: grid; place-items: center; }
+#stats-modal .db-card-ic svg { width: 44px; height: 44px; display: block; }
+#stats-modal .db-card-ic rect[data-t] { fill: currentColor !important; }
+#stats-modal .db-card-ic rect[data-t="m"] { fill-opacity: .6; }
+#stats-modal .db-card-ic rect[data-t="d"] { fill-opacity: .25; }
+#stats-modal .db-card-head b { flex: 1 1 auto; min-width: 0; font: 700 24px/30px var(--st-font); letter-spacing: -.01em; }
+#stats-modal .db-card-head > svg { flex: none; width: 28px; height: 28px; fill: currentColor; opacity: .75; }
+#stats-modal .db-card-norm { margin-left: 12px; font: 500 16px/20px var(--st-font); opacity: .7; }
+#stats-modal .db-big { display: flex; align-items: baseline; gap: 12px; font: 700 76px/80px var(--st-font); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+#stats-modal .db-big small { font: 500 18px/24px var(--st-font); letter-spacing: 0; opacity: .85; }
+#stats-modal .db-card-sub { font: 500 17px/24px var(--st-font); opacity: .88; }
+#stats-modal .db-rownum { display: flex; align-items: baseline; gap: 10px; width: 100%; padding-left: 58px; font: 700 40px/44px var(--st-font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+#stats-modal .db-rownum small { font: 500 15px/20px var(--st-font); letter-spacing: 0; opacity: .8; }
+/* the rating's five steps; a dot a day in its mood colour */
+#stats-modal .db-scale { display: flex; align-items: center; gap: 6px; }
+#stats-modal .db-scale i { width: 28px; height: 8px; border-radius: var(--mk-shape-full); background: color-mix(in srgb, currentColor 22%, transparent); }
+#stats-modal .db-scale i.is-on { background: currentColor; }
+#stats-modal .db-scale em { margin-left: 8px; font: 500 15px/20px var(--st-font); font-style: normal; opacity: .8; }
+#stats-modal .db-dots { display: grid; grid-template-columns: repeat(var(--n, 30), minmax(0, 1fr)); gap: 5px; width: 100%; margin-top: 4px; }
+#stats-modal .db-dots i { aspect-ratio: 1; border-radius: var(--mk-shape-full); background: color-mix(in srgb, currentColor 18%, transparent); }
+#stats-modal .db-dots i.is-future { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 30%, transparent); }
+/* the two rooms: one indicator, 4 dp gap; the key */
+#stats-modal .db-split { display: flex; gap: 4px; width: 100%; height: 12px; }
+#stats-modal .db-split i { display: block; border-radius: var(--mk-shape-full); background: #6fa8ef; }
+#stats-modal .db-split i + i { background: #63c995; }
+#stats-modal .db-key { display: flex; gap: 22px; font: 500 16px/20px var(--st-font); }
+#stats-modal .db-key span::before { content: ''; display: inline-block; width: 11px; height: 11px; margin-right: 8px; border-radius: 50%; background: #6fa8ef; }
+#stats-modal .db-key span.is-ph::before { background: #63c995; }
+#stats-modal .db-chip2 { height: 40px; padding: 0 18px; border-radius: var(--mk-shape-full); border: 1.5px solid color-mix(in srgb, currentColor 35%, transparent); display: inline-flex; align-items: center; font: 500 16px/20px var(--st-font); }
+/* hours against the norm (in the people card) */
+#stats-modal .db-norms { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+#stats-modal .db-norms { gap: 10px; margin-top: 4px; }
+#stats-modal .db-norms-row { display: grid; grid-template-columns: 36px 130px minmax(0, 1fr) 60px 68px; align-items: center; gap: 14px; font-family: var(--st-font); }
+#stats-modal .db-norms-row .db-av { width: 36px; height: 36px; }
+#stats-modal .db-norms-row b { font: var(--mk-type-title-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#stats-modal .db-norms-row em { font: var(--mk-type-label-l); font-style: normal; text-align: right; opacity: .85; font-variant-numeric: tabular-nums; }
+/* hours against the norm: the part up to it in primary, 2 dp gap, the overtime in tertiary; the norm a mark on the track */
+#stats-modal .db-norm { position: relative; display: flex; gap: 2px; height: 12px; border-radius: var(--mk-shape-full); background: var(--mk-sys-secondary-container); }
+#stats-modal .db-norm i { display: block; height: 100%; border-radius: var(--mk-shape-full); background: #cfe6ff; }
+#stats-modal .db-norm i.is-over { background: #d3b3e3; }   /* overtime in lavender: the user's pick for this one place */
+#stats-modal .db-norm[style*="--n"]::after { content: ''; position: absolute; left: var(--n); top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--mk-sys-on-surface); }
+#stats-modal .db-diff { justify-self: end; min-width: 56px; height: 24px; padding: 0 8px; border-radius: var(--mk-shape-sm); display: inline-flex; align-items: center; justify-content: center; font: var(--mk-type-label-l); font-variant-numeric: tabular-nums; background: var(--mk-sys-surface-container-high); color: var(--mk-sys-on-surface-variant); }
+#stats-modal .db-diff.is-over { background: #3a2a47; color: #f1e2fb; }
+@media (max-width: 1100px) { #stats-modal .db-card, #stats-modal .db-stack { grid-column: span 6; } #stats-modal .db-card.is-people { grid-column: span 12; } }
+@media (max-width: 700px) { #stats-modal .db-card, #stats-modal .db-stack { grid-column: span 12; } }
 
 /* ── Body ───────────────────────────────────────────────────────────────── */
 #stats-modal .db-body { outline: none; }
@@ -284,15 +335,15 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-sec { margin-bottom: 28px; }
 #stats-modal .db-sechead { gap: 12px; margin: 0 0 12px; align-items: baseline; }
 #stats-modal .db-sechead h3 {
-  font: var(--mk-type-title-m);
+  font: var(--mk-type-title-l);
   letter-spacing: 0;
   text-transform: none;
   color: var(--mk-sys-on-surface);
 }
 #stats-modal .db-sechead i { display: none; }
-#stats-modal .db-meta { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); letter-spacing: 0; }
+#stats-modal .db-meta { font: var(--mk-type-body-m); color: var(--mk-sys-on-surface-variant); letter-spacing: 0; }
 #stats-modal .db-loading { color: var(--mk-sys-secondary); }
-#stats-modal .db-note { margin: 10px 0 0; font: var(--mk-type-body-s); line-height: 1.55; color: var(--stx-t3); max-width: 78ch; }
+#stats-modal .db-note { margin: 12px 0 0; font: var(--mk-type-body-m); color: var(--mk-sys-on-surface-variant); max-width: 78ch; }
 #stats-modal .db-empty {
   padding: 28px 16px;
   border: 0;
@@ -316,19 +367,19 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 
 /* Tiles: one tonal step, no outline, a clear number. */
 #stats-modal .db-tiles { gap: 8px; margin-bottom: 24px; }
+/* a figure: an M3 filled card (surface-container-highest, shape medium 12, padding 16), the figure in Display Small,
+   what it is in Title Small, the note under it in Body Medium (as the answers page) */
+#stats-modal .db-tiles { gap: 1px; margin-bottom: 20px; border-radius: var(--mk-shape-md); overflow: hidden; background: var(--mk-sys-outline-variant); }
 #stats-modal .db-tile {
   gap: 2px;
-  padding: 14px 16px;
+  padding: 12px 16px;
   border: 0;
-  border-radius: var(--mk-shape-lg);
+  border-radius: 0;
   background: var(--mk-sys-surface-container);
 }
-#stats-modal .db-tile b { font: var(--mk-type-headline-s); font-size: 26px; letter-spacing: -.02em; color: var(--mk-sys-on-surface); }
-#stats-modal .db-tile > span { font: var(--mk-type-label-m); letter-spacing: .01em; text-transform: none; color: var(--mk-sys-on-surface-variant); }
-#stats-modal .db-tile > small { font: var(--mk-type-body-s); color: var(--stx-t3); }
-#stats-modal .db-tiles--side .db-tile { padding: 12px 14px; border-radius: var(--mk-shape-md); }
-#stats-modal .db-tiles--side .db-tile b { font-size: 20px; }
-#stats-modal .db-tiles--side .db-tile > span { font-size: 11px; }
+#stats-modal .db-tile b { font: 500 36px/44px var(--mk-font-plain, 'Geist Sans'), system-ui, sans-serif; letter-spacing: 0; color: var(--mk-sys-on-surface); font-variant-numeric: tabular-nums; }
+#stats-modal .db-tile > span { font: var(--mk-type-title-s); letter-spacing: 0; text-transform: none; color: var(--mk-sys-on-surface); }
+#stats-modal .db-tile > small { font: var(--mk-type-body-m); color: var(--mk-sys-on-surface-variant); }
 
 /* The chart is one object: its own tonal surface. */
 #stats-modal .db-chart {
@@ -344,15 +395,17 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-bars { gap: 10px; padding: 0; border: 0; border-radius: 0; background: none; }
 #stats-modal .db-bar-row { font: var(--mk-type-body-m); }
 #stats-modal .db-bar-label { color: var(--mk-sys-on-surface); font-weight: 600; }
+/* an M3 linear indicator in the theme's primary over the secondary-container track (one colour for every count) */
 #stats-modal .db-bar {
   height: 8px;
   border-radius: var(--mk-shape-full);
-  background: var(--mk-sys-surface-container-highest);
+  background: var(--mk-sys-secondary-container);
   overflow: hidden;
 }
 #stats-modal .db-bar i {
   width: 100%;
   border-radius: var(--mk-shape-full);
+  background: var(--mk-sys-primary) !important;
   transform: translateX(calc((var(--v, 1) - 1) * 100%));
 }
 #stats-modal .db-body.db-anim .db-bar i {
@@ -360,7 +413,7 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 }
 @keyframes mk-db-bar-in { from { transform: translateX(-100%); } }
 #stats-modal .db-bar-row b { color: var(--mk-sys-on-surface); }
-#stats-modal .db-bar-row small { color: var(--stx-t3); }
+#stats-modal .db-bar-row small { color: var(--mk-sys-on-surface-variant); }
 
 /* Mood chips: tonal, not outlined. */
 #stats-modal .db-moodchip {
@@ -398,7 +451,11 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-px.is-today { box-shadow: inset 0 0 0 2px var(--mk-sys-secondary); }
 
 /* People: list items in a grid, one tonal step, state layer on hover. */
-#stats-modal .db-people { gap: 8px; }
+/* lists of people (the month, fatigue, night parts, coffee): one tonal surface, the rows on it, a state layer each */
+#stats-modal :is(.db-people, .db-fat, .db-parts) { gap: 0; padding: 4px; border-radius: var(--mk-shape-md); background: var(--mk-sys-surface-container); }
+#stats-modal :is(.db-person, .db-fat-row, .db-part-row) { border: 0 !important; border-radius: var(--mk-shape-sm) !important; background: transparent !important; padding: 10px 12px !important; position: relative; isolation: isolate; }
+#stats-modal :is(.db-person, .db-fat-row, .db-part-row)::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--mk-sys-on-surface); opacity: 0; transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects); }
+#stats-modal :is(.db-person, .db-fat-row, .db-part-row):hover::before { opacity: var(--mk-state-hover); }
 #stats-modal .db-person,
 #stats-modal .db-coffee-row {
   position: relative;
@@ -427,7 +484,8 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-staff-item:hover::before { opacity: var(--mk-state-hover); }
 #stats-modal .db-person:active::before,
 #stats-modal .db-coffee-row:active::before { opacity: var(--mk-state-pressed); }
-#stats-modal .db-av { box-shadow: none; }
+/* a person: initials in a tonal circle (M3 primary-container), no emoji, one size per place */
+#stats-modal .db-av { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--mk-shape-full); background: var(--mk-sys-primary-container); color: var(--mk-sys-on-primary-container); font: var(--mk-type-label-l); letter-spacing: 0; box-shadow: none; }
 #stats-modal .db-coffee { gap: 4px; }
 #stats-modal .db-coffee-sum {
   border: 0;
@@ -462,6 +520,14 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 
 /* Drill-down header: back icon button + title, like an M3 top app bar. */
 #stats-modal .db-back { gap: 8px; margin: 0 0 20px -8px; }
+/* back: an M3 tonal button with its word, not a bare arrow */
+#stats-modal .db-backbtn { position: relative; display: inline-flex; align-items: center; gap: 10px; height: 56px; padding: 0 26px 0 18px; border: 0; border-radius: 9999px; background: #24413a; color: #eef7f1; font: 700 20px/1 'Google Sans', system-ui, sans-serif; cursor: pointer; isolation: isolate; flex: none; transition: border-radius 350ms cubic-bezier(.42, 1.67, .21, .9); }
+#stats-modal .db-backbtn:active { border-radius: 16px; }
+#stats-modal .db-backbtn svg { width: 28px; height: 28px; fill: currentColor; }
+#stats-modal .db-backbtn::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects); }
+#stats-modal .db-backbtn:hover::before { opacity: var(--mk-state-hover); }
+#stats-modal .db-backbtn:active::before { opacity: var(--mk-state-pressed); }
+#stats-modal .db-back { display: flex; align-items: center; gap: 16px; margin: 0 0 20px; }
 #stats-modal .db-back h2 { font: var(--mk-type-headline-s); letter-spacing: -.01em; color: var(--mk-sys-on-surface); }
 #stats-modal .db-back > div > span { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); }
 
@@ -493,7 +559,6 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 }
 :root.mk-mobile-shell #stats-modal #stats-table-wrap { padding: 4px 16px 24px !important; }
 :root.mk-mobile-shell #stats-modal .db-chrome { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
-:root.mk-mobile-shell #stats-modal .db-tabs { margin-left: -16px; margin-right: -16px; padding-left: 4px; }
 @media (max-width: 760px) {
   #stats-modal .db-chips { flex-wrap: wrap; }
 }
@@ -515,12 +580,12 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-fat-row .db-av { width: 36px; height: 36px; }
 #stats-modal .db-fat-name { display: grid; gap: 2px; min-width: 0; }
 #stats-modal .db-fat-name b { font: var(--mk-type-title-s); color: var(--mk-sys-on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#stats-modal .db-fat-name small { font: var(--mk-type-body-s); color: var(--stx-t3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#stats-modal .db-fat-name small { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #stats-modal .db-fat-name small span { font-weight: 700; font-variant-numeric: tabular-nums; }
 #stats-modal .db-spark { width: 72px; height: 28px; display: block; }
 #stats-modal .db-fat-val { display: grid; justify-items: end; gap: 1px; min-width: 44px; }
 #stats-modal .db-fat-val b { font: 700 17px/1 var(--mk-font-plain); }
-#stats-modal .db-fat-val small { font: var(--mk-type-body-s); color: var(--stx-t3); white-space: nowrap; }
+#stats-modal .db-fat-val small { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); white-space: nowrap; }
 #stats-modal .db-fat-val b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 #stats-modal .db-fat-wait { font-variant-numeric: tabular-nums; }
 /* Person drill-down: the hourly month curve (fatigue-month.css) on a tonal card */
@@ -546,7 +611,7 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-strip-day {
   position: relative; display: grid; place-items: center; height: 44px; padding: 0;
   border: 0; border-radius: var(--mk-shape-sm);
-  background: var(--mk-sys-surface-container); color: var(--stx-t3);
+  background: var(--mk-sys-surface-container); color: var(--mk-sys-on-surface-variant);
   font: 600 11px/1 var(--mk-font-plain); cursor: pointer;
 }
 #stats-modal .db-strip-day b { font: inherit; }
@@ -557,7 +622,7 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-strip-day i { position: absolute; right: 3px; top: 2px; font: 700 9px/1 var(--mk-font-plain); font-style: normal; opacity: .75; }
 #stats-modal .db-strip-day.is-future { opacity: .35; cursor: default; }
 #stats-modal .db-strip-day.is-today { box-shadow: inset 0 0 0 2px var(--mk-sys-on-surface); }
-#stats-modal .db-strip-day:hover:not(.is-future) { filter: brightness(1.15); }
+#stats-modal .db-strip-day:hover:not(.is-future) { box-shadow: inset 0 0 0 40px color-mix(in srgb, var(--mk-sys-on-surface) 8%, transparent); }
 @media (max-width: 760px) {
   #stats-modal .db-strip { grid-template-columns: repeat(11, minmax(0, 1fr)); }
 }
@@ -571,7 +636,7 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-part-row .db-av { width: 36px; height: 36px; }
 #stats-modal .db-part-name { display: grid; gap: 2px; min-width: 0; }
 #stats-modal .db-part-name b { font: var(--mk-type-title-s); color: var(--mk-sys-on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#stats-modal .db-part-name small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-part-name small { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); }
 #stats-modal .db-part-bars { display: grid; grid-template-columns: repeat(4, 22px); gap: 4px; align-items: end; height: 46px; }
 #stats-modal .db-part-bars i {
   position: relative; display: block; height: 100%; font-style: normal;
@@ -581,7 +646,7 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-part-bars i.is-fav { background-image: linear-gradient(to top, #23cdcf calc(var(--h) * 70%), transparent 0); }
 #stats-modal .db-part-bars b { position: absolute; left: 0; right: 0; bottom: calc(var(--h) * 70% + 2px); text-align: center; font: 700 10px/1 var(--mk-font-plain); color: var(--mk-sys-on-surface-variant); }
 #stats-modal .db-part-bars i.is-fav b { color: var(--mk-sys-on-surface); }
-#stats-modal .db-part-bars em { position: absolute; left: 0; right: 0; bottom: -14px; text-align: center; font: 600 9px/1 var(--mk-font-plain); font-style: normal; color: var(--stx-t3); }
+#stats-modal .db-part-bars em { position: absolute; left: 0; right: 0; bottom: -14px; text-align: center; font: 600 9px/1 var(--mk-font-plain); font-style: normal; color: var(--mk-sys-on-surface-variant); }
 #stats-modal .db-part-row { padding-bottom: 20px; }
 
 /* ── Nakts: gultas ─────────────────────────────────────────────────── */
@@ -596,9 +661,9 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-bedmap i.is-on { background: #23cdcf; }
 #stats-modal .db-bed-name { display: flex; align-items: baseline; gap: 6px; }
 #stats-modal .db-bed-name b { font: var(--mk-type-title-s); color: var(--mk-sys-on-surface); }
-#stats-modal .db-bed-name small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-bed-name small { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); }
 #stats-modal .db-bed-total { font: 700 22px/1 var(--mk-font-plain); color: #23cdcf; }
-#stats-modal .db-bed-total small { font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-bed-total small { font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); }
 #stats-modal .db-bed-who { display: flex; flex-wrap: wrap; gap: 4px; }
 #stats-modal .db-bed-who > span:not(.db-dim) {
   display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
@@ -608,9 +673,7 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-bed-who b { color: #23cdcf; }
 
 @media (prefers-reduced-motion: reduce) {
-  #stats-modal .db-tab-indicator,
-  #stats-modal .db-chips button,
-  #stats-modal .db-tabs button { transition: none; }
+  #stats-modal .db-chips button { transition: none; }
 }
 
 /* ── Nogurums: komandas dienas (cik cilvēku augstā / kritiskā zonā) ── */
@@ -622,13 +685,13 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-ft-c { fill: #ff5c70; }
 #stats-modal .db-ft-h.is-future, #stats-modal .db-ft-c.is-future { opacity: .35; }
 #stats-modal .db-ft-g { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed rgba(255, 255, 255, .06); pointer-events: none; }
-#stats-modal .db-ft-g b { position: absolute; right: calc(100% + 8px); top: -7px; white-space: nowrap; font: 500 10px/1 var(--mk-font-plain); color: var(--stx-t3); font-variant-numeric: tabular-nums; }
+#stats-modal .db-ft-g b { position: absolute; right: calc(100% + 8px); top: -7px; white-space: nowrap; font: 500 10px/1 var(--mk-font-plain); color: var(--mk-sys-on-surface-variant); font-variant-numeric: tabular-nums; }
 #stats-modal .db-ft-today { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed rgba(156, 206, 255, .55); pointer-events: none; }
 #stats-modal .db-ft-today b { position: absolute; top: -2px; left: 4px; font: 600 10px/1 var(--mk-font-plain); color: #9cceff; white-space: nowrap; }
 #stats-modal .db-ft-moon { position: absolute; top: -4px; transform: translateX(-50%); font-size: 12px; font-style: normal; line-height: 1; }
 #stats-modal .db-ft-x { position: relative; height: 16px; margin-top: 6px; }
-#stats-modal .db-ft-x span { position: absolute; top: 0; transform: translateX(-50%); font: 500 10px/1.4 var(--mk-font-plain); color: var(--stx-t3); white-space: nowrap; font-variant-numeric: tabular-nums; }
-#stats-modal .db-ft-key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0 -20px; font: var(--mk-type-body-s); color: var(--stx-t3); }
+#stats-modal .db-ft-x span { position: absolute; top: 0; transform: translateX(-50%); font: 500 10px/1.4 var(--mk-font-plain); color: var(--mk-sys-on-surface-variant); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#stats-modal .db-ft-key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0 -20px; font: var(--mk-type-body-s); color: var(--mk-sys-on-surface-variant); }
 #stats-modal .db-ft-key span { display: inline-flex; align-items: center; gap: 6px; }
 #stats-modal .db-ft-key .is-h::before, #stats-modal .db-ft-key .is-c::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: #ff9f43; }
 #stats-modal .db-ft-key .is-c::before { background: #ff5c70; }
@@ -636,3 +699,479 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-ft-today, #stats-modal .db-ft-today b { font-style: normal; }
 /* Full moon today or tomorrow: the label goes left of the line, off the moon. */
 #stats-modal .db-ft-today.is-by-moon b { left: auto; right: 12px; }
+/* an M3 list (two-line items on one tonal surface): the room as its coloured shape, the person, when; the duty day a chip */
+#stats-modal .db-mlist { display: flex; flex-direction: column; padding: 4px 0; border-radius: var(--mk-shape-md); background: var(--mk-sys-surface-container); }
+#stats-modal .db-mitem { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 16px; min-height: 64px; padding: 8px 16px; }
+#stats-modal .db-mitem + .db-mitem { border-top: 1px solid var(--mk-sys-outline-variant); }
+#stats-modal .db-room { width: 40px; height: 40px; display: grid; place-items: center; font: var(--mk-type-label-l); }
+#stats-modal .db-room.is-ge { border-radius: var(--mk-shape-full); background: color-mix(in oklab, #5aa9ff 30%, #15171a); color: #cfe4ff; }
+#stats-modal .db-room.is-ph { border-radius: var(--mk-shape-md); background: color-mix(in oklab, #4fd18b 28%, #15171a); color: #c9f3dc; }
+#stats-modal .db-mtext { display: flex; flex-direction: column; min-width: 0; }
+#stats-modal .db-mtext b { font: var(--mk-type-body-l); color: var(--mk-sys-on-surface); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#stats-modal .db-mtext small { font: var(--mk-type-body-m); color: var(--mk-sys-on-surface-variant); }
+#stats-modal .db-daychip { height: 32px; padding: 0 12px; border-radius: var(--mk-shape-sm); border: 1px solid var(--mk-sys-outline-variant); background: transparent; color: var(--mk-sys-on-surface); font: var(--mk-type-label-l); cursor: pointer; }
+#stats-modal .db-daychip:hover { background: color-mix(in srgb, var(--mk-sys-on-surface) 8%, transparent); }
+/* the mockup's ground and accents: a deep green page, light teal hours, the mint chosen filter */
+#stats-modal.mk-stats > .mk-stats-sheet { background: #0f1c18 !important; }
+/* The sticky toolbar takes the sheet's own colour, so no darker band runs across the page. */
+#stats-modal .db-chrome { background: #0f1c18; }
+#stats-modal .db-card.is-people .db-norm { background: rgba(255, 255, 255, .12); }
+#stats-modal .db-card.is-people .db-norm i { background: #a6e3d3; }
+#stats-modal .db-card.is-people .db-norm i.is-over { background: #d3b3e3; }
+#stats-modal .db-card.is-people .db-av { background: #3b5f52; color: #e6f4ee; }
+#stats-modal .db-card.is-fatigue .db-big { color: #ffe3cf; }
+#stats-modal .db-card-ic > svg[viewBox^="0 -960"] { width: 40px; height: 40px; fill: currentColor; }
+#stats-modal .db-chips button[aria-pressed="true"] { background: #a8dcc1; color: #0f2b20; }
+#stats-modal .db-chips button:not([aria-pressed="true"]) { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(230, 245, 238, .55); color: #eef7f1; }
+/* a pill: icon, title, its number, the chevron at the far end (the head's parts laid in the pill's own row) */
+#stats-modal .db-card.is-coffee { padding: 30px 36px 28px; border-radius: 32px; }
+#stats-modal .db-norms-row { grid-template-columns: 36px 130px minmax(0, 1fr) auto auto; }
+#stats-modal .db-diff { white-space: nowrap; }
+/* ── Kafija (the user's reference): four coloured figures with their symbols, the drinks as equal pills, a tonal row
+   per person: their drinks, the cups in yellow, the caffeine in orange (a red chip past 400 mg a day), the money in
+   teal, the columns split by hairlines ── */
+#stats-modal .db-cbigs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 14px; font-family: var(--st-font); }
+#stats-modal .db-cbig { display: flex; align-items: center; gap: 22px; min-height: 140px; padding: 22px 32px; border-radius: 48px; color: #fff1e6; }
+#stats-modal .db-cbig.is-cups { background: #6d5236; }
+#stats-modal .db-cbig.is-mg { background: #a4553a; }
+#stats-modal .db-cbig.is-eur { background: #2a685b; color: #e6fff6; }
+#stats-modal .db-cbig.is-people { background: #2d4f70; color: #e8f1ff; }
+#stats-modal .db-cbig > svg { flex: none; width: 72px; height: 72px; fill: currentColor; opacity: .92; }
+#stats-modal .db-cbig.is-eur > svg { fill: #7fe0c0; }
+#stats-modal .db-cbig.is-mg > svg { fill: #ffb27c; }
+#stats-modal .db-cbig span { display: flex; flex-direction: column; min-width: 0; }
+#stats-modal .db-cbig b { font: 700 60px/64px var(--st-font); letter-spacing: -.03em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#stats-modal .db-cbig small { font: 700 20px/26px var(--st-font); opacity: .95; }
+#stats-modal .db-coffee-sum { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 0 0 22px; padding: 0 !important; background: none !important; border: 0 !important; }
+#stats-modal .db-coffee-sum .db-csrc { justify-content: center; gap: 14px; height: 64px; border-radius: var(--mk-shape-full); background: var(--mk-sys-surface-container-high); }
+#stats-modal .db-coffee-sum .db-csrc :is(svg, img) { width: 44px; height: 44px; }
+#stats-modal .db-coffee-sum .db-csrc b { font: 700 30px/34px var(--st-font); color: var(--mk-sys-on-surface); }
+#stats-modal .db-coffee { gap: 8px !important; font-family: var(--st-font); }
+#stats-modal .db-coffee-row { gap: 20px !important; min-height: 72px; padding: 10px 24px 10px 14px !important; border: 0 !important; border-radius: 24px !important; background: var(--mk-sys-surface-container) !important; }
+#stats-modal .db-coffee-row .db-av { width: 52px; height: 52px; font: 700 18px/1 var(--st-font); }
+#stats-modal .db-coffee-name { min-width: 200px; }
+#stats-modal .db-coffee-name b { font: 700 24px/30px var(--st-font) !important; color: var(--mk-sys-on-surface) !important; }
+#stats-modal .db-coffee-srcs { gap: 18px !important; }
+#stats-modal .db-coffee-srcs .db-csrc :is(svg, img) { width: 40px; height: 40px; }
+#stats-modal .db-coffee-srcs .db-csrc b { font: 700 26px/30px var(--st-font) !important; color: var(--mk-sys-on-surface) !important; margin-left: 4px; }
+#stats-modal :is(.db-coffee-cups, .db-coffee-mg, .db-coffee-eur) { align-items: center !important; gap: 10px !important; padding-left: 22px; border-left: 1px solid rgba(255, 255, 255, .16); min-width: 0 !important; }
+#stats-modal :is(.db-coffee-cups, .db-coffee-mg, .db-coffee-eur) small { font: 500 19px/24px var(--st-font) !important; letter-spacing: 0 !important; text-transform: none !important; color: #c9d3cf !important; }
+#stats-modal .db-coffee-cups { min-width: 150px !important; }
+#stats-modal .db-coffee-cups b { font: 700 36px/40px var(--st-font) !important; color: #f5c04a !important; }
+#stats-modal .db-coffee-mg { min-width: 250px !important; }
+#stats-modal .db-coffee-mg b { font: 700 32px/36px var(--st-font) !important; color: #ffab70 !important; }
+#stats-modal .db-coffee-mg.is-over small { padding: 3px 12px; border-radius: var(--mk-shape-full); background: #6e2828; color: #ffb6a8 !important; font-size: 17px !important; }
+#stats-modal .db-coffee-eur { min-width: 230px !important; }
+#stats-modal .db-coffee-eur b { font: 700 32px/36px var(--st-font) !important; color: #7fe0c0 !important; }
+@media (max-width: 1300px) { #stats-modal .db-cbigs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* the details' headings as big as the reference's: the view's name beside Atpakaļ, each section's title */
+#stats-modal .db-back h2 { font: 700 40px/46px var(--st-font) !important; letter-spacing: -.02em !important; }
+#stats-modal .db-sechead h3 { font: 700 30px/36px var(--st-font) !important; letter-spacing: -.01em !important; }
+/* the search bar's field has no box of its own (the app's input styles and the browser's suggestion arrow stay out):
+   focus shows on the whole bar as the M3 focus ring */
+#stats-modal .db-search input { -webkit-appearance: none !important; appearance: none !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; outline: none !important; margin: 0 !important; }
+#stats-modal .db-search input::-webkit-calendar-picker-indicator { display: none !important; }
+#stats-modal .db-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+#stats-modal .db-search:focus-within { box-shadow: inset 0 0 0 2px var(--mk-sys-primary); }
+
+/* ── M3 shapes: each section's icon in its own cookie shape, cards with their own corners ───────────────────────── */
+:is(#stats-modal, #wm-summary) .db-badge { --sh: color-mix(in oklab, var(--c, #1c3a2f) 62%, var(--on, #eef7f1)); position: relative; flex: none; display: grid; place-items: center; width: 64px; height: 64px; color: inherit; }
+:is(#stats-modal, #wm-summary) .db-badge > .db-badge-shape { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+:is(#stats-modal, #wm-summary) .db-badge-shape path { fill: var(--sh); }
+:is(#stats-modal, #wm-summary) .db-badge > :not(.db-badge-shape) { position: relative; width: 36px !important; height: 36px !important; }
+:is(#stats-modal, #wm-summary) .db-badge > svg[viewBox^="0 -960"] { fill: currentColor; }
+:is(#stats-modal, #wm-summary) .db-badge rect[data-t] { fill: currentColor !important; }
+:is(#stats-modal, #wm-summary) .db-badge rect[data-t="m"] { fill-opacity: .6; }
+:is(#stats-modal, #wm-summary) .db-badge rect[data-t="d"] { fill-opacity: .25; }
+:is(#stats-modal, #wm-summary) .db-badge > .db-badge-txt { width: auto !important; height: auto !important; font: 700 18px/1 var(--st-font); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+:is(#stats-modal, #wm-summary) .db-badge.is-xl { width: 132px; height: 132px; }
+:is(#stats-modal, #wm-summary) .db-badge.is-xl > :not(.db-badge-shape) { width: 72px !important; height: 72px !important; }
+:is(#stats-modal, #wm-summary) .db-badge.is-xl > .db-badge-txt { width: auto !important; height: auto !important; font-size: 40px; }
+/* a fun tone per section */
+:is(#stats-modal, #wm-summary) .db-badge.is-mood { --sh: #4f9a76; }
+:is(#stats-modal, #wm-summary) .db-badge.is-bolus { --sh: #3d73a6; }
+:is(#stats-modal, #wm-summary) .db-badge.is-fatigue { --sh: #e08a66; }
+:is(#stats-modal, #wm-summary) .db-badge.is-people { --sh: #3f7764; }
+:is(#stats-modal, #wm-summary) .db-badge.is-coffee { --sh: #f5c04a; color: #3a2a06; }
+:is(#stats-modal, #wm-summary) .db-badge.is-radio { --sh: #2f8190; }
+:is(#stats-modal, #wm-summary) .db-badge.is-night { --sh: #4565a3; }
+:is(#stats-modal, #wm-summary) .db-badge.is-clover { --sh: #6fa8ef; color: #0b2442; }
+:is(#stats-modal, #wm-summary) .db-badge.is-sunny { --sh: #ffd3b8; color: #5a2410; }
+#stats-modal .db-card-lobe { width: 150px; height: 150px; border-radius: 0; background: none; right: -18px; top: -30px; }
+#stats-modal .db-card-lobe path { fill: var(--lobe); }
+#stats-modal .db-card.is-coffee { --lobe: #f5c04a; }
+/* every card its own corners (elliptic radii: smooth curves, nothing stretched) */
+#stats-modal .db-card.is-k-mood { border-radius: 48px 48px 48px 140px / 48px 48px 48px 110px; }
+#stats-modal .db-card.is-k-bolus { border-radius: 48px 140px 48px 48px / 48px 120px 48px 48px; }
+#stats-modal .db-card.is-k-fatigue { border-radius: 48px 48px 140px 48px / 48px 48px 110px 48px; }
+#stats-modal .db-card.is-k-people { border-radius: 32px 32px 32px 96px / 32px 32px 32px 80px; }
+#stats-modal .db-card.is-k-coffee { border-radius: 48px 48px 48px 48px; }
+#stats-modal .db-card .db-card-head { gap: 16px; }
+
+/* one answer in a line (the card's "who" and "when") */
+#stats-modal .db-mini { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+#stats-modal .db-mini .db-badge { width: 56px; height: 56px; }
+#stats-modal .db-mini > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#stats-modal .db-mini > span:last-child b { font: 700 22px/26px var(--st-font); }
+#stats-modal .db-mini > span:last-child small { font: 500 16px/20px var(--st-font); opacity: .85; }
+/* the coffee card: the drinks with their icons, caffeine and money */
+#stats-modal .db-cfacts { display: flex; gap: 28px; }
+#stats-modal .db-card .db-fact b { font-size: 26px; line-height: 30px; }
+#stats-modal .db-card .db-fact small { font-size: 15px; }
+
+/* ── a section's lead: back + title beside one big tonal card (the user's Bolus mockup) ─────────────────────── */
+#stats-modal .db-lead { display: flex; align-items: center; gap: 24px; margin: 0 0 32px; font-family: var(--st-font); }
+#stats-modal .db-lead > .db-back { flex: none; align-self: flex-start; margin: 0; flex-direction: column; align-items: flex-start; gap: 14px; }
+#stats-modal .db-hero { --c: #1c3a2f; --on: #eef7f1; flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px 0; padding: 22px 36px; border-radius: 56px; background: var(--c); color: var(--on); font-family: var(--st-font); }
+#stats-modal .db-hero.is-mood { --c: #1d3a2f; }
+#stats-modal .db-hero.is-bolus { --c: #1e3a4f; --on: #eaf2fb; }
+#stats-modal .db-hero.is-fatigue { --c: #b05a3c; --on: #fff1e8; }
+#stats-modal .db-hero.is-fatigue .db-badge { --sh: #e99673; }
+#stats-modal .db-hero.is-radio { --c: #1d3a40; }
+#stats-modal .db-hero.is-night { --c: #20304a; --on: #e8efff; }
+#stats-modal .db-hero-main { display: flex; align-items: center; gap: 24px; padding-right: 36px; }
+#stats-modal .db-hero-num { display: flex; flex-direction: column; gap: 6px; }
+#stats-modal .db-hero-num b { font: 700 80px/84px var(--st-font); letter-spacing: -.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#stats-modal .db-hero-num small { font: 500 18px/24px var(--st-font); opacity: .88; }
+#stats-modal .db-hero-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: center; gap: 16px 24px; }
+#stats-modal .db-hero-seg { display: flex; align-items: center; justify-content: center; min-width: 0; }
+#stats-modal .db-fact { display: flex; flex-direction: column; gap: 6px; }
+#stats-modal .db-fact b { font: 700 44px/48px var(--st-font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#stats-modal .db-fact small { font: 500 17px/22px var(--st-font); opacity: .85; }
+#stats-modal .db-hero .db-scale i { width: 36px; height: 12px; }
+#stats-modal .db-hero .db-fact .db-diff { height: 48px; padding: 0 18px; border-radius: 9999px; font: 700 30px/1 var(--st-font); }
+/* two rooms as one bun shape */
+#stats-modal .db-bun { position: relative; display: flex; width: 430px; max-width: 100%; aspect-ratio: 430 / 150; }
+#stats-modal .db-bun > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+#stats-modal .db-bun > span { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+#stats-modal .db-bun b { font: 700 64px/68px var(--st-font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+#stats-modal .db-bun small { font: 700 20px/24px var(--st-font); }
+#stats-modal .db-bun .is-a { color: #08203f; }
+#stats-modal .db-bun .is-b { color: #06301f; }
+#stats-modal .db-rank-bar .is-ge { background: #3f8cff; }
+#stats-modal .db-rank-bar .is-ph { background: #5ee6a8; }
+
+/* ── ranked list: place, name, one bar on a shared scale, total, the parts in words ─────────────────────────── */
+#stats-modal .db-rank { display: flex; flex-direction: column; gap: 2px; font-family: var(--st-font); }
+#stats-modal .db-rank-row { position: relative; display: grid; grid-template-columns: 40px minmax(150px, 240px) minmax(0, 1fr) 84px minmax(150px, auto); align-items: center; gap: 24px; min-height: 56px; padding: 6px 24px 6px 12px; border: 0; border-radius: 9999px; background: transparent; color: var(--mk-sys-on-surface); text-align: left; font: inherit; isolation: isolate; }
+#stats-modal .db-rank-row:nth-child(odd of .db-rank-row) { background: rgba(255, 255, 255, .045); }
+#stats-modal button.db-rank-row { cursor: pointer; }
+#stats-modal button.db-rank-row::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: currentColor; opacity: 0; transition: opacity var(--mk-dur-effects-fast) var(--mk-ease-effects); }
+#stats-modal button.db-rank-row:hover::before { opacity: var(--mk-state-hover); }
+#stats-modal button.db-rank-row:active::before { opacity: var(--mk-state-pressed); }
+#stats-modal .db-rank-n { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #2c4a3f; color: #dff3ea; font: 700 18px/1 var(--st-font); font-variant-numeric: tabular-nums; }
+#stats-modal .db-rank-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 22px/28px var(--st-font); }
+#stats-modal .db-rank-name .db-face { margin-right: 10px; }
+#stats-modal .db-rank-bar { position: relative; display: flex; height: 22px; border-radius: 9999px; background: rgba(255, 255, 255, .08); }
+#stats-modal .db-rank-bar i { display: block; height: 100%; min-width: 4px; }
+#stats-modal .db-rank-bar i:first-child { border-radius: 9999px 0 0 9999px; }
+#stats-modal .db-rank-bar i:last-child { border-radius: 0 9999px 9999px 0; }
+#stats-modal .db-rank-bar i:only-child { border-radius: 9999px; }
+#stats-modal .db-rank-bar .is-main { background: #a6e3d3; }
+#stats-modal .db-rank-bar .is-over { background: #d3b3e3; }   /* overtime in lavender: the user's pick */
+#stats-modal .db-rank-bar[style*="--n"]::after { content: ''; position: absolute; left: var(--n); top: -6px; bottom: -6px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: #eef7f1; }
+#stats-modal .db-rank-total { text-align: right; font: 700 28px/32px var(--st-font); font-variant-numeric: tabular-nums; white-space: nowrap; }
+#stats-modal .db-rank-extra { display: flex; align-items: center; gap: 18px; font: 700 20px/24px var(--st-font); white-space: nowrap; }
+#stats-modal .db-rank-extra small { font: 500 17px/22px var(--st-font); opacity: .8; }
+#stats-modal .db-rank-extra .is-ge { color: #79b0ff; }
+#stats-modal .db-rank-extra .is-ph { color: #6ff0b3; }
+#stats-modal .db-rank.is-plain .db-rank-row { grid-template-columns: minmax(150px, 240px) minmax(0, 1fr) 84px minmax(80px, auto); padding-left: 24px; }
+#stats-modal .db-rank.is-plain .db-rank-n { display: none; }
+#stats-modal .db-legend { display: inline-flex; flex-wrap: wrap; gap: 8px 22px; margin-left: 8px; font: 600 17px/22px var(--st-font); color: var(--mk-sys-on-surface); }
+#stats-modal .db-legend span { display: inline-flex; align-items: center; gap: 8px; }
+#stats-modal .db-legend span::before { content: ''; width: 26px; height: 14px; border-radius: 9999px; background: #a6e3d3; }
+#stats-modal .db-legend .is-ge::before { background: #3f8cff; }
+#stats-modal .db-legend .is-ph::before { background: #5ee6a8; }
+#stats-modal .db-legend .is-over::before { background: #d3b3e3; }
+#stats-modal .db-legend .is-mark::before { width: 3px; height: 22px; border-radius: 2px; background: #eef7f1; }
+@media (max-width: 1400px) {
+  #stats-modal .db-lead { flex-direction: column; align-items: stretch; }
+  #stats-modal .db-lead > .db-back { align-self: flex-start !important; flex-direction: row; align-items: center; }
+  #stats-modal .db-rank-row { grid-template-columns: 40px minmax(120px, 180px) minmax(0, 1fr) 72px auto; gap: 16px; }
+}
+
+/* ── Komandas sajūta (the user's mockup): big face, the word in its mood's pill, connected reaction shapes ──── */
+#stats-modal .db-lead.has-title > .db-back > div { display: none; }
+#stats-modal .db-hero.db-mlead { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px; padding: 0; border-radius: 0; background: none; color: var(--mk-sys-on-surface); }
+#stats-modal .db-mlead > .db-face.db-mlead-face { font-size: 132px; line-height: 1; }
+#stats-modal .db-mlead-word { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+#stats-modal .db-hero-title { font: 700 36px/42px var(--st-font); letter-spacing: -.01em; }
+#stats-modal .db-mword { display: inline-flex; align-items: center; height: 84px; padding: 0 30px; border-radius: 9999px; background: var(--t); color: #0f2b20; font: 700 60px/1 var(--st-font); letter-spacing: -.02em; white-space: nowrap; }
+#stats-modal .db-mlead > .db-fact b { font-size: 40px; line-height: 44px; }
+/* connected: the circle overlaps the first pill, each pill the next (earlier ones on top) */
+#stats-modal .db-rx { display: flex; align-items: center; margin-left: auto; color: #10231c; }
+#stats-modal .db-rx-total { position: relative; z-index: 9; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 148px; height: 148px; border-radius: 50%; background: #a8f0d0; }
+#stats-modal .db-rx-total b { font: 700 60px/60px var(--st-font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+#stats-modal .db-rx-total small { font: 700 18px/22px var(--st-font); }
+#stats-modal .db-rx-pill { position: relative; display: flex; align-items: center; gap: 14px; height: 100px; margin-left: -40px; padding: 0 34px 0 58px; border-radius: 9999px; background: var(--t); }
+#stats-modal .db-rx-pill:nth-child(2) { z-index: 8; } #stats-modal .db-rx-pill:nth-child(3) { z-index: 7; } #stats-modal .db-rx-pill:nth-child(4) { z-index: 6; } #stats-modal .db-rx-pill:nth-child(5) { z-index: 5; } #stats-modal .db-rx-pill:nth-child(6) { z-index: 4; }
+#stats-modal .db-rx-pill .db-face { font-size: 46px; line-height: 1; }
+#stats-modal .db-rx-pill > span:last-child { display: flex; flex-direction: column; }
+#stats-modal .db-rx-pill b { font: 700 34px/38px var(--st-font); font-variant-numeric: tabular-nums; }
+#stats-modal .db-rx-pill small { font: 500 19px/22px var(--st-font); }
+
+/* the line, the five moods named on the left */
+#stats-modal .db-mchart-card { margin: 0 0 20px; padding: 18px 28px 14px; border-radius: 40px; background: #14302a; font-family: var(--st-font); }
+#stats-modal .db-mchart-cap { display: block; margin-bottom: 6px; font: 500 17px/22px var(--st-font); color: var(--mk-sys-on-surface); opacity: .9; }
+#stats-modal .db-mchart { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: stretch; }
+#stats-modal .db-mchart-y { position: relative; }
+#stats-modal .db-mchart-y > span { position: absolute; left: 0; display: flex; align-items: center; gap: 12px; transform: translateY(-50%); font: 700 19px/1 var(--st-font); color: var(--mk-sys-on-surface); white-space: nowrap; }
+#stats-modal .db-mchart-y .db-face { font-size: 30px; }
+#stats-modal .db-mchart .db-chart { width: 100%; height: auto; border: 0; border-radius: 0; background: none; }
+#stats-modal .db-chart-x { fill: rgba(238, 247, 241, .8); font: 700 19px var(--st-font); }
+#stats-modal .db-chart-today { fill: #eef7f1; font: 700 15px var(--st-font); letter-spacing: .12em; }
+
+/* reactions (left) and the calendar (right) */
+#stats-modal .db-mgrid { display: grid; grid-template-columns: minmax(380px, 440px) minmax(0, 1fr); gap: 20px; align-items: start; }
+#stats-modal .db-mside { padding: 20px 22px; border-radius: 40px; background: #14302a; }
+#stats-modal .db-rank.is-moods { gap: 6px; }
+#stats-modal .db-rank.is-moods .db-rank-row { grid-template-columns: 150px minmax(60px, 1fr) 40px 52px; gap: 14px; min-height: 52px; padding: 0 8px; background: none; }
+#stats-modal .db-rank.is-moods .db-rank-name { font-size: 21px; }
+#stats-modal .db-rank.is-moods .db-face { font-size: 30px; vertical-align: -6px; }
+#stats-modal .db-rank.is-moods .db-rank-bar { height: 16px; }
+#stats-modal .db-rank.is-moods .db-rank-total { font-size: 24px; }
+#stats-modal .db-rank.is-moods .db-rank-extra { justify-content: flex-end; padding: 0; border: 0; font: 500 18px/1 var(--st-font); }
+#stats-modal .db-mside .db-own { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .12); }
+#stats-modal .db-mside .db-own-title { display: block; margin: 0 0 10px 8px; font: 700 15px/20px var(--st-font); letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+#stats-modal .db-mside .db-own-item { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 64px; padding: 0 22px 0 16px; border: 0; border-radius: 9999px; background: #24413a; color: var(--mk-sys-on-surface); font-family: var(--st-font); cursor: pointer; }
+#stats-modal .db-mside .db-own-item .db-face { font-size: 36px; }
+#stats-modal .db-mside .db-own-item b { flex: 1; text-align: left; font: 700 22px/26px var(--st-font); }
+#stats-modal .db-mside .db-own-item small { font: 500 20px/1 var(--st-font); opacity: .8; }
+
+#stats-modal .db-cal { padding: 20px 24px 22px; border-radius: 40px; background: #14302a; font-family: var(--st-font); }
+#stats-modal .db-cal-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; margin: 0 0 12px; }
+#stats-modal .db-cal-head h3 { margin: 0; font: 700 40px/46px var(--st-font); letter-spacing: -.02em; color: var(--mk-sys-on-surface); }
+#stats-modal .db-cal-key { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; font: 600 17px/22px var(--st-font); color: var(--mk-sys-on-surface); }
+#stats-modal .db-cal-key > span { display: inline-flex; align-items: center; gap: 8px; }
+#stats-modal .db-cal-key svg { width: 22px; height: 22px; fill: currentColor; }
+#stats-modal .db-cal-key .is-sun svg { fill: #ffc94a; color: #ffc94a; }
+#stats-modal .db-cal .db-pixels { gap: 8px; min-width: 760px; }
+#stats-modal .db-cal .db-px-weekday { padding-bottom: 4px; font: 700 18px/1 var(--st-font); letter-spacing: 0; color: var(--mk-sys-on-surface); }
+#stats-modal .db-cal .db-px { display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 8px; min-height: 76px; padding: 10px 12px; border-radius: 18px; background: #1d3a33; }
+#stats-modal .db-px-duty { display: flex; align-items: center; gap: 6px; font: 700 18px/1 var(--st-font); color: var(--mk-sys-on-surface); font-variant-numeric: tabular-nums; }
+#stats-modal .db-px-duty i { display: grid; place-items: center; }
+#stats-modal .db-px-duty i + b + i { margin-left: auto; }
+#stats-modal .db-px-duty svg { width: 18px; height: 18px; fill: currentColor; opacity: .85; }
+#stats-modal .db-px-duty i:first-child svg, #stats-modal .db-cal-key .is-sun svg { fill: #ffc94a; color: #ffc94a; opacity: 1; }
+#stats-modal .db-cal .db-px[data-kind="marked"] { background: color-mix(in srgb, var(--c) 26%, #1d3a33); }
+#stats-modal .db-cal .db-px.is-today { box-shadow: inset 0 0 0 3px #6fe3ff; }
+#stats-modal .db-cal .db-px-head > b { font: 700 20px/1 var(--st-font); color: var(--mk-sys-on-surface); }
+#stats-modal .db-cal .db-px-face { font-size: 24px; }
+#stats-modal .db-cal-hint { display: table; margin: 16px auto 0; padding: 12px 28px; border-radius: 9999px; background: #24413a; font: 600 18px/22px var(--st-font); color: var(--mk-sys-on-surface); }
+@media (max-width: 1500px) {
+  #stats-modal .db-mgrid { grid-template-columns: 1fr; }
+  #stats-modal .db-rx { margin-left: 0; }
+}
+/* the lobes peek above the cards: room for them under the toolbar, so the sticky bar never cuts them */
+#stats-modal .db-cards { padding-top: 26px; }
+#stats-modal .db-card-lobe { top: -26px; }
+/* Atpakaļ: a 56 px tonal M3 button with a bigger arrow, the same everywhere */
+#stats-modal .db-lead > .db-back { align-self: center; }
+/* each section's bars in its own tone */
+#stats-modal .db-rank.is-fatigue .db-rank-bar .is-main { background: #f0a27d; }
+#stats-modal .db-rank.is-radio .db-rank-bar .is-main { background: #7fd6e3; }
+#stats-modal .db-rank.is-night .db-rank-bar .is-main { background: #9cb8ff; }
+/* Komandas sajūta below 1700 px: the face beside two rows, the word and days on top, the reactions filling the
+   whole second row (no hole on the right); Atpakaļ at the top, not floating in the middle */
+#stats-modal .db-lead > .db-back { align-self: flex-start; }
+#stats-modal .db-rx-pill { flex: 1 1 0; min-width: max-content; }
+@media (max-width: 1700px) {
+  #stats-modal .db-hero.db-mlead { display: grid; grid-template-columns: auto auto minmax(0, 1fr); align-items: center; gap: 20px 28px; padding: 24px 28px; border-radius: 48px; background: #14302a; }
+  #stats-modal .db-mlead > .db-fact { justify-self: end; text-align: right; padding-right: 12px; }
+  #stats-modal .db-mlead > .db-mlead-face { grid-row: 1 / span 2; }
+  #stats-modal .db-mlead > .db-rx { grid-column: 2 / -1; margin-left: 0; }
+}
+/* the coffee card as the user's mockup: drinks five to a row, the icon over its number, caffeine and money big */
+#stats-modal .db-cdrinks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 8px; width: 100%; }
+#stats-modal .db-cdrinks .db-csrc { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; }
+#stats-modal .db-cdrinks .db-csrc :is(svg, img) { width: 42px; height: 42px; object-fit: contain; }
+#stats-modal .db-cdrinks .db-csrc b { font: 700 26px/30px var(--st-font); font-variant-numeric: tabular-nums; color: var(--on); }
+#stats-modal .db-card.is-coffee .db-cfacts { gap: 40px; }
+#stats-modal .db-card.is-coffee .db-fact b { font-size: 40px; line-height: 44px; }
+#stats-modal .db-card.is-coffee .db-fact small { font-size: 18px; }
+#stats-modal .db-card.is-coffee .db-badge { width: 72px; height: 72px; }
+#stats-modal .db-card.is-coffee { gap: 8px; padding: 24px 32px; }
+#stats-modal .db-card.is-coffee .db-big { font-size: 64px; line-height: 68px; }
+#stats-modal .db-card.is-coffee .db-big small { font-size: 24px; }
+#stats-modal .db-card.is-people .db-norms { flex: 1 1 auto; justify-content: space-around; }
+#stats-modal .db-card.is-coffee .db-card-head b { font-size: 30px; }
+
+/* One title row (the user's ask): the mark and "Statistika", then the month, the groups, the search and Aizvērt; the
+   toolbar no longer takes a row of its own over the answers */
+#stats-modal .mk-stats-head { flex-wrap: nowrap; gap: 14px; padding: 12px 20px 10px 24px; }
+#stats-modal .mk-stats-head > :not(.db-chrome) { flex: none; }
+#stats-modal .mk-stats-head > .db-chrome { position: static; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; background: none; }
+#stats-modal .mk-stats-head .db-top { flex-wrap: nowrap; align-items: center; gap: 12px; padding: 0; }
+#stats-modal .mk-stats-head .db-top > :not(.db-search) { flex: none; }
+#stats-modal .mk-stats-head .db-search { flex: 0 1 280px; width: auto; min-width: 150px; height: 48px; margin-left: auto; }
+#stats-modal .mk-stats-head > .mk-stats-close { margin-left: 0 !important; }
+#stats-modal #stats-table-wrap { padding-top: 8px !important; }
+@media (max-width: 1400px) {
+  #stats-modal #stats-title { font-size: 30px; line-height: 36px; }
+  #stats-modal .mk-stats-head .db-monthnav b { min-width: 0; font-size: 15px; }
+  #stats-modal .mk-stats-head .db-chips button { padding: 0 10px; font-size: 13px; }
+}
+
+/* One person: the emoji in the shape, the shift kinds side by side, a calendar of shifts with big days and the
+   bolus on its day, the energy as three plain numbers over the line */
+#stats-modal .db-badge-emoji { position: relative; font-size: 64px; line-height: 1; }
+#stats-modal .db-pkinds { display: flex; gap: 28px; }
+#stats-modal .db-pfacts { display: flex; flex-wrap: wrap; gap: 12px 40px; margin: 0 0 10px; padding: 14px 22px; border-radius: 28px; background: #14302a; font-family: var(--st-font); color: var(--mk-sys-on-surface); }
+#stats-modal .db-pfacts .db-fact b { font-size: 34px; line-height: 38px; }
+#stats-modal .db-pfacts .db-fact b small { font-size: 16px; font-weight: 500; opacity: .8; }
+#stats-modal .db-pcal { padding: 14px 18px 16px; }
+#stats-modal .db-pcal .db-px--shift { min-height: 72px; }
+#stats-modal .db-pcal .db-px--shift small { font: 700 16px/1.2 var(--st-font); }
+#stats-modal .db-legend .is-day::before { background: #3f9bff; }
+#stats-modal .db-legend .is-night::before { background: #23cdcf; }
+#stats-modal .db-legend .is-24h::before { background: #f5b73f; }
+#stats-modal .db-legend .is-bolus::before { background: #ff8a8a; }
+/* the person as in the M3 reference: the emoji in a big wavy shape, a lighter wave behind it; the hero's tone */
+#stats-modal .db-hero.is-person { --c: #1c3a2f; }
+#stats-modal .db-badge.is-person { --sh: #a8dcc1; }
+#stats-modal .db-badge.is-person.is-xl { width: 150px; height: 150px; margin: -18px 0; }
+#stats-modal .db-badge.is-person.is-xl::before { content: ''; position: absolute; inset: -10px; border-radius: 50%; background: rgba(168, 220, 193, .16); }
+#stats-modal .db-badge.is-person .db-badge-emoji { font-size: 84px; }
+#stats-modal .db-badge.is-person .db-badge-txt { color: #0f2b20; -webkit-text-fill-color: #0f2b20; font-size: 46px; }
+/* a compact month: lower days, the shift as a pill in its colour, the bolus beside it */
+#stats-modal .db-pcal .db-px--shift { min-height: 56px; padding: 6px 10px; gap: 4px; }
+#stats-modal .db-pcal .db-px--shift small { display: flex; flex-wrap: wrap; gap: 4px; }
+/* the person search invites a press: longer, taller, tinted, the magnifier in a mint circle */
+#stats-modal .mk-stats-head .db-search { flex: 0 1 440px; min-width: 180px; height: 52px; padding: 0 20px 0 6px; gap: 12px; border-radius: 26px; background: #1f4a3d; box-shadow: inset 0 0 0 2px rgba(168, 220, 193, .55); }
+#stats-modal .mk-stats-head .db-search:hover { background: #245646; }
+#stats-modal .mk-stats-head .db-search:focus-within { background: #245646; box-shadow: inset 0 0 0 3px #a8dcc1; }
+#stats-modal .mk-stats-head .db-search > svg { width: 40px; height: 40px; padding: 8px; border-radius: 50%; background: #a8dcc1; fill: #0f2b20; box-sizing: border-box; }
+#stats-modal .mk-stats-head .db-search input { font: 600 17px/1 var(--st-font) !important; color: #effff7 !important; }
+#stats-modal .mk-stats-head .db-search input::placeholder { color: #cfeee0; opacity: 1; }
+
+/* a person's month, plain and colourful: a day with a shift takes its colour, the shift written with its sign, a bolus
+   change shown as the dock's bolus picture with GE (blue) or PH (green) */
+#stats-modal .db-pcal .db-px[data-kind="marked"] { background: color-mix(in srgb, var(--c) 24%, #1d3a33); }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-shift { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font: 700 14px/1.1 var(--st-font); color: #12100a; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-shift svg { width: 14px; height: 14px; fill: currentColor; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-shift.is-day { background: #9cc8ff; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-shift.is-night { background: #7fe0e0; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-shift.is-allday { background: #f5c04a; }
+#stats-modal .db-px-boluses { display: flex; flex-wrap: wrap; gap: 4px; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-bolus { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border-radius: 999px; font: 800 12px/1 var(--st-font); }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-bolus.is-ge { background: #3f8cff; color: #fff; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-bolus.is-ph { background: #5ee6a8; color: #06301f; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-bolus svg { flex: none; width: 20px !important; height: 20px !important; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-bolus rect[data-t] { fill: currentColor !important; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-bolus rect[data-t="m"] { fill-opacity: .6; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-bolus rect[data-t="d"] { fill-opacity: .3; }
+#stats-modal .db-pkey { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-left: 8px; font: 600 15px/1 var(--st-font); color: var(--mk-sys-on-surface); }
+#stats-modal .db-pcal .db-px--shift { min-height: 64px; }
+/* a person's drinks on the day: the coffee menu's own pictures with how many */
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-coffee { align-self: flex-start; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; padding: 2px 10px 2px 4px; border-radius: 999px; background: #3a2a14; color: #ffd98a; font: 800 13px/1 var(--st-font); }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-coffee .db-csrc { display: inline-flex; align-items: center; gap: 2px; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-coffee :is(svg, img) { flex: none; width: 22px !important; height: 22px !important; }
+#stats-modal :is(.db-pcal, .db-pkey) .db-px-coffee b { color: #ffd98a; }
+#stats-modal .db-pcal .db-px-boluses, #stats-modal .db-pcal .db-px--shift > small { align-self: flex-start; }
+/* a person's day in two columns, no empty half: date and shift on the left, the drinks (big, with how many) and the
+   bolus picture on the right */
+#stats-modal .db-pcal .db-px--shift { display: grid !important; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-items: start; gap: 6px 8px; min-height: 68px; padding: 8px 10px; }
+#stats-modal .db-pcal .db-px--shift > .db-px-head { grid-column: 1; grid-row: 1; }
+#stats-modal .db-pcal .db-px--shift > small { grid-column: 1; grid-row: 2; align-self: end; }
+#stats-modal .db-pcal .db-px--shift > .db-px-coffee { grid-column: 2; grid-row: 1; justify-self: end; }
+#stats-modal .db-pcal .db-px--shift > .db-px-boluses { grid-column: 2; grid-row: 2; justify-self: end; align-self: end; }
+#stats-modal .db-pcal .db-px-bolus { padding: 3px 10px 3px 4px; font-size: 13px; }
+#stats-modal .db-pcal .db-px-bolus svg { width: 26px !important; height: 26px !important; }
+
+/* ── One person's lead (the user's mockup): one surface; the hours big in warm off-white with a bar to the norm, the
+   difference as a yellow pill, each kind of shift / bolus / energy in its own coloured shape ── */
+:is(#stats-modal, #wm-summary) .db-hero.db-phero { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); align-items: center; gap: 8px 28px; padding: 14px 28px; border-radius: 48px 64px 52px 60px / 56px 48px 60px 52px; }
+:is(#stats-modal, #wm-summary) .db-phours { display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
+:is(#stats-modal, #wm-summary) .db-phours > b { font: 800 84px/0.95 var(--st-font); letter-spacing: -.03em; color: #fff6e6; }
+:is(#stats-modal, #wm-summary) .db-phours > small { font: 600 18px/1.2 var(--st-font); color: #fff6e6; }
+#stats-modal .db-pbar { display: block; height: 14px; margin-top: 4px; border-radius: 999px; background: rgba(255, 255, 255, .12); }
+#stats-modal .db-pbar i { display: block; height: 100%; border-radius: 999px; background: #f9e58a; }
+:is(#stats-modal, #wm-summary) .db-phours > em { font: 600 15px/1 var(--st-font); font-style: normal; color: #e8e2cf; }
+#stats-modal .db-pdiff { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#stats-modal .db-pdiff .db-diff { height: 48px; padding: 0 20px; border-radius: 26px 22px 28px 20px / 24px 28px 20px 26px; background: #f5c04a !important; color: #2a1d00 !important; font: 800 28px/1 var(--st-font); }
+#stats-modal .db-pdiff small { font: 600 15px/1 var(--st-font); color: #e8e2cf; }
+#stats-modal .db-pkinds { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+#stats-modal .db-pk { display: flex; align-items: center; gap: 10px; }
+#stats-modal .db-pk .db-badge { width: 60px; height: 60px; }
+#stats-modal .db-pk .db-badge > :not(.db-badge-shape) { width: 30px !important; height: 30px !important; }
+#stats-modal .db-pk .db-badge svg:not(.db-badge-shape) { fill: currentColor; }
+#stats-modal .db-pk .db-badge rect[data-t] { fill: currentColor !important; }
+#stats-modal .db-pk .db-badge .db-badge-txt { width: auto !important; height: auto !important; font-size: 17px; }
+#stats-modal .db-pk > span { display: flex; flex-direction: column; }
+#stats-modal .db-pk > span > b { font: 800 34px/1 var(--st-font); color: #fff6e6; }
+#stats-modal .db-pk > span > b small { font-size: 18px; font-weight: 600; }
+#stats-modal .db-pk > span > small { font: 600 14px/1.2 var(--st-font); color: #e8e2cf; }
+#stats-modal .db-pk.is-k24 .db-badge { --sh: #9ee6c8; color: #0f2b20; }
+#stats-modal .db-pk.is-kday .db-badge { --sh: #ffb38a; color: #3a1806; }
+#stats-modal .db-pk.is-knight .db-badge { --sh: #9cc8ff; color: #0b2442; }
+#stats-modal .db-pk.is-kbolus .db-badge { --sh: #8ec5ff; color: #0b2442; }
+#stats-modal .db-pk.is-kenergy .db-badge { --sh: var(--ec); color: #10231c; }
+@media (max-width: 1500px) {
+  :is(#stats-modal, #wm-summary) .db-hero.db-phero { grid-template-columns: auto auto minmax(0, 1fr); }
+  #stats-modal .db-pkinds { grid-column: 1 / -1; }
+}
+
+/* the worker window draws the same summary (personHero) in #wm-summary: the rules below are shared */
+#wm-summary { --st-font: 'Google Sans', var(--mk-font-plain, 'Geist Sans'), system-ui, sans-serif; }
+/* ── One person's summary, the user's design: one wavy surface (static SVG behind, text and icons in HTML), three
+   zones 16 / 41 / 43 %, sizes from the card's own width (container units) ── */
+:is(#stats-modal, #wm-summary) .db-hero.db-ph { position: relative; isolation: isolate; container-type: inline-size; display: grid; grid-template-columns: 16% 39% minmax(0, 1fr); align-items: center; gap: 0; padding: clamp(16px, 2.6cqw, 44px) clamp(16px, 2.4cqw, 40px) clamp(16px, 2.6cqw, 44px) clamp(8px, 1.2cqw, 20px); border-radius: 0; background: none; color: #fff6e4; font-family: var(--st-font); }
+:is(#stats-modal, #wm-summary) .db-ph-bg { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; overflow: visible; }
+:is(#stats-modal, #wm-summary) .db-ph-bg .is-main { fill: #10392c; }
+:is(#stats-modal, #wm-summary) .db-ph-bg .is-soft { fill: #144234; }
+:is(#stats-modal, #wm-summary) .db-ph-who { display: grid; place-items: center; }
+:is(#stats-modal, #wm-summary) .db-ph .db-badge.is-person.is-xl { --sh: #a4eac9; width: clamp(110px, 15cqw, 250px); height: clamp(110px, 15cqw, 250px); margin: 0; }
+:is(#stats-modal, #wm-summary) .db-ph .db-badge.is-person.is-xl::before { content: none; }
+/* auto width: the glyph is wider than 1em, a 1em box would start it at the left edge and push it right */
+:is(#stats-modal, #wm-summary) .db-ph .db-badge.is-xl > .db-badge-emoji { display: block; width: auto !important; height: auto !important; font-size: clamp(70px, 9.6cqw, 160px) !important; line-height: 1; }
+:is(#stats-modal, #wm-summary) .db-ph-hours { display: flex; flex-direction: column; gap: clamp(6px, 1.2cqw, 20px); min-width: 0; padding-right: 1cqw; }
+:is(#stats-modal, #wm-summary) .db-ph-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px clamp(10px, 1.4cqw, 24px); }
+:is(#stats-modal, #wm-summary) .db-ph-big { font: 700 clamp(60px, 9.6cqw, 160px)/.9 var(--st-font); letter-spacing: -.035em; color: #fff6e4; font-variant-numeric: tabular-nums; white-space: nowrap; }
+:is(#stats-modal, #wm-summary) .db-ph-diff { display: flex; flex-direction: column; align-items: center; gap: clamp(6px, .9cqw, 14px); }
+:is(#stats-modal, #wm-summary) .db-ph-diff b { padding: .16em .55em; background: #a4eac9; color: #10231c; font: 700 clamp(22px, 2.6cqw, 44px)/1 var(--st-font); font-variant-numeric: tabular-nums; white-space: nowrap; }
+:is(#stats-modal, #wm-summary) .db-ph-unit { margin-left: .17em; }
+/* a softly wavy capsule (mask, so the colour still follows the value) */
+:is(#stats-modal, #wm-summary) .db-ph .db-ph-diff b { padding: .24em .7em; border-radius: 0; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 80' preserveAspectRatio='none'%3E%3Cpath d='M42 3C72 0 92 8 121 5C150 2 170 3 183 12C198 23 200 40 198 54C195 70 181 78 160 77C131 76 110 80 80 77C55 75 31 79 16 68C2 58 0 40 3 26C6 12 21 5 42 3Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 80' preserveAspectRatio='none'%3E%3Cpath d='M42 3C72 0 92 8 121 5C150 2 170 3 183 12C198 23 200 40 198 54C195 70 181 78 160 77C131 76 110 80 80 77C55 75 31 79 16 68C2 58 0 40 3 26C6 12 21 5 42 3Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+:is(#stats-modal, #wm-summary) .db-ph-diff.is-under b { background: #ffc64d; color: #2a1d00; }
+:is(#stats-modal, #wm-summary) .db-ph-diff.is-over b { background: #d3b3e3; color: #2a1736; }
+:is(#stats-modal, #wm-summary) .db-ph-diff small { font: 500 clamp(14px, 1.5cqw, 24px)/1 var(--st-font); color: #c5ddd1; white-space: nowrap; }
+:is(#stats-modal, #wm-summary) .db-ph-label { font: 600 clamp(17px, 2.2cqw, 36px)/1.15 var(--st-font); color: #fff6e4; }
+:is(#stats-modal, #wm-summary) .db-ph-progress { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: clamp(10px, 1.4cqw, 22px); }
+:is(#stats-modal, #wm-summary) .db-ph-bar { display: flex; height: clamp(16px, 2.4cqw, 40px); overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .14); }
+:is(#stats-modal, #wm-summary) .db-ph-bar i { display: block; height: 100%; border-radius: 999px; background: #ffe58a; }
+/* over the norm: flat segments inside the track's own rounded ends, a thin mark where the norm ends */
+:is(#stats-modal, #wm-summary) .db-ph-bar.has-over i { border-radius: 0; }
+:is(#stats-modal, #wm-summary) .db-ph-bar i.is-over { flex: 1 0 auto; background: #d3b3e3; box-shadow: inset 3px 0 0 #fff6e4; }
+:is(#stats-modal, #wm-summary) .db-ph .db-badge.db-ph-shape > svg.db-ph-ico { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+:is(#stats-modal, #wm-summary) .db-ph-ico text { fill: currentColor; stroke: none; font-family: var(--st-font); }
+:is(#stats-modal, #wm-summary) .db-ph .db-badge.db-ph-shape > svg.db-ph-ico .is-fill { fill: currentColor; }
+/* the main numbers in the rounded face the user asked for */
+:is(#stats-modal, #wm-summary) .db-ph :is(.db-ph-big, .db-ph-txt b, .db-ph-diff b, .db-ph-pct b) { font-family: 'Nunito', var(--st-font); font-weight: 900; letter-spacing: -.01em; }
+:is(#stats-modal, #wm-summary) .db-ph-pct { display: flex; flex-direction: column; line-height: 1.15; }
+:is(#stats-modal, #wm-summary) .db-ph-pct b { font: 700 clamp(15px, 1.9cqw, 30px)/1.15 var(--st-font); color: #fff6e4; font-variant-numeric: tabular-nums; }
+:is(#stats-modal, #wm-summary) .db-ph-pct small { font: 500 clamp(13px, 1.6cqw, 26px)/1.15 var(--st-font); color: #c5ddd1; font-variant-numeric: tabular-nums; }
+:is(#stats-modal, #wm-summary) .db-ph-stats { padding-left: 1.2cqw; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: start; gap: clamp(14px, 3.2cqw, 52px) clamp(10px, 1.2cqw, 20px); min-width: 0; }
+:is(#stats-modal, #wm-summary) :is(.db-ph-kinds, .db-ph-more) { display: contents; }
+:is(#stats-modal, #wm-summary) .db-ph-item { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+/* one 6-column grid: the three kinds take two columns each, bolus and energy three each, centred in their half */
+:is(#stats-modal, #wm-summary) .db-ph-kinds > .db-ph-item { grid-column: span 2; }
+:is(#stats-modal, #wm-summary) .db-ph-more > .db-ph-item { grid-column: span 3; justify-self: center; }
+:is(#stats-modal, #wm-summary) .db-ph-more .db-ph-txt > small { white-space: nowrap; }
+:is(#stats-modal, #wm-summary) .db-ph .db-badge.db-ph-shape { flex: none; width: clamp(46px, 6cqw, 100px); height: clamp(46px, 6cqw, 100px); }
+:is(#stats-modal, #wm-summary) .db-ph .db-badge.db-ph-shape > :not(.db-badge-shape) { width: clamp(28px, 3.45cqw, 58px) !important; height: clamp(28px, 3.45cqw, 58px) !important; fill: currentColor; }
+:is(#stats-modal, #wm-summary) .db-ph .db-badge.db-ph-shape rect[data-t] { fill: currentColor !important; }
+:is(#stats-modal, #wm-summary) .db-ph-txt { display: flex; flex-direction: column; min-width: 0; }
+:is(#stats-modal, #wm-summary) .db-ph-txt b { font: 700 clamp(34px, 5cqw, 84px)/.95 var(--st-font); color: #fff6e4; font-variant-numeric: tabular-nums; white-space: nowrap; }
+:is(#stats-modal, #wm-summary) .db-ph-txt b small { font: 600 clamp(16px, 2.4cqw, 40px)/1 var(--st-font); color: #fff6e4; }
+:is(#stats-modal, #wm-summary) .db-ph-txt > small { font: 500 clamp(12px, 1.5cqw, 25px)/1.15 var(--st-font); color: #c5ddd1; }
+:is(#stats-modal, #wm-summary) .db-ph-item.is-kenergy .db-ph-txt b { font-size: clamp(34px, 5cqw, 84px); }
+:is(#stats-modal, #wm-summary) .db-ph-label { margin-top: -.7cqw; }
+:is(#stats-modal, #wm-summary) .db-ph-item.is-k24 .db-badge { --sh: #a4eac9; color: #10231c; }
+:is(#stats-modal, #wm-summary) .db-ph-item.is-kday .db-badge { --sh: #ffc39c; color: #3a1806; }
+:is(#stats-modal, #wm-summary) .db-ph-item.is-knight .db-badge { --sh: #abd7f5; color: #0b2442; }
+:is(#stats-modal, #wm-summary) .db-ph-item.is-kbolus .db-badge { --sh: #9dddf5; color: #0b2442; }
+:is(#stats-modal, #wm-summary) .db-ph-item.is-kenergy .db-badge { --sh: color-mix(in oklab, var(--ec) 70%, #fff); color: #10231c; }
+@container (max-width: 820px) {
+  :is(#stats-modal, #wm-summary) .db-hero.db-ph { grid-template-columns: 22% minmax(0, 1fr); row-gap: 14px; }
+  :is(#stats-modal, #wm-summary) .db-ph-stats { grid-column: 1 / -1; }
+}

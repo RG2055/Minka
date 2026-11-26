@@ -39,7 +39,7 @@ function harness({ selected = '2026-09-02', stored = {} } = {}) {
     c, modal, wrap, requests, storage, reply,
     render: () => c.MinkaDaybookStats.render(),
     click(selector, dataset = {}) {
-      events.click({ target: { closest: s => s === '#stats-table-wrap' ? wrap : s === selector ? { dataset } : null } });
+      events.click({ target: { closest: s => (s === '#stats-table-wrap' || s === '#stats-modal') ? wrap : s === selector ? { dataset } : null } });
     },
     online: () => windowEvents.online(),
     async settle(handler = req => reply(req)) {
@@ -103,7 +103,7 @@ test('failed coffee day remains retryable, preserves cache and does not reload s
   await h.settle(req => h.reply(req, { ok: !req.url.includes('date=01.09.2026'), counts: { anna: 4 } }));
   assert.equal(h.requests.filter(isCoffee).length, 2);
   assert.equal(JSON.parse(h.storage.get('minkaCoffeeCountsV1'))['01.09.2026'].anna, 3);
-  h.click('[data-db-tab]', { dbTab: 'coffee' });
+  h.click('[data-db-open]', { dbOpen: 'coffee' });
   await h.settle();
   assert.match(h.wrap.innerHTML, /kafijas.*Mēģināt vēlreiz/);
   assert.equal(h.requests.filter(isCoffee).length, 2);

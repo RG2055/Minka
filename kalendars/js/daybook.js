@@ -194,20 +194,40 @@
     } catch (_e) {}
   }
 
+  // The statistics' styles are not part of the page's start: they load while the page is idle after it (or at the
+  // first open, whichever comes first), and the statistics are drawn only once both they and the script are in.
+  var statsCss = null;
+  function loadStatsCss() {
+    if (statsCss) return statsCss;
+    statsCss = new Promise(function (resolve) {
+      var l = document.createElement('link');
+      l.rel = 'stylesheet'; l.id = 'mk-stats-m3'; l.href = 'css/page/stats-m3.css?v=20261126wm52';
+      l.onload = resolve; l.onerror = resolve;   // without its styles the statistics still work
+      document.head.append(l);
+    });
+    return statsCss;
+  }
+  setTimeout(function () { (window.requestIdleCallback || setTimeout)(loadStatsCss, { timeout: 8000 }); }, 3000);
+  // The statistics' script and styles, once (the statistics and the worker window's summary both wait on it).
+  function loadStats() {
+    if (window.MinkaDaybookStats) return loadStatsCss();
+    if (!statsLoading) {
+      statsLoading = Promise.all([loadStatsCss(), new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'js/daybook-stats.js?v=20261126wm52';
+        s.onload = resolve;
+        s.onerror = function () { s.remove(); statsLoading = null; reject(new Error('daybook-stats')); };
+        document.head.append(s);
+      })]);
+    }
+    return statsLoading;
+  }
   function renderStats() {
     var wrap = document.getElementById('stats-table-wrap');
     if (!wrap) return;
     if (window.MinkaDaybookStats) { window.MinkaDaybookStats.render(); return; }
     wrap.innerHTML = '<div class="db-empty" role="status">Ielādē pārskatu…</div>';
-    if (!statsLoading) {
-      statsLoading = new Promise(function (resolve, reject) {
-        var s = document.createElement('script');
-        s.src = 'js/daybook-stats.js?v=20261113dk1';
-        s.onload = resolve;
-        s.onerror = function () { s.remove(); statsLoading = null; reject(new Error('daybook-stats')); };
-        document.head.append(s);
-      });
-    }
+    loadStats();
     statsLoading.then(function () { window.MinkaDaybookStats.render(); })
       .catch(function () { wrap.innerHTML = '<div class="db-empty">Neizdevās ielādēt pārskatu. Aizver un atver vēlreiz.</div>'; });
     void refresh().then(function () {
@@ -237,6 +257,8 @@
   window.MinkaDaybook = {
     enhance: enhance,
     renderStats: renderStats,
+    // one person's green month summary as HTML ('' when it cannot be drawn), for the worker window
+    personHero: function (name, month, opts) { return loadStats().then(function () { return window.MinkaDaybookStats.personHero(name, month, opts); }); },
     radio: function () { return radioRecords; },
     ratings: function () { return read((window.__mkKey || function (k) { return k; })('minkaShiftPulseV2')); },
     refresh: refresh,

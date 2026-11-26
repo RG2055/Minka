@@ -715,7 +715,8 @@
   function byCenter(id) { for (var i = 0; i < CENTERS.length; i++) if (CENTERS[i].id === id) return CENTERS[i]; return null; }
   function setCenter(id) {
     var wasGame = gameOn();
-    try { if (id === 'mood') localStorage.removeItem(CENTER); else localStorage.setItem(CENTER, JSON.stringify({ id: id, until: nextHandover(Date.now()) })); } catch (_e) {}
+    // the mood too is a choice of its own (removing the key let the account's saved centre come back at once)
+    try { localStorage.setItem(CENTER, JSON.stringify({ id: id, until: nextHandover(Date.now()) })); } catch (_e) {}
     centerSig = '';
     schedulePlace();
     if (wasGame !== gameOn()) {   // the walls make room for the game, or close in again: at once, no glide
@@ -735,7 +736,8 @@
   function moodNow(mood) {
     var st = mood && mood.querySelector('.rg-mood-stage'), face = mood && mood.querySelector('.rg-mood-fluent-face');
     var key = st ? st.dataset.rgMood : 'none';
-    return { key: key, word: MOOD_WORD[key] || '',   // no words for no rating (the user: room for the game) face: face ? face.textContent.trim() : '🙂',
+    // no words for no rating (the user: room for the game)
+    return { key: key, word: MOOD_WORD[key] || '', face: face ? face.textContent.trim() : '🙂',
       c1: st && st.style.getPropertyValue('--rg-mood-primary') || '', c2: st && st.style.getPropertyValue('--rg-mood-secondary') || '' };
   }
   // The rating row: the mood card's own row, copied, and dressed by the mood card's own rules: they

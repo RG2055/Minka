@@ -384,6 +384,7 @@
     });
   }
   function m3Watch(el) {
+    el.setAttribute('data-rg-live', '');   // RG Engine: this readout is the face's own (js/rg-engine.js)
     m3Paint(el);
     if (el.__m3Obs || typeof MutationObserver !== 'function') return;
     el.__m3Obs = new MutationObserver(function (list) {
@@ -395,6 +396,7 @@
     if (!el.classList.contains('wf-m3d')) return;
     el.classList.remove('wf-m3d'); delete el.dataset.td;
     if (el.__m3Obs) { el.__m3Obs.disconnect(); delete el.__m3Obs; }
+    el.removeAttribute('data-rg-live');
     var box = el.querySelector(':scope > .mk-m3d'); if (box) box.remove();
   }
   // Picker tiles: the readout as it looks on duty.
@@ -514,6 +516,7 @@
     // the trend arrow goes under the number, inside the ring (side by side they ran into it)
     var val = el.querySelector('.mk-mid-meta-value'), tm = val && !val.querySelector('.m3g-tr') && /^\s*(\d{1,3}\s*%)\s*(\S+)\s*$/.exec(val.textContent || '');
     if (tm) val.innerHTML = tm[1].replace(/\s+/g, '') + '<i class="m3g-tr">' + tm[2] + '</i>';
+    if (val) val.setAttribute('data-rg-live', '');   // the number and its arrow are redrawn here (js/rg-engine.js)
     if (val) val.classList.toggle('m3g-long', v >= 100);
     if (old && old.getAttribute('data-v') === String(v)) return;
     var R = 40, end = v * 3.6, body = '';

@@ -1042,17 +1042,6 @@ body::after {
   align-items: baseline;
 }
 .worker-info span { color: white; font-weight: 600; }
-#modal-total-hours {
-  font-size: 13px;
-  color: var(--accent);
-  margin-top: 4px;
-  font-weight: 600;
-  background: rgba(191, 90, 242, 0.1);
-  padding: 4px 12px;
-  border-radius: 30px;
-  display: inline-block;
-}
-
 .view-toggle {
   display: flex;
   gap: 8px;

@@ -1,3 +1,6 @@
+/* Nunito 900 (OFL, local): the round face of the big numbers here and in the statistics' summary */
+@font-face { font-family: 'Nunito'; src: url('../../assets/fonts/nunito/nunito-900-latin.woff2') format('woff2'); font-weight: 900; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Nunito'; src: url('../../assets/fonts/nunito/nunito-900-latin-ext.woff2') format('woff2'); font-weight: 900; font-display: swap; unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 /* ════════════════════════════════════════════════════════════════════════
    Kartītes logs (#worker-modal#worker-modal) — M3 Expressive / PixelPlayer (2026-09-23)
    Tā pati tonālā sistēma kā nakts logā: plakanas virsmas, Google Sans,
@@ -37,42 +40,42 @@
 
 /* Galvene: bez blāvā "RP" ūdenszīmes; vārds kā M3 virsraksts */
 #worker-modal#worker-modal .modal-avatar { display: none !important; }
-#worker-modal#worker-modal .modal-header { grid-template-columns: minmax(0, 1fr) auto auto !important; }
+#worker-modal#worker-modal .modal-header { grid-template-columns: minmax(0, 1fr) auto !important; }
+/* the name and surname big enough to read across the room (the emoji is in the summary below, not here too) */
+#worker-modal#worker-modal .modal-header-text { display: flex !important; flex-flow: row wrap; align-items: baseline; gap: 0 .3em; }   /* the name on one line, as the user's design */
+#worker-modal#worker-modal .modal-header-text > * { min-width: 0; white-space: nowrap !important; overflow: hidden !important; text-overflow: clip !important; }
 #worker-modal#worker-modal #modal-worker-name {
   color: var(--pp-on) !important;
-  font-size: 22px !important;
-  font-weight: 500 !important;
+  font-size: 30px !important;
+  line-height: 1.05 !important;
+  font-weight: 700 !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
 #worker-modal#worker-modal .modal-surname-line {
-  color: var(--pp-on-var) !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  letter-spacing: .02em !important;
-  text-transform: none !important;
-}
-#worker-modal#worker-modal #modal-total-hours {
-  border: 0 !important;
-  border-radius: 16px !important;
-  background: var(--pp-primary-c) !important;
-  color: var(--pp-on-primary-c) !important;
-  font-family: var(--pp-font) !important;
-  font-weight: 700 !important;
-}
-#worker-modal#worker-modal #modal-total-hours * { color: var(--pp-on-primary-c) !important; -webkit-text-fill-color: var(--pp-on-primary-c) !important; font-family: var(--pp-font) !important; }
-#worker-modal#worker-modal #modal-total-hours::before,
-#worker-modal#worker-modal #modal-total-hours::after { color: rgba(11, 29, 54, .72) !important; -webkit-text-fill-color: rgba(11, 29, 54, .72) !important; font-family: var(--pp-font) !important; font-weight: 500 !important; letter-spacing: .04em !important; }
-#worker-modal#worker-modal .modal-close {
-  border: 0 !important;
-  border-radius: 20px !important;
-  background: var(--pp-c3) !important;
   color: var(--pp-on) !important;
+  font-size: 30px !important;
+  line-height: 1.05 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}/* the same big tinted close as every window (colleagues who do not see well must find it); round here, as the
+   header also holds the name, the tabs and the month's hours */
+#worker-modal#worker-modal .modal-close {
+  display: grid !important; place-items: center !important;
+  width: 56px !important; height: 56px !important; padding: 0 !important;
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: #a8dcc1 !important;
+  color: #0f2b20 !important;
   box-shadow: none !important;
+  font: 700 20px/1 var(--pp-font) !important;
   transition: border-radius 350ms var(--pp-spring), background-color 150ms var(--pp-effects) !important;
 }
-#worker-modal#worker-modal .modal-close:hover { background: var(--pp-c4) !important; }
-#worker-modal#worker-modal .modal-close:active { border-radius: 12px !important; }
+#worker-modal#worker-modal .modal-close > * { color: #0f2b20 !important; -webkit-text-fill-color: #0f2b20 !important; }
+#worker-modal#worker-modal .modal-close .material-icons-round { font-size: 32px !important; }
+#worker-modal#worker-modal .modal-close:hover { background: #bfe8d2 !important; }
+#worker-modal#worker-modal .modal-close:active { border-radius: 18px !important; }
 
 /* Galvenās cilnes (Nogurums / Kalendārs / Emoji / Izskats) */
 #worker-modal#worker-modal .view-toggle { gap: 6px !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
@@ -731,7 +734,7 @@
   --pp-on-primary-c:color-mix(in oklab,var(--emo-seed) 30%,#080b10);
 }
 #worker-modal#worker-modal.mk-emoji-mode {transition:background-color .55s var(--pp-effects) !important;}
-#worker-modal#worker-modal.mk-emoji-mode :is(.mkp-tabs,.mkp-tab-pill,.mkp-search,.mkp-btn,.view-toggle,.modal-close,#modal-total-hours) {transition:background-color .55s var(--pp-effects),color .3s var(--pp-effects),border-radius .35s var(--pp-spring) !important;}
+#worker-modal#worker-modal.mk-emoji-mode :is(.mkp-tabs,.mkp-tab-pill,.mkp-search,.mkp-btn,.view-toggle,.modal-close) {transition:background-color .55s var(--pp-effects),color .3s var(--pp-effects),border-radius .35s var(--pp-spring) !important;}
 @media (prefers-reduced-motion: reduce) { #worker-modal#worker-modal.mk-emoji-mode, #worker-modal#worker-modal.mk-emoji-mode * {transition:none !important;} }
 /* Emoji tab: Izmērs kartītē, a connected button group in the footer's middle */
 #worker-modal#worker-modal .mkp-size {display:flex;align-items:center;justify-content:center;gap:2px;}

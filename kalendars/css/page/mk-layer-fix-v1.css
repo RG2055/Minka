@@ -6538,29 +6538,7 @@ html.has-wallpaper-bg #radiologists-duty .mk-side-card {
   margin-top: 3px !important;
   color: rgba(255,255,255,.82) !important;
   font: 750 17px/1.05 Inter, system-ui, sans-serif !important;
-}
-#worker-modal #modal-total-hours {
-  display: inline-flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 2px !important;
-  margin-left: 0 !important;
-  padding: 7px 12px !important;
-  min-width: 68px !important;
-  border-radius: 12px !important;
-  background: rgba(52,211,153,.08) !important;
-  border: 1px solid rgba(52,211,153,.32) !important;
-  color: #34d399 !important;
-  font: 900 17px/1 Inter, system-ui, sans-serif !important;
-  font-variant-numeric: tabular-nums !important;
-}
-#worker-modal #modal-total-hours::after {
-  content: "MĒNESĪ";
-  color: rgba(255,255,255,.46);
-  font: 800 9px/1 Inter, system-ui, sans-serif;
-  letter-spacing: .14em;
-}
-#worker-modal .modal-close {
+}#worker-modal .modal-close {
   width: 38px !important;
   height: 38px !important;
   border-radius: 50% !important;

@@ -21,9 +21,7 @@
 }
 #worker-modal.mk-fatigue-mode .modal-header h2 { font-size:21px !important; font-weight:650 !important; }
 #worker-modal.mk-fatigue-mode .modal-surname-line { font-size:12px !important; font-weight:500 !important; color:#b6c4ca !important; }
-#worker-modal.mk-fatigue-mode .modal-avatar { font-size:32px !important; min-width:48px !important; color:#d2e9e04a !important; }
-#worker-modal.mk-fatigue-mode #modal-total-hours { background:#b0d8c80a !important; border-color:#b0d8c824 !important; padding:5px 12px !important; border-radius:12px !important; }
-#worker-modal.mk-fatigue-mode .modal-close { background:#d9eeee0c !important; border:1px solid #d9eeee20 !important; box-shadow:none !important; }
+#worker-modal.mk-fatigue-mode .modal-avatar { font-size:32px !important; min-width:48px !important; color:#d2e9e04a !important; }#worker-modal.mk-fatigue-mode .modal-close { background:#d9eeee0c !important; border:1px solid #d9eeee20 !important; box-shadow:none !important; }
 #worker-modal.mk-fatigue-mode .view-toggle { gap:8px !important; padding:6px 20px 0 !important; }
 #worker-modal.mk-fatigue-mode .toggle-btn { border-radius:9px !important; font-size:13px !important; font-weight:600 !important; }
 #worker-modal.mk-fatigue-mode .toggle-btn.active { background:#b2e1d312 !important; border-color:#b2e1d338 !important; }

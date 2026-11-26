@@ -6206,6 +6206,8 @@ function filterFullList(btn) {
   let coffeeStorageRefresh = 0;
   let coffeeStorageListening = false;
 
+  // the shown day drawn again through RG Engine (a card whose look changed is replaced by its fresh build)
+  window.mkRedrawDay = () => { try { g_updateList(); } catch (_e) {} };
   let g_rosterWidth = null, g_rosterWidthObs = null, g_rosterWidthEl = null;
   function g_updateList() {
     const container = document.getElementById('grafiks-list');
@@ -8539,12 +8541,31 @@ let modalWorkerDates = [];
 let modalListReady = false, modalCalendarReady = false;
 let workerModalCloseTimer;
 
+// The window's tab styles (css/page/mk-worker-modal-tabs.css, ~100 KB) are not part of the page's start: they load
+// while the page is idle, or here at the first open, which then waits for them (at most 1.5 s) so the window never
+// shows half-dressed.
+let wmCssP = null, wmCssReady = false;
+function wmCss() {
+  if (wmCssP) return wmCssP;
+  wmCssP = new Promise(resolve => {
+    const done = () => { wmCssReady = true; resolve(); };
+    const base = document.getElementById('mk-worker-modal-m3'), l = document.createElement('link');
+    l.rel = 'stylesheet'; l.id = 'mk-worker-modal-tabs'; l.href = 'css/page/mk-worker-modal-tabs.css?v=20261127wm53';
+    l.onload = done; l.onerror = done;
+    if (base) base.insertAdjacentElement('afterend', l); else document.head.append(l);
+    setTimeout(done, 1500);
+  });
+  return wmCssP;
+}
+setTimeout(() => (window.requestIdleCallback || setTimeout)(wmCss, { timeout: 6000 }), 2500);
 function showWorkerSchedule(workerName, currentShift, opts) {
+  if (!wmCssReady) { wmCss().then(() => showWorkerSchedule(workerName, currentShift, opts)); return; }
   // The fatigue curve opens on the month, or on the shift day when the
   // window was opened from a side card's fatigue (see below).
   try { if (window.__fatigue && window.__fatigue.setCurveRange) window.__fatigue.setCurveRange(opts && opts.fatigueRange || 'month'); } catch (_e) {}
   clearTimeout(workerModalCloseTimer);
   window.__wmWorkerName = String(workerName || '').trim();
+  wmAbsLoad();   // the absences come with the window, so the calendar tab draws them at once (no second paint)
   if (window.MinkaCardLock) { window.MinkaCardLock.sync(); window.MinkaCardLock.load(); }
   const stores = [window.__grafiksStore || {}, window.__grafiksStoreRad || {}];
   let allDates = [];
@@ -8614,7 +8635,16 @@ function showWorkerSchedule(workerName, currentShift, opts) {
   const initials = ((firstName[0] || '') + (surname[0] || '')).toUpperCase();
   if (avatarEl) avatarEl.textContent = initials || '??';
   if (surnameLine) surnameLine.textContent = surname || '';
-
+  // a long name gets a smaller font, never "…" (measured once the window has its size)
+  const fitName = () => {
+    for (const [el, from, to] of [[document.getElementById('modal-worker-name'), 30, 20], [document.getElementById('modal-surname-line'), 30, 20]]) {
+      if (!el) continue;
+      el.style.removeProperty('font-size');
+      for (let px = from; px > to && el.scrollWidth > el.clientWidth + 1; px -= 1) el.style.setProperty('font-size', px - 1 + 'px', 'important');
+    }
+  };
+  requestAnimationFrame(() => requestAnimationFrame(fitName));
+  setTimeout(fitName, 400);   // again once the fonts have their size
   modalListReady = false;
   modalCalendarReady = false;
 
@@ -8641,19 +8671,7 @@ function showWorkerSchedule(workerName, currentShift, opts) {
   // geometry is inline !important because the tab modes used to carry their
   // own sizes (fatigue: 980px wide at top 12px) and the window jumped.
   // Phones keep their bottom-sheet layout from CSS.
-  const wmDesktop = !document.documentElement.classList.contains('mk-mobile-shell');
-  const mw = Math.min(980, window.innerWidth * 0.96);
-  const mh = Math.min(window.innerHeight - 24, 780);
-  const cx = Math.round((window.innerWidth  - mw) / 2);
-  const cy = Math.round((window.innerHeight - mh) / 2);
-  const wmPin = (prop, value) => wmDesktop ? modal.style.setProperty(prop, value, 'important') : (modal.style[prop] = value);
-  wmPin('width', mw + 'px');
-  wmPin('left', cx + 'px');
-  wmPin('top', cy + 'px');
-  wmPin('max-height', mh + 'px');
-  if (wmDesktop) wmPin('height', mh + 'px');
-  // Position once; fade without scaling the entire text-heavy sheet.
-  wmPin('transform', 'none');
+  wmPlace(modal);
   wmTabIndex = -1;
   showModalView(opts && (opts.view === 'calendar' || opts.view === 'emoji' || opts.view === 'skin') ? opts.view : 'fatigue');
 
@@ -8733,6 +8751,35 @@ function renderModalList() {
   modalListReady = true;
 }
 
+// The worker window's size from the window's (also again when the window changes size, e.g. a Mac full screen, so the
+// card never keeps the size it opened with). Position once; fade without scaling the text-heavy sheet.
+function wmPlace(modal) {
+  const wmDesktop = !document.documentElement.classList.contains('mk-mobile-shell');
+  const mw = wmWidthFor(modal.classList.contains('mk-skin-mode') ? 'skin' : '');   // the open tab's width (Izskats is wider)
+  const mh = Math.min(window.innerHeight - 24, 1040);   // as tall as the screen allows: the energy line gets the room
+  const wmPin = (prop, value) => wmDesktop ? modal.style.setProperty(prop, value, 'important') : (modal.style[prop] = value);
+  wmPin('width', mw + 'px');
+  wmPin('left', Math.round((window.innerWidth - mw) / 2) + 'px');
+  wmPin('top', Math.round((window.innerHeight - mh) / 2) + 'px');
+  wmPin('max-height', mh + 'px');
+  if (wmDesktop) wmPin('height', mh + 'px');
+  wmPin('transform', 'none');
+}
+window.addEventListener('resize', () => {
+  const modal = document.getElementById('worker-modal');
+  if (modal && modal.open) wmPlace(modal);
+});
+// The energy tab's three tiles (fatigue.js draws them in its view) live inside the green summary's empty corner,
+// whichever of the two is drawn last.
+function wmDockTiles(kept) {
+  const slot = document.querySelector('#wm-summary .db-ph-slot');
+  const tiles = document.querySelector('#modal-fatigue-view .fe-tiles') || kept;
+  if (slot && tiles && tiles.parentNode !== slot) slot.replaceChildren(tiles);
+}
+(function () {
+  const view = document.getElementById('modal-fatigue-view');
+  if (view) new MutationObserver(() => wmDockTiles()).observe(view, { childList: true });
+})();
 function updateModalTotalHours() {
   const total = modalWorkerDates
     .filter(d => {
@@ -8748,7 +8795,15 @@ function updateModalTotalHours() {
       }
       return acc;
     }, 0);
-  document.getElementById('modal-total-hours').innerText = `${total}h`;
+  // the month's green summary (the statistics' own, drawn once its script is in); a later month or person wins
+  const host = document.getElementById('wm-summary');
+  if (host && window.MinkaDaybook && window.MinkaDaybook.personHero) {
+    const month = modalCurrentYear + '-' + String(modalCurrentMonth + 1).padStart(2, '0'), ask = window.__wmWorkerName + '|' + month + '|' + total;
+    host.dataset.ask = ask;
+    window.MinkaDaybook.personHero(window.__wmWorkerName, month, { energy: false, hours: total, slot: true })
+      .then(html => { if (host.dataset.ask !== ask) return; const tiles = host.querySelector('.fe-tiles'); host.innerHTML = html || ''; wmDockTiles(tiles); })
+      .catch(() => { if (host.dataset.ask === ask) host.innerHTML = ''; });
+  }
 
   // Norm / overtime strip for the displayed month
   const row = document.getElementById('wm-norm-row');
@@ -8756,12 +8811,16 @@ function updateModalTotalHours() {
     const norm = MinkaLvHolidays.workHours(modalCurrentYear, modalCurrentMonth);
     const diff = total - norm;
     let ot;
-    if (diff > 0) ot = '<span class="ot plus">Virsstundas<b>+' + diff + 'h</b></span>';
-    else if (diff === 0) ot = '<span class="ot zero">Normā<b>±0h</b></span>';
-    else ot = '<span class="ot minus">Līdz normai<b>' + diff + 'h</b></span>';
+    if (diff > 0) ot = '<span class="ot plus"><b>+' + diff + ' h</b>virsstundas</span>';
+    else if (diff === 0) ot = '<span class="ot zero"><b>±0 h</b>normā</span>';
+    else ot = '<span class="ot minus"><b>−' + Math.abs(diff) + ' h</b>līdz normai</span>';
+    // the bar to the norm: worked hours up to it, the overtime after it, one track with round outer ends
+    const top = Math.max(total, norm) || 1;
+    const bar = '<span class="wm-norm-bar' + (diff > 0 ? ' has-over' : '') + '" aria-hidden="true"><i style="width:' + (Math.min(total, norm) / top * 100).toFixed(1) + '%"></i>'
+      + (diff > 0 ? '<i class="is-over" style="width:' + (diff / top * 100).toFixed(1) + '%"></i>' : '') + '</span>';
     row.innerHTML =
-      '<span>Norma<b>' + norm + 'h</b></span>' +
-      '<span>Nostrādāts<b>' + total + 'h</b></span>' + ot;
+      '<span>Norma<b>' + norm + ' h</b></span>' +
+      '<span>Nostrādāts<b>' + total + ' h</b></span>' + ot + bar;
   }
 }
 
@@ -8825,7 +8884,7 @@ function wmPeopleRows(list) {
   return [...groups.values()]
     .sort((a, b) => (order[a[0].kind] - order[b[0].kind]) || (b[0].hrs - a[0].hrs))
     .map(g => '<li class="wm-sd-row is-' + g[0].kind + '">'
-      + '<span class="wm-sd-h is-' + g[0].kind + '" title="' + WM_KIND_LABEL[g[0].kind] + '">' + (g[0].hrs ? g[0].hrs + 'h' : '') + '</span>'
+      + '<span class="wm-sd-h is-' + g[0].kind + '" title="' + WM_KIND_LABEL[g[0].kind] + '">' + (g[0].hrs ? g[0].hrs + ' h' : '') + '</span>'
       + '<span class="wm-sd-names">' + g.map(p => {
         const first = wmEsc(wmTitleCase(p.name).split(/\s+/)[0]);
         return '<span title="' + wmEsc(wmTitleCase(p.name)) + '">' + (p.me ? '<b>' + first + '</b>' : first) + '</span>';
@@ -8849,8 +8908,8 @@ function wmDayCard(year, month, dd, item, me, todayMid) {
     + '<header class="wm-sd-head">'
     + '<span class="wm-sd-num">' + dd + '</span>'
     + '<span class="wm-sd-meta"><span class="wm-sd-wd">' + (when === ' is-today' ? 'Šodien' : WM_WEEKDAYS[at.getDay()]) + '</span>'
-    + '<span class="wm-sd-kind">' + (item ? WM_KIND_LABEL[kind] + (time ? ' <span class="wm-sd-time">' + wmEsc(time) + '</span>' : '') : 'Brīva diena') + '</span></span>'
-    + (hrs ? '<span class="wm-sd-hrs">' + hrs + 'h</span>' : '')
+    + '<span class="wm-sd-kind">' + (item ? WM_KIND_LABEL[kind] + (time ? ' <span class="wm-sd-time">' + wmEsc(time) + '</span>' : '') : 'Brīvdiena') + '</span></span>'
+    + (hrs ? '<span class="wm-sd-hrs">' + hrs + ' h</span>' : '')
     + '</header>'
     + (team || '<p class="wm-sd-none">Nav datu par šo dienu.</p>')
     + '</article>';
@@ -8893,15 +8952,18 @@ function renderModalCalendar() {
     const kind = item ? wmShiftKind(item) : '';
     const hrs = item ? parseFloat(String(item.shift || '').replace(',', '.')) || 0 : 0;
     const time = item && item.startTime && item.endTime ? item.startTime + '–' + item.endTime : '';
-    html += '<button type="button" class="wm-cd' + (item ? ' is-shift is-' + kind : ' is-off') + when + '" data-day="' + dd + '">'
+    html += '<button type="button" class="wm-cd' + (item ? ' is-shift is-' + kind + (hrs ? ' is-h' + Math.round(hrs) : '') : ' is-off') + when + '" data-day="' + dd + '">'
       + '<span class="wm-cd-num">' + dd + '</span>'
-      + (item ? '<span class="wm-cd-shift">' + (hrs ? '<b>' + hrs + 'h</b>' : '') + '<span>' + wmEsc(time || WM_KIND_LABEL[kind]) + '</span></span>' : '')
+      + (item ? '<span class="wm-cd-shift">' + (hrs ? '<b>' + hrs + ' h</b>' : '') + '<span>' + wmEsc(time || WM_KIND_LABEL[kind]) + '</span></span>' : '')
       + '</button>';
     if (item) html += wmDayCard(year, month, dd, item, me, todayMid);
   }
   if (!byDate.size) html += '<p class="wm-sd-empty">Šajā mēnesī maiņu nav.</p>';
   box.innerHTML = html;
+  box.style.setProperty('--wk', Math.ceil((lead + total) / 7));   // week rows: the days' sizes follow one row's height
+  wmPaintAbsences();
   wmCalPick(wmCalDay);
+  wmAbsLoad();
   if (!box.dataset.pickBound) {
     box.dataset.pickBound = '1';
     box.addEventListener('click', e => {
@@ -8925,6 +8987,83 @@ function wmCalPick(dd) {
     return d0 === dd && m0 - 1 === modalCurrentMonth && y0 === modalCurrentYear;
   });
   side.innerHTML = wmDayCard(modalCurrentYear, modalCurrentMonth, dd, item, String(window.__wmWorkerName || '').trim().toLowerCase(), todayMid);
+  const away = wmAwayOn(dd);
+  const head = side.querySelector('.wm-sd-head');
+  if (away && !item) { const k = side.querySelector('.wm-sd-kind'); if (k) k.textContent = 'Nav maiņas'; }
+  if (away && head) head.insertAdjacentHTML('afterend', '<p class="wm-sd-away is-' + away.group + '">' + wmEsc(away.label) + '<span>' + wmEsc(wmAwayRange(away)) + (away.plan ? ' (plāns)' : '') + '</span></p>');
+  wmAbsButton();
+}
+
+// This person's absences (leave, sick, working elsewhere ...) from the absences sheet (monthcal.js personAbsences):
+// the days are marked on the month, the picked day says it, and a button lists every range.
+let wmAbs = { who: null, list: [] };
+const WM_AWAY_ICON = { leave: 'beach_access', sick: 'sick', away: 'work_outline', unavailable: 'block', other: 'event_busy' };
+const WM_MON = ['janv.', 'febr.', 'marts', 'apr.', 'maijs', 'jūn.', 'jūl.', 'aug.', 'sept.', 'okt.', 'nov.', 'dec.'];
+const wmDnum = s => { const p = String(s).split('.').map(Number); return Date.UTC(p[2], p[1] - 1, p[0]) / 864e5; };
+function wmAwayOn(dd) {
+  const t = Date.UTC(modalCurrentYear, modalCurrentMonth, dd) / 864e5;
+  return wmAbs.who === window.__wmWorkerName ? wmAbs.list.find(a => wmDnum(a.from) <= t && t <= wmDnum(a.to)) : null;
+}
+function wmAwayRange(a) {
+  const [d1, m1, y1] = a.from.split('.').map(Number), [d2, m2, y2] = a.to.split('.').map(Number);
+  if (a.from === a.to) return d1 + '. ' + WM_MON[m1 - 1] + ' ' + y1;
+  if (m1 === m2 && y1 === y2) return d1 + '.–' + d2 + '. ' + WM_MON[m1 - 1] + ' ' + y1;
+  return d1 + '. ' + WM_MON[m1 - 1] + (y1 !== y2 ? ' ' + y1 : '') + ' – ' + d2 + '. ' + WM_MON[m2 - 1] + ' ' + y2;
+}
+function wmPaintAbsences() {
+  const box = document.getElementById('modal-calendar-days');
+  if (!box) return;
+  box.querySelectorAll('.wm-cd[data-day]').forEach(cell => {
+    const a = wmAwayOn(Number(cell.dataset.day)), want = a ? 'is-away-' + a.group : '';
+    if (cell.dataset.away === want) return;   // nothing changed: no repaint
+    cell.dataset.away = want;
+    cell.querySelector('.wm-cd-away')?.remove();
+    cell.className = cell.className.replace(/ is-away(-\w+)?/g, '');
+    cell.removeAttribute('title');
+    if (!a) return;
+    cell.classList.add('is-away', want);
+    cell.title = a.label;
+    cell.insertAdjacentHTML('beforeend', '<span class="wm-cd-away"><i class="material-icons-round" aria-hidden="true">' + (WM_AWAY_ICON[a.group] || 'event_busy') + '</i>' + wmEsc(a.label) + '</span>');
+  });
+}
+function wmAbsLoad() {
+  const who = window.__wmWorkerName;
+  if (wmAbs.who === who) return;   // the day panel already drew its button
+  const api = window.MinkaMonthCal && window.MinkaMonthCal.personAbsences;
+  if (!api) return;
+  api(who).then(list => {
+    if (who !== window.__wmWorkerName) return;
+    wmAbs = { who, list: list || [] };
+    if (!document.getElementById('modal-calendar-view')?.classList.contains('show') || !wmAbs.list.length) return;
+    wmPaintAbsences();
+    wmCalPick(wmCalDay);
+  }).catch(() => {});
+}
+// the button sits at the foot of the day panel (redrawn with it), only for a person with absences
+function wmAbsButton() {
+  const side = document.querySelector('#modal-calendar-side .wm-sd'), pop = document.getElementById('wm-away-pop');
+  if (!side || !pop) return;
+  const list = wmAbs.who === window.__wmWorkerName ? wmAbs.list : [];
+  if (!list.length) return;
+  const label = list.some(a => a.group === 'leave') ? 'Atvaļinājumi' : 'Prombūtnes';
+  side.insertAdjacentHTML('beforeend', '<button type="button" class="wm-away-btn" popovertarget="wm-away-pop"><span class="material-icons-round" aria-hidden="true">beach_access</span>' + label + '<span class="wm-away-n">' + list.length + '</span></button>');
+  const today = Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) / 864e5;
+  pop.innerHTML = '<h3>' + wmEsc(String(window.__wmWorkerName || '')) + '</h3><ul>' + list.map(a => {
+    const [, m, y] = a.from.split('.').map(Number);
+    return '<li><button type="button" class="is-' + a.group + (wmDnum(a.to) < today ? ' is-past' : '') + '" data-wm-away="' + y + '-' + (m - 1) + '-' + a.from.split('.')[0] * 1 + '"><b>' + wmEsc(a.label) + '</b><span>' + wmEsc(wmAwayRange(a)) + (a.plan ? ' (plāns)' : '') + '</span></button></li>';
+  }).join('') + '</ul>';
+  if (!pop.dataset.bound) {
+    pop.dataset.bound = '1';
+    pop.addEventListener('click', e => {
+      const b = e.target.closest('[data-wm-away]');
+      if (!b) return;
+      const [y, m, d] = b.dataset.wmAway.split('-').map(Number);
+      modalCurrentYear = y; modalCurrentMonth = m;
+      pop.hidePopover();
+      renderModalCalendar();
+      wmCalPick(d);   // the range's first day, picked
+    });
+  }
 }
 
 function modalCalendarMonth(delta) {

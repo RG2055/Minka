@@ -672,11 +672,13 @@ html.mk-cl-center-on body #grafiks-app #grafiks-list .card.rg-feedback-card { vi
 .pc98-embed .sw-hud .sw-side > * { pointer-events: auto; position: relative; margin: 0; min-width: 0; min-height: 0; align-self: center; }
 .pc98-embed .sw-hud :is(.sw-title, .sw-path, .sw-rank, .sw-top, .sw-streak, .pc98-stars b, .sw-prog span small, .sw-moves small) { display: none !important; }
 /* places: corners */
-.pc98-embed .sw-hud.sw-hud-in .sw-moves { grid-area: 1 / 1 / 2 / 3; justify-self: start; align-self: start; margin-top: 2px; width: 34px; height: 34px; }
-.pc98-embed .sw-hud.sw-hud-in .sw-moves svg { width: 34px; height: 34px; }
-.pc98-embed .sw-hud.sw-hud-in .sw-moves b { font-size: 14px; line-height: 20px; }
-.pc98-embed .sw-hud.sw-hud-in .sw-side .sw-lvpill { grid-area: 1 / 1 / 2 / 3; justify-self: start; align-self: end; display: flex; align-items: baseline; gap: 4px; padding: 0 0 2px; }
-.pc98-embed .sw-hud.sw-hud-in .sw-lvpill :is(small, b) { line-height: 16px; }   /* under the ring, one small line, clear of the board */
+.pc98-embed .sw-hud.sw-hud-in .sw-moves { grid-area: 1 / 1 / 2 / 3; justify-self: start; align-self: center; width: 30px; height: 30px; }
+.pc98-embed .sw-hud.sw-hud-in .sw-moves svg { width: 30px; height: 30px; }
+.pc98-embed .sw-hud.sw-hud-in .sw-moves b { font-size: 13px; line-height: 16px; }
+/* the corner is two cells wide and one high: the level beside the ring in two short lines, never under it */
+.pc98-embed .sw-hud.sw-hud-in .sw-side .sw-lvpill { grid-area: 1 / 1 / 2 / 3; justify-self: start; align-self: center; display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin-left: 34px; padding: 0; }
+.pc98-embed .sw-hud.sw-hud-in .sw-lvpill small { font-size: 10px; line-height: 12px; }
+.pc98-embed .sw-hud.sw-hud-in .sw-lvpill b { font-size: 14px; line-height: 16px; }
 .pc98-embed .sw-hud-in .sw-goals { grid-area: 1 / -3 / 2 / -1; justify-self: end; }
 .pc98-embed .sw-hud-in .sw-prog { grid-area: -2 / 1 / -1 / 3; justify-self: stretch; padding: 0 8px; }
 .pc98-embed .sw-hud-in .sw-btns { grid-area: -2 / -3 / -1 / -1; justify-self: end; }

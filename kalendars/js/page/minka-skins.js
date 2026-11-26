@@ -939,9 +939,19 @@ function normName(n) {
     if (skin.t === 'grad' && skin.id && GRAD_MAP[skin.id]) return { css: GRAD_MAP[skin.id] };
     return null;
   };
+  function skinSig(skin) {
+    if (!skin) return '0';
+    var str = JSON.stringify(skin), h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(36);
+  }
   window.mkApplySkinToEl = function(el, skin) {
     if (window.MINKA_APP === 'rad') skin = radUndither(skin);
     if (el.classList.contains('mk-next-person')) { applyNextShiftSkin(el, skin); return; }
+    // The look this card now wears, as one short signature: RG Engine keeps a card across a day switch only while
+    // the page's card, the last build and the new build carry the same one; else the card is replaced by its fresh
+    // build, so no class, property, face layer or observer of an earlier look survives (js/rg-engine.js).
+    el.setAttribute('data-skin-sig', skinSig(skin));
     if (window.nsApplyWorkerColour) window.nsApplyWorkerColour(el, skin);
     var numEl = el.querySelector('.mk-mid-hours.card-shift') || el.querySelector('.pv-num') || el.querySelector('.nsc-full-dur');
     if (numEl) { numEl.style.removeProperty('color'); numEl.style.removeProperty('-webkit-text-fill-color'); }
@@ -1284,14 +1294,21 @@ function normName(n) {
   /* One or two fields of a person's look changed outside the editor (the Nakts
      bed picker): merged into the saved look, synced, and every card and bed of
      that person repainted. A null value removes the field. */
+  var patchRedraw = 0;
   window.mkPatchWorkerSkin = function(name, patch, wait) {   // wait: ms before it is sent (800: a run of changes is one save; the fatigue correction asks for 1)
     var cur = window.mkGetWorkerSkin(name), next = cur ? JSON.parse(JSON.stringify(cur)) : {};
     Object.keys(patch || {}).forEach(function(k) { if (patch[k] == null || patch[k] === '') delete next[k]; else next[k] = patch[k]; });
     setSkin(name, hasAny(next) ? next : null, wait || 800);
     var k2 = normName(name);
+    var inList = false;
     document.querySelectorAll('#grafiks-list .card[data-worker], #nsPanel .ns-room-bed[data-worker], #nsPanel .nsc-full-card[data-worker]').forEach(function(c) {
-      if (normName(c.getAttribute('data-worker')) === k2) window.mkApplySkinToEl(c, hasAny(next) ? next : null);
+      if (normName(c.getAttribute('data-worker')) !== k2) return;
+      window.mkApplySkinToEl(c, hasAny(next) ? next : null);
+      if (c.closest('#grafiks-list')) inList = true;
     });
+    // The change shows at once on the card itself; once the changes pause, the day is drawn again, and RG Engine
+    // replaces that card by its fresh build (its signature changed), so nothing of the earlier look stays on it.
+    if (inList && window.mkRedrawDay) { clearTimeout(patchRedraw); patchRedraw = setTimeout(window.mkRedrawDay, 200); }
     return next;
   };
   window.mkSyncWorkerAppearance = function(name, debounceCloud) {

@@ -53,19 +53,7 @@ html body #worker-modal#worker-modal .modal-header {
   padding: 16px 24px 12px !important;
   gap: 16px !important;
 }
-html body #worker-modal#worker-modal .modal-header h2 { line-height: 22px !important; }
-html body #worker-modal#worker-modal #modal-total-hours {
-  box-sizing: border-box !important;
-  min-width: 68px !important;
-  height: 40px !important;
-  padding: 0 12px !important;
-  display: inline-flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transform: none !important;          /* mk-skins.css shrank it to .82 in Izskats */
-}
-html body #worker-modal#worker-modal .view-toggle {
+html body #worker-modal#worker-modal .modal-header h2 { line-height: 22px !important; }html body #worker-modal#worker-modal .view-toggle {
   position: relative !important;
   isolation: isolate;
   padding: 4px 20px 8px !important;

@@ -7,6 +7,7 @@
 .fmc-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
 .fmc-z4 { fill: rgba(255, 92, 112, .05); }
 .fmc-z3 { fill: rgba(255, 159, 67, .03); }
+.fmc-z2 { fill: rgba(231, 211, 75, .025); }   /* the middle zone (fatigue.js draws it too now) */
 .fmc-we { fill: rgba(255, 255, 255, .025); }
 .fmc-area { opacity: .1; }
 .fmc-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }

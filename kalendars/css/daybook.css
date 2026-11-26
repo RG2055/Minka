@@ -20,13 +20,10 @@
 .db-monthnav button { width: 32px; height: 32px; border: 0; border-radius: 9px; background: transparent; color: var(--stx-t2); font-size: 20px; line-height: 1; }
 .db-monthnav button:hover { background: var(--stx-hover); color: #fff; }
 .db-chips { display: flex; gap: 5px; }
-.db-chips button, .db-tabs button { padding: 7px 13px; border-radius: 9px; border: 1px solid var(--stx-border-soft); background: var(--stx-card); color: var(--stx-t2); font-size: 12px; font-weight: 700; letter-spacing: .03em; transition: background .12s, color .12s; }
-.db-chips button:hover, .db-tabs button:hover { background: var(--stx-hover); color: #f4f5f7; }
-.db-chips button[aria-pressed="true"], .db-tabs button[aria-pressed="true"] { border-color: rgba(31,224,145,.4); background: rgba(31,224,145,.12); color: #1fe091; }
-.db-personpick { margin-left: auto; }
-.db-personpick select { font: inherit; font-size: 12px; font-weight: 600; color: #f4f5f7; background: var(--stx-card); border: 1px solid var(--stx-border-soft); border-radius: 9px; padding: 7px 10px; min-width: 150px; color-scheme: dark; }
-.db-tabs { display: flex; gap: 5px; flex-wrap: wrap; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--stx-border-soft); }
-.db-tabs button { border-color: transparent; background: transparent; }
+.db-chips button { padding: 7px 13px; border-radius: 9px; border: 1px solid var(--stx-border-soft); background: var(--stx-card); color: var(--stx-t2); font-size: 12px; font-weight: 700; letter-spacing: .03em; transition: background .12s, color .12s; }
+.db-chips button:hover { background: var(--stx-hover); color: #f4f5f7; }
+.db-chips button[aria-pressed="true"] { border-color: rgba(31,224,145,.4); background: rgba(31,224,145,.12); color: #1fe091; }
+.db-search { margin-left: auto; }
 .db-loading { color: #7dd3fc; }
 
 /* Back bar for day / person views */
@@ -189,9 +186,8 @@
   .db-tiles, .db-tiles--5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .db-tiles--3 { grid-template-columns: 1fr 1fr; }
   .db-two { grid-template-columns: 1fr; }
-  .db-personpick { margin-left: 0; width: 100%; }
-  .db-personpick select { width: 100%; }
-  .db-monthnav b { min-width: 120px; font-size: 12px; }
+  .db-search { margin-left: 0; width: 100%; }
+    .db-monthnav b { min-width: 120px; font-size: 12px; }
   .db-people { grid-template-columns: 1fr; }
   .db-coffee-row { flex-wrap: wrap; }
   .db-coffee-name { min-width: 0; flex: 1; }

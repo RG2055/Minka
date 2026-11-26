@@ -122,6 +122,33 @@
       color: level.color,
     };
   }
+  /* The energy view (MkOutline's one switch, on by default): the same model read the other way round, energy =
+     100 - fatigue, with its own words; the colours stay, so green is still good. */
+  const ENERGY_WORD = { low: 'Augsta', mid: 'Vidēja', high: 'Zema', crit: 'Kritiski zema' };
+  function energyOn() { return !window.MkOutline || !window.MkOutline.energyView || window.MkOutline.energyView(); }
+  function shown(score) { return energyOn() ? 100 - score : score; }
+  function shownWord(p) { return energyOn() ? ENERGY_WORD[p.key] : p.label; }
+  /* Material Symbols Rounded (Apache 2.0, fonts.gstatic.com), 0 -960 960 960 box, and an M3 "cookie" shape (n soft
+     waves round a circle, 200 points on a 100 box) for the night parts' numbers. */
+  const FE_ICON = {
+    bolt: 'M360-360H236q-24 0-35.5-21.5T203-423l299-430q10-14 26-19.5t33 .5q17 6 25 21t6 32l-32 259h155q26 0 36.5 23t-6.5 43L416-100q-11 13-27 17t-31-3q-15-7-23.5-21.5T328-139l32-221Z',
+    flag: 'M280-400v240q0 17-11.5 28.5T240-120q-17 0-28.5-11.5T200-160v-600q0-17 11.5-28.5T240-800h287q14 0 25 9t14 23l10 48h184q17 0 28.5 11.5T800-680v320q0 17-11.5 28.5T760-320H553q-14 0-25-9t-14-23l-10-48H280Z',
+    schedule: 'M520-496v-144q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640v159q0 8 3 15.5t9 13.5l132 132q11 11 28 11t28-11q11-11 11-28t-11-28L520-496ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-400Zm0 320q133 0 226.5-93.5T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160Z',
+    work: 'M160-120q-33 0-56.5-23.5T80-200v-440q0-33 23.5-56.5T160-720h160v-80q0-33 23.5-56.5T400-880h160q33 0 56.5 23.5T640-800v80h160q33 0 56.5 23.5T880-640v440q0 33-23.5 56.5T800-120H160Zm0-80h640v-440H160v440Zm240-520h160v-80H400v80ZM160-200v-440 440Z',
+    close: 'M480-424 284-228q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536-480l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480-424Z',
+    check: 'M382-354 721-693q12-12 28-12t28 12q12 12 12 28.5T777-636L410-268q-12 12-28 12t-28-12L182-440q-12-12-11.5-28.5T183-497q12-12 28.5-12t28.5 12l142 143Z',
+    info: 'M508.5-291.5Q520-303 520-320v-160q0-17-11.5-28.5T480-520q-17 0-28.5 11.5T440-480v160q0 17 11.5 28.5T480-280q17 0 28.5-11.5Zm0-320Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z',
+    down: 'M440-313v-447q0-17 11.5-28.5T480-800q17 0 28.5 11.5T520-760v447l196-196q12-12 28-11.5t28 12.5q11 12 11.5 28T772-452L508-188q-6 6-13 8.5t-15 2.5q-8 0-15-2.5t-13-8.5L188-452q-11-11-11-27.5t11-28.5q12-12 28.5-12t28.5 12l195 195Z',
+    bedtime: 'M484-80q-84 0-157.5-32t-128-86.5Q144-253 112-326.5T80-484q0-128 72-232t193-146q22-8 41 5.5t18 36.5q-3 85 27 162t90 137q60 60 137 90t162 27q26-1 38.5 17.5T863-345q-44 120-147.5 192.5T484-80Z',
+  };
+  // "4 h 45 min", "2 h", "45 min": one way of writing a duration in the energy panel
+  function feDur(hours) { const m = Math.max(0, Math.round(hours * 60)), h = Math.floor(m / 60), r = m % 60; return h ? h + ' h' + (r ? ' ' + String(r).padStart(2, '0') + ' min' : '') : r + ' min'; }
+  function feIcon(name) { return '<svg class="fe-ic" viewBox="0 -960 960 960" aria-hidden="true"><path d="' + FE_ICON[name] + '"/></svg>'; }
+  function feCookie(n, a) {
+    let d = '';
+    for (let i = 0; i < 200; i++) { const t = i / 200 * Math.PI * 2, r = 50 * (1 + a * Math.cos(n * t)) / (1 + a); d += (i ? 'L' : 'M') + (50 + r * Math.sin(t)).toFixed(2) + ',' + (50 - r * Math.cos(t)).toFixed(2); }
+    return d + 'Z';
+  }
 
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   //  UTILÄªTAS
@@ -800,7 +827,9 @@
     const S=series.samples.slice(win.i0,win.i1+1),step=series.stepHours*HOUR;
     const wFrom=series.from+win.i0*step,wTo=series.from+win.i1*step,span=wTo-wFrom;
     const pct=t=>(100*(t-wFrom)/span).toFixed(3);
-    const y=v=>(100-v).toFixed(1);
+    // energy: high at the top; 4 % of air above and below, so a line at 0 or 100 is not cut by the plot's edge
+    const EN=energyOn(),P=v=>4+.92*v,flip=v=>P(EN?v:100-v);
+    const y=v=>flip(v).toFixed(1);
     const paths={awake:'',sleep:'',awakeF:'',sleepF:''};let prevKey=null;
     for(let i=0;i<S.length-1;i++){
       const a=S[i],b=S[i+1];
@@ -813,7 +842,7 @@
     let area='';
     S.forEach((v,i)=>{if(v)area+=(area?'L':'M')+i+' '+y(v.score);});
     if(area)area+='L'+(S.length-1)+' 100L'+S.findIndex(Boolean)+' 100Z';
-    let weekends='',ticks='';
+    let weekends='',ticks='',lastTick=-100;
     if(win.range==='day'){
       // every four hours from the shift start: 08, 12, 16, 20, 00, 04, 08
       // (by the wall clock, so a DST night still ends at 08:00)
@@ -824,27 +853,32 @@
         const nx=new Date(d);nx.setDate(nx.getDate()+1);
         const t=+d,dow=d.getDay(),x=(Math.max(t,wFrom)-wFrom)/step,w=(Math.min(+nx,wTo)-Math.max(t,wFrom))/step;
         if((dow===0||dow===6)&&w>0)weekends+=`<rect x="${x}" y="0" width="${w}" height="100" class="fmc-we"/>`;
-        if(t>=wFrom&&(win.range==='week'||dow===1||t===series.from))ticks+=`<span style="left:${pct(t)}%">${d.getDate()}.${d.getMonth()+1}.</span>`;
+        // a mark too close to the one before it (1.11. beside a Monday 2.11.) is left out
+        if(t>=wFrom&&(win.range==='week'||dow===1||t===series.from)&&pct(t)-lastTick>=6&&!(now>wFrom&&now<wTo&&Math.abs(pct(t)-pct(now))<6)){ticks+=`<span style="left:${pct(t)}%">${d.getDate()}.${d.getMonth()+1}.</span>`;lastTick=+pct(t);}
       }
     }
-    const band=(from,to,cls)=>`<rect x="0" y="${100-to}" width="${S.length-1}" height="${to-from}" class="${cls}"/>`;
+    const band=(from,to,cls)=>`<rect x="0" y="${P(EN?from:100-to)}" width="${S.length-1}" height="${(to-from)*.92}" class="${cls}"/>`;
     const lv=FATIGUE_LEVELS;
-    const bands=band(lv[2].max,100,'fmc-z4')+band(lv[1].max,lv[2].max,'fmc-z3');
-    const stops=[[100,lv[3].color],[lv[2].max,lv[3].color],[lv[2].max,lv[2].color],[lv[1].max,lv[2].color],[lv[1].max,lv[1].color],[lv[0].max,lv[1].color],[lv[0].max,lv[0].color],[0,lv[0].color]]
-      .map(([v,c])=>`<stop offset="${100-v}%" stop-color="${c}"/>`).join('');
+    const bands=band(lv[2].max,100,'fmc-z4')+band(lv[1].max,lv[2].max,'fmc-z3')+band(lv[0].max,lv[1].max,'fmc-z2');
+    let stops=[[100,lv[3].color],[lv[2].max,lv[3].color],[lv[2].max,lv[2].color],[lv[1].max,lv[2].color],[lv[1].max,lv[1].color],[lv[0].max,lv[1].color],[lv[0].max,lv[0].color],[0,lv[0].color]]
+      .map(([v,c])=>[flip(v),c]);   // stops must rise: the energy view reads the list backwards
+    if(EN)stops.reverse();
+    stops=stops.map(([o,c])=>`<stop offset="${o}%" stop-color="${c}"/>`).join('');
     const gid='fmcG'+Math.random().toString(36).slice(2,8);
     const sum=monthSummary(win.range==='month'?series:{samples:S,stepHours:series.stepHours,to:wTo},now);
     if(opts.out)opts.out.sum=sum,opts.out.from=wFrom,opts.out.to=wTo,opts.out.range=win.range;
     const inMonth=now>wFrom&&now<wTo;
     const nowMark=inMonth?`<i class="fmc-now" style="left:${pct(now)}%"><b>Tagad</b></i>`:'';
-    const peakMark=sum?.peak?`<i class="fmc-peak" style="left:${pct(sum.peak.t)}%;top:${100-sum.peak.score}%;--c:${getPresentation(sum.peak.score).color}"></i>`:'';
+    const peakMark=sum?.peak?`<i class="fmc-peak" style="left:${pct(sum.peak.t)}%;top:${flip(sum.peak.score)}%;--c:${getPresentation(sum.peak.score).color}"></i>`:'';
     const duties=series.duties.filter(d=>d.end>wFrom&&d.start<wTo).map(d=>{
       const a=Math.max(d.start,wFrom),b=Math.min(d.end,wTo);
       return `<i class="fmc-duty is-${d.kind==='nakts'?'night':d.kind==='diennakts'?'allday':'day'}" style="left:${pct(a)}%;width:${(100*(b-a)/span).toFixed(3)}%"></i>`;
     }).join('');
-    const levelLabels=`<span class="fmc-lvl" style="top:${100-(lv[2].max+100)/2}%">${lv[3].label}</span><span class="fmc-lvl" style="top:${100-(lv[1].max+lv[2].max)/2}%">${lv[2].label}</span><span class="fmc-lvl" style="top:${100-(lv[0].max+lv[1].max)/2}%">${lv[1].label}</span>`;
+    const lvLabel=(l,mid)=>`<span class="fmc-lvl" style="top:${flip(mid)}%">${EN?ENERGY_WORD[l.key]:l.label}</span>`;
+    const levelLabels=lvLabel(lv[3],(lv[2].max+100)/2)+lvLabel(lv[2],(lv[1].max+lv[2].max)/2)+lvLabel(lv[1],(lv[0].max+lv[1].max)/2);
     const data=S.map(v=>v?(v.asleep?'-':'')+v.score:'').join(',');
-    const label=`${workerName}: nogurums ${win.range==='day'?'maiņas dienā':win.range==='week'?'septiņās dienās':month+'. mēnesī'}. Augstā zonā ${sum?.highHours??0} stundas nomodā${sum?.peak?', augstākais '+sum.peak.score+'/100':''}.`;
+    const label=EN?`${workerName}: enerģija ${win.range==='day'?'maiņas dienā':win.range==='week'?'septiņās dienās':month+'. mēnesī'}. Zemā enerģijā ${sum?.highHours??0} stundas nomodā${sum?.peak?', zemākā '+(100-sum.peak.score)+'/100':''}.`
+      :`${workerName}: nogurums ${win.range==='day'?'maiņas dienā':win.range==='week'?'septiņās dienās':month+'. mēnesī'}. Augstā zonā ${sum?.highHours??0} stundas nomodā${sum?.peak?', augstākais '+sum.peak.score+'/100':''}.`;
     return `<figure class="fmc${opts.compact?' is-compact':''} is-${win.range}" data-fmc="${data}" data-fmc-from="${wFrom}" data-fmc-step="${series.stepHours}">
       <div class="fmc-plot" role="img" aria-label="${escapeHtml(label)}">
         <svg viewBox="0 0 ${S.length-1} 100" preserveAspectRatio="none" aria-hidden="true">
@@ -856,7 +890,7 @@
           <path d="${paths.awake}" class="fmc-line" stroke="url(#${gid})"/>
           <path d="${paths.awakeF}" class="fmc-line is-future" stroke="url(#${gid})"/>
         </svg>
-        ${levelLabels}${nowMark}${peakMark}<i class="fmc-cursor" hidden></i><div class="fmc-tip" hidden></div>
+        ${levelLabels}${[0,20,40,60,80,100].map(d=>`<span class="fmc-yv${d%50?' is-minor':''}" style="top:${(4+.92*(100-d)).toFixed(2)}%">${d}</span>`).join('')}${nowMark}${peakMark}<i class="fmc-cursor" hidden></i><div class="fmc-tip" hidden></div>
       </div>
       <div class="fmc-duties" aria-hidden="true">${duties}</div>
       <div class="fmc-x" aria-hidden="true">${ticks}</div>
@@ -881,7 +915,7 @@
       const cursor=plot.querySelector('.fmc-cursor'),tip=plot.querySelector('.fmc-tip');
       cursor.hidden=false;cursor.style.left=left+'%';
       tip.hidden=false;tip.style.left=left+'%';tip.classList.toggle('is-left',left>60);
-      tip.innerHTML=`<small>${d.getDate()}.${d.getMonth()+1}. ${String(d.getHours()).padStart(2,'0')}:00${t>Date.now()?' prognoze':''}</small><b style="color:${p.color}">${score}<span>/100</span></b><small>${p.label}${asleep?', miegā':''}</small>`;
+      tip.innerHTML=`<small>${d.getDate()}.${d.getMonth()+1}. ${String(d.getHours()).padStart(2,'0')}:00${t>Date.now()?' prognoze':''}</small><b style="color:${p.color}">${shown(score)}<span>/100</span></b><small>${shownWord(p)}${asleep?', miegā':''}</small>`;
       plot.classList.add('is-reading');
     };
     document.addEventListener('pointermove',move,{passive:true});
@@ -1402,17 +1436,6 @@
   //  DETAÄ»U PANELIS â€” WHOOP ring header, same rows as before
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-  function createForecastCurve(projection) {
-    if(!projection?.samples?.length)return '';
-    const samples=projection.samples,first=samples[0],last=samples[samples.length-1];
-    const x=t=>26+Math.max(0,Math.min(1,(t-first.time)/Math.max(1,last.time-first.time)))*292;
-    const y=s=>8+(100-s)*0.46;
-    const points=samples.map(s=>`${x(s.time).toFixed(1)},${y(s.score).toFixed(1)}`).join(' ');
-    const clock=t=>new Date(t).toLocaleTimeString('lv-LV',{hour:'2-digit',minute:'2-digit'});
-    const bands=projection.nightBands.map(b=>`<rect x="${x(b.start)}" y="8" width="${x(b.end)-x(b.start)}" height="46" fill="#fbbf24" opacity=".12"/>`).join('');
-    const rest=projection.restBands.map(b=>`<rect x="${x(b.start)}" y="56" width="${x(b.end)-x(b.start)}" height="3" rx="1" fill="#6ee7b7"/>`).join('');
-    return `<figure class="mk-fatigue-curve"><figcaption>Noguruma prognoze</figcaption><svg viewBox="0 0 330 76" role="img" aria-label="Noguruma prognoze: sākumā ${first.score}, beigās ${last.score} no 100. Dzeltenais fons rāda laiku no 02.00 līdz 06.00; zaļie posmi rāda plānoto atpūtu."><line x1="26" x2="318" y1="54" y2="54" stroke="#ffffff30"/>${bands}<text x="1" y="13">100</text><text x="12" y="56">0</text><polyline points="${points}" fill="none" stroke="#80e6f4" stroke-width="2" stroke-linejoin="round"/>${rest}<text x="26" y="72">${clock(first.time)}</text><text x="172" y="72" text-anchor="middle">${clock((first.time+last.time)/2)}</text><text x="318" y="72" text-anchor="end">${clock(last.time)}</text></svg><div class="mk-fatigue-curve-key"><span>▧ 02–06: parasti miegaināks</span>${rest?'<span style="color:#80e6f4">━ Ar plānoto miegu</span>':''}</div></figure>`;
-  }
 
   function createDetailPanel(fatigue) {
     if (!fatigue) {
@@ -1421,24 +1444,14 @@
 
     const f = fatigue;
     const now = new Date();
-    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const okIcon = `<span class="fatigue-ok">${fluentIcon('checkmark')}</span>`;
-    const warnIcon = `<span class="fatigue-warn">${fluentIcon('warning')}</span>`;
-    const rows = [];
     const target=f.selectedShift?.entry||f.currentShift;
     const comparison=target?.date?nightScenarios(f.workerName,target,now):null;
     const projection=comparison?.projection||(target?.date?forecast(f.workerName,target):null);
-    const clockText=t=>{
-      const date=new Date(t);
-      return `${date.getDate()}.${String(date.getMonth()+1).padStart(2,'0')}. ap ${date.toLocaleTimeString('lv-LV',{hour:'2-digit',minute:'2-digit'})}`;
-    };
-    const projectionNotes=[];
-    if(projection?.between){
-      const n=projection.between.nights;
-      projectionNotes.push(`Pirms šīs maiņas grafikā brīvas <b>${formatDuration(projection.between.hours)}</b>. ${n} ${n===1?'naktī':'naktīs'} ir vismaz 7 stundas bez darba starp 22.00 un 08.00. Tas nenozīmē, ka visas šīs stundas nogulētas.`);
-    }
-    if(projection?.hasNightPlan)projectionNotes.push(`Savā nakts daļā lielākais prognozētais nogurums: <b style="color:${getPresentation(projection.ownPeak?.score||0).color}">${projection.ownPeak?.score??'—'}/100</b>${projection.ownPeak?' — '+clockText(projection.ownPeak.time):''}.`);
 
+    const okIcon = `<span class="fatigue-ok">${fluentIcon('checkmark')}</span>`;
+    const warnIcon = `<span class="fatigue-warn">${fluentIcon('warning')}</span>`;
+    const rows = [];
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     // 1. Weekly hours
     const hoursOk = f.weeklyHours < THRESHOLDS.weeklyHoursWarn;
     rows.push(`<div class="fatigue-row">
@@ -1535,8 +1548,6 @@
     }
 
     const assumptions=sleepAssumptions(f.workerName);
-    let usual='';
-    try{const stats=JSON.parse(localStorage.getItem('minkaNightStatsV1')||'{}').data;const counts=stats?.parts?.[f.workerName];if(Array.isArray(counts)){const valid=counts.map(n=>Math.max(0,Number(n)||0)),max=Math.max(...valid);if(max>0){const parts=valid.map((n,i)=>n===max?`${i+1}.`:null).filter(Boolean);usual=`<p>Vēsturē biežāk: <b>${parts.join(' / ')} nakts daļa</b> (${max}×${parts.length>1?' katra':''}).</p>`;}}}catch(_){}
     const current=getPresentation(f.score);
     const ending=projection?getPresentation(projection.endScore):null;
     const shiftEnd=f.currentShiftEnd||f.selectedShift?.end;
@@ -1546,56 +1557,59 @@
       : f.viewMode==='past'&&shiftEnd ? new Date(shiftEnd).toLocaleTimeString('lv-LV',{hour:'2-digit',minute:'2-digit'})
       : f.hoursSinceLastShift>=0 ? formatRemaining(f.hoursSinceLastShift) : '—';
     const timeLabel=f.viewMode==='future'?'Maiņa sāksies pēc':f.viewMode==='today'&&f.onDuty?'Līdz maiņas beigām':f.viewMode==='past'?'Maiņas beigas':'Kopš maiņas beigām';
-    const timeHint=f.viewMode==='future'&&f.selectedShift?formatDateShort(f.selectedShift.entry.dateStr)
-      : shiftEnd&&f.onDuty?`plkst. ${new Date(shiftEnd).toLocaleTimeString('lv-LV',{hour:'2-digit',minute:'2-digit'})}`:'Brīvais laiks pēc grafika';
-    const isNight=target&&(target.isNight||target.hours>=24);
-    const miniFact=(label,value)=>`<div class="fh-rest-fact"><span>${label}</span><b>${value}</b></div>`;
-    let restHtml='';
-    if(projection?.hasNightPlan){
-      restHtml=`<h3>Atpūta naktī <small>Pēc sadalījuma</small></h3><div class="fh-rest-grid">${miniFact('Pirms savas daļas',formatDuration(projection.restBeforeHours))}${miniFact('Pēc savas daļas',formatDuration(projection.restAfterHours))}</div><p>Bez pārtraukuma: <b>${formatDuration(projection.longestRestHours)}</b></p>`;
-    }else if(isNight){
-      restHtml='<h3>Atpūta naktī</h3><p class="fh-rest-missing">Vēl nav ierēķināta</p><p>Nav saglabāts nakts sadalījums. Ar plānotu atpūtu prognoze var mainīties.</p>';
-    }else{
-      restHtml=`<h3>Brīvais laiks pirms maiņas</h3><b class="fh-rest-total">${projection?.between?formatDuration(projection.between.hours):'Nav pietiekamu datu'}</b><p>Laiks starp iepriekšējās maiņas beigām un šīs maiņas sākumu.</p>`;
-    }
     const timeOnly=t=>new Date(t).toLocaleTimeString('lv-LV',{hour:'2-digit',minute:'2-digit'});
+    /* A night part (the user's mockup): its number in its own M3 shape and colour, the work time, the sleep it leaves in big
+       type, the night as one bar (work and sleep) with its hour marks, then the two numbers that matter: at the part's end
+       and at 08:00, in energy or fatigue as the switch says. */
+    const PART_LOOK=[[9,.07,'#a8c8ff'],[8,.1,'#ffc94a'],[4,.18,'#8ee6b8'],[6,.1,'#ffb8c2']];
     const nightCard=o=>{
       const total=(o.sleep||[]).reduce((sum,p)=>sum+p.end-p.start,0)/HOUR;
       const first=comparison.options[0].start,last=comparison.options.at(-1).end;
       const bar=(start,end,kind)=>`<i class="is-${kind}" style="left:${100*(start-first)/(last-first)}%;width:${100*(end-start)/(last-first)}%"></i>`;
       const longest=Math.max(0,...(o.sleep||[]).map(p=>(p.end-p.start)/HOUR));
-      const sleepTimes=(o.sleep||[]).map(p=>`<span>${timeOnly(p.start)}–${timeOnly(p.end)}</span>`).join('');
-      return `<div class="fh-option${o.selected?' is-selected':''}${o.unavailable?' is-unavailable':''}"><div class="fh-option-body"><span class="fh-option-label">${o.part}. nakts daļa <small>${o.selected?'Pašreizējā':''}</small></span><span class="fh-option-time">Darbs ${timeOnly(o.start)}–${timeOnly(o.end)}</span>${o.unavailable?'<strong class="fh-option-past">Jau sākusies</strong></div>':`<div class="fh-sleep-total"><b>${formatRemaining(total).replace(' 00m','')}</b><span>miegam*</span></div><div class="fh-sleep-axis" aria-hidden="true">${bar(o.start,o.end,'work')}${o.sleep.map(p=>bar(p.start,p.end,'sleep')).join('')}</div><div class="fh-sleep-times">${sleepTimes||'<span>Miegs nav paredzēts</span>'}</div>${(o.sleep||[]).length>1?`<span class="fh-sleep-note">2 posmi, garākais ${formatRemaining(longest).replace(' 00m','')}</span>`:''}</div><div class="fh-slot-scores"><small>Nogurums /100</small><span>Daļas beigās <b style="color:${getPresentation(o.endScore).color}">${o.endScore}</b></span><span>Maiņas beigās ${timeOnly(shiftEnd)} <b style="color:${getPresentation(o.shiftEndScore).color}">${o.shiftEndScore}</b></span></div>`}</div>`;
+      const marks=[first,...comparison.options.map(x=>x.end)].map(t=>`<span style="left:${100*(t-first)/(last-first)}%">${timeOnly(t)}</span>`).join('');
+      const look=PART_LOOK[(o.part-1)%PART_LOOK.length];
+      const num=`<span class="fe-part-n" style="--t:${look[2]}"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="${feCookie(look[0],look[1])}"/></svg><b>${o.part}</b></span>`;
+      const head=`<div class="fe-part-head">${num}<div class="fe-part-when"><span class="fe-part-time">${feIcon('work')}${timeOnly(o.start)}–${timeOnly(o.end)}</span></div>${o.selected?'<span class="fe-part-check" title="Pēc plāna" aria-label="Pēc plāna"><svg viewBox="0 -960 960 960"><path d="m382-354 339-339q12-12 28-12t28 12q12 12 12 28.5T777-636L410-268q-12 12-28 12t-28-12L182-440q-12-12-11.5-28.5T183-497q12-12 28.5-12t28.5 12l142 143Z"/></svg></span>':''}</div>`;
+      if(o.unavailable)return `<div class="fe-part is-unavailable">${head}<strong class="fe-part-past">Jau sākusies</strong></div>`;
+      const sleepTimes=(o.sleep||[]).map(p=>`${timeOnly(p.start)}–${timeOnly(p.end)}`).join(' un ');
+      const sc=v=>`<b style="color:${getPresentation(v).color}">${energyOn()?feIcon('bolt'):''}${shown(v)}</b>`;   // the energy sign, as on the side cards
+      return `<div class="fe-part${o.selected?' is-selected':''}">${head}`
+        +`<div class="fe-part-sleep">${feIcon('bedtime')}<b>${feDur(total)}</b><small>miegam*</small></div>`
+        +`<div class="fe-axis" aria-hidden="true"><div class="fe-axis-marks">${marks}</div><div class="fe-axis-bar">${bar(o.start,o.end,'work')}${(o.sleep||[]).map(p=>bar(p.start,p.end,'sleep')).join('')}</div></div>`
+        +`<div class="fe-part-times" title="${(o.sleep||[]).length>1?o.sleep.length+' posmos, garākais '+feDur(longest):''}">${sleepTimes?'Miegs '+sleepTimes:'Miegs nav paredzēts'}</div>`
+        +`<div class="fe-part-scores"><span>Pēc daļas ${sc(o.endScore)}</span><span>Rītā ${timeOnly(shiftEnd)} ${sc(o.shiftEndScore)}</span></div></div>`;
     };
     // With the night parts shown, the footnote joins their note line (one row less).
     const footnote=`Aptuvena prognoze, nevis mērījums.${f.sleepModel.estimatedHistoryNights?' Daļa vēstures aplēsta pēc ieradumiem.':''}`;
-    const comparisonHtml=comparison?`<section class="fh-comparison"><div class="fh-comparison-head"><h3>Kuru nakts daļu strādāt?</h3><div class="fh-sleep-legend"><span class="is-work">Darbs</span><span class="is-sleep">Miegs*</span></div></div><div class="fh-options" style="--fh-parts:${comparison.options.length}">${comparison.options.map(nightCard).join('')}</div><p class="fh-sleep-note">* Atvēlētas ${assumptions.latencyMinutes} min iemigšanai katrā reizē.${comparison.saved?'':' Nesaglabāts plāns.'} ${footnote}</p></section>`:'';
+    const ownPart=comparison?.options.find(o=>o.selected)?.part||null;   // the part this person works tonight
+    const EN=energyOn();
+    const comparisonHtml=comparison?`<section class="fe-parts"><div class="fe-parts-head"><h3>Kuru nakts daļu strādāt?</h3><div class="fe-legend"><span class="is-work">Darbs</span><span class="is-sleep">Miegs*</span></div></div><div class="fe-part-grid" style="--fh-parts:${comparison.options.length}">${comparison.options.map(nightCard).join('')}</div><p class="fe-note">* ${assumptions.latencyMinutes} min iemigšanai.${comparison.saved?'':' Nesaglabāts plāns.'} ${footnote}</p></section>`:'';
     // The person's fatigue on the card's scale (same curve as Statistika):
     // the month, or the shift day / seven days around it (fhMonthHtml).
     const monthHtml=fhMonthHtml(f);
-    const middleHtml=`<section class="fh-middle"><div class="fh-chart">${createForecastCurve(projection)||'<p>Izvēlies maiņu, lai redzētu noguruma prognozi.</p>'}${projection?`<div class="fh-start-score">Sākumā <b style="color:${getPresentation(projection.startScore).color}">${projection.startScore}/100</b><span>Augstākais <b style="color:${getPresentation(projection.peak.score).color}">${projection.peak.score}/100</b> — ${timeOnly(projection.peak.time)}</span></div>`:''}</div><div class="fh-rest">${restHtml}</div></section>`;
-    // SmartCrew-inspired presentation: expose the actual schedule features,
-    // without adding a second heuristic score or arbitrary extra penalties.
-    const drivers=[];
-    const driver=(label,value,tone='neutral')=>`<div class="fh-driver is-${tone}"><span>${label}</span><b>${value}</b></div>`;
-    drivers.push(driver('Darbs pēdējās 7 dienās',formatRemaining(f.weeklyHours).replace(' 00m',''),f.weeklyHours>=THRESHOLDS.weeklyHoursWarn?'load':'neutral'));
-    if(projection?.between)drivers.push(driver('Brīvs pirms šīs maiņas',formatRemaining(projection.between.hours).replace(' 00m',''),projection.between.hours<THRESHOLDS.minRestHours?'load':'rest'));
-    const driversHtml=drivers.slice(0,3).join('');
     return `<div class="fatigue-panel fatigue-tab-panel mk-detail-fatigue fh-health ${f.levelClass}">
-      ${monthHtml}
-      <section class="fh-summary fh-summary--small" aria-label="Svarīgākais par nogurumu">
-        <div class="fh-tile fh-current" style="--fh-color:${current.color}"><span class="fh-eyebrow">${f.viewMode==='today'?'Nogurums tagad':'Maiņas sākumā'}</span><div class="fh-number">${f.score}<small>/100</small></div><strong class="fh-level">${current.label}</strong></div>
-        <div class="fh-tile" style="--fh-color:${ending?.color||'#aeb9c4'}"><span class="fh-eyebrow">Maiņas beigās <small>Prognoze</small></span><div class="fh-number">${ending?.score??'—'}${ending?'<small>/100</small>':''}</div><span class="fh-tile-note">${projection?.hasNightPlan?`Ar nakts sadalījumu${projection.nightParts?` (${projection.nightParts} daļas)`:''}`:target?`${target.hours}h dežūra`:''}</span></div>
-        <div class="fh-tile fh-time" style="--fh-color:#9cceff"><span class="fh-eyebrow">${timeLabel}</span><div class="fh-time-number">${timeValue}</div><span class="fh-tile-note">${timeHint}</span></div>
+      <section class="fe-tiles" aria-label="Svarīgākais">
+        <div class="fe-tile is-now" style="--t:${current.color}">${feIcon('bolt')}<div class="fe-tile-text"><span class="fe-num"><b>${shown(f.score)}</b><small>/100</small></span><span class="fe-sub">${f.viewMode==='today'?'Tagad':'Maiņas sākumā'}</span><em>${shownWord(current)}<span class="fe-em-tail"> ${energyOn()?'enerģija':'nogurums'}</span></em></div></div>
+        <div class="fe-tile is-end" style="--t:${ending?.color||'#aeb9c4'}">${feIcon('flag')}<div class="fe-tile-text"><span class="fe-num"><b>${ending?shown(ending.score):'—'}</b>${ending?'<small>/100</small>':''}</span><span class="fe-sub">Maiņas beigās</span>${ownPart?`<em>Strādā ${ownPart}. no ${comparison.options.length} daļām</em>`:projection?.hasNightPlan&&projection.nightParts?`<em>Nakts dalīta ${projection.nightParts} daļās</em>`:target?`<em>${target.hours} h dežūra</em>`:''}</div></div>
+        <div class="fe-tile is-time">${feIcon('schedule')}<div class="fe-tile-text"><span class="fe-num fe-num--time">${String(timeValue).replace(/^(\d+)h (\d+)m$/,'$1 h $2 min')}</span><span class="fe-sub">${f.viewMode==='today'&&f.onDuty&&shiftEnd?'Līdz '+timeOnly(shiftEnd):timeLabel}</span></div></div>
       </section>
+      ${monthHtml}
       ${comparisonHtml}
 
-      <details class="fh-more"><summary>Grafiks un aprēķins</summary>
-      <div class="fh-switch" role="group" aria-label="Papildu informācija"><button type="button" data-fatigue-section="schedule" aria-pressed="true" aria-controls="fh-schedule">${fluentIcon('calendar_ltr')}<span>Maiņa un atpūta</span></button><button type="button" data-fatigue-section="explanation" aria-pressed="false" aria-controls="fh-explanation">${fluentIcon('info')}<span>Kā aprēķināts?</span></button>${projection?'<button type="button" data-fatigue-section="curve" aria-pressed="false" aria-controls="fh-curve">'+fluentIcon('data_line')+'<span>Līkne un atpūta</span></button>':''}</div>
-      <div id="fh-schedule" data-fatigue-panel="schedule" class="fatigue-details mk-detail-stats fh-facts">${rows.join('')}</div>
-      <div id="fh-explanation" data-fatigue-panel="explanation" class="fh-explanation" hidden><div class="fh-calculation"><h3>Tava slodze un atpūta</h3><div class="fh-drivers">${driversHtml}</div></div><div class="fh-context"><h3>Miegs un dežūras slodze</h3><p>Miegs samazina prognozi. Uzkrātā dežūras slodze mazinās lēnāk un saglabājas arī pēc maiņas.</p><p>Dežūras pēc kārtas uzkrāj atkopšanās parādu. Diennakts pēc vienas brīvas dienas beidzas tuvu kritiskajam līmenim, un arī nākamās dienas paliek smagas.</p><p>Lietotnes hibrīda indekss, nevis izmērīts noguruma procents.</p>${f.sleepModel.recoveryRange&&f.sleepModel.recoveryRange[0]!==f.sleepModel.recoveryRange[1]?`<p>Atkarībā no miega: ${f.sleepModel.recoveryRange.join("–")}/100. Scenāriju robežas, nevis mērījums.</p>`:""}${usual}<details class="fh-model-details"><summary>Par modeli un skalu</summary><button type="button" class="fh-research-button" data-fatigue-compare>Salīdzināt ar 2024. gada modeli</button><p data-fatigue-comparison-output aria-live="polite"></p>${f.sleepModel.estimatedHistoryNights?`<p>${f.sleepModel.estimatedHistoryNights} agrākām naktīm trūkst plāna. Aplēse izmanto daļu biežumu un 00:00–07:20 logu. Šie laiki nav vēsturiski apstiprināti; 3 cilvēkiem pielāgota relatīvā nakts pozīcija. Variantu rezultāti: ${f.sleepModel.historyRange.join('–')}/100, nevis ticamības intervāls.</p>`:''}<p>UMP miega/nomoda prognoze apvienota ar eksperimentālu dežūras slodzes komponenti. Slodzes griesti 50, uzkrāšanās laika konstante 24h, atpūtas dežūrā 48h, ārpus darba pieņemtajā miegā 16h un nomodā 96h. Tās ir pakāpeniskas samazināšanās konstantes, nevis pilnas atkopšanās ilgums. Atkopšanās parāds: katra nakts vai diennakts dežūra atstāj parādu, kas dziest ar laika konstanti 36h (dienas dežūra ceturtdaļu no tā). Parāds, kas paliek pēc apmēram trim brīvām dienām, netiek skaitīts. Lielāks parāds liek jaunajai slodzei augt augstāk un ātrāk, un atpūta darbojas lēnāk. Tas kalibrēts pēc komandas pieredzes (diennakts pēc vienas brīvas dienas ap 90), nevis pēc klīniska pētījuma. Šie svari ir lietotnes pieņēmumi, nevis klīniski validēti koeficienti. 0–100 nav procents vai medicīnisks slieksnis. Netiek noteikts melatonīna daudzums vai pamošanās inerce. Parastās naktīs pieņemta 8h miega iespēja no 23.00. Pēc nakts dežūras salīdzināti trīs varianti: 2h dienā un 6h naktī, 3h un 7h, 4h un 8h. Katrā miegā atvēlētas 15min iemigšanai. Galvenais skaitlis ir šo variantu vidējais. Varianti un vienādie svari ir lietotnes pieņēmumi, nevis izmērītas varbūtības. Dienas miega iespēja sākas stundu pēc darba; darba intervāli tiek izslēgti. Darba laiks ir izslēgts. Faktiskais miegs nav zināms.</p></details></div></div>
-      ${projection?`<div id="fh-curve" data-fatigue-panel="curve" hidden>${middleHtml}</div>`:''}
-      </details>
+      <dialog class="fe-how-dlg" aria-labelledby="fe-how-t">
+        <div class="fe-how-head"><h3 id="fe-how-t">Kā aprēķina ${EN?'enerģiju':'nogurumu'}</h3><button type="button" class="fe-how-x" data-fe-how-close>${feIcon('close')}Aizvērt</button></div>
+        <ol class="fe-how-steps">
+          <li><b>Grafiks:</b> nostrādātās stundas un nakts maiņas pēc kārtas.</li>
+          <li><b>Miegs:</b> 8 h naktī, pēc nakts dežūras miegs dienā.</li>
+          <li><b>Dežūras pēc kārtas</b> nogurdina arvien vairāk.</li>
+          <li><b>${EN?'100 = pilnīgi atpūties, 0 = pilnīgi noguris.':'0 = pilnīgi atpūties, 100 = pilnīgi noguris.'}</b></li>
+        </ol>
+        <div class="fe-how-zones">${(EN?FATIGUE_LEVELS.slice().reverse():FATIGUE_LEVELS).map(l=>{const i=FATIGUE_LEVELS.indexOf(l),lo=i?FATIGUE_LEVELS[i-1].max:0;return `<span style="--t:${l.color}"><b>${EN?ENERGY_WORD[l.key]:l.label}</b>${EN?(100-l.max)+'–'+(100-lo):lo+'–'+l.max}</span>`;}).join('')}</div>
+        <h4>Ko šoreiz ņēma vērā</h4>
+        <div class="fe-how-facts">${rows.join('').replace(/fatigue-row-label">([^<]*)</g,(m,l)=>'fatigue-row-label">'+feShortLabel(l)+'<')}</div>
+        <details class="fh-model-details"><summary>Par modeli un skalu</summary><button type="button" class="fh-research-button" data-fatigue-compare>Salīdzināt ar 2024. gada modeli</button><p data-fatigue-comparison-output aria-live="polite"></p>${f.sleepModel.estimatedHistoryNights?`<p>${f.sleepModel.estimatedHistoryNights} agrākām naktīm trūkst plāna. Aplēse izmanto daļu biežumu un 00:00–07:20 logu. Šie laiki nav vēsturiski apstiprināti; 3 cilvēkiem pielāgota relatīvā nakts pozīcija. Variantu rezultāti: ${f.sleepModel.historyRange.join('–')}/100, nevis ticamības intervāls.</p>`:''}<p>UMP miega/nomoda prognoze apvienota ar eksperimentālu dežūras slodzes komponenti. Slodzes griesti 50, uzkrāšanās laika konstante 24h, atpūtas dežūrā 48h, ārpus darba pieņemtajā miegā 16h un nomodā 96h. Tās ir pakāpeniskas samazināšanās konstantes, nevis pilnas atkopšanās ilgums. Atkopšanās parāds: katra nakts vai diennakts dežūra atstāj parādu, kas dziest ar laika konstanti 36h (dienas dežūra ceturtdaļu no tā). Parāds, kas paliek pēc apmēram trim brīvām dienām, netiek skaitīts. Lielāks parāds liek jaunajai slodzei augt augstāk un ātrāk, un atpūta darbojas lēnāk. Tas kalibrēts pēc komandas pieredzes (diennakts pēc vienas brīvas dienas ap 90), nevis pēc klīniska pētījuma. Šie svari ir lietotnes pieņēmumi, nevis klīniski validēti koeficienti. 0–100 nav procents vai medicīnisks slieksnis. Netiek noteikts melatonīna daudzums vai pamošanās inerce. Parastās naktīs pieņemta 8h miega iespēja no 23.00. Pēc nakts dežūras salīdzināti trīs varianti: 2h dienā un 6h naktī, 3h un 7h, 4h un 8h. Katrā miegā atvēlētas 15min iemigšanai. Galvenais skaitlis ir šo variantu vidējais. Varianti un vienādie svari ir lietotnes pieņēmumi, nevis izmērītas varbūtības. Dienas miega iespēja sākas stundu pēc darba; darba intervāli tiek izslēgti. Darba laiks ir izslēgts. Faktiskais miegs nav zināms.</p></details>
+      </dialog>
       ${comparison?'':`<p class="fh-footnote">${footnote}</p>`}
     </div>`;
   }
@@ -1637,7 +1651,6 @@
      Remembered while the window is open, reset by the next opening. */
   let curveRange='month';
   function setCurveRange(range){curveRange=['day','week','month'].includes(range)?range:'month';}
-  const MONTH_LOC=['janvārī','februārī','martā','aprīlī','maijā','jūnijā','jūlijā','augustā','septembrī','oktobrī','novembrī','decembrī'];
   // The app's one switch motion (MinkaMotion.liquid, as the window's tabs):
   // a pill under the pressed button, its edges on two springs, so it
   // stretches toward the new choice and settles; the curve swaps at once.
@@ -1654,7 +1667,6 @@
   // curve comes in on M3's shared X axis: from the side of the choice made,
   // a short slide and fade (transform + opacity, compositor only), never
   // from nothing.
-  const RANGE_ORDER=['day','week','month'];
   function fhSwitchRange(container,was){
     const section=container.querySelector('.fh-month');
     if(!section)return;
@@ -1663,8 +1675,9 @@
     const fresh=tpl.content.firstElementChild;
     if(!fresh)return;
     const swap=sel=>{const a=section.querySelector(sel),b=fresh.querySelector(sel);if(a&&b)a.replaceWith(b);return b;};
-    swap('.fh-month-head h3');swap('.fh-month-facts');
-    const fig=swap('.fmc');
+    swap('.fe-mh');   // the hidden title's period follows the range
+    swap('.fmc');
+    feTickRoom(container);
     const bar=section.querySelector('.fh-range');
     if(bar){
       bar.querySelectorAll('[data-fmc-range]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fmcRange===curveRange)));
@@ -1672,11 +1685,18 @@
       fhRangePill(bar,bar.querySelector('[data-fmc-range="'+was+'"]'),next,true);
       if(next)next.focus({preventScroll:true});
     }
-    const MM=window.MinkaMotion;
-    if(fig&&MM&&MM.animate){
-      const dir=RANGE_ORDER.indexOf(curveRange)>RANGE_ORDER.indexOf(was)?1:-1;
-      MM.animate(fig,[{opacity:.35,transform:'translateX('+(dir*24)+'px)'},{opacity:1,transform:'none'}],'spatial-default');
-    }
+  }
+  // the schedule facts in the "how" dialog: a few words each, the value says the rest
+  const FE_SHORT=[[/^Darbs pēdējās 7 dienās$/,'darbā 7 dienās'],[/^Maiņas pēdējās 7 dienās$/,'maiņas 7 dienās'],[/^Nakts maiņas pēdējās 7 dienās$/,'naktis 7 dienās'],
+    [/^(Pašlaik darbā|Maiņa šajā datumā) — .*$/,'šī maiņa'],[/^Nākamā pilnā brīvdiena$/,'brīvdiena'],[/^Nākamā maiņa$/,'nākamā maiņa'],
+    [/^Starp maiņām mazāk par 11h$/,'atpūta zem 11 h'],[/^Kopš maiņas beigām$/,'kopš maiņas'],[/^Izvēlētā maiņa — .*$/,'izvēlētā maiņa']];
+  function feShortLabel(l){const t=l.trim();for(const [re,w] of FE_SHORT)if(re.test(t))return w;return t.charAt(0).toLowerCase()+t.slice(1);}
+  // a date under "Tagad" steps aside, measured once drawn (any width): the pill and a date never overlap
+  function feTickRoom(root){
+    const tag=root&&root.querySelector('.fh-month .fmc-now b');
+    if(!tag)return;
+    const t=tag.getBoundingClientRect();
+    root.querySelectorAll('.fh-month .fmc-x span').forEach(x=>{const r=x.getBoundingClientRect();x.style.visibility=r.right>t.left-6&&r.left<t.right+6?'hidden':'';});
   }
   function fhMonthHtml(f){
     const monthAt=new Date(f.evaluatedAt||Date.now());
@@ -1684,13 +1704,30 @@
     const curve=monthCurveHtml(f.workerName,monthAt.getFullYear(),monthAt.getMonth()+1,{compact:true,range:curveRange,anchor:+monthAt,out});
     if(!curve)return '';
     const sum=out.sum,d=t=>{const x=new Date(t);return x.getDate()+'.'+(x.getMonth()+1)+'.';};
-    const title=out.range==='day'?'Nogurums '+(Math.abs(Date.now()-(out.from+12*HOUR))<12*HOUR?'šajā maiņā':d(out.from)):out.range==='week'?'Nogurums '+d(out.from)+'–'+d(out.to-HOUR):'Nogurums '+MONTH_LOC[monthAt.getMonth()];
-    const seg=[['day','Diena'],['week','Nedēļa'],['month','Mēnesis']].map(([k,l])=>`<button type="button" data-fmc-range="${k}" aria-pressed="${out.range===k}">${l}</button>`).join('');
-    return `<section class="fh-month"><div class="fh-month-head"><h3>${title}</h3><div class="fh-range" role="group" aria-label="Periods">${seg}</div><div class="fh-month-facts"><span>Augstā zonā <b>${sum?.highHours??0} h</b></span>${sum?.peak?`<span>Augstākais <b style="color:${getPresentation(sum.peak.score).color}">${sum.peak.score}</b> ${out.range==='day'?new Date(sum.peak.t).toLocaleTimeString('lv-LV',{hour:'2-digit',minute:'2-digit'}):d(sum.peak.t)}</span>`:''}</div></div>${curve}</section>`;
+    const EN=energyOn(),W=EN?'Enerģija':'Nogurums';
+    const MONTH_NAME=['Janvāris','Februāris','Marts','Aprīlis','Maijs','Jūnijs','Jūlijs','Augusts','Septembris','Oktobris','Novembris','Decembris'];
+    const when=out.range==='day'?(Math.abs(Date.now()-(out.from+12*HOUR))<12*HOUR?'Šajā maiņā':d(out.from)):out.range==='week'?d(out.from)+'–'+d(out.to-HOUR):MONTH_NAME[monthAt.getMonth()];
+    const seg=[['day','Diena'],['week','Nedēļa'],['month','Mēnesis']].map(([k,l])=>`<button type="button" data-fmc-range="${k}" aria-pressed="${out.range===k}">${feIcon('check')}${l}</button>`).join('');
+    // the user's mockup: the title beside its shape, the range, then the two facts as tinted pills with their icons
+    return `<section class="fh-month"><div class="fh-month-head">`
+      // no title block: the tab says what it is, the period is in the buttons and on the dates; the line gets the room
+      +`<h3 class="fe-mh db-visually-hidden">${W} ${when}</h3>`
+      // the same switch as the mood card's (energy or fatigue everywhere, MkOutline), as joined buttons like the period's
+      +`<div class="fe-view" role="group" aria-label="Rādīt"><button type="button" data-fe-view="energy" aria-pressed="${EN}">${feIcon('check')}Enerģija</button><button type="button" data-fe-view="fatigue" aria-pressed="${!EN}">${feIcon('check')}Nogurums</button></div>`
+      // how it is counted, in the free middle of this row (the user: no empty line under the night parts)
+      +`<button type="button" class="fe-how" data-fe-how>${feIcon('info')}Kā tas aprēķināts?</button>`
+      +`<div class="fh-range" role="group" aria-label="Periods">${seg}</div>`
+      +`</div>${curve}</section>`;
   }
   function renderModalFatigue() {
     const container = document.getElementById('modal-fatigue-view');
     if (!container) return;
+    const tab = document.querySelector('#toggle-fatigue > span');
+    if (tab) tab.textContent = energyOn() ? 'Enerģija' : 'Nogurums';
+    if (!renderModalFatigue.bound) {   // the energy switch elsewhere redraws an open card
+      renderModalFatigue.bound = true;
+      window.addEventListener('mk-energy-view', () => { if (document.getElementById('worker-modal')?.open) renderModalFatigue(); });
+    }
     const nameEl = document.getElementById('modal-worker-name');
     const surnameEl = document.getElementById('modal-surname');
     if (!nameEl) return;
@@ -1701,13 +1738,10 @@
       container.innerHTML = '<div class="fatigue-panel fatigue-tab-panel"><div class="fatigue-nodata">Lai aprēķinātu nogurumu, vajadzīgs darba grafiks.</div></div>';
       return;
     }
-    const moreOpen=container.dataset.worker===fullName&&container.querySelector('.fh-more')?.open;
-    const previousSection=container.dataset.worker===fullName?container.querySelector('[data-fatigue-section][aria-pressed="true"]')?.dataset.fatigueSection:'schedule';
     container.dataset.worker=fullName;
     container.innerHTML = createDetailPanel(calculateFatigue(fullName));
     const rangeBar=container.querySelector('.fh-range');
     if(rangeBar)requestAnimationFrame(()=>{if(rangeBar.isConnected)fhRangePill(rangeBar,null,rangeBar.querySelector('[aria-pressed="true"]'),false);});
-    if(moreOpen&&container.querySelector('.fh-more'))container.querySelector('.fh-more').open=true;
     if(!container.dataset.fatigueSectionsBound){
       container.dataset.fatigueSectionsBound='1';
       container.addEventListener('click',async event=>{
@@ -1726,6 +1760,12 @@
           finally{compare.disabled=false;}
           return;
         }
+        const view=event.target.closest('[data-fe-view]');
+        if(view&&container.contains(view)){
+          const want=view.dataset.feView==='energy';
+          if(window.MkOutline&&window.MkOutline.setEnergyView&&energyOn()!==want)window.MkOutline.setEnergyView(want);   // redraws through mk-energy-view
+          return;
+        }
         const range=event.target.closest('[data-fmc-range]');
         if(range&&container.contains(range)){
           const was=curveRange;
@@ -1734,15 +1774,14 @@
           fhSwitchRange(container,was);
           return;
         }
-        const button=event.target.closest('[data-fatigue-section]');
-        if(!button||!container.contains(button))return;
-        const section=button.dataset.fatigueSection;
-        container.querySelectorAll('[data-fatigue-section]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
-        container.querySelectorAll('[data-fatigue-panel]').forEach(panel=>{panel.hidden=panel.dataset.fatiguePanel!==section;});
+        const dlg=container.querySelector('.fe-how-dlg');
+        if(event.target.closest('[data-fe-how]')&&dlg){dlg.showModal();return;}
+        if(event.target.closest('[data-fe-how-close]')&&dlg){dlg.close();return;}
+        if(dlg&&event.target===dlg)dlg.close();   // a click on the dimmed area outside closes it
       });
     }
-    if(previousSection==='explanation'||previousSection==='curve')container.querySelector(`[data-fatigue-section="${previousSection}"]`)?.click();
-    requestAnimationFrame(bindChartTooltips);
+    requestAnimationFrame(()=>{bindChartTooltips();feTickRoom(container);});
+    setTimeout(()=>feTickRoom(container),400);   // again after the window's opening motion
   }
 
   function findFullWorkerName(firstName, surname) {

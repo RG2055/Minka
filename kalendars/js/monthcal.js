@@ -158,65 +158,70 @@
     // Same tonal system as the card window (mk-worker-modal-m3.css): flat
     // surface steps, Google Sans, sentence case, role colour as a thin rule.
     s.textContent = [
-      '#mcal-overlay{--c0:#10141b;--c1:#161b23;--c2:#1c222c;--c3:#252c37;--c4:#2f3743;--on:#e3e7ee;--on-var:#b8c1cd;--pri:#a8c7fa;--on-pri:#0b2a57;--pri-c:#d6e3ff;--on-pri-c:#0b1d36;--rg:#1fe091;--rd:#3f9bff;--holi:#f5b73f;--bday:#ff8fc8;--k24:#f5b73f;--kn:#64d2ff;',
-      'position:fixed;inset:0;z-index:240000;display:none;flex-direction:column;background:var(--c0);color:var(--on);font-family:"Google Sans","Google Sans Text",Inter,system-ui,sans-serif;}',
+      '#mcal-overlay{--c0:#0E2A23;--c1:#143A30;--c2:#1A463A;--c3:#235346;--c4:#2C6655;--on:#FFF6E4;--on-var:#C5DDD1;--pri:#A9D4F5;--on-pri:#102A44;--pri-c:#BCD9FF;--on-pri-c:#0B1D36;--rg:#EFE6B8;--rd:#9DDDF5;--holi:#FFCC5C;--bday:#FFB59E;--k24:#FFCC5C;--kn:#8FD3FF;',
+      'position:fixed;inset:0;z-index:240000;display:none;flex-direction:column;background:url(\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1000 200%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22%23154034%22 d=%22M0 0L250 0C262 34 246 62 214 70C176 80 168 110 132 120C92 131 60 112 30 128C16 136 6 150 0 160Z%22/%3E%3Cpath fill=%22%231B4A3D%22 d=%22M420 0L530 0C524 16 500 26 474 24C450 22 428 14 420 0Z%22/%3E%3C/svg%3E\') 0 0/100% 190px no-repeat,var(--c0);color:var(--on);font-family:"Google Sans","Google Sans Text",Inter,system-ui,sans-serif;}',
       '#mcal-overlay.is-open{display:flex;}',
       '#mcal-overlay.is-closing{display:flex;pointer-events:none;}',
       '#mcal-overlay button{font-family:inherit;}',
       '.mcal-inner{display:flex;flex-direction:column;width:100%;height:100%;padding:16px 20px 18px;box-sizing:border-box;}',
       // header
-      '.mcal-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:14px;flex:0 0 auto;}',
-      '.mcal-headicon{flex:0 0 auto;width:28px;height:28px;image-rendering:pixelated;}',
+      '.mcal-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px clamp(6px,.8vw,14px);margin-bottom:10px;flex:0 0 auto;}',
+      '.mcal-headicon{flex:0 0 auto;display:grid;place-items:center;box-sizing:border-box;width:clamp(46px,3.8vw,60px);height:clamp(44px,3.6vw,56px);padding:clamp(11px,1vw,15px);border-radius:46% 54% 50% 50%/54% 48% 52% 46%;background:#A4EAC9;color:#10231C;image-rendering:pixelated;}.mcal-headicon svg rect{fill:#10231C;}.mcal-headicon>i{background-color:#10231C !important;}',
       '.mcal-titles{display:flex;align-items:baseline;gap:12px;min-width:0;}',
-      '.mcal-title{font-size:26px;font-weight:400;line-height:1.15;white-space:nowrap;}',
+      '.mcal-title{font:900 clamp(24px,2.5vw,42px)/1.05 "Nunito","Google Sans",system-ui,sans-serif;letter-spacing:-.01em;white-space:nowrap;}',
       '.mcal-sub{font-size:15px;color:var(--on-var);white-space:nowrap;font-variant-numeric:tabular-nums;}',
-      '.mcal-nav{display:flex;align-items:center;gap:6px;}',
+      '.mcal-nav{display:flex;align-items:center;gap:4px;background:url(\'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 50%22 preserveAspectRatio=%22none%22%3E%3Cpath fill=%22%23A4EAC9%22 d=%22M25 1C34 1 41 5 46 10C48 12 52 12 54 10C59 5 66 1 75 1A24 24 0 0 1 75 49C66 49 59 45 54 40C52 38 48 38 46 40C41 45 34 49 25 49A24 24 0 0 1 25 1Z%22/%3E%3C/svg%3E\') 0 0/100% 100% no-repeat;}.mcal-nav .mcal-icbtn{width:46px;height:46px;border-radius:50%;background:transparent;color:#10231C;}.mcal-nav .mcal-icbtn:hover:not([disabled]){background:rgba(16,35,28,.12);}.mcal-nav .mcal-icbtn:active:not([disabled]){border-radius:34%;}.mcal-nav .mcal-icbtn svg{width:26px;height:26px;}',
       '.mcal-icbtn{cursor:pointer;width:40px;height:40px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:20px;background:var(--c2);color:var(--on);padding:0;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease;}',
       '.mcal-icbtn:hover:not([disabled]){background:var(--c3);}',
       '.mcal-icbtn:active:not([disabled]){border-radius:12px;}',
       '.mcal-icbtn[disabled]{opacity:.38;cursor:default;}',
       '.mcal-icbtn svg{width:20px;height:20px;}',
-      '.mcal-seg{position:relative;display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:24px;background:var(--c1);}',
-      '.mcal-segpill{position:absolute;z-index:0;border-radius:16px;background:var(--pri-c);pointer-events:none;}',
+      '.mcal-seg{position:relative;display:inline-flex;align-items:center;gap:2px;padding:4px;border-radius:26px;background:var(--c2);}',
+      '.mcal-segpill{position:absolute;z-index:0;border-radius:19px;background:var(--pri-c);pointer-events:none;}',
       '.mcal-seg button{position:relative;z-index:1;}',
       '.mcal-seg.has-pill button.is-on{background:transparent;}',
       // Label colours change over the pill's travel, not before it arrives.
       '.mcal-seg button{transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease,color 280ms var(--mk-ease-effects,ease) !important;}',
-      '.mcal-seg button{cursor:pointer;height:32px;padding:0 16px;border:0;border-radius:16px;background:transparent;color:var(--on-var);font-size:14px;font-weight:500;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease,color 150ms ease;}',
+      '.mcal-seg button{cursor:pointer;height:38px;padding:0 clamp(9px,.9vw,16px);border:0;border-radius:19px;background:transparent;color:var(--on);font-size:clamp(14px,1.05vw,16px);font-weight:600;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease,color 150ms ease;}',
       '.mcal-seg button:hover{color:var(--on);}',
       '.mcal-seg button.is-on{background:var(--pri-c);color:var(--on-pri-c);}',
       '.mcal-actions{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;}',
-      '.mcal-actions>.mcal-legend{margin-right:8px;}',
-      '.mcal-actbtn{cursor:pointer;height:40px;padding:0 18px;border:0;border-radius:20px;background:var(--c2);color:var(--on);font-size:14px;font-weight:500;white-space:nowrap;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease;}',
+      '.mcal-actions>.mcal-legend{margin-right:2px;}',
+      '.mcal-actbtn{cursor:pointer;height:44px;padding:0 clamp(10px,1vw,18px);border:0;border-radius:22px;background:var(--c2);color:var(--on);font-size:15px;font-weight:600;white-space:nowrap;transition:border-radius 350ms var(--mk-ease-expressive-fast,ease),background-color 150ms ease;}',
       '.mcal-actbtn:hover{background:var(--c3);}',
+      // one header row down to ~1280 px: shorter words on the two list buttons, tighter tabs
+      '.mcal-actbtn .is-short{display:none;}',
+      '@media (max-width:1700px){.mcal-actbtn .is-long{display:none;}.mcal-actbtn .is-short{display:inline;}.mcal-seg button{padding:0 10px;}.mcal-head{column-gap:8px;}.mcal-actions{gap:6px;}.mcal-legend{gap:4px;}}',
       '.mcal-actbtn:active,.mcal-seg button:active,.mcal-abf:active{border-radius:10px;}',
+      // the same big tinted "Aizvērt" pill as every window (colleagues who do not see well must find it)
+      '.mcal-icbtn:is(.mcal-close,.mcal-panel-x){width:auto;height:52px;gap:8px;padding:0 clamp(14px,1.5vw,26px) 0 clamp(10px,1vw,18px);border-radius:28px;background:#A4EAC9;color:#0f2b20;font:700 clamp(17px,1.3vw,20px)/1 "Google Sans",system-ui,sans-serif;}',
+      '.mcal-icbtn:is(.mcal-close,.mcal-panel-x):hover{background:#bfe8d2;}',
+      '.mcal-icbtn:is(.mcal-close,.mcal-panel-x):active{border-radius:18px;}',
+      '.mcal-icbtn:is(.mcal-close,.mcal-panel-x) svg{width:30px;height:30px;}',
       '.mcal-close{margin-left:4px;}',
       '#mcal-overlay button:focus-visible{outline:2px solid var(--pri);outline-offset:2px;}',
       // grid
-      '.mcal-weekhead{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:8px;flex:0 0 auto;}',
-      '.mcal-weekhead>div{padding-left:12px;font-size:13px;font-weight:500;color:var(--on-var);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-      '.mcal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(min-content,1fr);gap:8px;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;}',
-      '.mcal-cell{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:8px;min-width:0;padding:8px 10px 10px 8px;border-radius:16px;background:var(--c1);}',
+      '.mcal-weekhead{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:6px;flex:0 0 auto;}',
+      '.mcal-weekhead>div{padding-left:14px;font-size:clamp(15px,1.5vw,22px);font-weight:800;color:var(--on);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.mcal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(min-content,1fr);gap:4px;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;font-size:var(--mcal-fs,14.5px);}',
+      '.mcal-cell{position:relative;display:grid;grid-template-columns:2.6em minmax(0,1fr);column-gap:.5em;min-width:0;padding:.6em .7em .7em .6em;border-radius:1.8em 1.5em 1.9em 1.6em/1.6em 1.9em 1.5em 1.8em;background:var(--c1);}',
       '.mcal-main{display:flex;flex-direction:column;gap:4px;min-width:0;}',
-      '.mcal-cell.is-weekend{background:#13171e;}',
+      '.mcal-cell.is-weekend{background:#123429;}',
       '.mcal-grid:not(.is-week) .mcal-cell:not(.mcal-blank){cursor:pointer;transition:background-color 150ms ease;}',
       '.mcal-grid:not(.is-week) .mcal-cell:not(.mcal-blank):hover{background:var(--c2);}',
-      '.mcal-cell.is-past>*{opacity:.5;}',
-      '.mcal-cell.is-today{box-shadow:inset 0 0 0 2px var(--pri);}',
-      '.mcal-blank{background:transparent !important;}',
-            '.mcal-daynum{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums;color:var(--on);}',
-      '.mcal-cell.is-weekend .mcal-daynum{color:var(--on-var);}',
+      '.mcal-cell.is-today{box-shadow:inset 0 0 0 3px var(--pri);}',
+      '.mcal-blank{background:transparent !important;}.mcal-out{grid-column:1/-1;padding:.2em .4em;font-size:1.05em;font-weight:600;color:#6F8F84;white-space:nowrap;}',
+      '.mcal-daynum{display:grid;place-items:center;min-width:1.25em;height:1.25em;font:900 2.1em/1 "Nunito","Google Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--on);}',
+      '.mcal-cell.is-weekend .mcal-daynum{color:var(--on);}',
       '.mcal-cell.is-holi-free .mcal-daynum{color:var(--holi);}',
-      '.mcal-cell.is-today .mcal-daynum{border-radius:14px;background:var(--pri);color:var(--on-pri);}',
-      '.mcal-tags{display:flex;flex-direction:column;min-width:0;padding-top:5px;font-size:11.5px;line-height:1.25;}',
-      '.mcal-tag{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--on-var);}',
-      '.mcal-tag.is-free{color:var(--holi);}',
-      '.mcal-tag.is-bday{color:var(--bday);}',
-      '.mcal-body{position:relative;display:flex;flex-direction:column;gap:5px;min-width:0;padding-top:5px;font-size:var(--mcal-fs,13px);line-height:1.25;}',
+      '.mcal-cell.is-today .mcal-daynum{border-radius:46% 54% 50% 50%/54% 48% 52% 46%;background:var(--pri);color:var(--on-pri);}',
+      '.mcal-tags{display:flex;flex-wrap:wrap;gap:.25em;min-width:0;padding-top:.2em;font-size:.9em;line-height:1.15;}',
+      '.mcal-tag{display:inline-flex;align-items:center;gap:.4em;max-width:100%;padding:.32em .8em .32em .6em;border-radius:1.2em .9em 1.3em 1em/1em 1.3em .9em 1.2em;background:var(--holi);color:#2A1D00;font-weight:800;}.mcal-tag i{flex:none;font-size:1.25em;line-height:1;}.mcal-tag span{min-width:0;}',
+      '.mcal-tag.is-bday{background:var(--bday);color:#3A1806;}',
+      '.mcal-body{position:relative;display:flex;flex-direction:column;gap:.45em;min-width:0;padding-top:.35em;line-height:1.22;}',
       '.mcal-tags+.mcal-body{padding-top:0;}',
       '.mcal-grid.is-week .mcal-body{gap:12px;}',
-      '.mcal-grp{display:flex;flex-direction:column;gap:1px;padding-left:8px;border-left:2px solid var(--rg);}',
-      '.mcal-rd{border-left-color:var(--rd);}',
+      '.mcal-grp{display:flex;flex-direction:column;gap:.18em;}',
       '.mcal-grp-h{display:none;font-size:11.5px;font-weight:500;margin-bottom:3px;}',
       '.mcal-grid.is-week .mcal-grp-h{display:block;}',
       '.mcal-rg .mcal-grp-h{color:var(--rg);}',
@@ -224,11 +229,10 @@
       // /rad: residents teal, radiologists coral (as everywhere in /rad).
       'html.minka-rad #mcal-overlay{--rg:#4dd0c8;--rd:#ff8f80;--rgx:#b8c2cf;}',
       // /rad Radiogrāferi tab: the radiographers in a quiet grey
-      '.mcal-rgx{border-left-color:var(--rgx);}',
       '.mcal-rgx .mcal-grp-h{color:var(--rgx);}',
       // The group name in every day (month and week), so it is plain who is
       // a radiographer and who a radiologist (/rad: resident / radiologist).
-      '#mcal-overlay .mcal-grp-h{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}',
+      '#mcal-overlay .mcal-grp-h{display:block;font-size:.84em;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.15em;}',
       '.mcal-w{display:flex;align-items:baseline;gap:6px;min-width:0;white-space:nowrap;}',
       '.mcal-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--on);}',
       '.mcal-nf{font-weight:500;}',
@@ -238,15 +242,13 @@
       '.mcal-grid.is-week .mcal-w{flex-wrap:wrap;row-gap:0;}',
       '.mcal-grid.is-week .mcal-wt{display:block;flex-basis:100%;order:3;}',
       '.mcal-wh{flex:0 0 auto;margin-left:auto;color:var(--on-var);font-size:.92em;font-variant-numeric:tabular-nums;}',
-      '.mcal-hg{display:grid;grid-template-columns:2.9em minmax(0,1fr);column-gap:6px;align-items:start;}',
-      '.mcal-hk{justify-self:start;padding:0 .4em;border-radius:.45em;font-size:.88em;font-weight:500;line-height:1.42;font-variant-numeric:tabular-nums;background:var(--c3);color:var(--on);}',
-      '.mcal-hk.is-allday{background:rgba(245,183,63,.18);color:var(--k24);}',
-      '.mcal-hk.is-night{background:rgba(100,210,255,.16);color:var(--kn);}',
-      '.mcal-hg.is-allday .mcal-hl,.mcal-w.is-allday .mcal-name,.mcal-w.is-allday .mcal-ns{color:var(--k24);}',
-      '.mcal-hg.is-night .mcal-hl,.mcal-w.is-night .mcal-name,.mcal-w.is-night .mcal-ns{color:var(--kn);}',
+      '.mcal-hg{display:grid;grid-template-columns:3.1em minmax(0,1fr);column-gap:.6em;align-items:start;}',
+      '.mcal-hk{justify-self:start;min-width:2.5em;box-sizing:border-box;text-align:center;padding:0 .45em;border-radius:999px;font-size:.9em;font-weight:800;line-height:1.4;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.16);color:var(--on);}',
+      '.mcal-hk.is-allday{background:var(--k24);color:#2A1D00;}',
+      '.mcal-hk.is-night{background:var(--kn);color:#06283A;}',
       '.mcal-legend{display:flex;align-items:center;gap:6px;font-size:13px;}',
-      '.mcal-legend .mcal-hk{font-size:12px;padding:3px 8px;border-radius:8px;}',
-      '.mcal-hl{color:var(--on);}',
+      '.mcal-legend .mcal-hk{font-size:clamp(12px,.95vw,14px);padding:5px clamp(7px,.7vw,12px);}',
+      '.mcal-hl{color:var(--on);font-weight:500;}',
       '.mcal-off{color:var(--on-var);opacity:.6;font-size:13px;}',
       '.mcal-empty{margin:auto;color:var(--on-var);font-size:15px;}',
       // holidays / birthdays dialog
@@ -307,6 +309,33 @@
       '.mcal-ab.is-cr{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0;}',
       '.mcal-ab.is-unavailable{background:transparent;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--abc) 55%,transparent);}',
       '.is-leave{--abc:var(--ab-leave);}.is-sick{--abc:var(--ab-sick);}.is-away{--abc:var(--ab-away);}.is-unavailable{--abc:var(--ab-unavailable);}.is-other{--abc:var(--ab-other);}',
+      // Klasiskais: the sheet people know (white, serif, green name column, yellow days off); it scrolls inside its card
+      '.mcal-clw{flex:1 1 auto;min-height:0;display:flex;}',
+      '.mcal-cl{flex:1 1 auto;min-width:0;overflow:auto;overscroll-behavior:contain;padding:10px 12px 12px;border-radius:26px;background:#fff;color:#111;font-family:"Times New Roman",Times,serif;}',
+      '.mcal-cl-t{position:sticky;left:0;margin:2px 0 8px;text-align:center;font-size:22px;font-weight:700;letter-spacing:.08em;}',
+      '.mcal-cl table{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;font-variant-numeric:tabular-nums;}',
+      '.mcal-cl :is(th,td){height:28px;padding:0 3px;border-right:1px solid #cfcfcf;border-bottom:1px solid #cfcfcf;text-align:center;white-space:nowrap;font-weight:700;background:#fff;}',
+      '.mcal-cl tr>:first-child{position:sticky;left:0;z-index:1;min-width:200px;padding:0 8px;border-left:1px solid #cfcfcf;text-align:left;font-weight:400;}',
+      '.mcal-cl thead th{position:sticky;top:0;z-index:2;border-top:1px solid #cfcfcf;font-family:"Google Sans",system-ui,sans-serif;font-size:14px;}',
+      '.mcal-cl thead th:first-child{z-index:3;font-size:11px;}',
+      '.mcal-cl thead th:nth-child(2){font-size:11px;}',
+      '.mcal-cl tbody tr.is-rg>:first-child{background:#b6d7a8;}',
+      '.mcal-cl tbody tr.is-rd>:first-child{background:#a4c2f4;}',
+      '.mcal-cl tbody tr>th:nth-child(2){font-family:"Google Sans",system-ui,sans-serif;font-size:14px;}',
+      '.mcal-cl :is(td,thead th).is-we{background:#ffe599;}',
+      '.mcal-cl :is(td,thead th).is-free{background:#f6b26b;}',
+      '.mcal-cl thead th.is-we{background:#f9cb9c;}',
+      '.mcal-cl :is(td,thead th).is-today{box-shadow:inset 2px 0 0 #1155cc,inset -2px 0 0 #1155cc;}',
+      '.mcal-cl thead th.is-today{box-shadow:inset 2px 0 0 #1155cc,inset -2px 0 0 #1155cc,inset 0 2px 0 #1155cc;}',
+      '.mcal-cl td.is-12.is-day,.mcal-cl-key .is-d{color:#cc0000;}',
+      '.mcal-cl td.is-12.is-night,.mcal-cl-key .is-n{color:#1155cc;}',
+      '.mcal-cl td.is-ab{font-weight:400;color:#444;}',
+      '.mcal-cl tr.mcal-cl-sec :is(th,td){height:24px;font-family:"Google Sans",system-ui,sans-serif;font-size:11px;font-weight:700;color:#444;}',
+      '.mcal-cl tr.mcal-cl-sec>:first-child{font-weight:800;font-size:12px;letter-spacing:.06em;color:#111;}',
+      '.mcal-cl tbody tr:not(.mcal-cl-sec):hover :is(th,td){filter:brightness(.95);}',
+      '.mcal-cl-key{position:sticky;left:0;margin:10px 0 0;font:500 13px/1.4 "Google Sans",system-ui,sans-serif;color:#444;}',
+      '.mcal-cl-key b{margin:0 4px 0 14px;font-family:"Times New Roman",Times,serif;font-size:15px;color:#111;}',
+      '.mcal-cl-key b:first-child{margin-left:0;}',
       '@media (max-width:760px){.mcal-abs{--abn:92px;padding-right:6px;}.mcal-abname .mcal-ns,.mcal-abwhen{display:none;}.mcal-ni{display:inline;}.mcal-abdays>span:not(.is-tick):not(.is-today){visibility:hidden;}.mcal-abdays>span.is-today{border-radius:6px;}.mcal-ab{padding:0 2px;font-size:10px;}.mcal-abdays>span{font-size:10px;}}'
     ].join('');
     document.head.appendChild(s);
@@ -318,6 +347,7 @@
     close: '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4.47 4.47a.75.75 0 0 1 1.06 0L10 8.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L11.06 10l4.47 4.47a.75.75 0 1 1-1.06 1.06L10 11.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L8.94 10 4.47 5.53a.75.75 0 0 1 0-1.06Z"/></svg>'
   };
   var WEEK_LONG = ['Pirmdiena','Otrdiena','Trešdiena','Ceturtdiena','Piektdiena','Sestdiena','Svētdiena'];
+  var MONTH_SHORT = ['janv.','febr.','marts','apr.','maijs','jūn.','jūl.','aug.','sept.','okt.','nov.','dec.'];
   var MONTH_LOWER = ['janvāris','februāris','marts','aprīlis','maijs','jūnijs','jūlijs','augusts','septembris','oktobris','novembris','decembris'];
 
   // Store names arrive upper case ("VĀRDS UZVĀRDS"); show them as names.
@@ -432,7 +462,7 @@
       .catch(function(){ _absFailed = !_abs; return _abs; })
       .finally(function(){
         _absPromise = null;
-        if (isOpen() && _viewMode === 'abs') render(_curMonth);
+        if (isOpen() && (_viewMode === 'abs' || _viewMode === 'classic')) render(_curMonth);
       });
     return _absPromise;
   }
@@ -580,6 +610,69 @@
     }).join('') + '</div>';
   }
 
+  // ---- Klasiskais: the published roster as the table people know (names down, days across) ----
+  // Read only, from the same stores as the month view; absences from the sheet when they are in.
+  var AB_CODE = { leave: 'A', sick: 'S', away: 'C', unavailable: 'x', other: '·' };
+  function buildClassic(month){
+    var p = monthParts(month);
+    if (p.idx == null || !p.year) return '<div class="mcal-empty">Nav datu šim mēnesim.</div>';
+    var daysIn = new Date(p.year, p.idx + 1, 0).getDate(), today = todayKey();
+    if (!_abs && !_absFailed) loadAbsences();
+    var away = {};
+    if (_abs) monthAbsences(p).rows.forEach(function(r){
+      var m = away[r.sec + '|' + normName(r.name)] = {};
+      r.items.forEach(function(it){ for (var d = it.s; d <= it.e; d++) m[d] = it.a; });
+    });
+    var cols = [];
+    for (var d = 1; d <= daysIn; d++){
+      var ds = ('0' + d).slice(-2) + '.' + ('0' + (p.idx + 1)).slice(-2) + '.' + p.year;
+      var wd = (new Date(p.year, p.idx, d).getDay() + 6) % 7, hd = MinkaLvHolidays.get(ds);
+      cols.push({ d: d, ds: ds, cls: (hd && hd.free ? ' is-free' : wd >= 5 ? ' is-we' : '') + (p.year * 10000 + (p.idx + 1) * 100 + d === today ? ' is-today' : ''), title: hd ? hd.name : '' });
+    }
+    function section(sec, store, label){
+      var people = {}, count = cols.map(function(){ return 0; });
+      cols.forEach(function(c, i){
+        dayWorkers(month, c.ds, store).forEach(function(w){
+          var k = normName(w.name);
+          (people[k] || (people[k] = { name: w.name, days: {}, hours: 0 })).days[c.d] = w;
+          people[k].hours += hoursOf(w);
+          count[i]++;
+        });
+      });
+      Object.keys(away).forEach(function(k){   // someone away the whole month still has a row
+        var q = k.split('|'); if (q[0] === sec && !people[q[1]]) people[q[1]] = { name: q[1], days: {}, hours: 0 };
+      });
+      var keys = Object.keys(people).sort(function(x, y){ return people[x].name.localeCompare(people[y].name, 'lv'); });
+      if (!keys.length) return '';
+      var out = '<tr class="mcal-cl-sec is-' + sec + '"><th>' + label + '</th><th>' + keys.length + '</th>'
+        + cols.map(function(c, i){ return '<td class="' + c.cls.trim() + '" title="Strādā">' + (count[i] || '') + '</td>'; }).join('') + '</tr>';
+      keys.forEach(function(k){
+        var pr = people[k], aw = away[sec + '|' + k] || {};
+        out += '<tr class="is-' + sec + '"><th>' + esc(titleCase(pr.name).toUpperCase()) + '</th><th>' + (pr.hours || '') + '</th>'
+          + cols.map(function(c){
+            var w = pr.days[c.d], a = aw[c.d], txt = '', cls = c.cls, tip = '';
+            if (w){
+              var h = hoursOf(w), k2 = kindOf(w);
+              txt = String(h || '') + (sec === 'rg' && h === 12 ? (k2 === 'night' ? 'N' : 'D') : '');
+              cls += ' is-' + k2 + (h === 12 && sec === 'rg' ? ' is-12' : '');
+              tip = (w.startTime && w.endTime ? w.startTime + '–' + w.endTime : KIND_NAME[k2]);
+            } else if (a){ txt = AB_CODE[a.group] || '·'; cls += ' is-ab'; tip = AB_NAME[a.group] || 'Cits'; }
+            return '<td class="' + cls.trim() + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + txt + '</td>';
+          }).join('') + '</tr>';
+      });
+      return out;
+    }
+    var body = IS_RAD ? section('rd', rdStore(), 'RADIOLOGI') + section('rg', rgStore(), LEFT.toUpperCase())
+      : section('rg', rgStore(), LEFT.toUpperCase()) + section('rd', rdStore(), 'RADIOLOGI');
+    if (!body) return '<div class="mcal-empty">Šim mēnesim grafiks vēl nav publicēts.</div>';
+    var norm = 0; try { norm = MinkaLvHolidays.workHours(p.year, p.idx) || 0; } catch (_e) {}
+    return '<div class="mcal-clw"><div class="mcal-cl"><div class="mcal-cl-t">' + esc(month.toUpperCase()) + ' GADS</div>'
+      + '<table><thead><tr><th>' + (norm ? '1 sl. ' + norm + ' st.' : '') + '</th><th>STUNDAS</th>'
+      + cols.map(function(c){ return '<th class="' + c.cls.trim() + '"' + (c.title ? ' title="' + esc(c.title) + '"' : '') + '>' + c.d + '</th>'; }).join('')
+      + '</tr></thead><tbody>' + body + '</tbody></table>'
+      + '<p class="mcal-cl-key"><b>24</b> diennakts <b class="is-d">12D</b> diena <b class="is-n">12N</b> nakts <b>A</b> atvaļinājums <b>S</b> slimība <b>x</b> nevar strādāt <b>C</b> strādā citur</p></div></div>';
+  }
+
   function buildGrid(month){
     var p = monthParts(month);
     if (p.idx == null || !p.year) return '<div class="mcal-empty">Nav datu šim mēnesim.</div>';
@@ -596,7 +689,7 @@
 
     function cellFor(slot){
       var d = slot - startW + 1;
-      if (d < 1 || d > daysIn) return '<div class="mcal-cell mcal-blank"></div>';
+      if (d < 1 || d > daysIn){ var od = new Date(p.year, p.idx, d); return '<div class="mcal-cell mcal-blank"><span class="mcal-out">' + od.getDate() + '. ' + MONTH_SHORT[od.getMonth()] + '</span></div>'; }
       var dateStr = ('0' + d).slice(-2) + '.' + ('0' + (p.idx + 1)).slice(-2) + '.' + p.year;
       var key = p.year * 10000 + (p.idx + 1) * 100 + d;
       var rg = rgv ? dayWorkers(month, dateStr, _rgx) : dayWorkers(month, dateStr, rgStore());
@@ -612,8 +705,8 @@
       var cls = 'mcal-cell' + (slot % 7 >= 5 ? ' is-weekend' : '')
         + (key === today ? ' is-today' : (today && key < today ? ' is-past' : ''));
       if (hd && hd.free) cls += ' is-holi-free';
-      var tags = (hd ? '<span class="mcal-tag' + (hd.free ? ' is-free' : '') + '">' + esc(hd.name) + '</span>' : '')
-        + (bdNames ? '<span class="mcal-tag is-bday">Dz. d. ' + esc(bdNames.map(function(n){ return titleCase(firstName(n)); }).join(', ')) + '</span>' : '');
+      var tags = (hd ? '<span class="mcal-tag' + (hd.free ? ' is-free' : '') + '"><i class="material-icons-round" aria-hidden="true">flag</i><span>' + esc(hd.name) + '</span></span>' : '')
+        + (bdNames ? '<span class="mcal-tag is-bday"><i class="material-icons-round" aria-hidden="true">cake</i><span>Dz. d. ' + esc(bdNames.map(function(n){ return titleCase(firstName(n)); }).join(', ')) + '</span></span>' : '');
       var rail = '<div class="mcal-rail"><span class="mcal-daynum">' + d + '</span></div>';
       var title = _viewMode === 'month' ? ' title="Atvērt nedēļu"' : '';
       return '<div class="' + cls + '" data-day="' + d + '"' + title + '>' + rail + '<div class="mcal-main">' + (tags ? '<div class="mcal-tags">' + tags + '</div>' : '') + '<div class="mcal-body">' + body + '</div></div></div>';
@@ -640,7 +733,7 @@
     grid.style.removeProperty('--mcal-fs');
     if (_viewMode === 'week') return;
     // Paddings and gaps do not scale with the text, so a second pass settles it.
-    var fs = 13;
+    var fs = 14.5;
     for (var pass = 0; pass < 2; pass++){
       var sh = grid.scrollHeight, ch = grid.clientHeight;
       if (!(sh > ch + 1 && ch > 0) || fs <= 11) break;
@@ -716,15 +809,16 @@
       + '<button data-view="month" class="' + (_viewMode === 'month' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'month') + '">Mēnesis</button>'
       + '<button data-view="week" class="' + (_viewMode === 'week' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'week') + '">Nedēļa</button>'
       + '<button data-view="abs" class="' + (_viewMode === 'abs' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'abs') + '">Prombūtnes</button>'
+      + '<button data-view="classic" class="' + (_viewMode === 'classic' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'classic') + '" title="Publicētais grafiks tabulā">Klasiskais</button>'
       + (IS_RAD ? '<button data-view="rgv" class="' + (_viewMode === 'rgv' ? 'is-on' : '') + '" aria-pressed="' + (_viewMode === 'rgv') + '">Radiogrāferi</button>' : '')
       + '</div>'
       + (_viewMode === 'week' && p.idx != null ? '<div class="mcal-sub">' + esc(weekRange(p, _weekIdx)) + '</div>' : '')
       + '<div class="mcal-actions">'
-      + (_viewMode === 'abs' ? ''
+      + (_viewMode === 'abs' || _viewMode === 'classic' ? ''
         : '<div class="mcal-legend" aria-label="Maiņu veidi"><span class="mcal-hk is-allday">Diennakts</span><span class="mcal-hk is-day">Diena</span><span class="mcal-hk is-night">Nakts</span></div>')
-      + (IS_RAD ? '' : '<button class="mcal-actbtn" data-panel="bday">Dzimšanas dienas</button>')
-      + '<button class="mcal-actbtn" data-panel="holi">Svētku dienas</button>'
-      + '<button class="mcal-icbtn mcal-close" aria-label="Aizvērt">' + ICON.close + '</button>'
+      + (IS_RAD ? '' : '<button class="mcal-actbtn" data-panel="bday" title="Dzimšanas dienas"><span class="is-long">Dzimšanas dienas</span><span class="is-short">Dz. dienas</span></button>')
+      + '<button class="mcal-actbtn" data-panel="holi" title="Svētku dienas"><span class="is-long">Svētku dienas</span><span class="is-short">Svētki</span></button>'
+      + '<button class="mcal-icbtn mcal-close" aria-label="Aizvērt" title="Aizvērt (Esc)">' + ICON.close + '<span>Aizvērt</span></button>'
       + '</div>'
       // Absence filters get their own line, so the top line stays as in
       // the other views with the close button in the corner.
@@ -736,7 +830,7 @@
     // tabs never leave the page. (A node taken out and put back loses its
     // previous style, so its colours would snap instead of easing.)
     var inner = _overlay.querySelector('.mcal-inner');
-    var body = _viewMode === 'abs' ? buildAbsences(month) : buildGrid(month);
+    var body = _viewMode === 'abs' ? buildAbsences(month) : _viewMode === 'classic' ? buildClassic(month) : buildGrid(month);
     var oldHead = inner.querySelector(':scope > .mcal-head');
     var oldSeg = oldHead && oldHead.querySelector(':scope > .mcal-seg');
     if (!oldHead || !oldSeg){
@@ -802,7 +896,7 @@
     var reopen = wrap.classList.contains('is-open');
     var year = (monthParts(_curMonth).year) || new Date().getFullYear();
     var html;
-    var closeBtn = '<button class="mcal-icbtn mcal-panel-x" aria-label="Aizvērt">' + ICON.close + '</button>';
+    var closeBtn = '<button class="mcal-icbtn mcal-panel-x" aria-label="Aizvērt">' + ICON.close + '<span>Aizvērt</span></button>';
     if (type === 'holi'){
       var items = MinkaLvHolidays.list(year);
       html = '<div class="mcal-panel" role="dialog" aria-label="Svētku dienas ' + year + '"><div class="mcal-panel-h"><span class="mcal-panel-t">Svētku dienas ' + year + '</span>' + closeBtn + '</div>'
@@ -1142,5 +1236,20 @@
   window.addEventListener('resize', function(){ if (isOpen()) scheduleFit(); });
   document.addEventListener('minka:auth-ok', loadBirthdays);
 
-  window.MinkaMonthCal = { open: open, close: close, isOpen: isOpen };
+  // One person's absences (leave, sick, ...) for the worker window: the sheets' own, and the yearly leave plan for
+  // the months the radiographer sheet does not have yet (as the absences view does). Oldest first.
+  function personAbsences(name){
+    var n = normName(name);
+    return loadAbsences().then(function(d){
+      if (!d) return [];
+      var sheet = {}; (d.techMonths || []).forEach(function(m){ sheet[m.year * 12 + m.month - 1] = 1; });
+      var mk = function(s){ var p = String(s).split('.'); return (+p[2]) * 12 + (+p[1]) - 1; };
+      var own = (d.absences || []).filter(function(a){ return normName(a.name) === n && a.group !== 'assignment'; });
+      var plan = (d.leavePlan || []).filter(function(a){ return normName(a.name) === n && !sheet[mk(a.from)]; });
+      return own.map(function(a){ return { a: a, plan: false }; }).concat(plan.map(function(a){ return { a: a, plan: true }; }))
+        .map(function(x){ return { from: x.a.from, to: x.a.to, group: AB_NAME[x.a.group] ? x.a.group : 'other', label: AB_NAME[x.a.group] || 'Cits', plan: x.plan }; })
+        .sort(function(x, y){ return dnum(x.from) - dnum(y.from); });
+    });
+  }
+  window.MinkaMonthCal = { open: open, close: close, isOpen: isOpen, personAbsences: personAbsences };
 })();

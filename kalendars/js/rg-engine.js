@@ -7,8 +7,10 @@
  * their style, layout and listeners. What other modules added to a node (classes, inline properties,
  * child nodes) is left alone, because it is in neither the old nor the new build.
  * Nodes are paired by tag and key: data-worker, else id, else data-rg-key.
- * A card (data-worker) whose builder content a module rewrote (its own nodes gone from the page) is
- * replaced as a whole by the new build, so stale content never survives.
+ * An element marked data-rg-live is drawn by its own module (a face's readout): when the build's content for it
+ * changes, that content replaces what is inside and the module redraws it; it never counts as rewritten.
+ * A card (data-worker) whose builder content a module rewrote (its own nodes gone from the page), or whose look
+ * changed (data-skin-sig), is replaced as a whole by the new build, so stale content never survives.
  * After a morph `rg:patched` is dispatched on the region (in a microtask, before the frame is painted;
  * with { quiet: true } the caller sends it with RGEngine.notify once its own finishing work is done),
  * detail { added: [elements put into the page], removed: [elements taken out] }. Modules that decorate
@@ -77,6 +79,7 @@
   // Whether a module rewrote what the builder put inside `was` (its own nodes are no longer there).
   function rewritten(was, live) {
     if (textOnly(was) && textOnly(live)) return false;
+    if (was.nodeType === 1 && was.hasAttribute('data-rg-live')) return false;   // its content is its module's
     for (let s = was.firstChild; s; s = s.nextSibling) {
       const l = SHADOW.get(s);
       if (!l || l.parentNode !== live) return true;
@@ -85,6 +88,14 @@
     return false;
   }
 
+  // A card whose look changed (data-skin-sig, set by every skin apply: js/page/minka-skins.js) in the new build, or
+  // on the page outside the build (the cloud, the editor, a colleague), is replaced whole: patching would keep what
+  // the earlier look's appliers added outside the build (classes, properties, face layers, observers) or add the
+  // new look's layers a second time.
+  function reskinned(was, now, live) {
+    const a = was.getAttribute('data-skin-sig');
+    return a !== now.getAttribute('data-skin-sig') || a !== live.getAttribute('data-skin-sig');
+  }
   // The new build is equal to the old one: its copy stands for the same page nodes.
   function carry(was, copy) {
     SHADOW.set(copy, SHADOW.get(was));
@@ -109,7 +120,7 @@
         if (free < olds.length && same(olds[free], n)) o = olds[free++];
       }
       const ol = o && SHADOW.get(o);
-      if (o && !(ol && ol.parentNode === live && !(o.nodeType === 1 && o.hasAttribute('data-worker') && rewritten(o, ol)))) o = null;
+      if (o && !(ol && ol.parentNode === live && !(o.nodeType === 1 && o.hasAttribute('data-worker') && (reskinned(o, n, ol) || rewritten(o, ol))))) o = null;
       if (o) used.add(o);
       pair.push(o);
     }
@@ -129,6 +140,12 @@
         target = SHADOW.get(o);
         if (n.nodeType === 1) {
           if (o.isEqualNode(n)) carry(o, c);
+          else if (n.hasAttribute('data-rg-live')) {
+            // a part a module keeps drawing itself (a face's readout, a ring): the build's new content goes in as a
+            // whole and the module redraws it from there; nothing inside is paired
+            SHADOW.set(c, target); patchAttrs(o, n, target);
+            if (o.innerHTML !== n.innerHTML) target.replaceChildren(...n.childNodes);
+          }
           else { SHADOW.set(c, target); patchAttrs(o, n, target); patchChildren(o, n, c, target, out); }
         } else {
           SHADOW.set(c, target);
