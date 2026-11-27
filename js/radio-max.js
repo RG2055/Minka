@@ -17,7 +17,7 @@
     const artist = (byId('npArtist')?.textContent || '').trim();
     const cover = byId('npCover')?.getAttribute('src') || '';
     const put = (sel, text) => { const el = $(sel); if (el.textContent !== text) el.textContent = text; };
-    put('.rmx-station', title ? station : (station ? 'RG Radio' : ''));
+    put('.rmx-station', title ? station : (station ? byId('curStation').dataset.sub || 'RG Radio' : ''));
     put('.rmx-title', title || station || 'RG Radio');
     put('.rmx-artist', title ? artist : (station ? '' : 'Izvēlies staciju'));
     slide();

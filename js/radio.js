@@ -46,6 +46,12 @@ let latvianStations = [];
 let worldStations = [];
 let extraLatvianStations = [];
 let ehrStationRows = [];   // data/ehr-stations.json (scripts/build-ehr-stations.mjs): the "EHR" tab
+// The "GTA" tab: data/wheel-stations.json names the games and stations; the audio (one long file per
+// station) and the logos are on the home server only (the music host's /fm/ path), never in this repo or on the site.
+const GTA_BASE = (localStorage.getItem('mk_gta_base') || 'https://music.rgapp.page/fm').replace(/\/+$/, '') + '/';
+let gtaGames = [], gtaStations = [];
+// A station is on air by the wall clock: everyone hears the same second of its recording.
+const gtaLiveSecond = station => Math.floor(Date.now() / 1000 % station.gta.dur);
 // Expose stationsList globally so lazy-load caller can detect when ready
 Object.defineProperty(window, 'stationsList', { get(){ return stationsList; }, configurable:true });
 Object.defineProperty(window, 'recordStations', { get(){ return recordStations; }, configurable:true });
@@ -71,7 +77,7 @@ function mergeUniqueStations(a,b){
 }
 function refreshCombinedStations(){
     const currentKey = stationsList[currentIndex] && radioStationKey(stationsList[currentIndex]);
-    stationsList = mergeUniqueStations(mergeUniqueStations(recordStations, latvianStations), worldStations);
+    stationsList = mergeUniqueStations(mergeUniqueStations(recordStations, latvianStations.concat(gtaStations)), worldStations);
     if (currentKey) { const index = stationsList.findIndex(s => s && radioStationKey(s) === currentKey); if (index >= 0) currentIndex = index; }
     window.dispatchEvent(new Event('rg-stations-ready'));
 }
@@ -461,6 +467,7 @@ function startNowPlaying(st){
     npStationLogo = stationLogoUrl(st);
     npLastKey = "";
     setNowUI("", "", "");
+    if (st.gta) return;   // one long recording: there is no song list to ask
 
     // Record keeps its existing metadata path and cadence. Other providers
     // are queried only for the selected station, while visible and playing.
@@ -489,7 +496,7 @@ function toggleMenu(forceOpen) {
             const profile = window.__mkUnifiedMedia;
             // Opens where the playing station is (favourites first when there are any), so it shows at once.
             const now = typeof stationsList !== 'undefined' && typeof currentIndex !== 'undefined' ? stationsList[currentIndex] : null;
-            const own = !now || now.group === 'world' || now.group === 'separator' ? '' : now.ehr ? 'ehr' : now.group === 'latvija' ? 'latvija' : 'record';
+            const own = !now || now.group === 'world' || now.group === 'separator' ? '' : now.ehr ? 'ehr' : now.group === 'gta' ? 'gta' : now.group === 'latvija' ? 'latvija' : 'record';
             // The "Atklāj" tab is gone (2026-11-16): without favourites it opens where the station plays, else on Radio Record.
             stationPickerSource = profile?.getSession() && profile.getRadio()?.favorites?.length ? 'favorites' : (own || 'record');
             stationPickerQuery = '';
@@ -1172,6 +1179,17 @@ async function initStations() {
             const response = await fetch('data/ehr-stations.json?v=20261018ehr1');
             if (response.ok) ehrStationRows = (await response.json()).filter(r => r && r.mount && /^https:\/\//.test(r.url));
         } catch (_) { /* Without it the EHR streams stay in the Latvian list. */ }
+    })(), (async () => {
+        try {
+            const response = await fetch('data/wheel-stations.json?v=20261127fm1');
+            if (!response.ok) return;
+            gtaGames = await response.json();
+            gtaStations = gtaGames.flatMap(game => game.stations.map(([id, title, dur]) => {
+                const url = GTA_BASE + game.id + '/' + id;
+                return { title, group: 'gta', gta: { game: game.id, dur }, tooltip: game.short, cover: url + '.webp', catalogKey: 'gta:' + game.id + '/' + id,
+                    stream_128: url + '.m4a', stream_320: url + '.m4a', stream_64: '', stream_hls: '', prefix: '', id: '' };
+            }));
+        } catch (_) { /* Without it the GTA tab stays empty. */ }
     })()]);
     // 1) Instant fallback list (so play/menu works even if network is slow after radio opens)
     recordStations = (STATIONS_LOCAL || []).map(s => ({
@@ -1793,9 +1811,9 @@ function stationPickerItems() {
     // used to look like "nothing found").
     if (query && stationPickerSource !== 'world') return stationPickerIndex().filter(({ search }) => search.includes(query));
     return stationPickerIndex()
-        .filter(({ station }) => stationPickerSource === 'featured' ? featuredKeys.has(radioStationKey(station)) : stationPickerSource === 'world' ? worldPageKeys.has(radioStationKey(station)) : stationPickerSource === 'favorites' ? (window.__mkUnifiedMedia?.getRadio()?.favorites||[]).includes(radioStationKey(station)) : stationPickerSource === 'ehr' ? !!station.ehr : stationPickerSource === 'latvija'
+        .filter(({ station }) => stationPickerSource === 'featured' ? featuredKeys.has(radioStationKey(station)) : stationPickerSource === 'world' ? worldPageKeys.has(radioStationKey(station)) : stationPickerSource === 'favorites' ? (window.__mkUnifiedMedia?.getRadio()?.favorites||[]).includes(radioStationKey(station)) : stationPickerSource === 'ehr' ? !!station.ehr : stationPickerSource === 'gta' ? station.group === 'gta' : stationPickerSource === 'latvija'
             ? station.group === 'latvija' && !station.ehr
-            : station.group !== 'latvija' && station.group !== 'world')
+            : station.group !== 'latvija' && station.group !== 'world' && station.group !== 'gta')
         .filter(({ search }) => !query || search.includes(query));
 }
 
@@ -1812,8 +1830,10 @@ function updateStationPickerSelection() {
         if (!button) continue;
         button.classList.toggle('is-current', selected);
         button.setAttribute('aria-current', String(selected));
-        button.querySelector('.station-play-mark').innerHTML = selected ? STATION_SELECTED_ICON : STATION_PLAY_ICON;
+        const mark = button.querySelector('.station-play-mark');   // a GTA wheel slot has none
+        if (mark) mark.innerHTML = selected ? STATION_SELECTED_ICON : STATION_PLAY_ICON;
     }
+    window.rgGta?.mid(list);
 }
 
 function renderStationPickerList() {
@@ -1846,6 +1866,8 @@ function renderStationPickerList() {
     const discovery = stationPickerSource === 'featured' && !stationPickerQuery;
     const ehrView = stationPickerSource === 'ehr' && !stationPickerQuery;
     list.dataset.mode = discovery ? 'discovery' : ehrView ? 'ehr' : 'grid';
+    // GTA: the games and the chosen game's station wheel (js/radio-wheel.js) instead of tiles; a search shows tiles as usual.
+    if (stationPickerSource === 'gta' && !stationPickerQuery && window.rgGta) { list.dataset.mode = 'gta'; window.rgGta.render(list, gtaGames, GTA_BASE, stationsList, () => currentIndex); return; }
     if (discovery) void checkDiscoveryStations();
     list.innerHTML = (discovery ? discoveryOverviewHTML() + '<div class="discovery-featured-row">' : '') + items.map(({ station, index }) => {
         const isCurrent = index === currentIndex;
@@ -1907,7 +1929,7 @@ function refreshEhrNow() {
 function renderStationOverlay() {
     const overlay = document.getElementById('stationOverlay');
     if (!overlay || overlay.style.display !== 'grid') return;
-    const recordCount = stationsList.filter(s => s && s.group !== 'latvija' && s.group !== 'world' && s.group !== 'separator').length;
+    const recordCount = stationsList.filter(s => s && s.group !== 'latvija' && s.group !== 'world' && s.group !== 'gta' && s.group !== 'separator').length;
     const latviaCount = stationsList.filter(s => s && s.group === 'latvija' && !s.ehr).length;
     const ehrCount = stationsList.filter(s => s && s.ehr).length;
     overlay.setAttribute?.('data-station-view', stationPickerSource);
@@ -1932,6 +1954,8 @@ function renderStationOverlay() {
             <button type="button" data-station-source="favorites" role="tab" aria-selected="${stationPickerSource === 'favorites'}">Favorīti <span>0</span></button>
             <button type="button" data-station-source="record" role="tab" aria-selected="${stationPickerSource === 'record'}"
                 class="${stationPickerSource === 'record' ? 'active' : ''}">Radio Record <span>${recordCount}</span></button>
+            ${gtaStations.length ? `<button type="button" data-station-source="gta" role="tab" aria-selected="${stationPickerSource === 'gta'}"
+                class="${stationPickerSource === 'gta' ? 'active' : ''}">GTA <span>${gtaStations.length}</span></button>` : ''}
             <button type="button" data-station-source="ehr" role="tab" aria-selected="${stationPickerSource === 'ehr'}"
                 class="${stationPickerSource === 'ehr' ? 'active' : ''}">EHR <span>${ehrCount}</span></button>
             <button type="button" data-station-source="latvija" role="tab" aria-selected="${stationPickerSource === 'latvija'}"
@@ -1945,7 +1969,7 @@ function renderStationOverlay() {
         button.addEventListener('click', () => {
             clearTimeout(stationPickerSearchTimer);
             if(button.dataset.stationSource==='favorites'&&!window.__mkUnifiedMedia?.getSession()){window.__mkUnifiedMedia?.open();return;}
-            stationPickerSource = ['latvija','ehr','favorites','featured','world'].includes(button.dataset.stationSource) ? button.dataset.stationSource : 'record';
+            stationPickerSource = ['latvija','ehr','gta','favorites','featured','world'].includes(button.dataset.stationSource) ? button.dataset.stationSource : 'record';
             // A search that made sense for one catalogue often produces an
             // apparently broken empty state in the other one. Source switches
             // should start from the complete station list.
@@ -2320,6 +2344,10 @@ function selectStation(index) {
     const s = stationsList[index];
     const url = s.stream_320 || s.stream_128 || s.stream_hls || s.stream_64;
     if (!url) return;
+    // A GTA station: its game stands above the name in the players (in place of "RG Radio"), its logo is shown whole.
+    document.body.classList.toggle('radio-gta', !!s.gta);
+    radioStreamLive = s.gta ? s : null;
+    document.getElementById('curStation').dataset.sub = s.gta ? s.tooltip : '';
     const streamMeta = describeStationStream(url);
     
     document.getElementById('curStation').style.opacity = 1;
@@ -2361,6 +2389,8 @@ function requestRadioPlayback() {
         aCtx.resume().then(() => { if (!audio.paused) paint(true); }).catch(() => paint(false, true));
     }
     paint(false);
+    // A paused GTA station comes back where it is on air now, not where it was left.
+    if (radioStreamLive && audio.readyState) audio.currentTime = gtaLiveSecond(radioStreamLive);
     return audio.play().then(() => {
         const blocked = aCtx && aCtx.state === 'suspended';
         paint(!audio.paused && !blocked, blocked);
@@ -2369,7 +2399,7 @@ function requestRadioPlayback() {
     });
 }
 
-let radioStreamGeneration = 0, radioStreamURL = '', radioStreamCleanup = null;
+let radioStreamGeneration = 0, radioStreamURL = '', radioStreamCleanup = null, radioStreamLive = null;   // radioStreamLive: the GTA station on air, set by selectStation
 function play(url, name) {
     setupAudio();
     document.getElementById('curStation').textContent = name;
@@ -2401,7 +2431,11 @@ function play(url, name) {
     };
     audio.addEventListener?.('error', failedPlayback);
     cleanup.push(() => audio.removeEventListener?.('error', failedPlayback));
-    const direct = () => { if (!active()) return; audio.src = url; requestRadioPlayback(); };
+    // A GTA station is one long recording: it opens at the second that is on air (the #t media fragment makes the
+    // browser ask the server for that part only) and runs round.
+    const live = radioStreamLive;
+    audio.loop = !!live;
+    const direct = () => { if (!active()) return; audio.src = live ? url + '#t=' + gtaLiveSecond(live) : url; requestRadioPlayback(); };
     const isHLS = url.includes('.m3u8');
     // Chrome advertises native HLS, but changing a live stream to .88 speed
     // can fail with DEMUXER_ERROR_COULD_NOT_PARSE (observed on Record Remix).
@@ -2458,6 +2492,7 @@ function describeStationStream(url) {
     const value = String(url || '').toLowerCase();
     if (value.includes('.m3u8')) return { codec: 'AAC', quality: 'HLS' };
     const rate = value.match(/(?:^|[_-])(\d{2,3})(?=\.(?:aacp?|mp3)|(?:\?|$))/)?.[1];
+    if (value.includes('.m4a')) return { codec: 'AAC', quality: '128 KBPS' };
     if (value.includes('.aac')) return { codec: 'AAC', quality: rate ? `${rate} KBPS` : 'LIVE' };
     if (value.includes('.mp3') || value.includes('stream.mp3')) return { codec: 'MP3', quality: rate ? `${rate} KBPS` : 'LIVE' };
     return { codec: 'AUDIO', quality: 'LIVE' };

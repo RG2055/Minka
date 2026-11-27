@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261127wm1';
+  var CALENDAR_BUILD = '20261127fm1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1178,7 +1178,7 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWind
    is that colour mixed into the skin's dark base (--rmx-base), the play key is the primary itself. A warm accent
    (js/radio-max.js) tints the surfaces from a cool grey instead (--rmx-tsrc): orange into dark reads as brown. A skin changes the
    base, how much colour each tone takes, the shapes and the type. */
-#rmx{--rmx-src:rgb(var(--radio-accent-rgb,158,224,187));--rmx-tsrc:var(--rmx-src);--rmx-base:#0a0d0c;--rmx-tile-r:14px;--rmx-art-r:14px;
+#rmx{--rmx-src:rgb(var(--radio-accent-rgb,158,224,187));--rmx-tsrc:var(--rmx-src);--rmx-base:#0a0d0c;--rmx-tile-r:16px;--rmx-art-r:14px;
   --rmx-acc:color-mix(in oklab,var(--rmx-src) 74%,#fff);--rmx-surface:color-mix(in oklab,var(--rmx-tsrc) 14%,var(--rmx-base));--rmx-well:color-mix(in oklab,var(--rmx-tsrc) 24%,var(--rmx-base));--rmx-on:color-mix(in oklab,var(--rmx-tsrc) 42%,var(--rmx-base));--rmx-on-ink:color-mix(in oklab,var(--rmx-tsrc) 16%,#fff);--rmx-menu:color-mix(in oklab,var(--rmx-tsrc) 19%,var(--rmx-base));
   --rmx-play-bg:var(--rmx-acc);--rmx-play-ink:color-mix(in oklab,var(--rmx-src) 30%,#000);--rmx-ink:color-mix(in oklab,var(--rmx-tsrc) 7%,#f2f4f3);--rmx-sub:color-mix(in oklab,var(--rmx-tsrc) 28%,#a9b0ad);--rmx-rail:color-mix(in oklab,var(--rmx-tsrc) 32%,var(--rmx-base));--rmx-bg:color-mix(in srgb,var(--rmx-surface) 86%,transparent);--rmx-font:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;--rmx-label:var(--rmx-font);
   position:relative;z-index:6;box-sizing:border-box;height:238px;width:100%;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:52px minmax(0,1fr) 44px;row-gap:10px;padding:16px 20px;
@@ -1191,6 +1191,7 @@ html body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#radioWind
 #rmx .rmx-meta{grid-column:1;grid-row:1;display:flex;align-items:center;gap:14px;min-width:0}
 #rmx .rmx-art{width:52px;height:52px;flex:none;border-radius:var(--rmx-art-r);overflow:hidden;background:var(--rmx-well);display:grid;place-items:center;color:var(--rmx-sub)}
 #rmx .rmx-art img{width:100%;height:100%;object-fit:cover;display:block}
+body.radio-gta #rmx .rmx-art img{object-fit:contain;padding:3px;box-sizing:border-box}
 #rmx .rmx-art img:not([src]),#rmx .rmx-art img[src=""],#rmx .rmx-art img[src$="radio-default.svg"]{display:none}
 #rmx .rmx-art svg{width:24px;height:24px}
 #rmx .rmx-art:has(img[src]:not([src=""]):not([src$="radio-default.svg"])) svg{display:none}
@@ -1287,6 +1288,7 @@ body>#slowFxPanel.rmx-fx{max-width:none!important;width:min(680px,calc(100vw - 2
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-search input{font-family:var(--rmx-font)!important;color:var(--rmx-ink)!important}
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-close{background:none!important;border:0!important;color:var(--rmx-sub)!important}
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button,#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .world-genre-row [data-wg]{background:var(--rmx-well)!important;border:0!important;box-shadow:none!important;color:var(--rmx-ink)!important;font-family:var(--rmx-label)!important;letter-spacing:var(--rmx-track,0)!important;text-transform:var(--rmx-case,none)!important;border-radius:calc(var(--rmx-tile-r) + 2px)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button{text-transform:uppercase!important;letter-spacing:.04em!important}
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button.active,#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .world-genre-row [data-wg]:is([aria-pressed="true"],.active,[aria-selected="true"]){background:var(--rmx-on)!important;color:var(--rmx-on-ink)!important}
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile{background:var(--rmx-well)!important;border:0!important;box-shadow:none!important;border-radius:var(--rmx-tile-r)!important}
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile.is-current{background:color-mix(in srgb,var(--rmx-acc) 20%,transparent)!important;box-shadow:none!important}
@@ -1298,6 +1300,40 @@ body>#slowFxPanel.rmx-fx{max-width:none!important;width:min(680px,calc(100vw - 2
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-entry>.station-favorite[aria-pressed="true"]{color:var(--rmx-acc)!important}
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-list{scrollbar-color:var(--rmx-well) transparent}
 #stationOverlay[data-skin="dither"] .station-tile .station-logo{image-rendering:pixelated}
+/* Station browser in M3 Expressive: one tinted surface shared with the player, tonal steps instead of dark slabs.
+   --st-1 / --st-2: the skin's ink laid thin over its surface, so every skin gets the same hierarchy in its own tone;
+   radii come from the skin (--rmx-tile-r), so a square skin stays square. No rims, shadows or pictures behind. */
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin]{--st-1:color-mix(in srgb,var(--rmx-ink) 6%,transparent);--st-2:color-mix(in srgb,var(--rmx-ink) 12%,transparent);--st-seg:min(20px,calc(var(--rmx-tile-r,16px) + 6px))}
+#radioWindow.mk-st-joined #rmx{--rmx-bg:var(--rmx-surface)}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-head{padding:14px 22px 6px!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-search{background:var(--st-1)!important;border-radius:var(--st-seg)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-search:focus-within{background:var(--st-2)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-close{width:40px!important;height:40px!important;border-radius:50%!important;background:var(--st-1)!important;color:var(--rmx-ink)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-close:hover{background:var(--st-2)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs{gap:2px!important;padding:8px 22px 0!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button{background:var(--st-1)!important;border-radius:min(8px,var(--rmx-tile-r,8px))!important;transition:border-radius .2s cubic-bezier(.2,0,0,1),background .15s!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button:first-child{border-top-left-radius:var(--st-seg)!important;border-bottom-left-radius:var(--st-seg)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button:last-child{border-top-right-radius:var(--st-seg)!important;border-bottom-right-radius:var(--st-seg)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button:hover{background:var(--st-2)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button.active{background:var(--rmx-on)!important;color:var(--rmx-on-ink)!important;border-radius:var(--st-seg)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-tabs button span{font-size:11px!important;font-weight:500!important;letter-spacing:0!important;opacity:.62!important;margin-left:6px!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-picker-list{padding:18px 22px 20px!important;gap:8px!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile{background:transparent!important;border:0!important;transition:background .15s!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile:hover{background:var(--st-1)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile.is-current{background:color-mix(in srgb,var(--rmx-acc) 20%,transparent)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile.is-offline{background:transparent!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile .station-logo-wrap{background:var(--st-1)!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .world-genre-row [data-wg]{background:var(--st-1)!important;border:0!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .world-genre-row [data-wg]:is([aria-pressed="true"],.active,[aria-selected="true"]){background:var(--rmx-on)!important}
+/* The playing station: a small equalizer over its picture. Stepped, so it redraws a few times a second, and it runs
+   only while the list is open. */
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile.is-current .station-play-mark{display:grid!important;place-items:center;position:absolute!important;inset:auto auto auto 6px!important;top:50%!important;translate:0 -50%;width:48px!important;height:48px!important;border-radius:var(--rmx-art-r)!important;background:rgba(0,0,0,.5)!important;color:#fff!important;pointer-events:none;opacity:1!important;transform:none!important}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .station-tile.is-current .st-eq{width:20px!important;height:20px!important;fill:currentColor}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .st-eq rect{transform-box:fill-box;transform-origin:50% 100%;animation:st-eq .8s steps(5,end) infinite alternate}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .st-eq rect:nth-child(2){animation-delay:-.3s}
+#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .st-eq rect:nth-child(3){animation-delay:-.55s}
+@keyframes st-eq{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+@media (prefers-reduced-motion:reduce){#stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin] .st-eq rect{animation:none}}
 /* The center dock (js/radio-max.js): when the screen is wide enough the radio stands in the dock's row, centred on
    the viewport, its bottom on the dock's bottom, as wide as the room between the dock's two halves. The halves are
    the dock's own buttons moved sideways (translate) over two pills of the dock's own glass; the Radio key fades in
@@ -1572,8 +1608,9 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
-  await loadAny(['js/radio.js?v=20261126rs1']);
-  await loadAny(['js/radio-max.js?v=20261126ws1']);
+  await loadAny(['js/radio-wheel.js?v=20261127fm1']);
+  await loadAny(['js/radio.js?v=20261127fm1']);
+  await loadAny(['js/radio-max.js?v=20261127fm1']);
   await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
@@ -5289,7 +5326,7 @@ window.__mkMiniDock = (function () {
     dock.layout(item);
     if (el.hidden) return;
     var name = station(), title = meta.title || name || 'Radio';
-    var sub = meta.title ? meta.artist || name : name ? 'RG Radio' : '';
+    var sub = meta.title ? meta.artist || name : name ? document.getElementById('curStation').dataset.sub || 'RG Radio' : '';
     dock.text(el, title, sub);
     var img = el.querySelector('.rgm-art img');
     if (meta.cover && img.getAttribute('src') !== meta.cover) img.src = meta.cover;
