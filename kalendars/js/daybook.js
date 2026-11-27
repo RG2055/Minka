@@ -196,7 +196,7 @@
 
   // The statistics' styles are not part of the page's start: they load while the page is idle after it (or at the
   // first open, whichever comes first), and the statistics are drawn only once both they and the script are in.
-  var statsCss = null;
+  var statsCss = null, statsCssDone = false;
   function loadStatsCss() {
     if (statsCss) return statsCss;
     statsCss = new Promise(function (resolve) {
@@ -204,9 +204,11 @@
       l.rel = 'stylesheet'; l.id = 'mk-stats-m3'; l.href = 'css/page/stats-m3.css?v=20261127s33';
       l.onload = resolve; l.onerror = resolve;   // without its styles the statistics still work
       document.head.append(l);
-    });
+    }).then(function () { statsCssDone = true; });
     return statsCss;
   }
+  // The dialog waits for its styles at the very first open (unstyled, its header icons filled the screen for a moment).
+  window.__mkStatsCssPending = function () { return statsCssDone ? null : loadStatsCss(); };
   setTimeout(function () { (window.requestIdleCallback || setTimeout)(loadStatsCss, { timeout: 8000 }); }, 3000);
   // The statistics' script and styles, once (the statistics and the worker window's summary both wait on it).
   function loadStats() {

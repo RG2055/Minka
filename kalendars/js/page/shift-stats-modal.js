@@ -20,6 +20,8 @@
     const monthLabel = document.getElementById('stats-month-label');
     if (!modal || !wrap) return;
     if (isOpen(modal)) return;
+    const styles = window.__mkStatsCssPending && window.__mkStatsCssPending();
+    if (styles) { styles.then(function () { window.openStatsModal(opts); }); return; }
     // The header shows the dock's own Statistika icon, in the current icon set.
     try {
       const mark = modal.querySelector('.mk-stats-mark');
