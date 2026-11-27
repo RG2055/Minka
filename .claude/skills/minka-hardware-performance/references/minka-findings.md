@@ -195,3 +195,22 @@ declarations. Knip does not apply (script-tag globals, no ES modules).
 | P6 | Hover: invalidation scope, emoji/initials effects on pointer events | PC hover 22 % | `hover.js` invalidations; PC hover state |
 | P7 | RAM: bolus photos on demand, header art at shown size, empty iframes, then CSS consolidation (14.7k rules) | shared 8 GB with the iGPU | `ram-census.js`, PC memory footprint |
 | P8 | Safe deletion: 72 Biome-proven declarations; per-feature lazy load from coverage | less parse/compile, less memory | protocol in playbook.md §6 |
+
+## Mood glass liquid drawn as one still frame (2026-11-27, dea12b5d)
+
+`kalendars/js/page/mk-liquid.js` replaced the two CSS bars + 720 ms slosh on desktop. Measured locally (not the cloud
+harness): Playwright Chromium, synthetic server :8012, target navigator, CPU x4, 1920x1080, three runs each, run one
+after another; "before" = the same server with `ROUTES` serving an empty mk-liquid.js and the two CSS files from
+a6bb480b. Medians (ranges):
+
+| state | before, main-thread task ms | after | liquid work after |
+|---|---|---|---|
+| idle 20 s | 103 (88-146) | 118 (102-136) | 0 draws, 0 `sync` calls, no running animation in the stage |
+| 8 day switches | 1906 (1862-2004) | 1926 (1912-1930) | 1 draw (18-22 ms, the first with the face texture), 48 `sync` calls |
+| 5 rating presses | 1767 (1649-1777) | 1760 (1736-1764) | 5 draws, 10-19 ms in all |
+
+One redraw at 20 different levels: median 4-5 ms, max 23-27 ms (CPU x4). Script time rose by about 5-6 ms per change
+(day switch 429 -> 468 ms per 8, rating 147 -> 177 ms per 5); totals are inside run-to-run noise. Not measured: the
+GPU process and frames (the old slosh was a 720 ms transform animation per level change, the new one composites a
+single frame), the dancers standing in the liquid (a second canvas, redraw on the wrap's class/style changes), the
+hospital PC. Probe: session scratchpad `tools/liquid-probe.js` (patches createImageData/putImageData for 250x250).

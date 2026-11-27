@@ -193,7 +193,9 @@
   /* The visible alpha bounds sit ~1px above the WebP canvas centre. */
   transform: translate(-50%, calc(-50% + 1px));
   transform-origin: 50% 50%;
-  clip-path: ellipse(44.6% 43.2% at 50% 48%);
+  /* A circle on the glass's own visible bounds (centre 49.1%, radius 44.9% of the picture): the earlier ellipse cut the
+     bottom rim 3-4 px higher than the top, so the ring round the glass looked off-centre at the bottom. */
+  clip-path: circle(44.9% at 50% 49.1%);
   filter: saturate(.22) brightness(1.035);
   pointer-events: none;
   user-select: none;

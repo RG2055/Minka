@@ -1297,11 +1297,14 @@
       var fresh = !!(st.changedAt && (now - st.changedAt) < WARN_MS);
       var pctRoom = st.changedAt ? Math.min((now - st.changedAt) / WARN_MS * 100, 100) : 100;
       var roomLevel = !fresh ? 'stale' : pctRoom >= 80 ? 'warn' : pctRoom >= 60 ? 'caution' : 'fresh';
-      // the dock's outline for this room (index.html .bolus-ring): it fills as the 24 h pass (full = change it now)
-      var usedRoom = fresh ? Math.min(100, pctRoom) : 100;
-      btn.style.setProperty('--bo-' + r.id, usedRoom.toFixed(1));
-      btn.classList.toggle('bo-out-' + r.id, usedRoom < 1);
-      btn.classList.toggle('bo-warn-' + r.id, roomLevel === 'warn');
+      // the dock's outline for this room (index.html .bolus-ring): what is left of the 24 h, like the chips in the
+      // window: full just after a change, shorter and redder as the end nears, gone (and the item red) once it is due
+      var leftRoom = fresh ? Math.max(0, 100 - pctRoom) : 0;
+      btn.style.setProperty('--bo-' + r.id, leftRoom.toFixed(1));
+      btn.classList.toggle('bo-out-' + r.id, leftRoom < 1);
+      btn.classList.toggle('bo-amber-' + r.id, fresh && leftRoom < 40 && leftRoom >= 20);
+      btn.classList.toggle('bo-warn-' + r.id, fresh && leftRoom < 20 && leftRoom >= 8);
+      btn.classList.toggle('bo-low-' + r.id, fresh && leftRoom < 8);
       btn.classList.toggle('bo-end-' + r.id, roomLevel === 'stale');
       var seg = document.getElementById(r.id === 'ge' ? 'bolusSegGe' : 'bolusSegPh');
       if (seg) {
