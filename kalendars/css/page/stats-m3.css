@@ -1251,3 +1251,7 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal .db-card.is-k-bolus { --ch: 390; }
 #stats-modal .db-card.is-k-bolus .db-big { font-size: calc(176 * var(--k)); }
 #stats-modal .db-card.is-k-bolus .db-big small { font-size: calc(36 * var(--k)); }
+/* the content's real width in mockup pixels (measured: the mood row 607, fatigue's top row 603), so a narrow card
+   scales it down instead of letting "Normāli" or the face run past the edge */
+#stats-modal .db-card.is-k-mood { --cw: 640; }
+#stats-modal .db-card.is-k-fatigue { --cw: 640; }
