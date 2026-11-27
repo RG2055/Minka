@@ -646,8 +646,8 @@
     var sc = m ? Math.max(1, Math.min(5, Math.round(m.score))) : 3, happy = sc >= 4;
     var eyes = happy ? '<path d="M31 45Q37 37 43 45M57 45Q63 37 69 45"/>' : '<circle cx="37" cy="43" r="3.6" stroke="none" fill="currentColor"/><circle cx="63" cy="43" r="3.6" stroke="none" fill="currentColor"/>';
     return '<svg class="db-mface" viewBox="0 0 100 100" aria-hidden="true" style="--f:' + (m ? FACE_TINT[m.key] || '#6fd69e' : '#9fb3aa') + '"><path class="db-mface-body" d="' + shapePath('mood') + '"/>'
-      + (sc >= 3 ? '<path d="M78 2l-3 9M90 6l-7 7M97 18l-9 3" fill="none" stroke="#ffd36b" stroke-width="4" stroke-linecap="round"/>' : '')
-      + '<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">' + eyes + '<path d="' + MOUTH[sc - 1] + '"/></g></svg>';
+      + (m && sc >= 3 ? '<path d="M78 2l-3 9M90 6l-7 7M97 18l-9 3" fill="none" stroke="#ffd36b" stroke-width="4" stroke-linecap="round"/>' : '')
+      + '<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">' + eyes + '<path d="' + MOUTH[m ? sc - 1 : 1] + '"/></g></svg>';   // no rating: a flat mouth, no sparks
   }
   // Fatigue's face: a soft blob, the eyes and colour from how tired the month was (hours very tired per person)
   function sleepyFace(hours) {
@@ -673,7 +673,8 @@
     // the team's rating: the word, five steps, a dot a day
     var avg = moodAverage(rows), m = avg == null ? null : M.moodFor(avg);
     var marked = past.filter(function (r) { return r.mood || ownMood(r.day); }).length;
-    out.push(card('mood', 'mood', '', 'Kā jūtas komanda?', '<span class="db-mood-row">' + moodFace(m) + '<span class="db-mood-word"><span class="db-big">' + (m ? m.label : 'Nav vērtēts') + '</span>'
+    var word = m ? m.label : 'Nav vērtējumu';   // a longer word gets a smaller size, so it always fits beside the face
+    out.push(card('mood', 'mood', '', 'Kā jūtas komanda?', '<span class="db-mood-row">' + moodFace(m) + '<span class="db-mood-word"><span class="db-big" style="--fit:' + Math.min(1, 7 / word.length).toFixed(3) + '">' + word + '</span>'
       + '<span class="db-scale" role="img" aria-label="' + (m ? 'Vērtējums ' + m.score + ' no 5' : 'Nav vērtējuma') + '">' + [1, 2, 3, 4, 5].map(function (k) { return '<i' + (m && k <= m.score ? ' class="is-on"' : '') + '></i>'; }).join('') + '<em>' + (m ? m.score + ' no 5' : '') + '</em></span></span></span>'
       + '<span class="db-mood-foot"><span class="db-card-sub">' + marked + ' no ' + past.length + ' dienām novērtētas</span>'
       + '<span class="db-dots" style="--n:' + rows.length + '">' + rows.map(function (r) { var c = r.mood ? M.moodFor(r.mood.score).color : ''; return '<i' + (c ? ' style="background:' + c + '"' : '') + (r.day > b.today ? ' class="is-future"' : '') + '></i>'; }).join('') + '</span></span>'));
@@ -736,7 +737,7 @@
       return n ? '<span class="db-rx-pill" style="--t:' + MOOD_TINT[mo.key] + '"><span class="db-face">' + mo.emoji + '</span><span><b>' + Math.round(n / total * 100) + '%</b><small>' + mo.label + '</small></span></span>' : '';
     }).join('');
     var lead = '<div class="db-hero is-mood db-mlead"><span class="db-face db-mlead-face">' + (m ? m.emoji : '😶') + '</span>'
-      + '<span class="db-mlead-word"><b class="db-hero-title">Komandas sajūta</b><span class="db-mword" style="--t:' + (m ? MOOD_TINT[m.key] : '#d7e3dd') + '">' + (m ? m.label : 'Nav vērtēts') + '</span></span>'
+      + '<span class="db-mlead-word"><b class="db-hero-title">Komandas sajūta</b><span class="db-mword" style="--t:' + (m ? MOOD_TINT[m.key] : '#d7e3dd') + '">' + (m ? m.label : 'Nav vērtējumu') + '</span></span>'
       + '<span class="db-fact"><b>' + marked + ' no ' + past.length + '</b><small>dienām atzīmētas</small></span>'
       + '<span class="db-rx"><span class="db-rx-total"><b>' + total + '</b><small>' + (total === 1 ? 'reakcija' : 'reakcijas') + '</small></span>' + pills + '</span></div><!--lead-->';
     return lead
@@ -1253,9 +1254,8 @@
     var MM = window.MinkaMotion, body = chrome.body;
     if (!MM || !kind || kind === 'refresh') return null;
     var tr = MM.travel();
-    if (kind === 'reveal') {
-      return MM.animate(body, [{ opacity: 0 }, { opacity: 1 }], 'effects-default');
-    }
+    // the numbers arrive while the dialog itself still fades in: no second, slower fade (it showed an empty sheet first)
+    if (kind === 'reveal') return null;
     if (kind === 'month') {
       return MM.animate(body, [{ opacity: 0, translate: (28 * tr * info.dir) + 'px 0' }, { opacity: 1, translate: '0 0' }], 'spatial-fast', { standard: true, measure: true });
     }
@@ -1328,12 +1328,13 @@
       chrome.body.classList.remove('db-pending');
       var animated = kind && kind !== 'refresh';
       var keepScroll = !animated ? wrap.scrollTop : null;
+      // the board is sized from the frame (a size container): set it before the body changes, so no frame paints unsized
+      wrap.classList.toggle('db-board-host', !state.day && !state.person && !DETAILS[state.tab]);
       if (window.MinkaMotion) window.MinkaMotion.run('stats-body', function () {
         chrome.body.innerHTML = inner;
         chrome.body.classList.toggle('db-anim', !!animated);
       }, { fallback: function () { return fresh && kind === 'open' ? null : bodyMotion(kind, info); } });
       else { chrome.body.innerHTML = inner; chrome.body.classList.toggle('db-anim', !!animated); }
-      fitCards(wrap); requestAnimationFrame(function () { fitCards(wrap); });   // the motion may swap the body a frame later
       if (keepScroll != null) wrap.scrollTop = keepScroll;
       if (kind === 'forward') wrap.scrollTop = 0;
       if (kind === 'back' && scrollMemo.from != null) { wrap.scrollTop = scrollMemo.list; scrollMemo.from = null; }
@@ -1351,8 +1352,6 @@
     var coffeeDays = state.day ? [state.day] : elapsedDays(b.rows, b.today).map(function (r) { return r.day; });
     if (coffeeDays.some(function (d) { return d <= b.today && !coffee.loaded[d] && !coffee.failed[d]; })) void loadCoffee(coffeeDays);
   }
-  // The answers page is sized from the frame (css: container units on the host), so the frame becomes a size container only there.
-  function fitCards(wrap) { wrap.classList.toggle('db-board-host', !!wrap.querySelector('.db-cards')); }
   // Escape and the back button: leave a drill-down first, one level at a time.
   function back() {
     if (!modalOpen() || (!state.day && !state.person && !DETAILS[state.tab])) return false;
