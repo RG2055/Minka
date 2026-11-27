@@ -345,3 +345,137 @@ html body #radioWindow #vizBtn.active{border-color:rgba(var(--radio-accent-rgb,1
 #mediaProfile .media-worker-mark svg{display:block;width:100%;height:100%}
 @media(max-width:700px){#mediaProfile .media-workers{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){#mediaProfile .media-workers{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* M3 Expressive (2026-11-27, the user's choice "B"): one tonal surface, no picture or gradient behind it, always in the
+   middle of the window. Picking: two panes, the names on the left (filled tonal buttons, the chosen one round and in
+   the accent), you and your PIN on the right. Logged in: the same surface, narrow. No rims, glow or blur. */
+dialog#mediaProfile{--mp-surf:#1c2421;--mp-high:#252f2b;--mp-well:#2e3934;--mp-well2:#38443e;--mp-acc:#9ee0bb;--mp-acc-ink:#0f2a1d;--mp-ink:#e6eeea;--mp-sub:#a7b6ae;
+  padding:24px;border:0;border-radius:28px;background:var(--mp-surf);box-shadow:0 8px 28px #0007;color:var(--mp-ink);font-family:'Google Sans','Google Sans Text',Inter,system-ui,sans-serif;scrollbar-width:thin;scrollbar-color:var(--mp-well) transparent}
+dialog#mediaProfile::backdrop{background:#03070a99}
+dialog#mediaProfile[open]{animation:mp-in .26s cubic-bezier(.2,0,0,1)}
+@keyframes mp-in{from{opacity:0;scale:.97}}
+dialog#mediaProfile.is-pick{width:min(900px,calc(100vw - 32px))}
+dialog#mediaProfile header{align-items:center;margin-bottom:16px}
+dialog#mediaProfile header small{font-size:12px;letter-spacing:.08em;color:var(--mp-sub)}
+dialog#mediaProfile h2{font-size:26px;font-weight:600;letter-spacing:0;margin:4px 0 0}
+dialog#mediaProfile [data-close]{width:40px;height:40px;min-height:40px;flex:0 0 40px;padding:9px;margin:0;border:0;border-radius:50%;background:var(--mp-well);color:var(--mp-ink)}
+dialog#mediaProfile [data-close]:hover{background:var(--mp-well2)}
+dialog#mediaProfile button,dialog#mediaProfile input{border:0;border-radius:16px;background:var(--mp-well);color:var(--mp-ink)}
+dialog#mediaProfile button:hover{background:var(--mp-well2)}
+dialog#mediaProfile button:focus-visible,dialog#mediaProfile input:focus-visible{outline:2px solid var(--mp-acc);outline-offset:2px}
+dialog#mediaProfile #mediaStatus{color:var(--mp-sub)!important;font-size:13px;line-height:1.45;margin:0}
+/* the two panes */
+dialog#mediaProfile.is-pick #mediaContent{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(250px,1fr);gap:16px;align-items:stretch}
+dialog#mediaProfile .media-pick{display:grid;align-content:start;gap:12px;min-width:0}
+dialog#mediaProfile .media-find{height:48px;min-height:48px;padding:0 20px;border-radius:24px;background:var(--mp-well);font-size:15px}
+dialog#mediaProfile .media-workers{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;max-height:min(420px,calc(100dvh - 260px));overflow:auto;scrollbar-width:thin;scrollbar-color:var(--mp-well) transparent;padding:2px}
+dialog#mediaProfile .media-workers button{min-height:52px;padding:6px 12px 6px 8px;gap:10px;border-radius:16px;background:var(--mp-well);transition:border-radius .25s cubic-bezier(.38,1.21,.22,1),background-color .15s,color .15s}
+dialog#mediaProfile .media-workers button[aria-pressed="true"]{border-radius:26px;background:var(--mp-acc);color:var(--mp-acc-ink);font-weight:700}
+dialog#mediaProfile .media-worker-avatar.has-emoji{width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:var(--mp-high);font-size:20px}
+dialog#mediaProfile .media-workers button[aria-pressed="true"] .media-worker-avatar{background:#ffffff55}
+dialog#mediaProfile .media-worker-name{font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+dialog#mediaProfile .media-worker-mark svg{width:16px;height:16px}
+dialog#mediaProfile .media-side{display:grid;align-content:center;justify-items:center;gap:14px;padding:24px 20px;border-radius:24px;background:var(--mp-high);text-align:center;min-width:0}
+dialog#mediaProfile .media-side #mediaStatus{text-align:center;max-width:32ch}
+dialog#mediaProfile .media-side-empty{display:grid;justify-items:center;gap:10px;color:var(--mp-sub);font-size:16px}
+dialog#mediaProfile .media-side-empty strong{color:var(--mp-ink);font-weight:600}
+dialog#mediaProfile .media-side-pic{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:var(--mp-well);font-size:40px}
+dialog#mediaProfile .media-side-pic .media-worker-avatar{width:72px;height:72px;font-size:22px;border:0}
+dialog#mediaProfile .media-person-heading{display:grid;justify-items:center;gap:10px;margin:0;font-size:22px;font-weight:600}
+dialog#mediaProfile .media-pin{display:grid;gap:10px;width:100%;max-width:260px}
+dialog#mediaProfile .media-pin label{gap:6px;font-size:13px;color:var(--mp-sub);text-align:left}
+dialog#mediaProfile .media-pin input{height:52px;min-height:52px;padding:0 16px;border-radius:16px;background:var(--mp-surf);font-size:24px;letter-spacing:.3em;text-align:center}
+dialog#mediaProfile .media-pin button[type=submit]{height:48px;border-radius:24px;background:var(--mp-acc);color:var(--mp-acc-ink);font-weight:700;font-size:15px}
+dialog#mediaProfile .media-pin button[type=submit]:hover{filter:brightness(1.06)}
+dialog#mediaProfile .media-pin button:not([type=submit]){height:40px;min-height:40px;border-radius:20px;background:transparent;color:var(--mp-sub);font-size:14px}
+dialog#mediaProfile .media-pin button:not([type=submit]):hover{background:var(--mp-well);color:var(--mp-ink)}
+/* narrow windows: one column, the PIN in place of the names (with "Atpakaļ") */
+@media (max-width:720px){dialog#mediaProfile.is-pick #mediaContent{grid-template-columns:minmax(0,1fr)}dialog#mediaProfile .media-workers{grid-template-columns:1fr 1fr}}
+/* logged in: the same surface and tones, narrow */
+dialog#mediaProfile.is-logged{width:min(400px,calc(100vw - 24px));padding:22px}
+dialog#mediaProfile .media-shortcuts button,dialog#mediaProfile .media-favorite-list{border:0;border-radius:16px;background:var(--mp-well)}
+dialog#mediaProfile .media-favorite{border-bottom:0}
+dialog#mediaProfile .media-account-actions button{border-radius:20px}
+dialog#mediaProfile #mediaRecoveryNotice{border-top:0;margin-top:16px;padding:16px;border-radius:20px;background:var(--mp-high)}
+@media (prefers-reduced-motion:reduce){dialog#mediaProfile[open]{animation:none}dialog#mediaProfile .media-workers button{transition:none}}
+
+/* RG sign-in, M3 Expressive (2026-11-27 spec): one green-tinted surface, names 70 % / PIN 30 %, every name on screen.
+   No gradients, glow, blur or shadows; expressive shapes only on the key, the big emoji and the PIN pane. */
+dialog#mediaProfile{--mp-surf:#101e19;--mp-high:#1c3028;--mp-well:#293d34;--mp-well2:#365247;--mp-acc:#a4e5c7;--mp-acc-ink:#143c2d;--mp-ink:#f3f0e7;--mp-sub:#aec5b9;--mp-line:#6a8d7f;--mp-err:#ffb4ab;
+  --mp-flower:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50.0 0.0L53.2 0.9L56.1 3.4L58.6 6.8L60.6 10.4L62.5 13.3L64.5 14.9L67.2 15.2L70.5 14.5L74.4 13.4L78.6 12.7L82.4 13.0L85.4 14.6L87.0 17.6L87.3 21.4L86.6 25.6L85.5 29.5L84.8 32.8L85.1 35.5L86.7 37.5L89.6 39.4L93.2 41.4L96.6 43.9L99.1 46.8L100.0 50.0L99.1 53.2L96.6 56.1L93.2 58.6L89.6 60.6L86.7 62.5L85.1 64.5L84.8 67.2L85.5 70.5L86.6 74.4L87.3 78.6L87.0 82.4L85.4 85.4L82.4 87.0L78.6 87.3L74.4 86.6L70.5 85.5L67.2 84.8L64.5 85.1L62.5 86.7L60.6 89.6L58.6 93.2L56.1 96.6L53.2 99.1L50.0 100.0L46.8 99.1L43.9 96.6L41.4 93.2L39.4 89.6L37.5 86.7L35.5 85.1L32.8 84.8L29.5 85.5L25.6 86.6L21.4 87.3L17.6 87.0L14.6 85.4L13.0 82.4L12.7 78.6L13.4 74.4L14.5 70.5L15.2 67.2L14.9 64.5L13.3 62.5L10.4 60.6L6.8 58.6L3.4 56.1L0.9 53.2L0.0 50.0L0.9 46.8L3.4 43.9L6.8 41.4L10.4 39.4L13.3 37.5L14.9 35.5L15.2 32.8L14.5 29.5L13.4 25.6L12.7 21.4L13.0 17.6L14.6 14.6L17.6 13.0L21.4 12.7L25.6 13.4L29.5 14.5L32.8 15.2L35.5 14.9L37.5 13.3L39.4 10.4L41.4 6.8L43.9 3.4L46.8 0.9Z'/%3E%3C/svg%3E");background:var(--mp-surf);box-shadow:none;color:var(--mp-ink)}
+dialog#mediaProfile::backdrop{background:#050b0999}
+dialog#mediaProfile .media-key{display:none}
+dialog#mediaProfile.is-pick{width:min(96vw,1400px);max-height:94dvh;padding:12px 16px 16px}
+dialog#mediaProfile.is-pick header{min-height:60px;margin-bottom:4px;padding:0;background:none}
+dialog#mediaProfile.is-pick header small{display:none}
+dialog#mediaProfile.is-pick h2{margin:0;font-size:28px;font-weight:600;color:var(--mp-ink)}
+dialog#mediaProfile.is-pick .media-key{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;background:var(--mp-acc);color:var(--mp-acc-ink);-webkit-mask:var(--mp-flower) center/contain no-repeat;mask:var(--mp-flower) center/contain no-repeat}
+dialog#mediaProfile .media-key svg{width:22px;height:22px;rotate:-45deg}
+dialog#mediaProfile [data-close]{background:transparent}
+dialog#mediaProfile [data-close]:hover{background:var(--mp-well)}
+dialog#mediaProfile.is-pick #mediaContent{grid-template-columns:minmax(0,7fr) minmax(260px,3fr);gap:16px;align-items:stretch}
+dialog#mediaProfile.is-pick .media-pick{padding:0;background:none;border-radius:0;gap:12px;align-content:start}
+dialog#mediaProfile .media-step{margin:0;font-size:19px;font-weight:600;color:var(--mp-ink)}
+dialog#mediaProfile .media-find-box{position:relative;display:block}
+dialog#mediaProfile .media-find-box svg{position:absolute;left:16px;top:50%;width:20px;height:20px;translate:0 -50%;color:var(--mp-sub);pointer-events:none}
+/* filled capsule; focus only deepens the tone (no ring: it is focused on open) */
+dialog#mediaProfile input.media-find{width:100%;height:44px;min-height:44px;padding:0 20px 0 46px;border-radius:22px;background:var(--mp-well);box-shadow:none;outline:0!important;font-size:15px;color:var(--mp-ink);transition:background-color .15s}
+dialog#mediaProfile input.media-find:focus{background:var(--mp-well2)}
+dialog#mediaProfile input.media-find::placeholder{color:var(--mp-sub)}
+/* names: the column count comes from the script (fitNames); no inner scrolling */
+dialog#mediaProfile.is-pick .media-workers{gap:7px;max-height:none;overflow:visible;padding:0}
+dialog#mediaProfile .media-workers button{height:48px;min-height:48px;padding:0 10px 0 8px;gap:10px;border-radius:15px;background:var(--mp-well);color:var(--mp-ink);font-weight:500;transition:border-radius .22s cubic-bezier(.2,0,0,1),background-color .22s,color .22s,scale .1s}
+dialog#mediaProfile .media-workers button:hover{background:var(--mp-well2)}
+dialog#mediaProfile .media-workers button:active{scale:.97}
+dialog#mediaProfile .media-workers button[aria-pressed="true"]{border-radius:999px;background:var(--mp-acc);color:var(--mp-acc-ink);font-weight:500}
+dialog#mediaProfile .media-worker-avatar.has-emoji{width:30px;height:30px;flex:0 0 30px;border-radius:50%;background:transparent;font-size:24px}
+dialog#mediaProfile .media-workers button[aria-pressed="true"] .media-worker-avatar{background:transparent}
+dialog#mediaProfile .media-worker-name{font-size:16px;font-weight:500}
+dialog#mediaProfile .media-pager{display:flex;align-items:center;justify-content:center;gap:12px;color:var(--mp-sub);font-size:14px}
+dialog#mediaProfile .media-pager[hidden]{display:none}
+dialog#mediaProfile .media-pager button{width:40px;height:40px;min-height:40px;padding:0;border-radius:20px;background:var(--mp-well);color:var(--mp-ink);font-size:20px;line-height:1}
+dialog#mediaProfile .media-pager button:disabled{opacity:.38}
+/* PIN pane */
+dialog#mediaProfile.is-pick .media-side{gap:10px;padding:24px 20px;border-radius:48px 28px 48px 28px;background:var(--mp-high);align-content:center}
+dialog#mediaProfile .media-side>*{animation:mp-pane .18s cubic-bezier(.2,0,0,1)}
+@keyframes mp-pane{from{opacity:0;translate:0 6px}}
+dialog#mediaProfile .media-side-pic{display:grid;place-items:center;width:88px;height:88px;border-radius:42% 58% 55% 45%/48% 42% 58% 52%;background:var(--mp-acc);font-size:46px;-webkit-mask:none;mask:none;animation:mp-pop .22s cubic-bezier(.2,0,0,1)}
+@keyframes mp-pop{from{scale:.92}}
+dialog#mediaProfile .media-side-empty .media-side-pic{background:var(--mp-well2)}
+dialog#mediaProfile .media-side-pic .media-worker-avatar{width:88px;height:88px;border:0;background:transparent;color:var(--mp-acc-ink);font-size:26px}
+dialog#mediaProfile .media-side-empty{gap:10px;color:var(--mp-ink)}
+dialog#mediaProfile .media-side-empty strong{font-size:20px;font-weight:600}
+dialog#mediaProfile .media-person-heading{display:grid;justify-items:center;gap:2px;margin:0;font-size:22px;font-weight:600;color:var(--mp-ink)}
+dialog#mediaProfile .media-person-heading .media-side-pic{margin-bottom:8px}
+dialog#mediaProfile .media-person-heading>span:last-child{font-size:16px;font-weight:500;color:var(--mp-sub)}
+dialog#mediaProfile .media-side #mediaStatus{color:var(--mp-sub)!important;font-size:13px}
+dialog#mediaProfile #mediaStatus.is-error{color:var(--mp-err)!important}
+dialog#mediaProfile .media-pin{display:grid;gap:10px;width:100%;max-width:280px}
+dialog#mediaProfile .media-pin label{display:grid;gap:5px;font-size:13px;color:var(--mp-sub);text-align:left}
+dialog#mediaProfile .media-pin-field{position:relative;display:block}
+dialog#mediaProfile .media-pin input{height:48px;min-height:48px;padding:0 46px 0 16px;border-radius:16px;background:transparent;box-shadow:inset 0 0 0 1px var(--mp-line);outline:0!important;color:var(--mp-ink);text-align:left;letter-spacing:.35em;font-size:20px}
+dialog#mediaProfile .media-pin input:focus{box-shadow:inset 0 0 0 2px var(--mp-acc)}
+dialog#mediaProfile .media-pin .media-eye{position:absolute;right:4px;top:50%;translate:0 -50%;width:40px;height:40px;min-height:40px;padding:9px;border-radius:50%;background:transparent;color:var(--mp-sub)}
+dialog#mediaProfile .media-pin .media-eye:hover{background:var(--mp-well)}
+dialog#mediaProfile .media-eye[aria-pressed="true"]{color:var(--mp-acc)}
+dialog#mediaProfile .media-pin button[type=submit]{display:flex;align-items:center;justify-content:center;gap:10px;height:48px;border-radius:999px;background:var(--mp-acc);color:var(--mp-acc-ink);font-size:16px;font-weight:600;transition:scale .1s}
+dialog#mediaProfile .media-pin button[type=submit]:active{scale:.97}
+dialog#mediaProfile .media-pin button[type=submit] svg{width:19px;height:19px}
+dialog#mediaProfile .media-pin .media-link{justify-self:center;height:auto;min-height:32px;padding:4px 10px;border-radius:16px;background:transparent;color:var(--mp-sub);font-size:14px;text-decoration:underline;text-underline-offset:3px}
+dialog#mediaProfile .media-pin .media-link:hover{background:var(--mp-well);color:var(--mp-ink)}
+@media (max-width:720px){dialog#mediaProfile.is-pick #mediaContent{grid-template-columns:minmax(0,1fr)}dialog#mediaProfile .media-side-empty{display:none}dialog#mediaProfile.is-pick h2{font-size:24px}}
+@media (prefers-reduced-motion:reduce){dialog#mediaProfile .media-side>*,dialog#mediaProfile .media-side-pic{animation:none}dialog#mediaProfile .media-workers button{transition:none}}
+dialog#mediaProfile:focus{outline:0}
+dialog#mediaProfile [data-close]{border:0!important;box-shadow:none!important;outline:0}dialog#mediaProfile [data-close]:focus-visible{outline:2px solid var(--mp-acc)}
+dialog#mediaProfile .media-pin input{box-shadow:none;outline:1px solid var(--mp-line)!important;outline-offset:-1px!important}
+dialog#mediaProfile .media-pin input:focus{outline:2px solid var(--mp-acc)!important;outline-offset:-2px!important}
+/* the PIN pane is as tall as its tallest state (new PIN: two fields), so picking a name never resizes the dialog */
+dialog#mediaProfile.is-pick .media-side{min-height:min(440px,calc(94dvh - 120px))}
+/* picking a name must not move anything: the picture keeps one place at the top in every state, the pane only fades */
+dialog#mediaProfile.is-pick .media-side{align-content:start;padding-top:32px}
+dialog#mediaProfile .media-side>*{animation-name:mp-fade}
+@keyframes mp-fade{from{opacity:0}}
+dialog#mediaProfile .media-workers button{user-select:none;-webkit-user-select:none}  /* quick clicks must not paint a text selection on the name */
+dialog#mediaProfile .media-side>*{animation:none}  /* no fade on each pick: it read as flashing */
+dialog#mediaProfile .media-side .media-side-pic{animation:mp-pop .22s cubic-bezier(.2,0,0,1)}
+dialog#mediaProfile .media-side #mediaStatus:empty{display:none}

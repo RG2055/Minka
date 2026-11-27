@@ -304,9 +304,10 @@
       case 'look': byId('themeBtn')?.click(); break;
       case 'profile': (byId('mediaProfileButton') || byId('mediaRegisterButton'))?.click(); break;
       case 'min':
-        // Minimized means all of it: the station list joined under the window closes first.
-        if (overlay && overlay.style.display === 'grid' && typeof toggleMenu === 'function') toggleMenu(false);
-        openSnd(false);
+        // One step back at a time (the user): an open station list or sound band folds back to the plain player;
+        // from the plain player the key minimizes it to the mini player.
+        if (overlay && overlay.style.display === 'grid' && !overlay._mkClosing && typeof toggleMenu === 'function') { toggleMenu(false); break; }
+        if (sndOpen) { openSnd(false); break; }
         if (typeof window.toggleRadio === 'function') window.toggleRadio();
         break;
     }

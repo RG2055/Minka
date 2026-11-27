@@ -18,7 +18,7 @@
   var GROUP = { rg: { label: IS_RAD ? 'Rezidenti' : 'Radiogrāferi', accent: IS_RAD ? '#4dd0c8' : '#1fe091' }, rd: { label: 'Radiologi', accent: '#3f9bff' } };
   var SHIFT = { day: { label: 'Diena', color: '#3f9bff' }, night: { label: 'Nakts', color: '#23cdcf' }, '24h': { label: '24h', color: '#f5b73f' } };
   // What a card on the answers page opens (each with a back bar); /rad has no Bolus or night plan.
-  var DETAILS = { mood: 'Komandas sajūta', bolus: 'Bolus maiņas', fatigue: 'Nogurums', people: 'Kurš dežurēja visvairāk', coffee: 'Kafija', radio: 'Radio', night: 'Nakts' };
+  var DETAILS = { mood: 'Komandas sajūta', bolus: 'Bolusu maiņas', fatigue: 'Nogurums', people: 'Kurš dežurēja visvairāk', coffee: 'Kafija', radio: 'Radio', night: 'Nakts' };
   if (IS_RAD) { delete DETAILS.bolus; delete DETAILS.night; }
   // Long lists show this many rows, the rest behind "Rādīt visus".
   var CAP = 8;
@@ -610,11 +610,53 @@
     fatigue: pxIcon(['....lll..', '...lll...', '..lll....', '.lllllll.', '....lll..', '...lll...', '..lll....', '.ll......', 'l........']),
     coffee: pxIcon(['..m..m...', '...m..m..', '.........', 'lllllll..', 'lllllllll', 'lllllll.l', 'lllllllll', '.lllll...', 'llllllll.'])
   };
-  /* A card: the M3 shape scale (css: 48 for the big ones, 32 for the hours and coffee, full for the pills) and, behind
-     two of them, a round lighter lobe peeking out (a circle: one smooth curve, nothing stretched) */
-  function card(key, look, blob, icon, title, body, lobe) {
-    return '<button type="button" class="db-card is-' + look + ' is-k-' + key + '" data-db-open="' + key + '">' + (lobe ? '<svg class="db-card-lobe" viewBox="0 0 100 100" aria-hidden="true"><path d="' + shapePath(key) + '"/></svg>' : '')
-      + '<span class="db-card-head">' + badge(key, icon, 'db-card-ic') + '<b>' + title + '</b>' + ICON.next + '</span>' + (body || '') + '</button>';
+  /* A card (the user's M3 Expressive statistics spec, 2026-11-27): a flat tonal surface with its own decorative shapes
+     inside it, behind the content (fixed-size inline SVG in a corner: nothing stretched, nothing adds room). */
+  /* Each card's shape (the user's M3 spec, 2026-11-27): an SVG behind the content, stretched to the card, with the
+     surface and its accents clipped to the card's own outline. The content is plain HTML above it and is never clipped. */
+  var ART = {
+    mood: [600, 420, 'M0 52C0 20 20 4 54 6C120 12 170 0 240 8S380 20 450 8S560 2 580 12C596 20 600 36 600 58V362C600 394 584 412 552 412C480 406 420 420 340 412S180 404 110 414S8 414 2 380Z', ['M0 304C40 300 70 330 80 370C86 400 102 412 124 420H0Z']],
+    bolus: [600, 400, 'M0 60C0 15 28 0 65 6C105 13 110 30 150 17S220 0 255 14S310 26 345 12S405 0 440 9S485 25 520 11S600 4 600 65C600 115 578 140 590 190S600 290 596 340Q594 400 530 400C480 400 470 380 430 389S360 400 320 390S250 382 210 394S130 400 90 391Q0 410 0 340Z', ['M350 0C370 70 450 20 480 110S570 175 600 105V0Z', 'M350 400C410 330 440 390 485 330S565 285 600 320V400Z']],
+    fatigue: [600, 400, 'M0 46C0 16 18 0 50 0H470C540 0 600 34 600 110V290C600 360 548 400 478 400H50C18 400 0 384 0 354Z', ['M290 400C350 356 420 380 470 336S560 296 600 246V400Z']],
+    people: [768, 456, 'M36 0H732Q768 0 768 36V420Q768 456 732 456H36Q0 456 0 420V36Q0 0 36 0Z', ['M220 456C280 424 340 414 410 420S530 446 590 456Z']],
+    coffee: [438, 456, 'M36 0H402Q438 0 438 36V420Q438 456 402 456H36Q0 456 0 420V36Q0 0 36 0Z', []],
+    radio: [418, 210, 'M34 0H384Q418 0 418 34V176Q418 210 384 210H34Q0 210 0 176V34Q0 0 34 0Z', ['M228 210C286 192 334 198 372 184S412 166 418 162V210Z']],
+    night: [418, 236, 'M34 0H384Q418 0 418 34V202Q418 236 384 236H34Q0 236 0 202V34Q0 0 34 0Z', ['M208 236C266 218 314 226 358 210S410 190 418 186V236Z']]
+  };
+  function art(key) {
+    var a = ART[key];
+    if (!a) return '';
+    var id = 'db-art-' + key, box = 'width="' + a[0] + '" height="' + a[1] + '"';
+    return '<svg class="db-art" viewBox="0 0 ' + a[0] + ' ' + a[1] + '" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + a[2] + '"/></clipPath></defs>'
+      + '<g clip-path="url(#' + id + ')"><rect class="db-art-bg" ' + box + '/>' + a[3].map(function (d) { return '<path class="db-art-acc" d="' + d + '"/>'; }).join('') + '<rect class="db-art-state" ' + box + '/></g></svg>';
+  }
+  // small accent strokes (the mockup's sparks) and the radio's signal, drawn beside a number or an emblem
+  var TICKS = '<svg class="db-ticks" viewBox="0 0 30 30" aria-hidden="true"><path d="M7 13 4 3M15 11l2-9M22 16l6-6"/></svg>';
+  var IC_ACC = { radio: '<svg class="db-ic-acc is-sig" viewBox="0 0 40 40" aria-hidden="true"><path d="M15 31V11l19-5v20"/><path d="M15 15l19-5" stroke-width="5"/><ellipse cx="10.5" cy="31" rx="5.5" ry="4.5" fill="#85dfc7" stroke="none"/><ellipse cx="29.5" cy="26" rx="5.5" ry="4.5" fill="#85dfc7" stroke="none"/></svg>', night: '<svg class="db-ic-acc is-ticks" viewBox="0 0 30 30" aria-hidden="true"><path d="M7 13 4 3M15 11l2-9M22 16l6-6"/></svg>' };
+  function card(key, look, icon, title, body) {
+    var ic = icon ? badge(key, icon, 'db-card-ic') : '';
+    if (ic && IC_ACC[key]) ic = ic.replace(/<\/span>$/, IC_ACC[key] + '</span>');
+    return '<button type="button" class="db-card is-' + look + ' is-k-' + key + '" data-db-open="' + key + '">' + art(key)
+      + '<span class="db-card-head">' + ic + '<b>' + title + '</b>' + ICON.next + '</span>' + (body || '') + '</button>';
+  }
+  // The team's face: the mood's flower in its tone, eyes and mouth from the score (5 a wide smile, 1 a frown)
+  var FACE_TINT = { excellent: '#a6ec8a', good: '#7fe3a6', ok: '#6fd69e', bad: '#ffc27a', terrible: '#ff9faa' };
+  var MOUTH = ['M34 68Q50 56 66 68', 'M36 65H64', 'M36 61Q50 69 64 61', 'M33 59Q50 74 67 59', 'M30 57Q50 82 70 57'];
+  function moodFace(m) {
+    var sc = m ? Math.max(1, Math.min(5, Math.round(m.score))) : 3, happy = sc >= 4;
+    var eyes = happy ? '<path d="M31 45Q37 37 43 45M57 45Q63 37 69 45"/>' : '<circle cx="37" cy="43" r="3.6" stroke="none" fill="currentColor"/><circle cx="63" cy="43" r="3.6" stroke="none" fill="currentColor"/>';
+    return '<svg class="db-mface" viewBox="0 0 100 100" aria-hidden="true" style="--f:' + (m ? FACE_TINT[m.key] || '#6fd69e' : '#9fb3aa') + '"><path class="db-mface-body" d="' + shapePath('mood') + '"/>'
+      + (sc >= 3 ? '<path d="M78 2l-3 9M90 6l-7 7M97 18l-9 3" fill="none" stroke="#ffd36b" stroke-width="4" stroke-linecap="round"/>' : '')
+      + '<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">' + eyes + '<path d="' + MOUTH[sc - 1] + '"/></g></svg>';
+  }
+  // Fatigue's face: a soft blob, the eyes and colour from how tired the month was (hours very tired per person)
+  function sleepyFace(hours) {
+    var lvl = hours >= 60 ? 2 : hours >= 20 ? 1 : 0, tone = ['#f7cdb0', '#f4ad8f', '#f0937b'][lvl];
+    var eyes = lvl ? '<path d="M28 46Q35 52 42 46M58 46Q65 52 72 46"/>' : '<path d="M30 44H40M60 44H70"/>';
+    return '<svg class="db-sface" viewBox="0 0 120 100" aria-hidden="true"><path fill="' + tone + '" d="M14 52C10 26 30 8 56 10C84 12 104 26 100 54C96 82 74 96 50 92C26 88 16 74 14 52Z"/>'
+      + '<g fill="none" stroke="#5a2418" stroke-width="4.5" stroke-linecap="round">' + eyes + '</g>'
+      + (lvl ? '<ellipse cx="46" cy="66" rx="' + (lvl === 2 ? 5 : 4) + '" ry="' + (lvl === 2 ? 7 : 4) + '" fill="#5a2418"/>' : '<path d="M42 62Q50 68 58 62" fill="none" stroke="#5a2418" stroke-width="4.5" stroke-linecap="round"/>')
+      + (lvl === 2 ? '<text x="96" y="30" font-size="22" font-weight="800" fill="' + tone + '">z</text><text x="106" y="16" font-size="16" font-weight="800" fill="' + tone + '">z</text>' : '') + '</svg>';
   }
   function moodAverage(rows) {
     var w = rows.reduce(function (acc, r) { if (r.mood) { acc.sum += r.mood.score * r.mood.total; acc.n += r.mood.total; } return acc; }, { sum: 0, n: 0 });
@@ -631,49 +673,53 @@
     // the team's rating: the word, five steps, a dot a day
     var avg = moodAverage(rows), m = avg == null ? null : M.moodFor(avg);
     var marked = past.filter(function (r) { return r.mood || ownMood(r.day); }).length;
-    out.push(card('mood', 'mood', 'a', ms('sentiment_satisfied'), 'Kā jūtas komanda?', '<span class="db-big">' + (m ? m.label : 'Nav vērtēts') + '</span>'
-      + '<span class="db-scale" role="img" aria-label="' + (m ? 'Vērtējums ' + m.score + ' no 5' : 'Nav vērtējuma') + '">' + [1, 2, 3, 4, 5].map(function (k) { return '<i' + (m && k <= m.score ? ' class="is-on"' : '') + '></i>'; }).join('') + '<em>' + (m ? m.score + ' no 5' : '') + '</em></span>'
-      + '<span class="db-card-sub">' + marked + ' no ' + past.length + ' dienām novērtētas</span>'
-      + '<span class="db-dots" style="--n:' + rows.length + '">' + rows.map(function (r) { var c = r.mood ? M.moodFor(r.mood.score).color : ''; return '<i' + (c ? ' style="background:' + c + '"' : '') + (r.day > b.today ? ' class="is-future"' : '') + '></i>'; }).join('') + '</span>', true));
-    // Bolus: the month's changes, the two rooms as one indicator, who changed most
+    out.push(card('mood', 'mood', '', 'Kā jūtas komanda?', '<span class="db-mood-row">' + moodFace(m) + '<span class="db-mood-word"><span class="db-big">' + (m ? m.label : 'Nav vērtēts') + '</span>'
+      + '<span class="db-scale" role="img" aria-label="' + (m ? 'Vērtējums ' + m.score + ' no 5' : 'Nav vērtējuma') + '">' + [1, 2, 3, 4, 5].map(function (k) { return '<i' + (m && k <= m.score ? ' class="is-on"' : '') + '></i>'; }).join('') + '<em>' + (m ? m.score + ' no 5' : '') + '</em></span></span></span>'
+      + '<span class="db-mood-foot"><span class="db-card-sub">' + marked + ' no ' + past.length + ' dienām novērtētas</span>'
+      + '<span class="db-dots" style="--n:' + rows.length + '">' + rows.map(function (r) { var c = r.mood ? M.moodFor(r.mood.score).color : ''; return '<i' + (c ? ' style="background:' + c + '"' : '') + (r.day > b.today ? ' class="is-future"' : '') + '></i>'; }).join('') + '</span></span>'));
+    // Bolus: the month's changes, the two rooms as one split bar, who changed most
     if (!IS_RAD) {
       var ge = s.bolus.filter(function (e) { return e.room === 'ge'; }).length, ph = s.bolus.length - ge;
-      var top = s.people.slice().sort(function (a, c) { return (c.ge + c.philips) - (a.ge + a.philips); })[0];
-      out.push(card('bolus', 'bolus', 'b', dockIcon('bolusDocBtn'), 'Bolus maiņas', '<span class="db-big">' + s.bolus.length + '<small>šomēnes</small></span>'
-        + (s.bolus.length ? '<span class="db-split"><i style="flex:' + ge + '"></i><i style="flex:' + ph + '"></i></span><span class="db-key"><span class="is-ge">GE ' + ge + '</span><span class="is-ph">PH ' + ph + '</span></span>' : '')
-        + (top && top.ge + top.philips ? mini('clover', initials(top.name), esc(formatName(shortName(top.name))), 'mainīja visbiežāk, ' + (top.ge + top.philips) + (top.ge + top.philips === 1 ? ' reizi' : ' reizes')) : '')));
+      var top = s.people.slice().sort(function (a, c) { return (c.ge + c.philips) - (a.ge + a.philips); })[0], times = top ? top.ge + top.philips : 0;
+      out.push(card('bolus', 'bolus', dockIcon('bolusDocBtn'), 'Bolusu maiņas', '<span class="db-big">' + s.bolus.length + TICKS + '<small>šomēnes</small></span>'
+        + (s.bolus.length ? '<span class="db-split">' + (ge ? '<span class="is-ge" style="flex:' + ge + '">GE ' + ge + '</span>' : '') + (ph ? '<span class="is-ph" style="flex:' + ph + '">PH ' + ph + '</span>' : '') + '</span>' : '')
+        + (times ? mini('clover', initials(top.name), esc(formatName(shortName(top.name))), 'mainīja visbiežāk, <span class="db-times">' + times + (times === 1 ? ' reizi' : ' reizes') + '</span>') : '')));
     }
-    // fatigue: hours a person spent very tired this month, on average
+    // fatigue: hours a person spent very tired this month, on average; the face from how tired
     var ff = fatigueFacts();
-    out.push(card('fatigue', 'fatigue', 'c', PX.fatigue, 'Nogurums', ff === 'wait' ? '<span class="db-big">…</span><span class="db-card-sub">Rēķina…</span>'
-      : ff ? '<span class="db-big">' + ff.perPerson + ' h</span><span class="db-card-sub">tik stundas šomēnes katrs bija ļoti noguris (vidēji)</span>'
-        + (ff.heavyPeople ? mini('sunny', ff.heavyDay.replace(/\.$/, ''), 'Smagākā diena', tired(ff.heavyPeople) + ',<br>vidēji ' + ff.heavyEach + ' stundas no 24') : '')
-      : '<span class="db-card-sub">Nav datu</span>', true));
-    // hours against the month's norm (the same norm as Kalendārs): up to the norm, a mark at it, the overtime past it
+    out.push(card('fatigue', 'fatigue', PX.fatigue, 'Nogurums', ff === 'wait' ? '<span class="db-big">…</span><span class="db-card-sub">Rēķina…</span>'
+      : ff ? '<span class="db-fat-top"><span><span class="db-big">' + ff.perPerson + ' h</span><span class="db-card-sub">ļoti noguris vidēji mēnesī</span></span>' + sleepyFace(ff.perPerson) + '</span>'
+        + (ff.heavyPeople ? mini('sunny', ff.heavyDay, 'Smagākā diena', tired(ff.heavyPeople) + ',<br>vidēji ' + ff.heavyEach + ' stundas no 24') : '')
+      : '<span class="db-card-sub">Nav datu</span>'));
+    // hours against the month's norm (the same norm as Kalendārs): one scale for every row, the norm one mark, overtime past it
     var ppl = peopleOf(s).sort(function (a, c) { return c.hours - a.hours || a.name.localeCompare(c.name, 'lv'); });
     var norm = monthNorm();
     var scale = Math.max(norm * 1.25, ppl[0] ? ppl[0].hours : 0) || 1, pct = function (v) { return (Math.max(0, v) / scale * 100).toFixed(2) + '%'; };
-    out.push(card('people', 'people', 'd', dockIcon('statsDocBtn'), 'Stundas pret normu' + (norm ? ' <span class="db-card-norm">Norma ' + norm + ' h</span>' : ''), ppl.length ? '<span class="db-norms">' + ppl.slice(0, 6).map(function (p) {
+    out.push(card('people', 'people', dockIcon('statsDocBtn'), 'Stundas pret normu' + (norm ? ' <span class="db-card-norm">Norma ' + norm + ' h</span>' : ''), ppl.length ? '<span class="db-norms">' + ppl.slice(0, 6).map(function (p) {
       var h = Math.round(p.hours), diff = norm ? h - norm : 0;
       return '<span class="db-norms-row">' + avatar(p.name) + '<b>' + esc(shortName(p.name)) + '</b>'
         + '<span class="db-norm"' + (norm ? ' style="--n:' + pct(norm) + '"' : '') + '><i style="width:' + pct(norm ? Math.min(h, norm) : h) + '"></i>' + (diff > 0 ? '<i class="is-over" style="width:' + pct(diff) + '"></i>' : '') + '</span>'
-        + '<em>' + h + ' h</em>' + (norm ? '<span class="db-diff' + (diff > 0 ? ' is-over' : diff < 0 ? ' is-under' : '') + '">' + (diff > 0 ? '+' : diff < 0 ? '−' : '±') + Math.abs(diff) + ' h</span>' : '') + '</span>';
+        + '<em>' + h + ' h</em>' + (norm ? '<span class="db-diff' + (diff > 0 ? ' is-over' : diff < 0 ? ' is-under' : '') + '">' + (diff > 0 ? '+' : diff < 0 ? '−' : '±') + Math.abs(diff) + ' h</span>' : '<span></span>') + '</span>';
     }).join('') + '</span>' : '<span class="db-card-sub">Šomēnes grafikā nav maiņu.</span>'));
-    // coffee: cups this month, the drink most taken
+    // coffee: cups this month, the drinks (five by two, the RG icons), caffeine and money on the warm band
     var month = coffeeMonth(b), cups = month.people.reduce(function (n, p) { return n + p.cups; }, 0), src = {};
     month.people.forEach(function (p) { Object.keys(p.sources).forEach(function (k) { src[k] = (src[k] || 0) + p.sources[k]; }); });
-    // the mockup's second row: the hours (left), coffee with its big number, radio and nights as two pills
     var mg = month.people.reduce(function (n, p) { return n + (p.mg || 0); }, 0), cents = month.people.reduce(function (n, p) { return n + p.cents; }, 0);
     var topDrink = Object.keys(src).sort(function (a, c) { return src[c] - src[a]; })[0] || 'philips', drinkPic = window.__minkaCoffeeIcon ? window.__minkaCoffeeIcon(topDrink) : '';
-    out.push(card('coffee', 'coffee', 'e', drinkPic || PX.coffee, 'Kafija', '<span class="db-big">' + (cups || (coffee.busy ? '…' : '0')) + '<small>tases šomēnes</small></span>'
-      + (cups ? '<span class="db-cdrinks">' + sourceChips(src) + '</span><span class="db-cfacts">' + fact(mgText(mg), 'kofeīns') + fact(eur(cents), 'iztērēts') + '</span>' : '<span class="db-card-sub">Šomēnes vēl nav atzīmētu dzērienu.</span>')));
-    var pills = [card('radio', 'pill', 'b', dockIcon('radioIdleBtn'), 'Radio ' + rows.filter(function (r) { return r.radio.length; }).length, '<span class="db-card-sub">dienas ar radio</span>')];
+    out.push(card('coffee', 'coffee', drinkPic || PX.coffee, 'Kafija', '<span class="db-big">' + (cups || (coffee.busy ? '…' : '0')) + '<small>tases šomēnes</small></span>'
+      + (cups ? '<span class="db-cdrinks">' + sourceChips(src, 10) + '</span>' : '<span class="db-card-sub">Šomēnes vēl nav atzīmētu dzērienu.</span>')
+      + '<span class="db-cband"><svg viewBox="0 0 300 24" preserveAspectRatio="none" aria-hidden="true"><path d="M0 24V14C40 2 70 2 110 10S190 24 230 12 280 0 300 6V24Z"/></svg>'
+      + '<span><b>' + mgText(mg) + '</b><small>kofeīns</small></span><i></i><span><b>' + eur(cents) + '</b><small>iztērēts</small></span></span>'));
+    // radio and nights: two equal tiles, the same parts in the same places
+    var pills = [card('radio', 'tile', dockIcon('radioIdleBtn'), 'Radio', '<span class="db-big">' + rows.filter(function (r) { return r.radio.length; }).length + '</span><span class="db-card-sub">dienas ar radio</span>')];
     if (!IS_RAD) {
       var nights = s.shifts.filter(function (e) { return (e.type === 'night' || e.type === '24h') && (state.group === 'all' || e.group === state.group); }).length;
-      pills.push(card('night', 'pill', 'a', dockIcon('nsToggleBtnParent'), 'Naktis ' + nights, '<span class="db-card-sub">nakts maiņas šomēnes</span>'));
+      pills.push(card('night', 'tile', dockIcon('nsToggleBtnParent'), 'Naktis', '<span class="db-big">' + nights + '</span><span class="db-card-sub">nakts maiņas</span>'));
     }
     out.push('<div class="db-stack">' + pills.join('') + '</div>');
-    return '<div class="db-cards">' + out.join('') + '</div>';
+    // two rows as in the mockup: the three answers on top, hours, coffee and the two tiles below
+    var top = out.slice(0, IS_RAD ? 2 : 3);
+    return '<div class="db-cards' + (IS_RAD ? ' is-rad' : '') + '"><div class="db-row is-top">' + top.join('') + '</div><div class="db-row is-bottom">' + out.slice(top.length).join('') + '</div></div>';
   }
   // the old overview's feeling part, now the feeling card's detail
   // the reactions' own light tones (dark text on them), one per mood
@@ -737,9 +783,11 @@
      cans and cups — like the card's own coffee menu; the "tases" total stays cups. */
   var COFFEE_EQ = { monster: 2, monsterultra: 2, dynamit: 2, kongstrong: 2 };
   function drinks(key, units) { var n = (Number(units) || 0) / (COFFEE_EQ[key] || 1); return n > 0 ? Math.max(1, Math.round(n)) : 0; }
-  function sourceChips(sources) {
+  function sourceChips(sources, limit) {
     var icon = window.__minkaCoffeeIcon;
-    var parts = COFFEE_SOURCES.filter(function (d) { return (Number(sources && sources[d[0]]) || 0) > 0; }).map(function (d) {
+    var list = COFFEE_SOURCES.filter(function (d) { return (Number(sources && sources[d[0]]) || 0) > 0; });
+    if (limit) list = list.sort(function (a, c) { return drinks(c[0], sources[c[0]]) - drinks(a[0], sources[a[0]]); }).slice(0, limit);
+    var parts = list.map(function (d) {
       var n = drinks(d[0], sources[d[0]]);
       return '<span class="db-csrc" title="' + d[1] + '">' + (icon ? icon(d[0]) : '<small>' + d[1] + '</small>') + '<b>' + n + '</b></span>';
     });
@@ -1285,6 +1333,7 @@
         chrome.body.classList.toggle('db-anim', !!animated);
       }, { fallback: function () { return fresh && kind === 'open' ? null : bodyMotion(kind, info); } });
       else { chrome.body.innerHTML = inner; chrome.body.classList.toggle('db-anim', !!animated); }
+      fitCards(wrap); requestAnimationFrame(function () { fitCards(wrap); });   // the motion may swap the body a frame later
       if (keepScroll != null) wrap.scrollTop = keepScroll;
       if (kind === 'forward') wrap.scrollTop = 0;
       if (kind === 'back' && scrollMemo.from != null) { wrap.scrollTop = scrollMemo.list; scrollMemo.from = null; }
@@ -1302,6 +1351,8 @@
     var coffeeDays = state.day ? [state.day] : elapsedDays(b.rows, b.today).map(function (r) { return r.day; });
     if (coffeeDays.some(function (d) { return d <= b.today && !coffee.loaded[d] && !coffee.failed[d]; })) void loadCoffee(coffeeDays);
   }
+  // The answers page is sized from the frame (css: container units on the host), so the frame becomes a size container only there.
+  function fitCards(wrap) { wrap.classList.toggle('db-board-host', !!wrap.querySelector('.db-cards')); }
   // Escape and the back button: leave a drill-down first, one level at a time.
   function back() {
     if (!modalOpen() || (!state.day && !state.person && !DETAILS[state.tab])) return false;

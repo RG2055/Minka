@@ -201,7 +201,7 @@
     if (statsCss) return statsCss;
     statsCss = new Promise(function (resolve) {
       var l = document.createElement('link');
-      l.rel = 'stylesheet'; l.id = 'mk-stats-m3'; l.href = 'css/page/stats-m3.css?v=20261126wm52';
+      l.rel = 'stylesheet'; l.id = 'mk-stats-m3'; l.href = 'css/page/stats-m3.css?v=20261127s26';
       l.onload = resolve; l.onerror = resolve;   // without its styles the statistics still work
       document.head.append(l);
     });
@@ -214,7 +214,7 @@
     if (!statsLoading) {
       statsLoading = Promise.all([loadStatsCss(), new Promise(function (resolve, reject) {
         var s = document.createElement('script');
-        s.src = 'js/daybook-stats.js?v=20261126wm52';
+        s.src = 'js/daybook-stats.js?v=20261127s29';
         s.onload = resolve;
         s.onerror = function () { s.remove(); statsLoading = null; reject(new Error('daybook-stats')); };
         document.head.append(s);

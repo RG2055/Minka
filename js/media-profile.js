@@ -28,11 +28,13 @@
  const $=id=>document.getElementById(id);
  const hasAccount=new Map(),ACCOUNTS_KEY='minka:media-accounts:v1';
  const ACCOUNT_MARK='<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="#f00"/><path fill="#fff" d="M5.25 10.5h1.5v3h-1.5zM8.25 7.5h1.5v9h-1.5zM11.25 4.5h1.5v15h-1.5zM14.25 7.5h1.5v9h-1.5zM17.25 10.5h1.5v3h-1.5z"/></svg>';
- const dialog=document.createElement('dialog');dialog.id='mediaProfile';dialog.setAttribute('aria-labelledby','mediaProfileTitle');
- dialog.innerHTML=`<header><div class="media-identity"><span id="mediaProfileAvatar" hidden></span><div><small>TAVS KONTS</small><h2 id="mediaProfileTitle">Ielogoties</h2></div></div><button type="button" data-close aria-label="Aizvērt profilu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></header>
+ const dialog=document.createElement('dialog');dialog.id='mediaProfile';dialog.autofocus=true;  // opens with no field focused or lit (the search used to light up on open)
+ dialog.setAttribute('aria-labelledby','mediaProfileTitle');
+ dialog.innerHTML=`<header><div class="media-identity"><span class="media-key" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm5.65-4C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65z"/></svg></span><span id="mediaProfileAvatar" hidden></span><div><small>TAVS KONTS</small><h2 id="mediaProfileTitle">Ielogoties</h2></div></div><button type="button" data-close aria-label="Aizvērt profilu"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button></header>
  <p id="mediaDate"></p><p id="mediaStatus" role="status" aria-live="polite"></p><div id="mediaContent"></div>
  <section id="mediaRecoveryNotice" hidden><h3>Saglabā atkopšanas kodu</h3><p>Ar to varēsi nomainīt aizmirstu PIN, saglabājot favorītus. Šis kods tiek parādīts tikai vienu reizi.</p><code id="mediaRecoveryCode"></code><button type="button" id="mediaRecoveryCopy">Kopēt kodu</button><button type="button" id="mediaRecoveryDone">Esmu saglabājis</button></section>`;
  document.body.append(dialog);
+ const statusEl=$('mediaStatus');   // moved between the panes and the top: kept by reference
  const trigger=document.createElement('button');trigger.type='button';trigger.id='mediaProfileButton';trigger.textContent='Ielogoties';trigger.title='Ielogoties savā kontā: radio, izskats un kartīšu izkārtojums';trigger.addEventListener('click',open);
  const exitTrigger=button('Iziet',()=>{void logout();dialog.close();trigger.focus();});exitTrigger.id='mediaLogoutButton';exitTrigger.hidden=true;
  exitTrigger.prepend(icon('exit'));exitTrigger.title='Iziet no sava profila';exitTrigger.setAttribute('aria-label','Iziet no profila');
@@ -105,7 +107,7 @@
   el.textContent=emoji||String(name||'').trim().split(/\s+/).map(n=>n[0]).slice(0,2).join('');
   if(emoji)el.classList.add('has-emoji');el.setAttribute('aria-hidden','true');return el;
  }
- function status(text){$('mediaStatus').textContent=text;}
+ function status(text,error=false){statusEl.textContent=text;statusEl.classList.toggle('is-error',error);}
  function roster(){
   let state=window.__minkaLastSelectedDayState,all=null;
   try{const cal=$('calIframe')?.contentWindow;state=cal?.__minkaGetSelectedDayState?.()||state;all=cal?.__minkaGetAllWorkers?.()||null;}catch(_){}
@@ -244,7 +246,7 @@
   el.innerHTML='<svg viewBox="0 0 24 24" fill="none"><path d="'+paths[kind]+'" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';return el;
  }
  function setHeading(name){
-  dialog.classList.toggle('is-logged',!!name);$('mediaProfileTitle').textContent=name?pretty(name):'Ielogoties';
+  dialog.classList.toggle('is-logged',!!name);dialog.classList.toggle('is-pick',!name);if(name)$('mediaContent').before(statusEl);$('mediaProfileTitle').textContent=name?pretty(name):'Ielogoties';
   $('mediaDate').hidden=!!name;const pic=$('mediaProfileAvatar');pic.replaceChildren();pic.hidden=!name;if(name)pic.append(avatar(name));
  }
  function showStations(){dialog.close();$('radioSourceBroadcast')?.click();document.querySelector('#radioWindow .station-btn')?.click();}
@@ -281,32 +283,42 @@
  }
  async function renderWorkers(){
   setHeading(null);const gen=generation;selected=null;recovering=false;const {date,workers}=roster();rosterDate=date;$('mediaDate').textContent='';
-  const host=$('mediaContent');host.replaceChildren();status('Izvēlies sevi. Kontā saglabājas radio, izskats un kartīšu izkārtojums. Viss strādā arī bez ielogošanās.');
+  const host=$('mediaContent');host.replaceChildren();
+  // two panes (the user's choice "B"): who you are on the left, you and your PIN on the right
+  const pick=document.createElement('div');pick.className='media-pick';const side=document.createElement('div');side.className='media-side';
+  side.innerHTML='<div class="media-side-empty"><span class="media-side-pic" aria-hidden="true">👤</span><strong>Izvēlies savu vārdu</strong></div>';side.append(statusEl);host.append(pick,side);
+  status('Saglabā savu radio, izskatu un kartīšu izkārtojumu.');
   if(!workers.length){status('Grafiks vēl ielādējas. Pamēģini pēc brīža.');return;}
   const find=document.createElement('input');find.type='search';find.className='media-find';find.placeholder='Meklēt vārdu…';find.autocomplete='off';find.setAttribute('aria-label','Meklēt vārdu');
-  const grid=document.createElement('div');grid.className='media-workers';host.append(find,grid);
+  const grid=document.createElement('div');grid.className='media-workers';const step=document.createElement('h3');step.className='media-step';step.textContent='1. Izvēlies savu vārdu';
+  const box=document.createElement('label');box.className='media-find-box';box.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';box.append(find);
+  const pager=document.createElement('div');pager.className='media-pager';pager.hidden=true;const prev=button('‹',()=>{page--;draw();}),next=button('›',()=>{page++;draw();}),where=document.createElement('span');
+  prev.setAttribute('aria-label','Iepriekšējā lapa');next.setAttribute('aria-label','Nākamā lapa');pager.append(prev,where,next);pick.append(step,box,grid,pager);let page=0;
   // the first name; where two people share it, also the initial of the next name
   const firsts=new Map();for(const w of workers){const f=pretty(w.name).split(' ')[0];firsts.set(f,(firsts.get(f)||0)+1);}
   const short=name=>{const w=pretty(name).split(' ');return firsts.get(w[0])>1&&w[1]?w[0]+' '+w[1][0]+'.':w[0];};
   const draw=()=>{
    const q=norm(find.value);grid.replaceChildren();
    const list=workers.filter(w=>!q||norm(w.name).includes(q)).sort((x,y)=>(hasAccount.get(norm(y.name))===true)-(hasAccount.get(norm(x.name))===true)||norm(x.name).localeCompare(norm(y.name),'lv'));
-   for(const worker of list){
+   const fit=fitNames(grid,list.length),pages=Math.ceil(list.length/fit.per)||1;page=Math.max(0,Math.min(page,pages-1));
+   grid.style.gridTemplateColumns=`repeat(${fit.cols},minmax(0,1fr))`;pager.hidden=pages<2;where.textContent=`${page+1} / ${pages}`;prev.disabled=page===0;next.disabled=page===pages-1;
+   for(const worker of list.slice(page*fit.per,(page+1)*fit.per)){
     const b=button('',async()=>{
-     if(busy)return;busy=true;b.disabled=true;status('Pārbauda profilu…');
+     if(busy)return;busy=true;
      $('mediaRecoveryCode').textContent='';$('mediaRecoveryNotice').hidden=true;
-     try{const data=await api('pin-status',{name:worker.name},null);if(gen!==generation||session)return;selected={...worker,...data};renderPin();}
-     catch(e){status(e.message);}finally{busy=false;b.disabled=false;}
+     try{const data=await api('pin-status',{name:worker.name},null);if(gen!==generation||session)return;selected={...worker,...data};grid.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderPin();}
+     catch(e){status(e.message,true);}finally{busy=false;}
     });
     let emoji='';try{emoji=$('calIframe')?.contentWindow?.MinkaEmoji?.get(worker.name)||'';}catch(_){}
     const picture=document.createElement('span');picture.className='media-worker-avatar has-emoji';picture.textContent=emoji||'👤';
     const name=document.createElement('span');name.className='media-worker-name';name.textContent=short(worker.name);
-    b.append(picture,name);b.setAttribute('aria-label',pretty(worker.name));
+    b.append(picture,name);b.setAttribute('aria-label',pretty(worker.name));b.setAttribute('aria-pressed',String(!!selected&&norm(selected.name)===norm(worker.name)));
     if(hasAccount.get(norm(worker.name))===true){const m=document.createElement('span');m.className='media-worker-mark';m.title='Ir konts';m.innerHTML=ACCOUNT_MARK;b.append(m);}
     grid.append(b);
    }
+   positionDialog();
   };
-  find.addEventListener('input',draw);
+  find.addEventListener('input',()=>{page=0;draw();});refitNames=()=>{if(grid.isConnected&&dialog.open)draw();};
   find.addEventListener('keydown',e=>{if(e.key==='Enter'&&grid.children.length===1){e.preventDefault();grid.firstChild.click();}});
   const fresh=Date.now()-loadAccounts()<600000;draw();
   if(fresh)return;
@@ -315,10 +327,25 @@
   if(answers.every(x=>x===null))return;
   workers.forEach((w,i)=>{if(answers[i]!==null)hasAccount.set(norm(w.name),answers[i]);});
   try{localStorage.setItem(ACCOUNTS_KEY,JSON.stringify({at:Date.now(),names:[...hasAccount].filter(([,v])=>v===true).map(([k])=>k)}));}catch(_){}
-  if(gen===generation&&!session&&!selected&&grid.isConnected)draw();
+  if(gen===generation&&!session&&grid.isConnected)draw();
+ }
+ // Every name on screen at once: as many columns as the height needs (at least 4 where they fit),
+ // pages only when even the widest grid cannot hold them all. Sizes match the CSS (48 px rows, 7 px gaps).
+ let refitNames=null;window.addEventListener('resize',()=>refitNames?.(),{passive:true});
+ function fitNames(grid,n){
+  const GAP=7,ROW=48,MIN_W=136,PAGER=40+12,d=dialog.getBoundingClientRect(),top=grid.getBoundingClientRect().top-d.top;
+  const pad=parseFloat(getComputedStyle(dialog).paddingBottom)||16,avail=Math.min(innerHeight*.94,innerHeight-24)-top-pad;
+  const maxCols=Math.max(1,Math.floor(((grid.clientWidth||640)+GAP)/(MIN_W+GAP))),rows=Math.max(1,Math.floor((avail+GAP)/(ROW+GAP)));
+  const cols=Math.max(Math.min(4,maxCols),Math.ceil(n/rows));
+  if(cols<=maxCols)return {cols,per:Math.max(n,1)};
+  return {cols:maxCols,per:maxCols*Math.max(1,Math.floor((avail-PAGER+GAP)/(ROW+GAP)))};
  }
  function renderPin(){
-  const host=$('mediaContent');host.replaceChildren();const h=document.createElement('h3');h.className='media-person-heading';h.append(avatar(selected.name),document.createTextNode(pretty(selected.name)));host.append(h);
+  const side=$('mediaContent').querySelector('.media-side'),host=side||$('mediaContent');host.replaceChildren();
+  const h=document.createElement('h3');h.className='media-person-heading';const pic=document.createElement('span');pic.className='media-side-pic';pic.setAttribute('aria-hidden','true');
+  let emoji='';try{emoji=$('calIframe')?.contentWindow?.MinkaEmoji?.get(selected.name)||'';}catch(_){}
+  if(emoji)pic.textContent=emoji;else pic.append(avatar(selected.name));const who=document.createElement('span');who.textContent=pretty(selected.name);
+  h.append(pic,document.createTextNode(recovering?'2. Atjauno PIN':selected.hasPin?'2. Ievadi PIN':'2. Izveido PIN'),who);host.append(h);
   const form=document.createElement('form');form.className='media-pin';host.append(form);
   // A PIN is not the site password: a type=password field makes Chrome fill
   // the saved calendar password into it (autocomplete=off is ignored there).
@@ -327,23 +354,28 @@
   const maskedText=!!(window.CSS&&CSS.supports&&CSS.supports('-webkit-text-security','disc'));
   const makeField=(label,type,id,max)=>{const l=document.createElement('label');l.textContent=label;const input=document.createElement('input');input.id=id;input.name=id;input.required=true;input.maxLength=max;input.autocomplete='one-time-code';input.spellcheck=false;input.setAttribute('autocapitalize','off');
    if(type==='password'){input.type=maskedText?'text':'password';if(maskedText)input.style.setProperty('-webkit-text-security','disc');else input.autocomplete='off';input.inputMode='numeric';input.pattern=recovering||!selected.hasPin?'[0-9]{6}':'[0-9]{4,8}';}else input.type=type;
-   l.append(input);form.append(l);return input;};
+   if(type==='password'){const f=document.createElement('span');f.className='media-pin-field';const eye=document.createElement('button');eye.type='button';eye.className='media-eye';eye.setAttribute('aria-label','Rādīt PIN');eye.setAttribute('aria-pressed','false');
+    eye.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>';
+    eye.addEventListener('click',()=>{const show=eye.getAttribute('aria-pressed')!=='true';eye.setAttribute('aria-pressed',String(show));eye.setAttribute('aria-label',show?'Slēpt PIN':'Rādīt PIN');if(maskedText)input.style.setProperty('-webkit-text-security',show?'none':'disc');else input.type=show?'text':'password';input.focus();});
+    f.append(input,eye);l.append(f);}else l.append(input);
+   form.append(l);return input;};
   if(recovering)makeField('Atkopšanas kods','text','mediaRecoveryInput',40);
-  const pin=makeField(recovering?'Jauns 6 ciparu PIN':selected.hasPin?'Tavs PIN':'Izveido 6 ciparu PIN','password','mediaPin',recovering||!selected.hasPin?6:8);
+  const pin=makeField(recovering||!selected.hasPin?'Jauns PIN, 6 cipari':'Tavs PIN','password','mediaPin',recovering||!selected.hasPin?6:8);
   if(recovering||!selected.hasPin)makeField('Atkārto PIN','password','mediaConfirm',6);
-  const submit=document.createElement('button');submit.type='submit';submit.textContent=recovering?'Atjaunot PIN':selected.hasPin?'Ielogoties':'Izveidot profilu';form.append(submit);
-  form.append(button('Atpakaļ',()=>renderWorkers()));
-  if(!recovering&&selected.hasPin)form.append(button('Aizmirsi PIN?',()=>{recovering=true;renderPin();status('Ievadi saglabāto atkopšanas kodu. Ja tas pazudis, sazinies ar administratoru.');}));
+  const submit=document.createElement('button');submit.type='submit';submit.textContent=recovering?'Atjaunot PIN':selected.hasPin?'Ielogoties':'Izveidot profilu';submit.insertAdjacentHTML('beforeend','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>');form.append(submit);
+  if(!side){const back=button('Atpakaļ',()=>renderWorkers());back.className='media-back';form.append(back);}
+  host.append(statusEl);
+  if(!recovering&&selected.hasPin)form.append(Object.assign(button('Aizmirsi PIN?',()=>{recovering=true;renderPin();status('Ievadi saglabāto atkopšanas kodu. Ja tas pazudis, sazinies ar administratoru.');}),{className:'media-link'}));
   form.addEventListener('submit',async e=>{
    e.preventDefault();if(busy)return;const worker=selected,gen=generation;busy=true;submit.disabled=true;
    const data={name:worker.name,pin:pin.value,confirm:$('mediaConfirm')?.value,createPin:!worker.hasPin,recoveryCode:$('mediaRecoveryInput')?.value};
-   if((recovering||!worker.hasPin)&&data.pin!==data.confirm){status('PIN atkārtojums nesakrīt.');busy=false;submit.disabled=false;return;}
+   if((recovering||!worker.hasPin)&&data.pin!==data.confirm){status('PIN atkārtojums nesakrīt.',true);busy=false;submit.disabled=false;return;}
    try{
     status('Pārbauda…');const result=await api(recovering?'recover':'login',data,null);if(gen!==generation)return;
     if(recovering){recovering=false;selected.hasPin=true;renderPin();status('PIN atjaunots. Tagad ielogojies ar jauno PIN.');recoveryNotice(result.recoveryCode);}
     else{await adopt(result.session,true);recoveryNotice(result.recoveryCode);if(!result.recoveryCode&&session){dialog.close();startTour();}}
-   }catch(e){if(gen===generation)status(e.message);}finally{busy=false;submit.disabled=false;pin.value='';const c=$('mediaConfirm');if(c)c.value='';}
-  });status(recovering?'Atjaunošana nemaina tavas dziesmas un favorītus.':selected.hasPin?'Ievadi savu PIN.':'Izveido PIN, lai saglabātu savas stacijas un izskatu.');pin.focus();
+   }catch(e){if(gen===generation)status(e.message,true);}finally{busy=false;submit.disabled=false;pin.value='';const c=$('mediaConfirm');if(c)c.value='';}
+  });status(recovering?'Atjaunošana nemaina tavas dziesmas un favorītus.':'');pin.focus();
  }
  // Load local UI helpers only when needed. Positioning observers run only while open.
  const assets=new Map();
@@ -374,33 +406,18 @@
   }catch(e){if(gen===tourGeneration&&session){open();status(e.message);}}
  }
  document.addEventListener('visibilitychange',()=>{if(document.hidden)endTour();});
- let floatingCleanup=null,fallbackObserver=null,positionGeneration=0;
- async function attachPositioning(){
-  const gen=++positionGeneration;
-  try{
-   await loadAsset('vendor/floating-ui/core-1.8.0/floating-ui.core.umd.min.js');
-   await loadAsset('vendor/floating-ui/dom-1.8.0/floating-ui.dom.umd.min.js');
-   if(!dialog.open||gen!==positionGeneration)return;
-   const {computePosition,offset,flip,shift,autoUpdate}=window.FloatingUIDOM;
-   fallbackObserver?.disconnect();fallbackObserver=null;floatingCleanup?.();floatingCleanup=autoUpdate(trigger,dialog,()=>{
-    computePosition(trigger,dialog,{placement:'top-end',strategy:'fixed',middleware:[offset(10),flip({padding:12}),shift({padding:12,crossAxis:true})]}).then(({x,y})=>{if(dialog.open&&gen===positionGeneration){dialog.style.left=x+'px';dialog.style.top=y+'px';}});
-   },{animationFrame:false,layoutShift:false});
-  }catch(_){positionDialog();}
- }
- let centered=false;   // opened from elsewhere (the calendar's layout editor): in the middle of the window, not at the radio's button
+ let fallbackObserver=null;
+ // always in the middle of the window (from the radio, the header or the layout editor)
  function positionDialog(){
-  if(!dialog.open||floatingCleanup)return;
-  if(centered){const r=dialog.getBoundingClientRect();dialog.style.left=Math.max(12,Math.round((innerWidth-r.width)/2))+'px';dialog.style.top=Math.max(12,Math.round((innerHeight-r.height)/2))+'px';return;}
-  const anchor=trigger.getBoundingClientRect(),rect=dialog.getBoundingClientRect();
-  const left=Math.max(12,Math.min(innerWidth-rect.width-12,anchor.right-rect.width));
-  const top=Math.max(12,Math.min(innerHeight-rect.height-12,anchor.top-rect.height-10));
-  dialog.style.left=left+'px';dialog.style.top=top+'px';
+  if(!dialog.open)return;
+  // layout size, not getBoundingClientRect: the opening scale (.97) made the measured box smaller and the dialog sat off centre
+  dialog.style.left=Math.max(12,Math.round((innerWidth-dialog.offsetWidth)/2))+'px';dialog.style.top=Math.max(12,Math.round((innerHeight-dialog.offsetHeight)/2))+'px';
  }
- function open(opts){checkSessionDeadline();endTour();if(session){renderLogged();void flush();}else void renderWorkers();if(!dialog.open){centered=!!(opts&&opts.center);dialog.showModal();trigger.setAttribute('aria-expanded','true');fallbackObserver=new ResizeObserver(positionDialog);fallbackObserver.observe(dialog);positionDialog();if(!centered)void attachPositioning();}}
+ function open(opts){checkSessionDeadline();endTour();if(session){renderLogged();void flush();}else void renderWorkers();if(!dialog.open){dialog.showModal();trigger.setAttribute('aria-expanded','true');fallbackObserver=new ResizeObserver(positionDialog);fallbackObserver.observe(dialog);refitNames?.();positionDialog();}}
  window.addEventListener('resize',positionDialog,{passive:true});
  dialog.querySelector('[data-close]').onclick=()=>dialog.close();
  dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
- dialog.addEventListener('close',()=>{centered=false;positionGeneration++;floatingCleanup?.();floatingCleanup=null;fallbackObserver?.disconnect();fallbackObserver=null;trigger.setAttribute('aria-expanded','false');const p=$('mediaPin');if(p)p.value='';const c=$('mediaConfirm');if(c)c.value='';});
+ dialog.addEventListener('close',()=>{fallbackObserver?.disconnect();fallbackObserver=null;trigger.setAttribute('aria-expanded','false');const p=$('mediaPin');if(p)p.value='';const c=$('mediaConfirm');if(c)c.value='';});
  $('mediaRecoveryCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('mediaRecoveryCode').textContent);status('Atkopšanas kods nokopēts.');}catch(_){status('Iezīmē un nokopē redzamo kodu.');}};
  $('mediaRecoveryDone').onclick=()=>{$('mediaRecoveryCode').textContent='';$('mediaRecoveryNotice').hidden=true;if(session){dialog.close();startTour();}};
  const resumeSession=()=>{if(checkSessionDeadline()){armSessionDeadline();void flush();}};

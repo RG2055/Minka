@@ -12,13 +12,13 @@ Sesijas marķieris atrodas sessionStorage, PIN pārlūkā netiek saglabāts. Fav
 
 ## Kompakta izvēlne un pamācība
 
-Izvēlni novieto pie profila pogas ar lokāli glabātu Floating UI (core un DOM 1.8.0). Pārlūka dialog nodrošina modālo fokusu un Escape. Pozīcijas novērošana darbojas tikai atvērtai izvēlnei; aizverot to atvieno. Bibliotēku lejupielādē no lokālā servera tikai pirmajā atvēršanas reizē.
+Ielogošanās logs (2026-11-27) vienmēr atveras loga vidū, no radio un no galvenes vienādi: divas puses, vārdi pa kreisi, izvēlētais cilvēks un PIN pa labi. Pārlūka dialog nodrošina modālo fokusu un Escape.
 
 Profilā: identitāte, **Radio izskats**, **Pamācība**, favorīti, **Mainīt profilu**, **Iziet**. Pārkārtošanas/noņemšanas pogas rāda tikai rediģēšanas režīmā. Favorītu laukums ir ritināms, līdz 212 px augsts, šaurā/zemā logā saraujas; gari nosaukumi saīsinās vienā rindā. Pārkārtojot saglabā ritināšanas pozīciju un fokusu. Noņemšanu var atsaukt, atjaunojot arī vietu sarakstā. Servera datiem ir 250 favorītu robeža.
 
 Driver.js 1.8.0 rāda četrus īsus paskaidrojumus pie faktiskajām radio pogām: izskats, stacijas, profils, iziešana. To ielādē tikai vajadzības brīdī. Beidzot, aizverot/slēpjot radio, pārslēdzot uz mūziku vai izlogojoties pamācību iznīcina. Samazinātas kustības režīmā un datoros ar līdz 4 loģiskajiem kodoliem pārejas ir bez animācijas. Netiek pievienots pastāvīgs kadru cikls.
 
-Bibliotēku MIT licences, versijas, izcelsme un npm integritātes vērtības atrodas `vendor/driver/1.8.0` un `vendor/floating-ui`. Saspiesti ar gzip: Driver JS 7242 B, CSS 970 B; Floating core 4745 B, DOM 4065 B. Tie ir failu izmēri, ne veca datora darbības ātruma garantija.
+Bibliotēkas MIT licence, versija, izcelsme un npm integritātes vērtības atrodas `vendor/driver/1.8.0`. Saspiesta ar gzip: Driver JS 7242 B, CSS 970 B. Tie ir failu izmēri, ne veca datora darbības ātruma garantija.
 
 ## Radio izskats
 
