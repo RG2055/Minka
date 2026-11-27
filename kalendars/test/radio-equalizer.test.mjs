@@ -8,7 +8,7 @@ function setup(saved){
  if(fs.existsSync(source))vm.runInNewContext(fs.readFileSync(source,'utf8'),{window,localStorage:{getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)}});
  assert.ok(window.MinkaEqualizer,'shared equalizer engine exists');
  const nodes=[];const param=()=>({value:0,setTargetAtTime(v){this.value=v;}});
- const context={currentTime:0,createGain(){const n={gain:param(),connect(){}};nodes.push(n);return n;},createBiquadFilter(){const n={gain:param(),frequency:param(),Q:param(),connect(){}};nodes.push(n);return n;}};
+ const context={currentTime:0,createGain(){const n={gain:param(),to:[],connect(t){this.to.push(t);},disconnect(){this.to=[];}};nodes.push(n);return n;},createBiquadFilter(){const n={gain:param(),frequency:param(),Q:param(),connect(){}};nodes.push(n);return n;}};
  return {engine:window.MinkaEqualizer.create(),context,nodes,store};
 }
 test('boosts reserve headroom and bypass restores unity without losing the curve',()=>{
@@ -33,4 +33,13 @@ test('invalid storage and invalid gains cannot reach audio parameters',()=>{
  assert.ok(h.nodes.filter(n=>n.frequency).every(n=>Number.isFinite(n.gain.value)));
  h.engine.preset('flat');assert.ok(h.engine.snapshot().gains.every(v=>v===0));
  assert.ok(JSON.parse(h.store.get('minka:eq:v1')).gains.every(v=>v===0));
+});
+test('a flat or switched-off curve takes the ten filters out of the path, a real curve puts them back',()=>{
+ const h=setup(),eq=h.engine,out={connect(){}};eq.connect(h.context,{connect(){}},[out]);
+ const preamp=h.nodes[0],first=h.nodes.find(n=>n.frequency?.value===31);
+ assert.deepEqual(preamp.to,[out]);
+ eq.setBand(0,4);assert.deepEqual(preamp.to,[first]);
+ eq.setEnabled(false);assert.deepEqual(preamp.to,[out]);
+ eq.setEnabled(true);assert.deepEqual(preamp.to,[first]);
+ eq.preset('flat');assert.deepEqual(preamp.to,[out]);
 });

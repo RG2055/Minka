@@ -341,6 +341,9 @@ function drawDotMatrix(ctx, W, H, data, dt=16.7) {
     window._rgPanner.pan.setTargetAtTime(value,aCtx.currentTime,.035);
   }});
   window.rgEqualizer = engine;
+  // a tone profile that arrived before the engine (js/radio.js setEQ at start)
+  if (window.__mkPendingEqPreset) { engine.preset(window.__mkPendingEqPreset); window.__mkPendingEqPreset = ''; }
+  window.dispatchEvent(new Event('rg-eq-ready'));
 })();
 
 /* ═══════════════════════════════════════════════════

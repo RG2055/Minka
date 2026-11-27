@@ -75,48 +75,199 @@
   // The wheel over the volume nudges it, as on the old consoles.
   vol.addEventListener('wheel', (e) => { e.preventDefault(); const v = Math.max(0, Math.min(1, +vol.value - Math.sign(e.deltaY) * 0.05)); paintVol(v); window.rgListening?.setVolume(v); }, { passive: false });
 
-  /* ---------- the EQ preset: one compact menu built from the engine's own preset buttons ---------- */
-  const eqBtn = $('[data-rmx="eq"]'), eqMenu = $('.rmx-eq');
-  const presets = () => [...document.querySelectorAll('#eqRow .epb')];
-  function eqName(b) { return (b.querySelector('.epb-label')?.textContent || b.textContent || '').trim(); }
-  function paintEq() {
-    const on = document.querySelector('#eqRow .epb.active');
-    const name = on ? eqName(on) : 'FLAT';
+  /* ---------- Skaņa: the sound settings as part of the player (the EQ key). One container with it: a band inside
+     #rmx that grows upward while the player's bottom stays put (the window is anchored at its bottom and sized by its
+     content; --snd-h animates with an M3 spring). One audio system: the presets ARE curves of the 10-band equalizer
+     (js/radio-equalizer.js, window.rgEqualizer): choosing one glides its sliders there, moving a slider makes it
+     CUSTOM. The effects (CHILL, SPACE, LOFI, RADIO, SLOW: js/radio.js setEQ's modes) sit apart and work on their own, SLOW
+     with its sliders (the engine's own, by id). The old floating effects panel is never shown. */
+  const eqBtn = $('[data-rmx="eq"]');
+  const PRESETS = [['flat', 'FLAT'], ['bass', 'BASS'], ['bassplus', 'BASS+'], ['clear', 'CRISP'], ['loudness', 'LOUDNESS'], ['speakers', 'SKAĻRUŅI'],
+    ['voice', 'BALSS'], ['night', 'NAKTS'], ['rock', 'ROKS'], ['electronic', 'ELEKTRO'], ['acoustic', 'AKUSTIKA']];
+  const EFFECTS = [['chill', 'CHILL', '<path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 9.1 4.5 4.5 0 0 0 7 18Z"/>'],
+    ['depth', 'SPACE', '<circle cx="12" cy="12" r="2.5"/><path d="M12 4a8 8 0 0 1 8 8M4 12a8 8 0 0 0 8 8M6.3 6.3A8 8 0 0 1 12 4m5.7 13.7A8 8 0 0 1 12 20"/>'],
+    ['lofi', 'LOFI', '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/>'],
+    ['radio', 'RADIO', '<path d="M5 9a9.5 9.5 0 0 1 14 0M8 12a5 5 0 0 1 8 0"/><circle cx="12" cy="16" r="1.5"/>'],
+    ['chilldeep', 'SLOW', '<path d="M4 18a8 8 0 1 1 16 0M12 18l3.5-5"/>']];
+  const DEFAULTS = { volume: 100, pitch: 0, speed: 88, reverb: 40 };   // js/radio.js window.__slowFx's first values
+  const CHEVRON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const RESET_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const EQ = () => window.rgEqualizer, EQLIB = () => window.MinkaEqualizer;
+  const hz = (f) => (f >= 1000 ? f / 1000 + 'k' : String(f));
+  let snd = null, sndIn = null, sndOpen = false;
+  function buildSnd() {
+    if (snd) return;
+    if (typeof initSlowFxPanel === 'function') initSlowFxPanel();   // binds the effect sliders and switch by id
+    // a curve kept while the equalizer was switched off is not heard: start from FLAT, on
+    if (EQ() && !EQ().snapshot().enabled) EQ().preset('flat');
+    const bands = EQLIB()?.bands || [];
+    snd = document.createElement('section');
+    snd.className = 'rmx-snd'; snd.setAttribute('aria-label', 'Skaņa'); snd.inert = true;
+    snd.innerHTML = `<div class="rmx-snd-in"><div class="rmx-snd-body">
+      <div class="rmx-snd-head"><strong>Skaņa</strong><button type="button" class="rmx-btn rmx-snd-x" aria-label="Sakļaut skaņas iestatījumus" title="Sakļaut">${CHEVRON}</button></div>
+      <div class="rmx-snd-sub">Ekvalaizera preseti</div>
+      <div class="rmx-snd-pre" role="radiogroup" aria-label="Ekvalaizera preseti">${PRESETS.map(([id, label]) => `<button type="button" role="radio" data-eq-preset="${id}" aria-checked="false">${label}</button>`).join('')}<button type="button" role="radio" data-eq-preset="custom" aria-checked="false" disabled title="Tava līkne: pakustini kādu joslu">CUSTOM</button></div>
+      <div class="rmx-eqcard"><div class="rmx-bands">${bands.map((f, i) => `<div class="rmx-band"><output data-eq-out="${i}">0</output><div class="rmx-vs"><input type="range" min="-12" max="12" step="1" value="0" data-eq-band="${i}" aria-label="${hz(f)} Hz"></div><span>${hz(f)}</span></div>`).join('')}</div></div>
+      <div class="rmx-snd-sub">Skaņas efekti</div>
+      <div class="rmx-snd-fx" role="group" aria-label="Skaņas efekti">${EFFECTS.map(([id, label, icon]) => `<button type="button" data-fx="${id}" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>${label}</button>`).join('')}</div>
+      <div class="rmx-snd-slow"><div class="rmx-fxcard"></div></div>
+    </div></div>`;
+    sndIn = snd.firstElementChild;
+    // SLOW's own controls move in (ids and listeners stay): the keep-pitch switch and the four sliders
+    const card = snd.querySelector('.rmx-fxcard'), panel = byId('slowFxPanel');
+    const keep = panel?.querySelector('.slowfx-keep-toggle');
+    if (keep) card.append(keep);
+    card.insertAdjacentHTML('beforeend', `<button type="button" class="rmx-reset" data-reset="all" disabled>${RESET_ICON}Atjaunot sākotnējo</button>`);
+    const fxrow = document.createElement('div');   // SLOW's four sliders side by side (index.html .rmx-fxrow)
+    fxrow.className = 'rmx-fxrow';
+    panel?.querySelectorAll('.slowfx-row').forEach((row) => fxrow.append(row));
+    card.append(fxrow);
+    card.querySelectorAll('.slowfx-top span').forEach((v) => { v.setAttribute('role', 'button'); v.tabIndex = 0; v.title = 'Atjaunot'; });
+    mx.prepend(snd);
+    new ResizeObserver(() => fitSnd()).observe(sndIn.firstElementChild);
+    snd.querySelector('.rmx-snd-x').addEventListener('click', () => openSnd(false));
+    // a preset: the engine takes the curve at once (its filters glide 35 ms), the sliders follow it in 280 ms
+    snd.querySelector('.rmx-snd-pre').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-eq-preset]');
+      if (!b || b.disabled || !EQ()) return;
+      const from = EQ().snapshot().gains;
+      EQ().preset(b.dataset.eqPreset);
+      b.classList.remove('is-pop'); void b.offsetWidth; b.classList.add('is-pop');
+      glide(from, EQ().snapshot().gains);
+    });
+    snd.querySelector('.rmx-eqcard').addEventListener('input', (e) => { const i = e.target.dataset?.eqBand; if (i != null) { EQ()?.setBand(+i, +e.target.value); paintBands(); } });
+    // an effect: on its own, one at a time; pressed again it stops
+    snd.querySelector('.rmx-snd-fx').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-fx]');
+      if (!b || typeof setEQ !== 'function') return;
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      setEQ(on ? b.dataset.fx : 'none');
+      b.classList.remove('is-pop'); void b.offsetWidth; b.classList.add('is-pop');
+    });
+    card.addEventListener('click', (e) => {
+      const one = e.target.closest('.slowfx-top span'), all = e.target.closest('[data-reset]');
+      const S = window.__slowFx;
+      if ((!one && !all) || !S) return;
+      const keys = all ? Object.keys(DEFAULTS) : [one.id.replace(/^slowfx|Val$/g, '').toLowerCase()];
+      keys.forEach((k) => { if (k in DEFAULTS) { S[k] = DEFAULTS[k]; const input = byId('slowfx' + k[0].toUpperCase() + k.slice(1)); if (input) input.value = DEFAULTS[k]; } });
+      if (all) { S.keepPitch = false; const kp = byId('slowfxKeepPitch'); if (kp) kp.checked = false; }
+      if (typeof refreshSlowFxLabels === 'function') refreshSlowFxLabels();
+      if (typeof applySlowFxCustom === 'function') applySlowFxCustom();
+      paintDefaults();
+    });
+    card.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.slowfx-top span')) { e.preventDefault(); e.target.click(); } });
+    card.addEventListener('input', paintDefaults);
+    card.addEventListener('change', paintDefaults);
+    mx.addEventListener('transitionend', (e) => { if (e.target === mx && e.propertyName === '--snd-h' && !sndOpen) mx.classList.remove('snd-on', 'snd-closing'); });
+  }
+  // the sliders glide from the old curve to the new one (one-shot, 160 ms, emphasized decelerate)
+  let glideRaf = 0;
+  function glide(from, to) {
+    cancelAnimationFrame(glideRaf);
+    if (!snd || matchMedia('(prefers-reduced-motion: reduce)').matches) { paintBands(); return; }
+    const t0 = performance.now(), ease = (t) => 1 - Math.pow(1 - t, 3);
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / 160), k = ease(t);
+      paintBands(to.map((g, i) => from[i] + (g - from[i]) * k));
+      if (t < 1) glideRaf = requestAnimationFrame(step); else paintBands();
+    };
+    glideRaf = requestAnimationFrame(step);
+  }
+  // the band's height follows its content (a section opening, a card): the same spring, no jump
+  // Never taller than the room above the player (8 px from the window's top): the rest scrolls inside the band.
+  function fitSnd() {
+    if (!snd || !sndOpen) return;
+    const room = rw.getBoundingClientRect().bottom - 8 - 136;
+    mx.style.setProperty('--snd-h', Math.max(120, Math.min(sndIn.firstElementChild.offsetHeight, room)) + 'px');
+  }
+  function closeSndNow() {
+    if (!sndOpen) return;
+    sndOpen = false; snd.inert = true; eqBtn.setAttribute('aria-expanded', 'false');
+    mx.classList.remove('snd-on', 'snd-closing'); mx.style.setProperty('--snd-h', '0px');
+  }
+  function openSnd(open) {
+    buildSnd();
+    if (open === sndOpen) return;
+    sndOpen = open;
+    snd.inert = !open;
+    eqBtn.setAttribute('aria-expanded', String(open));
+    if (open) {
+      // the player stands in its own place to grow upward: a station list hanging under it closes first
+      if (overlay && overlay.style.display === 'grid' && typeof toggleMenu === 'function') toggleMenu(false);
+      paintEq(); paintDefaults(); paintBands();
+      mx.style.setProperty('--snd-h', '0px');
+      mx.classList.remove('snd-closing');
+      mx.classList.add('snd-on');
+      void mx.offsetHeight;
+      fitSnd();
+    } else {
+      mx.classList.add('snd-closing');   // closing settles without the spring's overshoot (it would squeeze the player)
+      mx.style.setProperty('--snd-h', '0px');
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) mx.classList.remove('snd-on', 'snd-closing');
+      eqBtn.focus({ preventScroll: true });
+    }
+  }
+  // The engine asks for its old floating effects panel whenever SLOW is set (also when a saved profile loads at
+  // start): that panel is never shown; SLOW's sliders live in this band, which opens only from the EQ key.
+  window.toggleSlowPanel = function () { if (sndOpen) paintEq(); };
+  function presetOf(gains) {
+    const lib = EQLIB();
+    const hit = lib && PRESETS.find(([id]) => lib.presets[id]?.gains.every((v, i) => v === gains[i]));
+    return hit ? hit[0] : 'custom';
+  }
+  // shown: the engine's curve, or (while gliding) the in-between values; the preset marks follow the real curve
+  function paintBands(view) {
+    const eq = EQ();
+    if (!eq || !snd) return;
+    const st = eq.snapshot(), gains = view || st.gains, preset = presetOf(st.gains);
+    snd.querySelectorAll('[data-eq-band]').forEach((input) => {
+      const i = +input.dataset.eqBand, g = gains[i], r = Math.round(g);
+      if (!view && +input.value !== st.gains[i]) input.value = st.gains[i];
+      if (view) input.value = r;
+      input.style.setProperty('--fv', ((g + 12) / 24).toFixed(4));   // the fill ends at the handle's centre (index.html .rmx-vs)
+      input.setAttribute('aria-valuetext', `${r > 0 ? '+' : ''}${r} dB`);
+      const out = snd.querySelector(`[data-eq-out="${i}"]`);
+      out.textContent = r > 0 ? '+' + r : String(r);
+      out.classList.toggle('is-away', r !== 0);
+    });
+    if (view) return;
+    snd.querySelectorAll('[data-eq-preset]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.eqPreset === preset)));
+    paintLabel();
+  }
+  // a value away from its first setting is marked and offers its reset; all at their defaults: no reset
+  function paintDefaults() {
+    const S = window.__slowFx;
+    if (!S || !snd) return;
+    let moved = !!S.keepPitch;
+    Object.keys(DEFAULTS).forEach((k) => {
+      const away = Math.abs((+S[k] || 0) - DEFAULTS[k]) > 0.001;
+      moved = moved || away;
+      byId('slowfx' + k[0].toUpperCase() + k.slice(1) + 'Val')?.classList.toggle('is-away', away);
+    });
+    const reset = snd.querySelector('.rmx-fxcard .rmx-reset');
+    if (reset) reset.disabled = !moved;
+  }
+  // the EQ key names what is on: the effect if one runs, else the preset (CUSTOM for a curve of one's own)
+  function paintLabel() {
+    const fx = (window.__eqMode || 'none').replace(/^none$/, '');
+    const e = EFFECTS.find(([id]) => id === fx);
+    const eq = EQ(), p = eq ? presetOf(eq.snapshot().gains) : 'flat';
+    const name = e ? e[1] : (PRESETS.find(([id]) => id === p)?.[1] || 'CUSTOM');
     const label = eqBtn.querySelector('b');
     if (label.textContent !== name) label.textContent = name;
-    eqMenu.querySelectorAll('button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.id === on?.id)));
   }
-  function openEq(open) {
-    if (open && !eqMenu.childElementCount) {
-      eqMenu.innerHTML = presets().map((b) => `<button type="button" role="menuitemradio" data-id="${b.id}">${eqName(b)}</button>`).join('');
-    }
-    eqMenu.hidden = !open;
-    eqBtn.setAttribute('aria-expanded', String(open));
-    if (open) { paintEq(); eqMenu.querySelector('[aria-checked="true"]')?.focus({ preventScroll: true }); }
+  function paintEq() {
+    paintLabel();
+    if (!snd) return;
+    const mode = window.__eqMode || 'none';
+    snd.querySelectorAll('[data-fx]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.fx === mode)));
+    snd.classList.toggle('is-slow', mode === 'chilldeep');
   }
-  eqMenu.addEventListener('click', (e) => {
-    const item = e.target.closest('button[data-id]');
-    if (!item) return;
-    openEq(false);
-    byId(item.dataset.id)?.click();
-    // SLOW opens the sound effects sheet: it was placed by a key that is hidden now, so put it over this button.
-    if (item.dataset.id === 'eq-chilldeep') requestAnimationFrame(placeFx);
-  });
-  if (byId('eqRow')) new MutationObserver(paintEq).observe(byId('eqRow'), { attributes: true, attributeFilter: ['class'], subtree: true });
-  // The sound effects sheet lived inside the old console, which is hidden: it moves to the page once (fixed anyway).
-  const fx = byId('slowFxPanel');
-  if (fx && fx.parentElement !== document.body) document.body.append(fx);
-  // Wide and low (index.html .rmx-fx), above the window from the EQ button; with no room above it lies over the
-  // radio itself rather than the dock under it.
-  function placeFx() {
-    if (!fx || !fx.classList.contains('open')) return;
-    fx.classList.add('rmx-fx');
-    const b = eqBtn.getBoundingClientRect(), w = rw.getBoundingClientRect(), p = fx.getBoundingClientRect();
-    fx.style.left = Math.max(8, Math.min(window.innerWidth - p.width - 8, b.left)) + 'px';
-    fx.style.top = Math.max(8, w.top - p.height - 10 >= 8 ? w.top - p.height - 10 : w.bottom - p.height) + 'px';
-  }
-  document.addEventListener('pointerdown', (e) => { if (!eqMenu.hidden && !eqMenu.contains(e.target) && !eqBtn.contains(e.target)) openEq(false); }, true);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !eqMenu.hidden) { openEq(false); eqBtn.focus(); } });
+  const paint = () => { paintEq(); paintBands(); };
+  if (byId('eqRow')) new MutationObserver(paint).observe(byId('eqRow'), { attributes: true, attributeFilter: ['class'], subtree: true });
+  window.addEventListener('resize', () => requestAnimationFrame(fitSnd));
+  window.addEventListener('storage', (e) => { if (e.key === 'minka:eq:v1') paintBands(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sndOpen && !document.querySelector('dialog[open]')) openSnd(false); });
 
   /* ---------- the station list: the engine's own, joined under the window ---------- */
   const stBtn = $('[data-rmx="stations"]'), overlay = byId('stationOverlay');
@@ -133,6 +284,7 @@
   if (overlay) new MutationObserver(() => {
     const openList = overlay.style.display === 'grid' && !overlay._mkClosing;
     stBtn.setAttribute('aria-expanded', String(openList));
+    if (openList && sndOpen) openSnd(false);   // one opening at a time: the list or the sound band
     // The list is going: the player eases back to its narrow place in the dock's row (index.html html.mk-cd-st).
     if (!openList) document.documentElement.classList.remove('mk-cd-st');
   }).observe(overlay, { attributes: true, attributeFilter: ['style', 'class'] });
@@ -146,14 +298,15 @@
       case 'prev': if (typeof playPrev === 'function') playPrev(); break;
       case 'next': if (typeof playNext === 'function') playNext(); break;
       case 'mute': window.rgListening?.toggleMute(); break;
-      case 'stations': if (typeof toggleMenu === 'function') toggleMenu(); break;
-      case 'eq': openEq(eqMenu.hidden); break;
+      // the band closes at once first: the list lifts the player by its height, measured now
+      case 'stations': closeSndNow(); if (typeof toggleMenu === 'function') toggleMenu(); break;
+      case 'eq': openSnd(!sndOpen); break;
       case 'look': byId('themeBtn')?.click(); break;
       case 'profile': (byId('mediaProfileButton') || byId('mediaRegisterButton'))?.click(); break;
       case 'min':
         // Minimized means all of it: the station list joined under the window closes first.
         if (overlay && overlay.style.display === 'grid' && typeof toggleMenu === 'function') toggleMenu(false);
-        openEq(false);
+        openSnd(false);
         if (typeof window.toggleRadio === 'function') window.toggleRadio();
         break;
     }
@@ -369,4 +522,5 @@
   cdockOpen = !document.body.classList.contains('radio-hidden') && !document.body.classList.contains('radio-idle');
   cdock.sync(false);
   readMeta(); paintEq(); render();
+  window.addEventListener('rg-eq-ready', paint);   // the equalizer's engine (js/radio_extras_v4.js) loads after this file
 })();

@@ -306,7 +306,7 @@ html.minka-rad #bolusDocBtn#bolusDocBtn#bolusDocBtn#bolusDocBtn,html.minka-rad #
     window.fetch = sideFetch;
   })();
 
-  var CALENDAR_BUILD = '20261127bl2';
+  var CALENDAR_BUILD = '20261127sd1';
 
   window.addEventListener('message', function(event) {
     if (event.origin !== window.location.origin || !event.data || event.data.type !== 'minka:rollover-preview-trace') return;
@@ -1246,10 +1246,6 @@ html.mk-low-spec #rmx .rmx-song.rmx-run>i{animation-iteration-count:2}
 #rmx .rmx-vol::-webkit-slider-thumb{-webkit-appearance:none;width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);margin-top:calc((var(--rmx-vt,4px) - var(--rmx-kh,18px)) / 2);border-radius:3px;background:var(--rmx-acc);border:0}
 #rmx .rmx-vol::-moz-range-thumb{width:var(--rmx-kw,4px);height:var(--rmx-kh,18px);border-radius:3px;background:var(--rmx-acc);border:0}
 /* the EQ presets: a compact menu over the spectrum, above its button */
-#rmx .rmx-eq{position:absolute;left:20px;bottom:66px;z-index:3;display:grid;grid-template-columns:repeat(6,auto);gap:4px;padding:6px;border-radius:calc(var(--rmx-kr,16px) + 2px);background:var(--rmx-menu,#151a20);box-shadow:0 8px 24px rgba(0,0,0,.35)}
-#rmx .rmx-eq[hidden]{display:none}
-#rmx .rmx-eq button{height:32px;padding:0 12px;border-radius:var(--rmx-kr,16px);font:600 12px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);color:var(--rmx-sub)}
-#rmx .rmx-eq button[aria-checked="true"]{background:var(--rmx-on);color:var(--rmx-on-ink)}
 /* ---------- skins: material, type, shapes; the spectrum's drawing is chosen in js by data-radio-skin ---------- */
 /* Klasiskais: mint by default, the deep tone; the chosen background shows faintly through the surface. */
 /* Jauns: a lighter, cleaner tone (surface-container-high), round keys each on its own, a wide pill play key. */
@@ -1267,17 +1263,13 @@ html.mk-low-spec #rmx .rmx-song.rmx-run>i{animation-iteration-count:2}
 /* Dither: 1-bit. Paper black and one ink: keys drawn in a 1 px ink line, the play key and the chosen key solid ink
    with black on it, the cover in grey pixels, mono type, dotted volume. */
 #radioWindow[data-radio-skin="dither"] #rmx{--rmx-src:rgb(var(--dth-ink-rgb,var(--radio-accent-rgb,120,220,200)));--rmx-base:#050505;--rmx-surface:#050505;--rmx-bg:#050505;--rmx-acc:var(--rmx-src);--rmx-well:color-mix(in oklab,var(--rmx-tsrc) 12%,#050505);--rmx-on:var(--rmx-src);--rmx-on-ink:#050505;--rmx-play-ink:#050505;--rmx-menu:#050505;--rmx-ink:#f4f3ec;--rmx-sub:#a9a89f;--rmx-tile-r:2px;--rmx-art-r:2px;--rmx-kr:2px;--rmx-tr:2px;--rmx-play-r:2px;--rmx-rail:repeating-linear-gradient(90deg,rgba(244,243,236,.35) 0 2px,transparent 2px 4px);--rmx-kw:4px;--rmx-kh:14px;--rmx-font:'JetBrains Mono',ui-monospace,monospace;--rmx-case:uppercase;--rmx-track:.03em}
-#radioWindow[data-radio-skin="dither"] #rmx :is(.rmx-btn:not([aria-expanded="true"]),.rmx-key:not(.rmx-play),.rmx-tools,.rmx-eq){background:#050505;box-shadow:inset 0 0 0 1px var(--rmx-acc)}
+#radioWindow[data-radio-skin="dither"] #rmx :is(.rmx-btn:not([aria-expanded="true"]),.rmx-key:not(.rmx-play),.rmx-tools){background:#050505;box-shadow:inset 0 0 0 1px var(--rmx-acc)}
 #radioWindow[data-radio-skin="dither"] #rmx .rmx-btn[aria-expanded="true"] b{color:inherit}
 #radioWindow[data-radio-skin="dither"] #rmx .rmx-art img{image-rendering:pixelated;filter:grayscale(1) contrast(1.5)}
 #radioWindow[data-radio-skin="dither"] #rmx .rmx-title{font-size:18px}
 #radioWindow[data-radio-skin="dither"] #rmx .rmx-artist{font-size:13px}
 /* The sound effects sheet, opened from the EQ menu: wide and low (two columns of sliders), so it sits above the
    radio window without scrolling and without covering the dock. */
-body>#slowFxPanel.rmx-fx{max-width:none!important;width:min(680px,calc(100vw - 24px))!important}
-#slowFxPanel.rmx-fx.open{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;align-items:start}
-#slowFxPanel.rmx-fx .slowfx-popup-head{grid-column:1 / -1}
-#slowFxPanel.rmx-fx .slowfx-row{margin-top:14px}
 /* The station list joined under the skeleton wears the same skin: js/radio-max.js copies the skin's tokens onto it
    (--rmx-*). One surface, no rim; tiles and tabs are the skin's tinted wells, the playing station its accent. */
 #stationOverlay#stationOverlay#stationOverlay#stationOverlay#stationOverlay[data-skin]{background:var(--rmx-surface)!important;background-image:none!important;border:0!important;box-shadow:none!important;color:var(--rmx-ink);font-family:var(--rmx-font)}
@@ -1360,8 +1352,102 @@ html.mk-cdock body #radioWindow#radioWindow#radioWindow#radioWindow#radioWindow#
 #rmx .rmx-artist{font-size:14px;line-height:22px}
 #rmx .rmx-top .rmx-btn{height:36px;border-radius:var(--rmx-kr,18px)}
 #rmx .rmx-play{height:40px;border-radius:var(--rmx-play-r,20px)}
-#rmx .rmx-eq{bottom:50px}
 @media (prefers-reduced-motion:reduce){#rmx .rmx-viz canvas{transition:none}}
+/* Skaņa: the sound settings as part of the player (js/radio-max.js openSnd). A band at the top of #rmx in the same
+   container, background, padding and corners; the player grows upward by the band's height (the window is anchored
+   at its bottom), the band uncovering from the top edge with an M3 spring. Closed, nothing here applies: the player
+   is exactly as before. The player's own tokens and button language: wells for the idle presets, the play key's
+   fill for the chosen one (round, with a check), 36 px keys. */
+@property --snd-h{syntax:'<length>';inherits:true;initial-value:0px}
+#rmx .rmx-snd{display:none}
+#rmx [data-rmx="eq"] .rmx-dd{transition:rotate .3s cubic-bezier(.38,1.21,.22,1)}
+#rmx [data-rmx="eq"][aria-expanded="true"] .rmx-dd{rotate:180deg}
+#rmx.snd-on{height:calc(136px + var(--snd-h));padding-top:calc(10px + var(--snd-h));transition:--snd-h .38s cubic-bezier(.38,1.21,.22,1)}
+#rmx.snd-on.snd-closing{transition:--snd-h .24s cubic-bezier(.3,0,.1,1)}
+#rmx.snd-on .rmx-snd{display:block;position:absolute;left:0;right:0;top:0;height:var(--snd-h);overflow:hidden;border-radius:inherit}
+#rmx .rmx-snd-in{position:absolute;left:0;right:0;bottom:0;max-height:100%;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--rmx-well) transparent}
+#rmx .rmx-snd-body{display:grid;gap:6px;padding:10px 16px 0}
+#rmx .rmx-snd-head{display:flex;align-items:center;gap:8px;min-height:36px}
+#rmx .rmx-snd-head strong{flex:1;font:600 18px/22px var(--rmx-label);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);color:var(--rmx-ink)}
+#rmx .rmx-snd-x{width:36px!important;padding:0!important}
+#rmx .rmx-snd-x svg{width:18px;height:18px}
+#rmx .rmx-snd-sub{margin-top:2px;font:500 13px/1.2 var(--rmx-font);color:var(--rmx-sub)}
+/* the equalizer's presets: one compact group of four columns, CUSTOM marks a curve of one's own */
+#rmx .rmx-snd-pre{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+#rmx .rmx-snd-pre button:disabled:not([aria-checked="true"]){color:var(--rmx-sub);cursor:default}
+#rmx .rmx-snd-pre button:disabled:not([aria-checked="true"]):hover{background:var(--rmx-well)}
+/* the effects: four keys with an icon over the name, on their own; the running one filled */
+#rmx .rmx-snd-fx{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+#rmx .rmx-snd-fx button{display:grid;justify-items:center;align-content:center;gap:4px;height:52px;border-radius:var(--rmx-kr,12px);background:var(--rmx-well);color:var(--rmx-ink);font:600 12px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);transition:border-radius .35s cubic-bezier(.38,1.21,.22,1),background-color .2s,color .2s}
+#rmx .rmx-snd-fx button:hover{background:color-mix(in srgb,var(--rmx-ink) 10%,var(--rmx-well))}
+#rmx .rmx-snd-fx button[aria-pressed="true"]{border-radius:26px;background:var(--rmx-play-bg,var(--rmx-acc));color:var(--rmx-play-ink)}
+#rmx .rmx-snd-fx svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#rmx .rmx-snd-slow{display:none}
+#rmx .rmx-snd.is-slow .rmx-snd-slow{display:block}
+/* the presets: one compact group, all idle ones in the player's well tone; the chosen one turns round */
+#rmx .rmx-snd-pre button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:0;padding:0 4px;white-space:nowrap;height:36px;border-radius:var(--rmx-kr,12px);background:var(--rmx-well);color:var(--rmx-ink);font:600 13px/1 var(--rmx-label);letter-spacing:var(--rmx-track,0);text-transform:var(--rmx-case,none);transition:border-radius .25s cubic-bezier(.38,1.21,.22,1),background-color .15s,color .15s}
+#rmx .rmx-snd-pre button:hover{background:color-mix(in srgb,var(--rmx-ink) 10%,var(--rmx-well))}
+#rmx .rmx-snd-pre button[aria-checked="true"]{border-radius:18px;background:var(--rmx-play-bg,var(--rmx-acc));color:var(--rmx-play-ink)}
+#rmx .rmx-snd-pre button[aria-checked="true"]::before{content:"";width:16px;height:16px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M4.5 12.5l5 5 10-11%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%273%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cpath d=%27M4.5 12.5l5 5 10-11%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%273%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") center/contain no-repeat}
+#rmx .rmx-snd-pre button.is-pop,#rmx .rmx-snd-fx button.is-pop{animation:snd-pop .25s cubic-bezier(.2,0,0,1)}
+@keyframes snd-pop{50%{scale:1.04}}
+#rmx .rmx-fxcard{display:grid;gap:8px 24px;padding:10px 16px;border-radius:var(--rmx-tile-r,16px);background:color-mix(in srgb,var(--rmx-well) 60%,transparent)}
+#rmx .rmx-fxcard{grid-template-columns:1fr auto}
+#rmx .rmx-fxcard>.slowfx-row{grid-column:1 / -1}
+#rmx .rmx-fxrow{grid-column:1 / -1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+#rmx .rmx-fxrow .slowfx-row{grid-template-columns:minmax(0,1fr)}
+#rmx .rmx-fxrow .slowfx-ico,#rmx .rmx-fxrow .slowfx-ends,#rmx .rmx-fxcard .slowfx-keep-label small{display:none}
+#rmx .rmx-fxrow .slowfx-top{font-size:13px;white-space:nowrap}
+#rmx .rmx-fxrow .slowfx-top span{min-width:0;padding:3px 8px}
+#rmx .rmx-fxcard .slowfx-hint{display:none}
+#rmx .rmx-fxcard>.rmx-reset{align-self:center}
+#rmx .rmx-eqcard{padding:2px 0 4px}
+#rmx .slowfx-keep-toggle{display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;color:var(--rmx-ink)}
+#rmx .slowfx-keep-toggle input{position:absolute;opacity:0;width:1px;height:1px}
+#rmx .slowfx-keep-label small{display:block;margin-top:2px;font-size:12px;color:var(--rmx-sub)}
+/* the M3 switch: a 52 x 32 track, the handle grows when on */
+#rmx .slowfx-switch{position:relative;flex:none;width:52px;height:32px;border:2px solid var(--rmx-sub);border-radius:16px;background:var(--rmx-well)}
+#rmx .slowfx-switch::after{content:"";position:absolute;top:6px;left:6px;width:16px;height:16px;border-radius:50%;background:var(--rmx-sub);transition:left .25s cubic-bezier(.38,1.21,.22,1),width .2s,height .2s,top .2s,background-color .2s}
+#rmx .slowfx-keep-toggle input:checked+.slowfx-switch{border-color:var(--rmx-play-bg,var(--rmx-acc));background:var(--rmx-play-bg,var(--rmx-acc))}
+#rmx .slowfx-keep-toggle input:checked+.slowfx-switch::after{top:2px;left:22px;width:24px;height:24px;background:var(--rmx-play-ink)}
+#rmx .slowfx-keep-toggle input:focus-visible+.slowfx-switch{outline:2px solid var(--rmx-acc);outline-offset:3px}
+#rmx .slowfx-row{display:grid;grid-template-columns:36px minmax(0,1fr);column-gap:12px;margin:0}
+#rmx .slowfx-ico{display:grid;place-items:center;width:36px;height:36px;border-radius:var(--rmx-kr,12px);background:var(--rmx-well);color:var(--rmx-ink)}
+#rmx .slowfx-ico svg{width:20px;height:20px;fill:none}
+#rmx .slowfx-main{min-width:0}
+#rmx .slowfx-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font:600 14px/1.3 var(--rmx-font);color:var(--rmx-ink)}
+/* the value: a quiet number at its first setting; moved, it fills and a press puts it back */
+#rmx .slowfx-top span{min-width:52px;padding:4px 10px;border-radius:999px;text-align:center;font:700 12px/1.2 var(--rmx-font);font-variant-numeric:tabular-nums;color:var(--rmx-sub);cursor:default;transition:background-color .2s,color .2s}
+#rmx .slowfx-top span.is-away{background:var(--rmx-on);color:var(--rmx-on-ink);cursor:pointer}
+#rmx .slowfx-hint{margin:2px 0 4px;font-size:12px;line-height:1.35;color:var(--rmx-sub)}
+#rmx .slowfx-ends{display:flex;justify-content:space-between;margin-top:2px;font-size:11px;color:var(--rmx-sub)}
+/* thick slider: a 16 px track filled in the accent up to a bar handle with a gap of the card's colour round it */
+#rmx .rmx-fxcard input[type=range]{display:block;width:100%;height:32px;margin:0;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer}
+#rmx .rmx-fxcard input[type=range]::-webkit-slider-runnable-track{height:16px;border-radius:8px;background:linear-gradient(to right,var(--rmx-acc) var(--slowfx-fill,50%),var(--rmx-well) var(--slowfx-fill,50%))}
+#rmx .rmx-fxcard input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:6px;height:32px;margin-top:-8px;border:0;border-radius:3px;background:var(--rmx-ink);box-shadow:0 0 0 3px var(--rmx-surface)}
+#rmx .rmx-fxcard input[type=range]::-moz-range-track{height:16px;border-radius:8px;background:var(--rmx-well)}
+#rmx .rmx-fxcard input[type=range]::-moz-range-progress{height:16px;border-radius:8px;background:var(--rmx-acc)}
+#rmx .rmx-fxcard input[type=range]::-moz-range-thumb{width:6px;height:32px;border:0;border-radius:3px;background:var(--rmx-ink);box-shadow:0 0 0 3px var(--rmx-surface)}
+#rmx .rmx-fxcard input[type=range]:disabled{opacity:.45;cursor:not-allowed}
+#rmx .rmx-reset{justify-self:end;display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:var(--rmx-kr,18px);background:var(--rmx-well);color:var(--rmx-ink);font:600 13px/1 var(--rmx-label);text-transform:var(--rmx-case,none)}
+#rmx .rmx-reset:disabled{opacity:.4;cursor:default}
+#rmx .rmx-reset svg{width:18px;height:18px}
+/* the equalizer: its presets as small buttons, ten bands (a disc with the value, a thick track filled from the
+   bottom with the handle inside it, the frequency) */
+#rmx .rmx-bands{display:flex;justify-content:space-between;gap:2px}
+#rmx .rmx-band{display:grid;justify-items:center;gap:4px;width:48px}
+#rmx .rmx-band output{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--rmx-well);color:var(--rmx-sub);font:700 12px/1 var(--rmx-font);font-variant-numeric:tabular-nums;transition:background-color .2s,color .2s}
+#rmx .rmx-band output.is-away{background:var(--rmx-on);color:var(--rmx-on-ink)}
+#rmx .rmx-band>span{font:500 11px/1 var(--rmx-font);color:var(--rmx-sub)}
+#rmx .rmx-vs{position:relative;width:36px;height:92px}
+#rmx .rmx-vs input[type=range]{position:absolute;left:50%;top:50%;width:92px;height:36px;margin:0;translate:-50% -50%;rotate:-90deg;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer}
+#rmx .rmx-vs input[type=range]::-webkit-slider-runnable-track{height:32px;border-radius:16px;background:linear-gradient(to right,var(--rmx-acc) calc(var(--fv,.5) * 70px + 11px),var(--rmx-well) calc(var(--fv,.5) * 70px + 11px))}
+#rmx .rmx-vs input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:22px;height:22px;margin-top:5px;border:0;border-radius:50%;background:var(--rmx-play-ink)}
+#rmx .rmx-vs input[type=range]::-moz-range-track{height:32px;border-radius:16px;background:var(--rmx-well)}
+#rmx .rmx-vs input[type=range]::-moz-range-progress{height:32px;border-radius:16px;background:var(--rmx-acc)}
+#rmx .rmx-vs input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:var(--rmx-play-ink)}
+#rmx .rmx-vs input[type=range]:disabled{opacity:.45;cursor:not-allowed}
+@media (prefers-reduced-motion:reduce){#rmx.snd-on{transition:none}#rmx .rmx-snd-pre button,#rmx .rmx-eqpre button{transition:none;animation:none!important}}
 </style>
 <div id="radioWindow" style="display:none;">
 <script>/* the skin before radio.js loads (lazily): without it the old radio layout under the one skeleton showed for a moment (the user) */
@@ -1385,7 +1471,7 @@ rw.dataset.radioSkin=['classic','clean','pioneer','pixel','amp','dither'].indexO
     <div class="rmx-viz" aria-hidden="true"><canvas></canvas></div>
     <div class="rmx-strip">
       <div class="rmx-left">
-        <button type="button" class="rmx-btn" data-rmx="eq" aria-haspopup="menu" aria-expanded="false" title="Skaņas profils"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg><b>FLAT</b><svg class="rmx-dd" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
+        <button type="button" class="rmx-btn" data-rmx="eq" aria-expanded="false" title="Skaņas profils"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg><b>FLAT</b><svg class="rmx-dd" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg></button>
       </div>
       <div class="rmx-tr">
         <button type="button" class="rmx-key" data-rmx="prev" title="Iepriekšējā stacija" aria-label="Iepriekšējā stacija"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
@@ -1397,7 +1483,6 @@ rw.dataset.radioSkin=['classic','clean','pioneer','pixel','amp','dither'].indexO
         <input type="range" class="rmx-vol" min="0" max="1" step="0.01" value="0.7" aria-label="Skaļums">
       </div>
     </div>
-    <div class="rmx-eq" role="menu" aria-label="Skaņas profils" hidden></div>
   </div>
   <div id="radioSourceBar" class="radio-source-bar" role="group" aria-label="Atskaņošanas avots">
     <button id="radioSourceBroadcast" type="button" aria-pressed="true" onclick="setRadioSource('radio')"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 7 13-4M5 8h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="14.5" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M14 12h4m-4 4h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>RADIO</span></button>
@@ -1605,13 +1690,13 @@ async function loadRadioScripts() {
   await loadAny(['js/radio-amp-layout.js?v=20261116pn1']);
   await loadAny(['js/radio-dither-layout.js?v=20261116pn1']);
   await loadAny(['js/radio-listening.js?v=20260919pixel2']);
-  await loadAny(['js/radio-equalizer.js?v=20260919pixel2']);
+  await loadAny(['js/radio-equalizer.js?v=20261127sd2']);
   await loadAny(['js/radio-equalizer-ui.js?v=20261012dot1']);
   await loadAny(['js/radio-pixel.js?v=20260919pixel5']);
   await loadAny(['js/radio-wheel.js?v=20261127fm1']);
-  await loadAny(['js/radio.js?v=20261127fm1']);
-  await loadAny(['js/radio-max.js?v=20261127fm1']);
-  await loadAny(['js/radio_extras_v4.js?v=20261012pf1']);
+  await loadAny(['js/radio.js?v=20261127sd3']);
+  await loadAny(['js/radio-max.js?v=20261127sd10']);
+  await loadAny(['js/radio_extras_v4.js?v=20261127sd1']);
   await loadAny(['js/radio-motion.js?v=20261112nw1']);
   _radioScriptsLoaded = true;
   _radioScriptsLoading = false;

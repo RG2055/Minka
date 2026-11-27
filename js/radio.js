@@ -678,7 +678,10 @@ document.addEventListener('pointerdown', (event) => {
     const clickedTrigger = path.some(node => node?.classList?.contains('station-btn') || node?.dataset?.act === 'stations');
     // Joined to the radio, the player below is part of it: playing or skipping there keeps the list open.
     const clickedPlayer = !!overlay.classList?.contains('mk-st-joined') && path.includes(document.getElementById('radioWindow'));
-    if (!clickedOverlay && !clickedTrigger && !clickedPlayer) toggleMenu(false);
+    // The player's own sheets (sound effects, the 10-band EQ dialog) are part of it too: using them keeps the list
+    // open (closing it here dropped the lifted player back to the dock, which read as the radio minimising).
+    const clickedSheet = path.some(node => node?.id === 'slowFxPanel' || node?.classList?.contains('minka-eq'));
+    if (!clickedOverlay && !clickedTrigger && !clickedPlayer && !clickedSheet) toggleMenu(false);
 }, true);
 
 
@@ -2216,6 +2219,8 @@ function initSlowFxPanel(){
       if (!p || !p.classList.contains('open')) return;
       const btn = document.getElementById('eq-chilldeep');
       if (p.contains(e.target) || (btn && btn.contains(e.target))) return;
+      // the big radio's EQ key toggles the sheet itself, and the 10-band EQ dialog opens from inside it
+      if (e.target.closest?.('[data-rmx="eq"], dialog.minka-eq')) return;
       toggleSlowPanel(false);
     }, true);
     __slowFx.panelInit = true;
@@ -2541,6 +2546,14 @@ function toggleMorePresets(){
 }
 
 function setEQ(mode) {
+    // The tone profiles (BASS, BASS+, CRISP, STUDIO) are curves of the 10-band equalizer now (js/radio-equalizer.js):
+    // a saved or synced one sets that curve and leaves no effect running. The modes left here are the effects.
+    // (STUDIO is gone: its nearest curve is CRISP. RADIO stays a mode: it is an effect now, the sound it always had.)
+    if (/^(bass|bassplus|clear|studio)$/.test(mode)) {
+        const curve = mode === 'studio' ? 'clear' : mode;
+        if (window.rgEqualizer) window.rgEqualizer.preset(curve); else window.__mkPendingEqPreset = curve;
+        mode = 'none';
+    }
     // Set the requested mode before initialization or custom rate/gain reads it.
     window.__eqMode = mode;
     if(!lowNode){

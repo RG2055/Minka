@@ -9,20 +9,33 @@
     night: {label:'Nakts', gains:[-4,-3,-1,0,1,2,1,0,-2,-3]},
     rock: {label:'Roks', gains:[4,3,2,0,-1,-1,1,3,3,2]},
     electronic: {label:'Elektronika', gains:[4,4,2,0,-2,0,1,3,4,3]},
-    acoustic: {label:'Akustika', gains:[0,1,2,2,1,1,2,2,1,0]}
+    acoustic: {label:'Akustika', gains:[0,1,2,2,1,1,2,2,1,0]},
+    // The big radio's one preset list: its former tone profiles as curves over the same ten bands, and two of the
+    // usual player presets. Boosts stay moderate: the engine lowers everything by the largest boost to keep it clean.
+    bassplus: {label:'Bass+', gains:[5,7,6,3,1,0,0,0,0,0]},
+    clear: {label:'Skaidrs', gains:[-4,-4,-3,-1,0,0,2,4,6,6]},
+    loudness: {label:'Loudness', gains:[5,5,3,1,0,0,0,1,3,4]},          // fuller at a low volume
+    speakers: {label:'Skaļruņi', gains:[-6,-3,3,3,1,0,1,2,2,0]}        // small PC speakers: no sub-bass they cannot play
   };
   function create(key = 'minka:eq:v1') {
     let saved;
     try { saved = JSON.parse(localStorage.getItem(key)); } catch (_) {}
     let gains = Array.isArray(saved?.gains) && saved.gains.length === bands.length
       ? saved.gains.map(v => Number.isFinite(v) ? Math.max(-12, Math.min(12, v)) : 0) : bands.map(() => 0);
-    let enabled = saved?.enabled !== false, context, filters, preamp;
+    let enabled = saved?.enabled !== false, context, filters, preamp, outs, through = null;
     const snapshot = () => ({enabled, gains:[...gains], headroom:enabled ? Math.max(0, ...gains) : 0});
     function apply() {
       if (!context) return;
-      // Attenuate before boosting; the existing output compressor remains last.
+      // Attenuate before boosting (the headroom keeps a boosted curve from clipping); the output compressor stays last.
       preamp.gain.setTargetAtTime(Math.pow(10, -snapshot().headroom / 20), context.currentTime, .035);
       filters.forEach((n, i) => n.gain.setTargetAtTime(enabled ? gains[i] : 0, context.currentTime, .035));
+      // A flat or switched-off curve does nothing: the ten filters leave the path and idle (no work on weak PCs).
+      const pass = !enabled || gains.every(v => v === 0);
+      if (pass === through) return;
+      through = pass;
+      preamp.disconnect();
+      if (pass) outs.forEach(output => preamp.connect(output));
+      else preamp.connect(filters[0]);
     }
     function save() { try { localStorage.setItem(key, JSON.stringify(snapshot())); } catch (_) {} apply(); }
     return {
@@ -37,7 +50,8 @@
           filter.frequency.value = frequency; filter.Q.value = 1.4;
           return filter;
         });
-        input.connect(preamp); preamp.connect(filters[0]);
+        outs = outputs;
+        input.connect(preamp);
         filters.slice(0, -1).forEach((filter, i) => filter.connect(filters[i + 1]));
         outputs.forEach(output => filters.at(-1).connect(output));
         apply();
