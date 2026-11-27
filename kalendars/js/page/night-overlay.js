@@ -73,12 +73,32 @@
       MM.animate(el, [{opacity:0, translate:'0 -10px'},{opacity:1, translate:'0 0'}], 'spatial-fast');
     }); });
   }
+  // The panel's M3 look (css/page/ns-m3.css) is not part of the page's start: it loads once the page is idle, or at
+  // the first open, which waits for it. It goes right after css/nightsplit-brand.css, so the cascade is as one sheet.
+  var _m3Css=null, _m3Done=false;
+  function loadM3Css(){
+    if(_m3Css) return _m3Css;
+    _m3Css=new Promise(function(resolve){
+      var l=document.createElement('link'); l.rel='stylesheet'; l.href='css/page/ns-m3.css?v=20261127m1';
+      l.onload=resolve; l.onerror=resolve;   // without it the panel still works, in the older look
+      var brand=document.querySelector('link[href*="nightsplit-brand.css"]');
+      if(brand) brand.after(l); else document.head.append(l);
+    }).then(function(){ _m3Done=true; });
+    return _m3Css;
+  }
+  setTimeout(function(){ (window.requestIdleCallback || setTimeout)(loadM3Css, { timeout: 8000 }); }, 3000);
   var _nsDeferOpen=null;
   window.toggleNsOverlay=function(forceOpen, opts){
     _nsDeferOpen=null;   // a later click wins over an open still waiting for its first build
     var wasOpen=_nsOpen;
     _nsOpen = (typeof forceOpen === 'boolean') ? !!forceOpen : !_nsOpen;
     if(_nsOpen === wasOpen) return;
+    if(_nsOpen && !_m3Done){
+      _nsOpen = wasOpen;
+      var wait = _nsDeferOpen = {};
+      loadM3Css().then(function(){ if(_nsDeferOpen===wait) toggleNsOverlay(true, opts); });
+      return;
+    }
     clearTimeout(_nsParkTimer);
     var MM=window.MinkaMotion;
     if(_nsOpen){

@@ -1259,3 +1259,212 @@ html:has(#stats-modal.mk-stats:not([data-state="closed"])) body > .mk-card-addon
 #stats-modal :is(.db-mface, .db-sface) { animation: none; }
 @font-face { font-family: 'M3 Digits'; src: url('../../assets/fonts/m3-digits/digits.woff2') format('woff2'); font-weight: 300 800; font-stretch: 25% 100%; font-display: block; }
 #stats-modal .db-card.is-k-mood .db-big { font-size: calc(108 * var(--k) * var(--fit, 1)); }
+#stats-modal .db-card.is-k-fatigue { --ch: 420; }   /* the explanation is two lines */
+#stats-modal .db-card.is-k-fatigue { --ch: 392; } #stats-modal .db-card.is-k-fatigue .db-big small { line-height: 1.05; }
+#stats-modal .db-card.is-k-fatigue { --ch: 440; }   /* the number's two lines and the critical count */
+#stats-modal .db-card.is-k-fatigue .db-fat-crit { margin-top: calc(4 * var(--k)); font-weight: 700; color: #ffd1c2; }
+/* fatigue, the user's note: no blank middle — the text on the left, a big face filling the right, the heaviest day under the text */
+#stats-modal .db-card.is-k-fatigue { --cw: 640; --ch: 470; }
+#stats-modal .db-card.is-k-fatigue .db-fat-top { justify-content: space-between; align-items: center; gap: calc(24 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-sface { width: calc(270 * var(--k)); margin-right: calc(-6 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-mini { align-self: flex-start; }
+/* the face spans the card's height on the right (out of the flow), so the text and the heaviest day keep the width */
+#stats-modal .db-card.is-k-fatigue { --ch: 450; }
+#stats-modal .db-card.is-k-fatigue .db-sface { position: absolute; right: calc(30 * var(--k)); top: 54%; translate: 0 -50%; width: calc(300 * var(--k)); margin: 0; }
+#stats-modal .db-card.is-k-fatigue .db-big { font-size: calc(150 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-fat-top .db-card-sub { font-size: calc(30 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-fat-crit { font-size: calc(28 * var(--k)) !important; }
+/* fatigue balanced (the user: not everything on one side): two equal halves, the number with its lines centred in
+   the left one, the face centred in the right one, the heaviest day centred under both */
+#stats-modal .db-card.is-k-fatigue { --ch: 470; }
+#stats-modal .db-card.is-k-fatigue .db-fat-top { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: calc(16 * var(--k)); margin: auto 0; }
+#stats-modal .db-card.is-k-fatigue .db-fat-top > span { justify-self: center; }
+#stats-modal .db-card.is-k-fatigue .db-sface { position: static; translate: none; justify-self: center; width: calc(250 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-mini { align-self: center; }
+/* the user's own arrangement (stats-editor, 2026-11-27): fatigue — the number, its lines and a bigger heaviest day on
+   the left; a big face in the top right with the critical count under it. Bolus — who changed most, centred. The card
+   is a size container, so the face and the count are placed in its own cq units and never cover the left column. */
+#stats-modal .db-card.is-k-fatigue .db-fat-top { display: block; margin: 0; }
+#stats-modal .db-card.is-k-fatigue .db-fat-top > span { max-width: 58cqw; }
+#stats-modal .db-card.is-k-fatigue .db-sface { position: absolute; top: 3cqh; right: 4cqw; width: min(80cqh, 34cqw); translate: none; margin: 0; }
+#stats-modal .db-card.is-k-fatigue .db-fat-crit { position: absolute; right: 2cqw; top: calc(3cqh + min(80cqh, 34cqw) / 1.2 + 1cqh); width: 40cqw; text-align: center; font-size: calc(32 * var(--k)) !important; }
+#stats-modal .db-card.is-k-fatigue .db-mini { align-self: flex-start; margin-top: auto; max-width: 58cqw; gap: calc(24 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-mini .db-badge { width: calc(146 * var(--k)); height: calc(146 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-mini .db-badge-txt { font-size: calc(40 * var(--k)) !important; }
+#stats-modal .db-card.is-k-fatigue .db-mini > span:last-child b { font-size: calc(46 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-mini > span:last-child small { font-size: calc(32 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue { --cw: 600; --ch: 520; }
+#stats-modal .db-card.is-k-bolus .db-mini { align-self: center; }
+#stats-modal .db-card.is-k-fatigue .db-fat-top > span { display: flex; flex-direction: column; align-items: flex-start; margin: 0; justify-self: start; }
+#stats-modal .db-card.is-k-fatigue .db-sface { top: 15cqh; width: min(70cqh, 32cqw); }
+#stats-modal .db-card.is-k-fatigue .db-fat-crit { top: calc(15cqh + min(70cqh, 32cqw) / 1.2 + 2cqh); }
+/* the user's second arrangement (stats-editor): fatigue — "88 h" about half the card's height, centred with its lines
+   in the left part; the face big in the top right. Coffee — bigger emblem, title and drinks. Bolus — the person bigger. */
+#stats-modal .db-card.is-k-fatigue .db-fat-top > span { width: 58cqw; max-width: none; align-items: center; text-align: center; }
+#stats-modal .db-card.is-k-fatigue .db-big { font-size: min(44cqh, 20cqw); line-height: 1; }
+#stats-modal .db-card.is-k-fatigue .db-sface { top: 8cqh; right: 5cqw; width: min(78cqh, 34cqw); }
+#stats-modal .db-card.is-k-fatigue .db-fat-crit { top: calc(8cqh + min(78cqh, 34cqw) / 1.2); right: 2cqw; }
+#stats-modal .db-card.is-k-coffee { --ch: 520; }
+#stats-modal .db-card.is-k-coffee .db-card-ic { width: calc(74 * var(--k)); height: calc(74 * var(--k)); }
+#stats-modal .db-card.is-k-coffee .db-card-head b { font-size: calc(37 * var(--k)); }
+#stats-modal .db-cdrinks .db-csrc :is(svg, img) { width: calc(67 * var(--k)); height: calc(71 * var(--k)); }
+#stats-modal .db-cdrinks .db-csrc b { font-size: calc(33 * var(--k)); }
+#stats-modal .db-card.is-k-bolus { --ch: 404; }
+#stats-modal .db-card.is-k-bolus .db-mini .db-badge { width: calc(78 * var(--k)); height: calc(78 * var(--k)); }
+#stats-modal .db-card.is-k-bolus .db-mini > span:last-child b { font-size: calc(31 * var(--k)); }
+#stats-modal .db-card.is-k-bolus .db-mini > span:last-child small { font-size: calc(24 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-sface { top: 14cqh; width: min(72cqh, 34cqw); }   /* below the chevron */
+#stats-modal .db-card.is-k-fatigue .db-fat-crit { top: calc(14cqh + min(72cqh, 34cqw) / 1.2); }
+/* the heaviest day on its own tinted surface (M3 tonal container), apart from the number's lines above it */
+#stats-modal .db-card.is-k-fatigue .db-fat-top { margin-bottom: calc(14 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-mini { padding: calc(10 * var(--k)) calc(28 * var(--k)) calc(10 * var(--k)) calc(10 * var(--k)); border-radius: calc(90 * var(--k)); background: color-mix(in srgb, #f69574 18%, var(--c)); }
+#stats-modal .db-card.is-k-fatigue .db-mini .db-badge { width: calc(122 * var(--k)); height: calc(122 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue { --ch: 570; } #stats-modal .db-card.is-k-fatigue .db-fat-top { margin-bottom: calc(24 * var(--k)); } #stats-modal .db-card.is-k-fatigue .db-big { font-size: min(40cqh, 20cqw); }
+#stats-modal .db-card.is-k-fatigue .db-fat-top > span { gap: 0; } #stats-modal .db-card.is-k-fatigue .db-fat-top > span > .db-card-sub:not(.db-fat-crit) { margin-top: -2.5cqh; }   /* the lines sit right under the hours */
+/* the user's third arrangement (stats-editor): a bigger mood face; fatigue's face bigger still, the critical count under it */
+#stats-modal .db-card.is-k-mood { --cw: 720; --ch: 420; }
+#stats-modal .db-mface { width: calc(266 * var(--k)); }
+#stats-modal .db-card.is-k-fatigue .db-sface { top: 2cqh; right: 7cqw; width: min(94cqh, 41cqw); }
+#stats-modal .db-card.is-k-fatigue .db-fat-crit { top: 75cqh; right: 9cqw; width: 37cqw; }
+#stats-modal .db-card.is-k-fatigue .db-fat-crit { top: calc(3cqh + min(94cqh, 41cqw) / 1.2); }   /* always just under the face */
+#stats-modal .db-fact b .db-fact-unit { display: inline; font-size: .42em; font-weight: 600; letter-spacing: 0; opacity: 1; }   /* "5 naktis no 30": the numbers big, the words small */
+#stats-modal .db-hero.is-fatigue .db-fact b { font-size: clamp(52px, 5.2vw, 84px); line-height: 1; }   /* "5 naktis no 30" as big as the hours beside it */
+#stats-modal .db-card.is-k-fatigue .db-fat-nights { display: block; margin-top: calc(6 * var(--k)); font-size: .82em; font-weight: 500; opacity: .75; }   /* subtle: nights worked by three */
+#stats-modal .db-card.is-k-fatigue .db-fat-nights { display: inline-block; margin-top: calc(10 * var(--k)); padding: calc(6 * var(--k)) calc(18 * var(--k)); border-radius: 9999px; background: color-mix(in srgb, #f69574 22%, var(--c)); font-size: 1em; font-weight: 700; opacity: 1; color: #fff5e5; }   /* nights worked by three: bigger, on its own tinted pill */
+#stats-modal .db-card.is-k-fatigue .db-fat-nights b { font: 800 1.55em/1 var(--st-num); vertical-align: -0.12em; }   /* the digits big */
+/* ── Radio detail (the user's mockup, 2026-11-27): organic hero, month strip, top 8 in two columns ── */
+#stats-modal .db-back:has(+ .db-rv-hero) { flex-direction: row; align-items: center; gap: 22px; margin: 0 0 14px; }
+#stats-modal .db-back:has(+ .db-rv-hero) > div { display: flex; align-items: baseline; gap: 22px; padding-left: 22px; border-left: 2px solid rgba(255, 245, 229, .14); }
+#stats-modal .db-back:has(+ .db-rv-hero) h2 { font: 800 clamp(30px, 3vw, 44px)/1 var(--mk-font-plain, Inter), system-ui, sans-serif; }
+#stats-modal .db-back:has(+ .db-rv-hero) span { font: 500 clamp(16px, 1.5vw, 22px)/1 var(--mk-font-plain, Inter), system-ui, sans-serif; color: #fff5e5; }
+#stats-modal .db-rv-hero { --c: #154644; --deco: #4ee8e0; --on: #fff5e5; position: relative; isolation: isolate; display: grid; grid-template-columns: auto minmax(0, 1.25fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: clamp(14px, 2vw, 32px); padding: clamp(22px, 3vw, 40px) clamp(24px, 3vw, 48px); margin-bottom: 18px; color: #fff5e5; font-family: var(--mk-font-plain, Inter), system-ui, sans-serif; }
+#stats-modal .db-rv-hero .db-art-acc:last-of-type { fill: #f6896f; }
+#stats-modal .db-rv-emblem { position: relative; display: grid; place-items: center; }
+#stats-modal .db-rv-num { display: flex; align-items: center; gap: clamp(10px, 1.4vw, 22px); }
+#stats-modal .db-rv-num b { font: 800 clamp(72px, 9vw, 150px)/.9 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; letter-spacing: -.04em; }
+#stats-modal .db-rv-num span { font: 700 clamp(18px, 1.9vw, 30px)/1.15 var(--mk-font-plain, Inter), sans-serif; }
+#stats-modal .db-rv-bar { position: relative; height: clamp(30px, 3vw, 42px); margin-top: 14px; border-radius: 9999px; background: rgba(255, 245, 229, .14); overflow: hidden; }
+#stats-modal .db-rv-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 9999px; background: #4ee8e0; }
+#stats-modal .db-rv-bar em { position: absolute; right: 14%; top: 50%; translate: 0 -50%; font: 800 clamp(15px, 1.5vw, 22px)/1 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; font-style: normal; color: #0f2b2a; }
+#stats-modal .db-rv-sep { align-self: stretch; width: 2px; margin: 10% 0; border-radius: 1px; background: rgba(255, 245, 229, .2); }
+#stats-modal .db-rv-fact { display: flex; flex-direction: column; gap: 8px; }
+#stats-modal .db-rv-fact b { font: 800 clamp(64px, 8vw, 132px)/.9 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; letter-spacing: -.04em; }
+#stats-modal .db-rv-fact span, #stats-modal .db-rv-top span { font: 700 clamp(18px, 1.8vw, 28px)/1.15 var(--mk-font-plain, Inter), sans-serif; }
+#stats-modal .db-rv-top { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-width: 0; }
+#stats-modal .db-rv-pill { max-width: 100%; padding: .1em .45em; border-radius: 42% 48% 40% 52% / 60% 50% 56% 46%; background: #ffd25a; color: #102a23; font: 900 clamp(36px, 4.4vw, 76px)/1.1 var(--mk-font-plain, Inter), sans-serif; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#stats-modal .db-rv-sec { margin: 0 0 18px; }
+#stats-modal .db-rv-sec h3 { display: flex; align-items: center; gap: 14px; margin: 0 0 12px; font: 800 clamp(26px, 2.6vw, 42px)/1 var(--mk-font-plain, Inter), sans-serif; color: #fff5e5; }
+#stats-modal .db-rv-sec h3 small { font: 600 clamp(15px, 1.3vw, 20px)/1 var(--mk-font-plain, Inter), sans-serif; color: rgba(255, 245, 229, .85); }
+#stats-modal .db-rv-spark { width: clamp(22px, 2vw, 32px); fill: none; stroke: #ffd25a; stroke-width: 3.6; stroke-linecap: round; }
+#stats-modal .db-rv-chip { padding: 6px 16px; border-radius: 9999px; background: #ffd25a; color: #102a23; font: 800 clamp(14px, 1.3vw, 20px)/1 var(--mk-font-plain, Inter), sans-serif; }
+#stats-modal .db-rv-sec .db-strip { gap: 6px; }
+#stats-modal .db-rv-sec .db-strip-day { height: clamp(46px, 5vw, 64px); border-radius: 10px; background: #183a36; color: #fff5e5; font: 800 clamp(14px, 1.4vw, 20px)/1 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; }
+#stats-modal .db-rv-sec .db-strip-day.is-on { background: color-mix(in srgb, #1f8fe0 calc(55% + var(--k, 0) * 45%), #183a36); }
+#stats-modal .db-rv-sec .db-strip-day i { font: 700 clamp(10px, .9vw, 13px)/1 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; opacity: .9; }
+#stats-modal .db-rv-sec .db-strip-day.is-today { box-shadow: inset 0 0 0 3px #fff5e5; }
+#stats-modal .db-rv-list { display: grid; grid-template-columns: 1fr 1fr; grid-auto-flow: column; grid-template-rows: repeat(4, auto); gap: 6px 18px; }
+#stats-modal .db-rv-row { display: grid; grid-template-columns: 44px minmax(0, 1.2fr) minmax(0, 2fr) auto; align-items: center; gap: 14px; padding: 10px 18px; border-radius: 18px; background: #16302b; color: #fff5e5; font-family: var(--mk-font-plain, Inter), sans-serif; }
+#stats-modal .db-rv-row > b { font: 800 clamp(18px, 1.6vw, 26px)/1.1 var(--mk-font-plain, Inter), sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#stats-modal .db-rv-rank { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font: 800 20px/1 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; font-style: normal; color: #102a23; }
+#stats-modal .db-rv-rank.is-c0 { background: #4ee8e0; } #stats-modal .db-rv-rank.is-c1 { background: #ffd25a; } #stats-modal .db-rv-rank.is-c2 { background: #f6896f; }
+#stats-modal .db-rv-track { height: 18px; border-radius: 9999px; background: rgba(255, 245, 229, .12); overflow: hidden; }
+#stats-modal .db-rv-track i { display: block; height: 100%; border-radius: 9999px; background: #4ee8e0; }
+#stats-modal .db-rv-row em { font: 600 clamp(15px, 1.4vw, 22px)/1 var(--mk-font-plain, Inter), sans-serif; font-style: normal; white-space: nowrap; }
+#stats-modal .db-rv-row em strong { font: 800 1.2em/1 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; }
+@media (max-width: 900px) { #stats-modal .db-rv-hero { grid-template-columns: auto 1fr; } #stats-modal .db-rv-sep { display: none; } #stats-modal .db-rv-list { grid-template-columns: 1fr; grid-auto-flow: row; } }
+/* the day's station count as the mood's M3 badge: a 16 px pill in the theme's primary on the cell's top-right corner */
+#stats-modal .db-rv-sec .db-strip { padding-top: 8px; }
+#stats-modal .db-rv-sec .db-strip-day { overflow: visible; }
+#stats-modal .db-rv-sec .db-strip-day i { position: absolute; top: -7px; right: -5px; z-index: 1; display: grid; place-items: center; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: var(--mk-sys-primary, #a4e5c7); color: var(--mk-sys-on-primary, #102a23); font: 500 11px/16px 'Google Sans', var(--mk-font-plain, Inter), system-ui, sans-serif; letter-spacing: .5px; font-variant-numeric: tabular-nums; font-style: normal; opacity: 1; }
+#stats-modal .db-rv-sec .db-strip-day { height: auto; aspect-ratio: 1; font-size: clamp(16px, 1.75vw, 30px); }   /* square days, bigger dates */
+/* the radio emblem = the overview tile's emblem, only bigger: the same icon, shape colour and note */
+#stats-modal .db-rv-emblem .db-badge { --sh: #2f8f86; color: #fff5e5; width: clamp(110px, 12vw, 190px); height: clamp(110px, 12vw, 190px); }
+#stats-modal .db-rv-emblem .db-badge > :not(.db-badge-shape):not(.db-ic-acc) { width: 54% !important; height: 54% !important; }
+#stats-modal .db-rv-emblem .db-badge > .db-ic-acc { position: absolute !important; top: -10%; right: -12%; width: 42% !important; height: 42% !important; fill: none; stroke-width: 3.6; stroke-linecap: round; }
+#stats-modal .db-rv-sec h3 { position: relative; padding-top: 6px; } #stats-modal .db-rv-sec h3 > .db-rv-spark { position: absolute; left: -10px; top: -10px; width: clamp(18px, 1.6vw, 26px); }   /* the sparks sit on the word, the headings line up with the content below */
+/* ── Nakts detail (the user's mockup, 2026-11-27): indigo hero, the parts as cards with four coloured bars, the beds
+   as four coloured cards with a 2x2 room plan. The hero reuses the radio hero's frame (db-rv-hero). ── */
+#stats-modal .db-back:has(+ .db-nv-hero) { flex-direction: row; align-items: center; gap: 22px; margin: 0 0 14px; }
+#stats-modal .db-back:has(+ .db-nv-hero) > div { display: flex; align-items: baseline; gap: 22px; padding-left: 22px; border-left: 2px solid rgba(255, 245, 229, .14); }
+#stats-modal .db-back:has(+ .db-nv-hero) h2 { font: 800 clamp(30px, 3vw, 44px)/1 var(--mk-font-plain, Inter), system-ui, sans-serif; }
+#stats-modal .db-back:has(+ .db-nv-hero) span { font: 500 clamp(16px, 1.5vw, 22px)/1 var(--mk-font-plain, Inter), system-ui, sans-serif; color: #fff5e5; }
+#stats-modal .db-nv-hero { --c: #2b3170; --deco: #3d4590; grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); }
+#stats-modal .db-nv-hero .db-art-acc:nth-of-type(n+2) { fill: #ffd25a; }
+#stats-modal .db-nv-hero .db-rv-emblem .db-badge { --sh: #b2a0f1; color: #29355a; }
+#stats-modal .db-nv-hero .db-ic-acc.is-ticks { stroke: #ffd36b; }
+#stats-modal .db-nv-fact { display: flex; align-items: center; gap: clamp(10px, 1.2vw, 20px); min-width: 0; }
+#stats-modal .db-nv-fact b { font: 800 clamp(60px, 7.4vw, 124px)/.9 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; letter-spacing: -.04em; }
+#stats-modal .db-nv-fact span { font: 600 clamp(15px, 1.5vw, 24px)/1.2 var(--mk-font-plain, Inter), sans-serif; }
+#stats-modal .db-sec:has(.db-parts, .db-beds) .db-sechead h3 { font: 800 clamp(26px, 2.6vw, 42px)/1 var(--mk-font-plain, Inter), sans-serif; color: #fff5e5; }
+#stats-modal .db-sec:has(.db-parts, .db-beds) .db-meta { font: 500 clamp(15px, 1.3vw, 20px)/1 var(--mk-font-plain, Inter), sans-serif; color: rgba(255, 245, 229, .85); }
+/* parts: one card per person, four bars in the parts' colours */
+#stats-modal .db-parts { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 0; background: none; }
+#stats-modal .db-parts .db-part-row { padding: 14px 16px 26px !important; border-radius: 20px !important; background: #172a2c !important; }
+#stats-modal .db-parts .db-part-row::before { display: none; }
+#stats-modal .db-part-row .db-av { width: 44px; height: 44px; color: #102a23; font: 800 16px/1 var(--mk-font-plain, Inter), sans-serif; }
+#stats-modal .db-parts > :nth-child(5n+1) .db-av { background: #8ee6b8; } #stats-modal .db-parts > :nth-child(5n+2) .db-av { background: #ffd25a; }
+#stats-modal .db-parts > :nth-child(5n+3) .db-av { background: #f6a08a; } #stats-modal .db-parts > :nth-child(5n+4) .db-av { background: #ffe18a; }
+#stats-modal .db-parts > :nth-child(5n) .db-av { background: #8cc6f5; }
+#stats-modal .db-part-name b { font: 800 clamp(15px, 1.2vw, 19px)/1.2 var(--mk-font-plain, Inter), sans-serif; color: #fff5e5; text-transform: uppercase; letter-spacing: .02em; }
+#stats-modal .db-part-name small { font: 500 clamp(13px, 1vw, 16px)/1.3 var(--mk-font-plain, Inter), sans-serif; color: rgba(255, 245, 229, .85); white-space: normal; }
+#stats-modal .db-part-bars { grid-template-columns: repeat(4, 26px); gap: 6px; height: 56px; }
+#stats-modal .db-part-bars i { background: none !important; }
+#stats-modal .db-part-bars i::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: max(4px, calc(var(--h) * 70%)); border-radius: 6px; background: var(--bar, #8ee6b8); }
+#stats-modal .db-part-bars i.is-p1 { --bar: #8ee6b8; } #stats-modal .db-part-bars i.is-p2 { --bar: #ffd25a; }
+#stats-modal .db-part-bars i.is-p3 { --bar: #f6a08a; } #stats-modal .db-part-bars i.is-p4 { --bar: #ffe18a; }
+#stats-modal .db-part-bars b { font: 800 13px/1 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; color: #fff5e5; }
+#stats-modal .db-part-bars em { font: 700 12px/1 var(--mk-font-plain, Inter), sans-serif; color: rgba(255, 245, 229, .85); bottom: -17px; }
+/* beds: four coloured cards, the room plan 2x2 with this bed lit, a quiet moon */
+#stats-modal .db-beds { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+#stats-modal .db-bed { --bc: #ffe18a; --bl: #fff2c4; min-height: 170px; align-content: start; gap: 10px; padding: 18px 20px; border-radius: 36px 28px 40px 28px; background: var(--bc); color: #1b1d33; }
+#stats-modal .db-beds > :nth-child(2) { --bc: #8cc6f5; --bl: #cfe9ff; } #stats-modal .db-beds > :nth-child(3) { --bc: #8ee6b8; --bl: #d4f8e4; } #stats-modal .db-beds > :nth-child(4) { --bc: #f6a08a; --bl: #ffd9cc; }
+#stats-modal .db-bed-name { display: grid; gap: 0; max-width: 55%; }
+#stats-modal .db-bed-name b, #stats-modal .db-bed-name small { font: 800 clamp(17px, 1.4vw, 22px)/1.15 var(--mk-font-plain, Inter), sans-serif; color: #1b1d33; }
+#stats-modal .db-bed-total { font: 800 clamp(34px, 3.2vw, 52px)/1 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; color: #1b1d33; }
+#stats-modal .db-bed-total small { font: 700 clamp(15px, 1.3vw, 20px)/1 var(--mk-font-plain, Inter), sans-serif; color: #1b1d33; }
+#stats-modal .db-bed-who { flex-direction: column; align-items: flex-start; gap: 6px; }
+#stats-modal .db-bed-who > span:not(.db-dim) { height: 30px; padding: 0 14px; border-radius: 9999px; background: var(--bl); color: #1b1d33; font: 800 13px/1 var(--mk-font-plain, Inter), sans-serif; text-transform: uppercase; }
+#stats-modal .db-bed-who b { color: #1b1d33; font-family: 'M3 Digits', var(--mk-font-plain, Inter), sans-serif; }
+#stats-modal .db-bedmap { top: auto; bottom: 18px; right: 18px; display: grid; grid-template-columns: repeat(2, 34px); grid-auto-rows: 28px; gap: 5px; padding: 8px; border-radius: 14px; background: #2a2f3e; }
+#stats-modal .db-bedmap i { width: auto; height: auto; border-radius: 6px; background: color-mix(in srgb, var(--bc) 35%, #2a2f3e); }
+#stats-modal .db-bedmap i.is-on { background: var(--bl); }
+#stats-modal .db-bed-moon { position: absolute; top: 14px; right: 18px; width: 46px; fill: var(--bl); }
+#stats-modal .db-bed-moon .z { fill: none; stroke: var(--bl); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 1100px) { #stats-modal .db-parts, #stats-modal .db-beds { grid-template-columns: repeat(2, minmax(0, 1fr)); } #stats-modal .db-nv-hero { grid-template-columns: auto 1fr; } }
+/* the room plan: the main room 2x2 (one corner empty) and the NMP room as its own box */
+#stats-modal .db-bedmap { display: flex; gap: 6px; padding: 0; background: none; grid-template-columns: none; }
+#stats-modal .db-bedmap .db-bm-main { display: grid; grid-template-columns: repeat(2, 30px); grid-auto-rows: 26px; gap: 5px; padding: 7px; border-radius: 14px; background: #2a2f3e; }
+#stats-modal .db-bedmap .db-bm-nmp { display: grid; place-items: center; width: auto; padding: 7px; border-radius: 14px; background: #2a2f3e; }
+#stats-modal .db-bedmap .db-bm-nmp i { width: 30px; height: 26px; }
+#stats-modal .db-bedmap i.is-none { background: transparent; }
+#stats-modal .db-bedmap { align-items: center; gap: 10px; }   /* NMP: its own small room beside the main one, as in the night panel */
+/* beds, the user's notes: no blank — the name, nights and three people on the left, a bigger room plan on the right */
+#stats-modal .db-bed { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name moon" "total map" "who map"; align-items: start; column-gap: 14px; row-gap: 10px; }
+#stats-modal .db-bed > .db-bed-name { grid-area: name; max-width: none; }
+#stats-modal .db-bed > .db-bed-total { grid-area: total; }
+#stats-modal .db-bed > .db-bed-who { grid-area: who; }
+#stats-modal .db-bed > .db-bed-moon { position: static; grid-area: moon; justify-self: end; width: 44px; }
+#stats-modal .db-bed > .db-bedmap { position: static; grid-area: map; align-self: end; justify-self: end; }
+#stats-modal .db-bed-name b, #stats-modal .db-bed-name small { font-size: clamp(20px, 1.8vw, 28px); }
+#stats-modal .db-bedmap .db-bm-main { grid-template-columns: repeat(2, clamp(30px, 3vw, 46px)); grid-auto-rows: clamp(26px, 2.5vw, 38px); gap: 6px; padding: 8px; }
+#stats-modal .db-bedmap .db-bm-nmp i { width: clamp(30px, 3vw, 46px); height: clamp(26px, 2.5vw, 38px); }
+#stats-modal .db-bedmap .db-bm-nmp { padding: 8px; }
+/* beds: the plan beside the name and nights; the three people across the whole card under them, never squeezed */
+#stats-modal .db-bed { grid-template-areas: "name moon" "total map" "who who"; }
+#stats-modal .db-bed > .db-bedmap { align-self: center; }
+#stats-modal .db-bed-total { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+#stats-modal .db-bed-who { flex-direction: row; flex-wrap: wrap; }
+#stats-modal .db-bed-who > span:not(.db-dim) { white-space: nowrap; }
+#stats-modal .db-bedmap .db-bm-main { grid-template-columns: repeat(2, clamp(24px, 2.3vw, 40px)); grid-auto-rows: clamp(20px, 1.9vw, 32px); }
+#stats-modal .db-bedmap .db-bm-nmp i { width: clamp(24px, 2.3vw, 40px); height: clamp(20px, 1.9vw, 32px); }
+#stats-modal .db-nv-fact span small { display: block; margin-top: 6px; font-size: .78em; font-weight: 500; opacity: .85; }   /* what the total is made of */
+#stats-modal .db-nv-fact b .db-fact-unit { display: inline; font-size: .38em; font-weight: 700; letter-spacing: 0; }   /* "5 naktis no 30": the numbers big */
+#stats-modal .db-nv-fact.is-three b { white-space: nowrap; font-size: clamp(46px, 5vw, 88px); }   /* "5 naktis no 30" on one line */
+#stats-modal .db-nv-fact span small { white-space: nowrap; }
+#stats-modal .db-nv-fact.is-history { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "pre pre" "num txt"; align-items: center; column-gap: clamp(10px, 1.2vw, 20px); row-gap: 4px; } #stats-modal .db-nv-fact.is-history small { grid-area: pre; font: 600 clamp(14px, 1.3vw, 20px)/1.2 var(--mk-font-plain, Inter), sans-serif; opacity: .9; } #stats-modal .db-nv-fact.is-history b { grid-area: num; } #stats-modal .db-nv-fact.is-history span { grid-area: txt; }   /* "apkopota vēsture par 230 naktīm" read in order */
+#stats-modal .db-nv-fact.is-history { justify-self: center; }
+#stats-modal .db-nv-fact:not(.is-history) span small { display: block; width: max-content; margin-top: 10px; padding: 8px 14px; border-radius: 16px; background: color-mix(in srgb, #b2a0f1 24%, #2b3170); opacity: 1; line-height: 1.3; }   /* the usual crew on its own tinted surface, apart from "naktis šomēnes" */
+/* Gultas (2026-11-27): the rooms (css/page/mk-rooms.css, shared with the night history), big, a row of their own: name and nights above, the rooms, then who sleeps there. */
+#stats-modal .db-bed { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name total" "map map" "who who"; align-items: end; }
+#stats-modal .db-bed > .db-bed-total { grid-area: total; justify-self: end; }
+#stats-modal .db-bed > .mk-rooms { grid-area: map; --mk-rooms-on: var(--bl); }

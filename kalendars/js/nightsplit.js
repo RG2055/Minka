@@ -125,7 +125,7 @@
   window.nsBedParts=function(bedEl){
     var img=bedEl && bedEl.querySelector('.ns-room-bed-picture img'), look=img && img.__look;
     if(!look) return Promise.reject(new Error('no bed look'));
-    var who=look.who||sleeperOf(bedEl), body='bare|'+who.fig+'|'+who.pants+'|'+who.accent+'|'+who.url;
+    var who=look.who||sleeperOf(bedEl), body=who.fig==='none'?'empty|m':'bare|'+who.fig+'|'+who.pants+'|'+who.accent+'|'+who.url;
     var key=look.rgb+'|'+look.overlay+'|'+body;
     if(_bedParts.has(key)) return _bedParts.get(key);
     var cloth=duvetLook(look.overlay,look.rgb), out={};
@@ -284,7 +284,7 @@
      flat sheet): 'full' the duvet over their figure, the feet out of its end;
      'bare' no duvet, the figure (paintBody); 'cloth' the duvet alone. */
   function dressDuvet(ctx,source,overlay,rgb,mode){
-    var m=modeOf(mode), bare=m.kind==='bare', only=m.kind==='cloth';
+    var m=modeOf(mode), bare=m.kind==='bare'||m.kind==='empty', only=m.kind==='cloth';   // empty: a flat sheet, nobody on it
     return Promise.all([duvetMaps(), bare?null:bedCloth(m.fig)]).then(function(r){
       var maps=r[0], cm=r[1], look=duvetLook(overlay,rgb), info=maps.info;
       return lookPixels(look).then(function(tex){
@@ -568,13 +568,16 @@
       .then(function(u){ if(img.isConnected) img.src=u; }).catch(function(){});
   },true);
   /* The bed by the chalkboard wears a different set every day (the same one all day). */
-  function dressCareBed(root){
+  // The bed by the chalkboard wears another duvet each time the panel opens (no timer: ledCards calls this on opening).
+  var _careId=null;
+  function dressCareBed(root, fresh){
     var img=(root||document).querySelector('#nsPanel .ns-bedcare-bed .ns-room-bed-picture img'); if(!img) return;
-    var d=new Date(), day=d.getFullYear()*1000+Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);
     var pool=BED_STYLES.filter(function(b){ return b[0] && b[2]!=='c'; });
-    var h=day*2654435761>>>0, id=pool[h%pool.length][0], key='care:'+id;
-    if(img.__tintKey===key) return;
+    if(fresh || !_careId){ var other=pool.filter(function(b){ return b[0]!==_careId; }); _careId=(other[Math.floor(Math.random()*other.length)]||pool[0])[0]; }
+    var id=_careId, key='care:'+id;
+    if(img.__tintKey===key || img.closest('.ns-duvet-off')) return;
     img.__tintKey=key;
+    img.__look={ rgb:'214,214,220', overlay:bedStyleSrc(id,256), who:{ fig:'none', pants:'', accent:'', url:'' } };
     tintedBed('214,214,220',undefined,0,bedStyleSrc(id,256)).then(function(url){ if(img.__tintKey===key){ img.removeAttribute('srcset'); img.src=url; } }).catch(function(){ img.__tintKey=null; });
   }
   // Reset used-colours each time a new day is selected (called from update())
@@ -608,10 +611,11 @@
     // As before: two beds one above the other on the left, one at the back on
     // the right; the NMP bed in the middle. They fill the visible floor
     // (10.5 % to the front wall's top at 85.8 % of the rendered room).
-    'is-left':{x:21.7,y:29.3,w:19.6,scale:1,z:24},
-    'is-right-top':{x:20.2,y:66.9,w:19.6,scale:1,z:28},
-    'is-right-bottom':{x:78.3,y:29.3,w:19.6,scale:1,z:22},
-    'is-center':{x:50,y:48,w:37.1,scale:1,z:25}
+    // (2026-11-27: the beds bigger, an even margin inside the room's drawn edge)
+    'is-left':{x:17,y:26,w:22,scale:1,z:24},
+    'is-right-top':{x:17,y:73,w:22,scale:1,z:28},
+    'is-right-bottom':{x:83,y:26,w:22,scale:1,z:22},
+    'is-center':{x:50,y:48,w:44,scale:1,z:25}
   };
   // ── Vēsturiskā nakts statistika (kurš ņem kuru daļu / kurā gultā guļ) ──
   // Lasa apkopojumu caur Minka API; Google Apps Script URL paliek Cloudflare secretā.
@@ -788,12 +792,12 @@
         }).join('');
         var short=nm.split(' ')[0];
         var favTxt=favPart?('Parasti <b>'+favPart+'. daļa</b>'):'nav datu';   // short: the name's column is narrow
-        return '<div class="ns-stat-row">'
-          +'<div class="ns-stat-part" style="--ns-fatigue-color:'+fatigueCol+'" title="Pašlaik izvēlēta '+currentPart+'. daļa">'
+        return '<div class="ns-stat-row" data-p="'+currentPart+'">'
+          +'<div class="ns-stat-part" data-p="'+currentPart+'" style="--ns-fatigue-color:'+fatigueCol+'" title="Pašlaik izvēlēta '+currentPart+'. daļa">'   // data-p: its colour is its part's (CSS)
             +'<strong>'+currentPart+'</strong><span>DAĻA</span>'
           +'</div>'
           +'<div class="ns-stat-person">'
-            +'<div class="ns-stat-name" title="'+escHtml(nm)+'"><span>'+escHtml(short)+'</span>'+(roomEmoji(nm)?'<span class="ns-stat-emoji" aria-hidden="true">'+escHtml(roomEmoji(nm))+'</span>':'')+'</div>'
+            +'<div class="ns-stat-name" title="'+escHtml(nm)+'"><span>'+escHtml(short)+'</span>'+(roomEmoji(nm)?'<span class="ns-stat-emoji" aria-hidden="true">'+escHtml(roomEmoji(nm))+'</span>':'')+'</div>'   // the name as a pill, as in the statistics' Gultas
             +'<div class="ns-stat-fav">'+favTxt+'</div>'
           +'</div>'
           +'<div class="ns-stat-bars">'+bars+'</div>'
@@ -804,6 +808,7 @@
       nights=Number.isFinite(nights) ? Math.max(0, Math.min(100000, Math.round(nights))) : 0;
       var saved=Date.now()-_nsStatsAt>=NS_STATS_TTL;
       var age=saved?', saglabāta '+new Date(_nsStatsAt).toLocaleString('lv-LV'):'';
+      if(box.style) box.style.setProperty('--ns-rows', String((rows.match(/class="ns-stat-row"/g)||[]).length||4));   // the rows share the column's height (CSS)
       box.innerHTML=rows+'<div class="ns-stats-foot">Vēsture: '+nights+' naktis'+escHtml(age)+'</div>';
     }
     // Paint valid local history synchronously, including an older snapshot.
@@ -978,12 +983,13 @@
     var state=bedCareLoadLocal();
     var ts=Number(state.all&&state.all.changedAt)||0;
     return '<div class="ns-bedcare-perch" role="button" tabindex="0" aria-expanded="false" aria-label="'+escHtml(bedCareAriaLabel(ts))+'">'
-      +'<span class="ns-bedcare-bed" aria-hidden="true">'+roomBedPicture('neutral')
+      +'<span class="ns-bedcare-stage"><span class="ns-room-scene-content">'
+      +'<span class="ns-bedcare-bed" data-i="care" data-worker="" aria-hidden="true">'+roomBedPicture('neutral')
       +'<span class="ns-room-bed-devices"><span class="ns-room-device is-feature dev-0"></span><span class="ns-room-device is-smart dev-1"></span><span class="ns-room-device is-feature dev-2"></span><span class="ns-room-device is-smart dev-3"></span></span>'
       // where the cats were: the mood's three dancers (js/radio-dancers.js) dance on this bed while the panel is
       // open, one strip of 48 frames (assets/butnes/night-dancers.webp); only CSS moves it (night-overlay.js .ns-nb-dance)
       +(window.MINKA_APP==='rad'?'':'<i class="ns-bed-nb"><i></i></i>')   // RG's creatures (not /rad, as radio-dancers.js)
-      +'</span>'
+      +'</span></span></span>'
       +'<span class="ns-bedcare-perch-copy"><small>Gultas veļa</small><span class="ns-bedcare-date-line"><svg class="ns-bedcare-calendar" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M7 3v4m10-4v4M3 11h18m-13 4h3m2 0h3"/></svg><b>'+escHtml(bedCareExactDateLabel(ts))+'</b></span><span class="ns-bedcare-footer"><span class="ns-bedcare-age">'+escHtml(bedCareAgeLabel(ts))+'</span><span class="ns-bedcare-action">Atzīmēt <span aria-hidden="true">↗</span></span></span></span>'
       +'</div>';
   }
@@ -1825,11 +1831,13 @@
     var p=ledProgress(slot), on=p>0&&p<1, big=svg.classList.contains('is-big'), V=big?120:40, c=V/2, R=big?46:15;
     svg.classList.toggle('is-running',on); svg.classList.toggle('is-done',p>=1);
     var done=svg.querySelector('.nsc-clock-done'), now=slot.s+(slot.e-slot.s)*Math.min(1,p);
-    if(done) done.setAttribute('d',p>0?clockArc(slot.s,now,R,c):'');
+    // written only when it changes: the same value every second restyled every card (their container queries) for nothing
+    if(done){ var dd=p>0?clockArc(slot.s,now,R,c):''; if(done.getAttribute('d')!==dd) done.setAttribute('d',dd); }
     // A real clock while the part runs: the hour hand and the minute hand.
     var hh=svg.querySelector('.nsc-clock-hand.is-hour'), mh=svg.querySelector('.nsc-clock-hand.is-minute');
-    if(on && hh) hh.style.transform='rotate('+((now%720)/720*360).toFixed(1)+'deg)';
-    if(on && mh) mh.style.transform='rotate('+((now%60)/60*360).toFixed(1)+'deg)';
+    var ht='rotate('+((now%720)/720*360).toFixed(1)+'deg)', mt='rotate('+((now%60)/60*360).toFixed(1)+'deg)';
+    if(on && hh && hh.style.transform!==ht) hh.style.transform=ht;
+    if(on && mh && mh.style.transform!==mt) mh.style.transform=mt;
     return p;
   }
   function nsClockTick(){
@@ -1938,7 +1946,8 @@
     }
     return n;
   }
-  function ledSourceColours(card,cols,rows){
+  function ledSourceColours(card,cols,rows,span){
+    span=span||1;
     // The picture as the card shows it, drawn into a grid of cols x rows.
     var c=document.createElement('canvas'); c.width=cols; c.height=rows;
     var x=c.getContext('2d',{willReadFrequently:true}), cs=getComputedStyle(card);
@@ -1949,12 +1958,24 @@
       var g=x.createLinearGradient(0,0,0,rows);
       g.addColorStop(0,'rgba(4,9,13,.18)'); g.addColorStop(.58,'rgba(4,9,13,.25)'); g.addColorStop(1,'rgba(4,9,13,.54)');
       x.fillStyle=g; x.fillRect(0,0,cols,rows);
-      try{ return x.getImageData(0,0,cols,rows).data; }catch(_e){ return null; }
+      try{ var d=x.getImageData(0,0,cols,rows).data; m3Cells(d); return d; }catch(_e){ return null; }
     }
+    // Past the picture's S edge (the text surface, ::after with its mask in nightsplit-brand.css) the lights are M3 cells:
+    // the part's colour, drawn round by ledDraw. The edge per row follows the mask's curve (26 % + 74 % of its x).
+    var pc=colourRgb(cs.getPropertyValue('--ns-pc'))||[169,242,213];
+    function edgeAt(f){ var Y=[0,.22,.4,.55,.72,.88,1], X=[12,4.5,3.5,7,9.5,7,2]; for(var j=1;j<Y.length;j++) if(f<=Y[j]){ var t=(f-Y[j-1])/(Y[j]-Y[j-1]); return .26+.74*(X[j-1]+(X[j]-X[j-1])*t)/100; } return .28; }
+    function m3Cells(d){
+      for(var r=0;r<rows;r++){ var e=Math.ceil(edgeAt((r+.5)/rows)/span*cols);
+        for(var c0=e;c0<cols;c0++){ var q=(r*cols+c0)*4; d[q]=pc[0]; d[q+1]=pc[1]; d[q+2]=pc[2]; d[q+3]=1; } }
+    }
+    // cropped as the picture window crops it (--ns-pic-pos, the middle by default)
+    var pos=(cs.getPropertyValue('--ns-pic-pos')||'').match(/(-?[\d.]+)%\s+(-?[\d.]+)%/), fx=pos?pos[1]/100:.5, fy=pos?pos[2]/100:.5;
+    // the picture window is the card's left 40 % (nightsplit-brand.css), cropped like it
+    var winW=span<1?cols:Math.max(1,Math.round(cols*.4));
     function cover(img){
-      var iw=img.naturalWidth||img.width||1, ih=img.naturalHeight||img.height||1, k=Math.max(cols/iw,rows/ih);
+      var iw=img.naturalWidth||img.width||1, ih=img.naturalHeight||img.height||1, k=Math.max(winW/iw,rows/ih);
       x.imageSmoothingQuality='high';
-      x.drawImage(img,(cols-iw*k)/2,(rows-ih*k)/2,iw*k,ih*k);
+      x.drawImage(img,(winW-iw*k)*fx,(rows-ih*k)*fy,iw*k,ih*k);
     }
     if(m && card.classList.contains('mk-has-skin')) return bedImage(m[1]).then(function(img){ cover(img); return finish(); }).catch(function(){ return finish(); });
     if(cols2.length>1){
@@ -1962,6 +1983,7 @@
       cols2.forEach(function(col,i,all){ gg.addColorStop(i/(all.length-1),col); });
       x.fillStyle=gg; x.fillRect(0,0,cols,rows); return Promise.resolve(finish());
     }
+    if(card.classList.contains('mk-skin-hue')){ x.fillStyle=cs.getPropertyValue('--nsc-accent')||'#8cc6f5'; x.fillRect(0,0,winW,rows); return Promise.resolve(finish()); }
     var svg=card.querySelector('.nsc-deco svg');
     if(svg){
       var src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg.outerHTML.indexOf('xmlns')<0?svg.outerHTML.replace('<svg','<svg xmlns="http://www.w3.org/2000/svg"'):svg.outerHTML);
@@ -1971,10 +1993,14 @@
   }
   // Lit like an LED: the colour more saturated and a little brighter, dark stays dark.
   function ledLight(v,m){ return Math.max(0,Math.min(255,Math.round((m+(v-m)*1.45)*1.12))); }
+  // The square lights cover the picture (its window where the card has one); the info zone beyond the S edge has the
+  // M3 Shape Dither instead (a cached SVG mask in CSS, revealed by --m3-reveal from ledDraw: no canvas there).
+  function ledBox(card){ var d=card.querySelector('.nsc-deco'); return (d && d.clientWidth>=40 && d.clientWidth<card.clientWidth-8) ? d : card; }
   function ledSetup(card,slot,index,size){
     // size: measured by the caller for all cards at once (measuring here, between the canvases
     // being put in, made the browser re-style the panel once per card)
-    var w=size?size[0]:card.clientWidth, h=size?size[1]:card.clientHeight; if(w<40||h<40) return;
+    var box=size?null:ledBox(card), w=size?size[0]:box.clientWidth, h=size?size[1]:box.clientHeight; if(w<40||h<40) return;
+    var span=Math.min(1,w/Math.max(1,size?size[2]:card.clientWidth));   // the share of the card's width the lights cover
     var cols=Math.ceil(w/LED_CELL), rows=Math.ceil(h/LED_CELL);
     var key=(card.getAttribute('data-worker')||'')+'|'+(card.style.getPropertyValue('--mk-skin-img')||card.className)+'|'+cols+'x'+rows;
     var cv=card.querySelector('canvas.nsc-led');
@@ -1986,9 +2012,9 @@
     var dpr=Math.min(2,window.devicePixelRatio||1);
     if(cv.__key!==key){
       cv.__key=key; cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
-      cv.__st={ cols:cols, rows:rows, dpr:dpr, lit:new Uint8Array(cols*rows), band:[], spark:[], colours:null, noise:ledNoise(cols,rows,index*7919+cols*31+rows), shown:0 };
+      cv.__st={ cols:cols, rows:rows, dpr:dpr, span:span, lit:new Uint8Array(cols*rows), band:[], spark:[], colours:null, noise:ledNoise(cols,rows,index*7919+cols*31+rows), shown:0 };
       var grid=_led.grids[key];
-      (grid?Promise.resolve(grid):ledSourceColours(card,cols,rows)).then(function(data){
+      (grid?Promise.resolve(grid):ledSourceColours(card,cols,rows,span)).then(function(data){
         if(!data || cv.__key!==key) return;
         _led.grids[key]=data; cv.__st.colours=data;
         // Opening the panel: the light sweeps in to where the night is now.
@@ -2013,6 +2039,7 @@
     function cell(i,a,boost){
       var x=(i%cols)*c, y=Math.floor(i/cols)*c, q=i*4, r=col[q], g=col[q+1], b=col[q+2];
       ctx.clearRect(x,y,c,c);
+      if(col[q+3]===1) return;   // past the picture's S edge: the M3 Shape Dither (CSS) is there
       if(a<1){ ctx.globalAlpha=a; }
       ctx.fillStyle='#03060a'; ctx.fillRect(x,y,c,c);
       var m=(r+g+b)/3, lr=ledLight(r*boost,m*boost), lg=ledLight(g*boost,m*boost), lb=ledLight(b*boost,m*boost), gap=Math.max(1,Math.round(c*.2)), sz=c-gap;
@@ -2028,10 +2055,14 @@
     S.band.forEach(function(i){ if(!lit[i]) ctx.clearRect((i%cols)*c,Math.floor(i/cols)*c,c,c); }); S.band=[];
     for(var i=0;i<lit.length;i++){
       if(lit[i]) continue;
-      var t=((i%cols)+.5)/cols+(n[i]-.5)*amp;
+      var t=((i%cols)+.5)/cols*(S.span||1)+(n[i]-.5)*amp;
       if(p>=1 || t<p){ lit[i]=1; if(flicker){ cell(i,1,1.35); S.spark.push(i); } else cell(i,1,1); }
       else if(flicker && t<p+.035 && Math.random()<.55){ cell(i,.18+Math.random()*.32,1); S.band.push(i); }
     }
+    // the info zone's M3 Shape Dither opens with the same progress past the surface's start (26 % of the card, where the
+    // picture's S edge begins); written only when the whole per cent changes (about once a minute), no restyle a second
+    var rv=Math.round(Math.max(0,Math.min(1,(p-.26)/.74))*100);
+    if(S.rv!==rv){ S.rv=rv; if(cv.parentElement) cv.parentElement.style.setProperty('--m3-reveal',rv+'%'); }
   }
   function ledCards(scope){
     if(!st || !st.sl) return;
@@ -2039,15 +2070,16 @@
     // and this measured every card and drew its picture into a canvas (~45 ms of
     // forced layout and canvas work a click); opening renders again and lights it.
     if(!window.__nsOverlayOpen) return;
-    if(!_led.timer) _led.openedAt=performance.now();   // the panel has just opened: sweep in
+    if(!_led.timer){ _led.openedAt=performance.now(); dressCareBed(document,true); }   // the panel has just opened: sweep in, a new duvet
     nsClockTick();
     // all the cards are measured first, then lit (reads before writes)
     var ledCards=[].slice.call((scope||document).querySelectorAll('#nsPanel .nsc-full-card[data-i]'));
-    var ledSizes=ledCards.map(function(card){ return [card.clientWidth,card.clientHeight]; });
+    var ledSizes=ledCards.map(function(card){ var b=ledBox(card); return [b.clientWidth,b.clientHeight,card.clientWidth]; });
     ledCards.forEach(function(card,n){
       var i=+card.getAttribute('data-i'), slot=st.sl[i];
       if(!slot) return;
-      if(ledProgress(slot)<=0){ var old=card.querySelector('canvas.nsc-led'); if(old) old.remove(); return; }
+      if(ledProgress(slot)<=0){ var old=card.querySelector('canvas.nsc-led'); if(old) old.remove(); card.style.removeProperty('--m3-reveal'); card.classList.remove('nsc-lit'); return; }
+      if(!card.classList.contains('nsc-lit')) card.classList.add('nsc-lit');   // a part that has begun: its emoji goes tinted (CSS)
       ledSetup(card,slot,i,ledSizes[n]);
     });
     if(!_led.timer) _led.timer=setInterval(function(){
@@ -2068,52 +2100,16 @@
     (scope||document).querySelectorAll('.nsc-full-card[data-worker], .ns-room-bed[data-worker]').forEach(function(el){
       var worker=el.getAttribute('data-worker')||'';
       window.mkApplySkinToEl(el, window.mkGetWorkerSkin(worker));
+      // the picture window crops where the person placed their picture on their own card (card faces: Attēla novietojums)
+      if(el.classList.contains('nsc-full-card')){
+        var own=document.querySelector('#grafiks-list .card[data-worker="'+(window.CSS&&CSS.escape?CSS.escape(worker):worker)+'"]');
+        var bx=own&&own.style.getPropertyValue('--wf-bg-x'), by=own&&own.style.getPropertyValue('--wf-bg-y');
+        if(bx&&by) el.style.setProperty('--ns-pic-pos',bx+' '+by); else el.style.removeProperty('--ns-pic-pos');
+      }
     });
     dressCareBed(scope);
     requestAnimationFrame(function(){ ledCards(scope); if(window.NaktsPets) window.NaktsPets.sync(); });
   }
-  /* The last part of the night does the morning round: bolus check, orange
-     bags, CT/RTG restart and calibration. Three small flat illustrations in
-     the bolus device's own palette (dark/light blue, yellow, white; the bag is orange), one bar
-     like the fatigue bar above, each with a two-line label. */
-  var NS_TASK_ICONS={
-    bolus:'<svg viewBox="0 0 24 28" aria-hidden="true">'
-      +'<rect x="1.5" y="3" width="6.5" height="10" rx="2" fill="#1f5fb4"/><rect x="3" y="4.6" width="3.5" height="5.4" rx="1.1" fill="#f2c14e"/>'
-      +'<rect x="16" y="3" width="6.5" height="10" rx="2" fill="#1f5fb4"/><rect x="17.5" y="4.6" width="3.5" height="5.4" rx="1.1" fill="#f2c14e"/>'
-      +'<rect x="9.6" y=".6" width="4.8" height="12" rx="2" fill="#4fb3e3"/><circle cx="12" cy="5" r="1.5" fill="none" stroke="#123b6b" stroke-width=".9"/>'
-      +'<path d="M2 12.5h20l-1.4 7H3.4z" fill="#eef2f5"/><path d="M4.8 12.5c0 3 2.8 4 7.2 4.4 4.4-.4 7.2-1.4 7.2-4.4" fill="none" stroke="#f2c14e" stroke-width="1"/><path d="M12 12.5v4.4" stroke="#4fb3e3" stroke-width="1"/>'
-      +'<rect x="5.8" y="19" width="12.4" height="8.4" rx="3" fill="#1f5fb4"/><rect x="7.4" y="20.4" width="9.2" height="3.4" rx=".8" fill="#fff"/>'
-      +'</svg>',
-    bags:'<svg viewBox="0 0 24 28" aria-hidden="true">'
-      +'<path d="M8.6 3.2c.9 1.6 5.9 1.6 6.8 0l1.2 2.4c-1.5 1.1-7.7 1.1-9.2 0z" fill="#c8651a"/>'
-      +'<path d="M10.2 1.2c1-.8 2.6-.8 3.6 0l-.7 2.4h-2.2z" fill="#c8651a"/>'
-      +'<path d="M7.4 5.6c3 1 6.2 1 9.2 0 3.4 3.4 5.2 8.4 5 13.4-.2 4.8-4.4 8-9.6 8s-9.4-3.2-9.6-8c-.2-5 1.6-10 5-13.4z" fill="#f28c28"/>'
-      +'<path d="M7.4 5.6c-2.4 2.6-3.8 6.4-3.9 10.4" fill="none" stroke="#f7ad62" stroke-width="1.2" stroke-linecap="round"/>'
-      +'<rect x="10.7" y="11.6" width="2.6" height="9" rx=".6" fill="#fff"/><rect x="7.5" y="14.8" width="9" height="2.6" rx=".6" fill="#fff"/>'
-      +'</svg>',
-    ct:'<svg viewBox="0 0 24 28" aria-hidden="true">'
-      +'<rect x="3" y="22" width="18" height="4.6" rx="1.6" fill="#1f5fb4"/>'
-      +'<circle cx="12" cy="12" r="10.4" fill="#dfe6ec"/><circle cx="12" cy="12" r="10.4" fill="none" stroke="#b9c4cd" stroke-width="1"/>'
-      +'<circle cx="12" cy="12" r="5.6" fill="#123b6b"/>'
-      +'<path d="M12 7.6v8.8M7.6 12h8.8" stroke="#4fb3e3" stroke-width="1"/><circle cx="12" cy="12" r="2.4" fill="none" stroke="#4fb3e3" stroke-width="1"/>'
-      +'<rect x="1" y="13.4" width="22" height="3" rx="1.2" fill="#eef2f5"/>'
-      +'<circle cx="19.4" cy="4.6" r="3.8" fill="#f2c14e"/><path d="M17.6 4.7l1.2 1.2 2.3-2.4" fill="none" stroke="#123b6b" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>'
-      +'</svg>'
-  };
-  function lastSlotChecklist(i,total){
-    if(i !== total - 1) return '';
-    var tasks=[
-      ['bolus','Bolusa','pārbaude','Pārbaudīt bolusa gatavību, tīrību un darba kārtību'],
-      ['bags','Maisu','nomaiņa','Iznest un nomainīt visus oranžos maisus'],
-      ['ct','CT/RTG','kalibrācija','Restartēt un kalibrēt CT/RTG iekārtas']
-    ];
-    return '<div class="nsc-last-checklist nsc-tasks" aria-label="Pēdējās daļas darbi">'
-      + tasks.map(function(t){
-        return '<div class="nsc-task" title="'+escHtml(t[3])+'"><i class="nsc-task-ico">'+NS_TASK_ICONS[t[0]]+'</i><div class="nsc-task-txt"><b>'+t[1]+'</b><small>'+t[2]+'</small></div></div>';
-      }).join('')
-      + '</div>';
-  }
-
   function balancedOrder(workers){
     var arr=fat(Array.isArray(workers)?workers:[]);
     var out=[];
@@ -2569,21 +2565,6 @@
       + '</div>';
   }
 
-  function roomPicture(roomType,layer){
-    var main=roomType==='main';
-    // Rendered in Blender (scripts/blender/nakts_rooms.py): the floor runs from
-    // 10.5 % to 91 % of the picture's height, the front wall's top is at 85.8 %.
-    var small=main?440:232;
-    var large=main?880:464;
-    var height=332;
-    var base='assets/rooms/room-'+roomType+'-';
-    var rev='?v=20260927rooms6';
-    return '<picture class="ns-room-image ns-room-image-'+layer+'" aria-hidden="true">'
-      +'<source type="image/avif" srcset="'+base+small+'.avif'+rev+' 1x, '+base+large+'.avif'+rev+' 2x">'
-      +'<img src="'+base+small+'.webp'+rev+'" srcset="'+base+small+'.webp'+rev+' 1x, '+base+large+'.webp'+rev+' 2x" width="'+small+'" height="'+height+'" alt="" decoding="async" draggable="false">'
-      +'</picture>';
-  }
-
   function roomBedPicture(tone){
     var safe=tone||'neutral';
     var base='assets/rooms/bed-'+safe+'-';
@@ -2911,7 +2892,7 @@
   }
 
   function roomWalker(roomType){
-    return '';   // no cats in the rooms (the user: the cats out altogether, 2026-11-26); the old walker below stays unused
+    return '';   // the room cats are js/nakts-pets.js; this old walker stays unused
     var cats=roomFluentCats(roomType);
     var cat=cats[0];
     var black=cats[1]||null;
@@ -2985,25 +2966,21 @@
       +'<div class="ns-room ns-room-main">'
       +'<div class="ns-room-titlebar">Galvenā istaba</div>'
       +'<div class="ns-room-shell">'
-      +roomPicture('main','base')
       +'<div class="ns-room-scene-content">'
       +(window.NaktsPets ? '' : roomWalker('main'))
       +roomBed(0, picked[0], 'is-left')
       +roomBed(1, picked[1], 'is-right-top')
       +roomBed(2, picked[2], 'is-right-bottom')
       +'</div>'
-      +roomPicture('main','foreground')
       +'</div>'
       +'</div>'
       +'<div class="ns-room ns-room-nmp">'
       +'<div class="ns-room-titlebar">Jaunais NMP</div>'
       +'<div class="ns-room-shell">'
-      +roomPicture('nmp','base')
       +'<div class="ns-room-scene-content">'
       +(window.NaktsPets ? '' : roomWalker('nmp'))
       +roomBed(3, picked[3], 'is-center')
       +'</div>'
-      +roomPicture('nmp','foreground')
       +'</div>'
       +'</div>'
       +'</div>'
@@ -3082,6 +3059,17 @@
       var panel = document.getElementById('nsPanelContent');
       if(!panel || window.__nsOverlayOpen!==true) return;
       var canvas=panel.querySelector('.ns-panel-canvas');
+      // Desktop: CSS lays the panel out (grid + container queries, nightsplit-brand.css "adaptive layout"): nothing is
+      // measured or scaled here, so a resize only restyles. Clear what an earlier fit left inline (a phone fit, an old build).
+      if(!document.documentElement.classList.contains('mk-mobile-shell')){
+        if(canvas){ canvas.style.transform=''; canvas.style.width=''; }
+        panel.style.height='';
+        panel.querySelectorAll('.ns-room-fit,.ns-room-layout,.ns-stats-box,.ns-room-cat,.ns-room-head,.ns-room-stage').forEach(function(el){
+          ['transform','width','height','min-width','flex-basis','margin-top','margin-bottom','justify-content','text-align'].forEach(function(k){ el.style.removeProperty(k); });
+        });
+        document.documentElement.style.setProperty('--ns-scene-scale','1');
+        return;
+      }
       if(canvas) canvas.style.transform='none';
       panel.style.height='';
       var blocks = scope.querySelectorAll('.ns-room-block');
@@ -3270,55 +3258,6 @@
     }
     var _nightDescs={moon:'Nakts sākums',starry:'Dziļā nakts',horizon:'Rīta puse',sunrise:'Rīts'};
 
-    function _moonPhase(dateStr){
-      try{
-        var d;
-        if(dateStr){
-          var m=String(dateStr).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-          if(m) d=new Date(m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2)+'T12:00:00Z');
-          else d=new Date(dateStr+'T12:00:00Z');
-        } else { d=new Date(); }
-        var ref=new Date('2000-01-06T18:14:00Z');
-        var cycle=29.53058867;
-        var elapsed=(d-ref)/86400000;
-        return((elapsed%cycle)+cycle)%cycle/cycle;
-      }catch(e){return 0.5;}
-    }
-    function _moonSVG(cx,cy,r,phase,uid){
-      uid=String(uid||('moon-'+cx+'-'+cy)).replace(/[^a-z0-9_-]/gi,'');
-      var grad=uid+'-surface',clip=uid+'-clip';
-      var defs='<defs><radialGradient id="'+grad+'" cx="32%" cy="26%" r="76%">'
-        +'<stop offset="0%" stop-color="#f0ede4"/><stop offset="48%" stop-color="#bbb9b2"/><stop offset="78%" stop-color="#8a8c89"/><stop offset="100%" stop-color="#5e6467"/>'
-        +'</radialGradient><clipPath id="'+clip+'"><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"/></clipPath></defs>';
-      var disc='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="url(#'+grad+')"/>';
-      var craters='<g clip-path="url(#'+clip+')">'
-        +'<ellipse cx="'+(cx-r*.28).toFixed(2)+'" cy="'+(cy-r*.25).toFixed(2)+'" rx="'+(r*.19).toFixed(2)+'" ry="'+(r*.15).toFixed(2)+'" fill="#686b6a" opacity="0.30"/>'
-        +'<circle cx="'+(cx+r*.32).toFixed(2)+'" cy="'+(cy-r*.10).toFixed(2)+'" r="'+(r*.12).toFixed(2)+'" fill="#747675" opacity="0.28"/>'
-        +'<circle cx="'+(cx+r*.06).toFixed(2)+'" cy="'+(cy+r*.31).toFixed(2)+'" r="'+(r*.16).toFixed(2)+'" fill="#6f7271" opacity="0.25"/>'
-        +'<ellipse cx="'+(cx-r*.38).toFixed(2)+'" cy="'+(cy+r*.27).toFixed(2)+'" rx="'+(r*.11).toFixed(2)+'" ry="'+(r*.08).toFixed(2)+'" fill="#555a5b" opacity="0.22"/>'
-        +'<circle cx="'+(cx+r*.16).toFixed(2)+'" cy="'+(cy-r*.38).toFixed(2)+'" r="'+(r*.055).toFixed(2)+'" fill="#f4f0e5" opacity="0.34"/>'
-        +'<path d="M '+(cx-r*.52).toFixed(2)+' '+(cy+r*.02).toFixed(2)+' Q '+cx+' '+(cy-r*.12).toFixed(2)+' '+(cx+r*.48).toFixed(2)+' '+(cy+r*.08).toFixed(2)+' Q '+cx+' '+(cy+r*.22).toFixed(2)+' '+(cx-r*.52).toFixed(2)+' '+(cy+r*.02).toFixed(2)+' Z" fill="#696d6d" opacity="0.12"/>'
-        +'</g>';
-      var surface=defs+disc+craters;
-      var rim='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#b8bab5" stroke-width="0.65" opacity="0.46"/>';
-      var k=(1-Math.cos(2*Math.PI*phase))/2;
-      if(k<0.02) return surface+'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#071018" opacity="0.78"/>'+rim;
-      if(k>0.98) return surface+rim;
-      var shadowPhase=(0.5-phase+1)%1;
-      var waxing=shadowPhase<0.5;
-      var ex=Math.cos(2*Math.PI*shadowPhase)*r;
-      var rx=Math.abs(ex).toFixed(2);
-      var T=(cy-r).toFixed(2),B=(cy+r).toFixed(2),X=cx.toFixed(2);
-      var shadow;
-      if(waxing){
-        if(ex>0) shadow='M '+X+' '+T+' A '+r+' '+r+' 0 0 0 '+X+' '+B+' A '+rx+' '+r+' 0 0 1 '+X+' '+T+' Z';
-        else     shadow='M '+X+' '+T+' A '+r+' '+r+' 0 0 0 '+X+' '+B+' A '+rx+' '+r+' 0 0 0 '+X+' '+T+' Z';
-      } else {
-        if(ex>0) shadow='M '+X+' '+T+' A '+r+' '+r+' 0 0 1 '+X+' '+B+' A '+rx+' '+r+' 0 0 0 '+X+' '+T+' Z';
-        else     shadow='M '+X+' '+T+' A '+r+' '+r+' 0 0 1 '+X+' '+B+' A '+rx+' '+r+' 0 0 1 '+X+' '+T+' Z';
-      }
-      return surface+'<path d="'+shadow+'" fill="#071018" opacity="0.91"/>'+rim;
-    }
 
     // Compute fatigue sparkline path data scaled to SVG coordinates
 
@@ -3344,8 +3283,7 @@
           +'<stop offset="0%" stop-color="#5da9e9" stop-opacity="0.55"/>'
           +'<stop offset="60%" stop-color="#5da9e9" stop-opacity="0.12"/>'
           +'<stop offset="100%" stop-color="#5da9e9" stop-opacity="0"/>'
-          +'</linearGradient>'
-          +'<radialGradient id="'+u+'-halo"><stop offset="0%" stop-color="#c8ebff" stop-opacity="0.16"/><stop offset="55%" stop-color="#82bde1" stop-opacity="0.07"/><stop offset="100%" stop-color="#82bde1" stop-opacity="0"/></radialGradient>';
+          +'</linearGradient>';
         bg='url(#'+u+'-bg)';
         deco=// Nebula wash
              '<ellipse cx="90" cy="80" rx="110" ry="60" fill="#356d86" opacity="0.06"/>'
@@ -3357,11 +3295,7 @@
             +'<circle cx="155" cy="26" r="1.1" fill="#fff" opacity="0.55"/>'
             +'<circle cx="60"  cy="52" r="0.8" fill="#fff" opacity="0.3"/>'
             +'</g>'
-            // Moon — grouped for CSS float animation (gradient halo, no blur filter)
-            +'<g class="ns-moon-float">'
-            +'<circle cx="238" cy="36" r="64" fill="url(#'+u+'-halo)"/>'
-            +_moonSVG(238,36,27,_moonPhase(window.__activeDateStr),u+'-moon')
-            +'</g>';
+            ;
         gr='<path d="M10 148 Q55 108 115 126 T232 134 L232 182 L10 182 Z" fill="url(#'+u+'-gr)"/>'
           +glowLine('M10 148 Q55 108 115 126 T232 134', '#5da9e9', 2, 0.9);
 
@@ -3455,7 +3389,7 @@
     // picture), or, for someone without an emoji, their initials.
     function nscEmojiCell(name, em){
       var pic=em&&window.MinkaEmoji3D?window.MinkaEmoji3D.html(em,false,'nsc-duration-pic'):null;
-      if(em) return '<span class="nsc-duration-emoji" aria-hidden="true">'+(pic||escHtml(em))+'</span>';
+      if(em) return '<span class="nsc-duration-emoji" aria-hidden="true"><i class="nsc-em-glyph">'+(pic||escHtml(em))+'</i></span>';
       var parts=String(name||'').trim().split(/\s+/).filter(Boolean);
       var ini=((parts[0]||'').charAt(0)+(parts.length>1?parts[parts.length-1].charAt(0):'')).toUpperCase();
       return '<span class="nsc-duration-emoji nsc-duration-initials" aria-hidden="true">'+escHtml(ini)+'</span>';
@@ -3467,22 +3401,20 @@
       var rt=slotRealtime(s);
       var tr=fatigueTrend(s.w.name);
       // Real length: 02:00–04:00 is 3h on the October DST night.
-      var dm=ledSlotMinutes(s), dur=Math.floor(dm/60)+'h'+(((dm%60))?String(dm%60).padStart(2,'0')+'m':'');
+      var dm=ledSlotMinutes(s), dur=(Math.floor(dm/60)?Math.floor(dm/60)+' h'+(dm%60?' ':''):'')+(dm%60?dm%60+' min':'');
       var fatPct=s.w.fs||0;
       var fatCol=fatPct>70?'#ff3b30':(fatPct>45?'#ff9500':(fatPct>20?'#ffd60a':'#30d158'));
       var statusCls=rt.active?'active':(rt.status==='NĀKAMĀ'?'upnext':'done');
       var gradCss='conic-gradient(from 0deg, transparent 0%, '+c.accent+' 30%, transparent 60%)';
       var theme=_nightTheme(i, st.sl.length, s.s, st.sl[0].s, st.sl[st.sl.length-1].e);
       var desc=_nightDescs[theme]||'';
-      var checklist = lastSlotChecklist(i, st.sl.length);
       var em=(window.MinkaEmoji&&window.MinkaEmoji.get)?(window.MinkaEmoji.get(s.w.name)||''):'';
       return '<div class="nsc-card-wrap" data-i="'+i+'">'
-        +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+(function(){ var x=nsSlotState(st.sl,i,nsNightCursor()); return x?' nsc-'+x.cls:''; })()+(checklist?' nsc-has-checklist':'')+'" data-i="'+i+'" data-worker="'+escHtml(s.w.name||'')+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
+        +'<div class="nsc-full-card nsc-theme-'+theme+(rt.active?' nsc-active':'')+(function(){ var x=nsSlotState(st.sl,i,nsNightCursor()); return x?' nsc-'+x.cls:''; })()+'" data-i="'+i+'" data-worker="'+escHtml(s.w.name||'')+'" style="--nsc-accent:'+c.accent+';--nsc-grad:'+gradCss+'">'
         +'<div class="nsc-deco" aria-hidden="true">'+_nightSvg(theme,i,s.w.name,c.accent,s,st.sl[0].s,st.sl[st.sl.length-1].e)+'</div>'
-        +(theme==='moon'?'<span class="nsc-moon-overlay" aria-hidden="true"><svg viewBox="0 0 64 64">'+_moonSVG(32,32,25,_moonPhase(window.__activeDateStr),'nsc-moon-'+i)+'</svg></span>':'')
         +'<div class="nsc-full-inner">'
         +'<div class="nsc-full-top">'
-        +'<span class="nsc-full-name">'+nm+'</span>'
+        +'<span class="nsc-full-name" style="--nl:'+String(s.w.name||'').split(/\s+/)[0].length+'">'+nm+'</span>'   // its length: the font fits it in CSS, nothing measured
         +'</div>'
         +'<div class="nsc-full-time">'+nsClock(s)+'<span>'+escHtml(s.ss)+' – '+escHtml(s.es)+'</span></div>'
         +(function(){
@@ -3502,7 +3434,6 @@
         +'</div>'
         +(rt.active?'<div class="nsc-full-progress"><span style="width:'+rt.pct.toFixed(1)+'%;background:'+c.accent+'"></span></div>':'')
         +'</div>'
-        +(checklist?'<div class="nsc-card-checklist">'+checklist+'</div>':'')
         +'</div>'
         +'</div>';
     }).join('');

@@ -620,6 +620,8 @@
     fatigue: [600, 400, 'M0 46C0 16 18 0 50 0H470C540 0 600 34 600 110V290C600 360 548 400 478 400H50C18 400 0 384 0 354Z', ['M340 400C396 372 450 384 500 358S572 330 600 304V400Z']],
     people: [768, 456, 'M36 0H732Q768 0 768 36V420Q768 456 732 456H36Q0 456 0 420V36Q0 0 36 0Z', ['M220 456C280 424 340 414 410 420S530 446 590 456Z']],
     coffee: [438, 456, 'M36 0H402Q438 0 438 36V420Q438 456 402 456H36Q0 456 0 420V36Q0 0 36 0Z', []],
+    nhero: [1600, 300, 'M0 70C0 30 30 10 70 14C220 28 300 4 460 16S760 34 920 18S1260 0 1420 14C1540 24 1600 30 1600 80V230C1600 280 1570 296 1520 290C1380 274 1260 300 1100 290S760 270 600 286S220 300 90 292C30 288 0 270 0 230Z', ['M0 20C60 0 160 10 230 40C300 72 300 150 270 210C240 270 150 300 60 300H0Z', 'M1548 14l6 13 15 2-11 10 3 15-13-8-14 8 3-15-11-10 15-2Z', 'M1580 74l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1Z']],
+    rhero: [1600, 300, 'M0 70C0 30 30 10 70 14C220 28 300 4 460 16S760 34 920 18S1260 0 1420 14C1540 24 1600 30 1600 80V230C1600 280 1570 296 1520 290C1380 274 1260 300 1100 290S760 270 600 286S220 300 90 292C30 288 0 270 0 230Z', ['M1400 0C1410 50 1470 70 1530 60C1570 54 1590 70 1600 90V0Z', 'M1380 300C1420 252 1480 240 1540 230C1570 226 1590 210 1600 190V300Z']],
     radio: [418, 210, 'M34 0H384Q418 0 418 34V176Q418 210 384 210H34Q0 210 0 176V34Q0 0 34 0Z', ['M228 210C286 192 334 198 372 184S412 166 418 162V210Z']],
     night: [418, 236, 'M34 0H384Q418 0 418 34V202Q418 236 384 236H34Q0 236 0 202V34Q0 0 34 0Z', ['M208 236C266 218 314 226 358 210S410 190 418 186V236Z']]
   };
@@ -687,10 +689,10 @@
         + (times ? mini('clover', initials(top.name), esc(formatName(shortName(top.name))), 'mainīja visbiežāk, <span class="db-times">' + times + (times === 1 ? ' reizi' : ' reizes') + '</span>') : '')));
     }
     // fatigue: hours a person spent very tired this month, on average; the face from how tired
-    var ff = fatigueFacts();
+    var ff = fatigueFacts(s);
     out.push(card('fatigue', 'fatigue', PX.fatigue, 'Nogurums', ff === 'wait' ? '<span class="db-big">…</span><span class="db-card-sub">Rēķina…</span>'
-      : ff ? '<span class="db-fat-top"><span><span class="db-big">' + ff.perPerson + ' h</span><span class="db-card-sub">ļoti noguris vidēji mēnesī</span></span>' + sleepyFace(ff.perPerson) + '</span>'
-        + (ff.heavyPeople ? mini('sunny', ff.heavyDay, 'Smagākā diena', tired(ff.heavyPeople) + ',<br>vidēji ' + ff.heavyEach + ' stundas no 24') : '')
+      : ff ? '<span class="db-fat-top"><span><span class="db-big">' + ff.perPerson + ' h</span><span class="db-card-sub">tik stundu katrs vidēji<br>bija ļoti noguris</span><span class="db-card-sub db-fat-crit">' + ff.critical + ' no ' + ff.people + ' sasniedza kritisku nogurumu' + (function () { var t = nightsOfThree(s.shifts); return t.three ? '<small class="db-fat-nights"><b>' + t.three + '</b> ' + nightWord(t.three) + ' mēnesī strādāja pa <b>3</b></small>' : ''; })() + '</span></span>' + sleepyFace(ff.perPerson) + '</span>'
+        + (ff.heavy ? mini('sunny', ff.heavy.day, 'Smagākā diena', ff.heavy.tired + (ff.heavy.tired === 1 ? ' bija ļoti noguris' : ' bija ļoti noguruši') + ',<br>nogurums ' + ff.heavy.avg) : '')
       : '<span class="db-card-sub">Nav datu</span>'));
     // hours against the month's norm (the same norm as Kalendārs): one scale for every row, the norm one mark, overtime past it
     var ppl = peopleOf(s).sort(function (a, c) { return c.hours - a.hours || a.name.localeCompare(c.name, 'lv'); });
@@ -759,13 +761,25 @@
           + '<button type="button" class="db-daychip" data-db-day="' + e.day + '">' + shortDay(e.day) + '</button></div>';
       }), '</div>', CAP) : empty('Šajā periodā ierakstu nav.')) + note('Bolusa vēsture no ierīcē sinhronizētajiem ierakstiem. Maiņa pirms 08:00 pieder iepriekšējai dežūras dienai.'), '#ff5c5c');
   }
+  /* Radio (the user's mockup, 2026-11-27): one organic hero (days with radio and a bar, stations this month, the most
+     played in a yellow pill), the month as a strip of days, the top 8 stations in two columns with coloured ranks. */
+  var SPARKS = '<svg class="db-rv-spark" viewBox="0 0 30 30" aria-hidden="true"><path d="M7 13 4 3M15 11l2-9M22 16l6-6"/></svg>';
   function radioView(b) {
-    var s = b.s, past = elapsedDays(b.rows, b.today).length || 1;
-    var items = s.stations.map(function (e) { return { name: esc(e.name), segs: [[e.count, 'is-main']], total: e.count, extra: e.count === 1 ? 'diena' : 'dienas' }; });
-    var withRadio = b.rows.filter(function (r) { return r.radio.length; }).length, top = s.stations[0];
-    return hero('radio', dockIcon('radioIdleBtn'), withRadio, 'dienas ar radio<br>no ' + past, [fact(s.stations.length || '—', 'stacijas šomēnes'), top ? fact(esc(top.name), 'biežākā, ' + top.count + (top.count === 1 ? ' diena' : ' dienas')) : ''])
-      + section('Mēnesis', withRadio + ' dienas ar radio', radioStrip(b))
-      + section('Stacijas', s.stations.length > 8 ? 'top 8' : '', rank(items, { empty: 'Šomēnes radio nav pierakstīts.', cls: 'is-radio' }) + note('Stacija tiek pierakstīta, kad tā sāk skanēt. Klausīšanās ilgums netiek mērīts.'));
+    var s = b.s, past = elapsedDays(b.rows, b.today).length || 1, withRadio = b.rows.filter(function (r) { return r.radio.length; }).length;
+    var top = s.stations[0], max = top ? top.count : 1, word = function (n) { return n % 10 === 1 && n % 100 !== 11 ? 'diena' : 'dienas'; };
+    var hero = '<div class="db-rv-hero">' + art('rhero')
+      + '<span class="db-rv-emblem">' + badge('radio', dockIcon('radioIdleBtn'), 'db-card-ic').replace(/<\/span>$/, IC_ACC.radio + '</span>') + '</span>'   // the overview tile's own emblem
+      + '<div class="db-rv-days"><div class="db-rv-num"><b>' + withRadio + '</b><span>no ' + past + '<br>dienām ar<br>radio</span></div>'
+      + '<div class="db-rv-bar"><i style="width:' + Math.round(withRadio / past * 100) + '%"></i><em>' + withRadio + '/' + past + '</em></div></div>'
+      + '<i class="db-rv-sep"></i><div class="db-rv-fact"><b>' + s.stations.length + '</b><span>stacijas šomēnes</span></div>'
+      + '<i class="db-rv-sep"></i><div class="db-rv-top">' + (top ? '<b class="db-rv-pill">' + esc(top.name) + '</b><span>biežākā<br>' + top.count + ' ' + word(top.count) + '</span>' : '<span>Šomēnes radio<br>nav pierakstīts</span>') + '</div></div>';
+    var rows = s.stations.slice(0, 8).map(function (e, i) {
+      return '<div class="db-rv-row"><i class="db-rv-rank is-c' + (i % 3) + '">' + (i + 1) + '</i><b>' + esc(e.name) + '</b><span class="db-rv-track"><i style="width:' + Math.max(4, Math.round(e.count / max * 100)) + '%"></i></span><em><strong>' + e.count + '</strong> ' + word(e.count) + '</em></div>';
+    }).join('');
+    return hero
+      + '<section class="db-rv-sec"><h3>' + SPARKS + 'Mēnesis <small>' + withRadio + ' ' + word(withRadio) + ' ar radio</small></h3>' + radioStrip(b) + '</section>'
+      + '<section class="db-rv-sec"><h3>' + SPARKS + 'Stacijas <span class="db-rv-chip">Top ' + Math.min(8, s.stations.length || 8) + '</span></h3>'
+      + (rows ? '<div class="db-rv-list">' + rows + '</div>' : empty('Šomēnes radio nav pierakstīts.')) + note('Stacija tiek pierakstīta, kad tā sāk skanēt. Klausīšanās ilgums netiek mērīts.') + '</section>';
   }
   // One cell per day of the month: lit when radio played, the stations in the
   // tooltip, a click opens the day. Fixed height, whatever the month holds.
@@ -907,12 +921,11 @@
         if (modalOpen() && state.tab === 'night' && !state.day && !state.person) render();
       }).catch(function () {}).then(function () { nightJob = null; });
   }
-  // Where the bed is: the same little plan as in the night panel, the main
-  // room (three beds) and Jaunais NMP (one), this bed lit.
+  // Where the bed is: the night rooms in small (css/page/mk-rooms.css, shared with the night history); this bed lit.
   function bedMap(key) {
-    var cell = function (k) { return '<i class="' + (k === key ? 'is-on' : '') + (k ? '' : ' is-none') + '"></i>'; };
-    return '<span class="db-bedmap" aria-hidden="true"><span class="db-bm-main">' + cell('main_left_top') + cell('main_right_top') + cell('main_left_bottom') + cell('')
-      + '</span><span class="db-bm-nmp">' + cell('nmp_center') + '</span></span>';
+    var bed = function (k, cls) { return '<span class="mk-rm-bed ' + cls + (k === key ? ' is-on' : '') + '"><img src="assets/rooms/bed-neutral-256.webp" alt="" width="256" height="364" decoding="async" draggable="false"></span>'; };
+    return '<span class="mk-rooms" aria-hidden="true"><span class="mk-rm is-main">' + bed('main_left_top', 'is-lt') + bed('main_right_top', 'is-rt') + bed('main_left_bottom', 'is-lb') + '<i class="mk-rm-box"></i></span>'
+      + '<span class="mk-rm is-nmp">' + bed('nmp_center', 'is-c') + '</span></span>';
   }
   function nightView(b) {
     var got = nightStats(), st = got && got.data;
@@ -923,8 +936,19 @@
     b.s.shifts.forEach(function (e) { if (e.type === 'night' || e.type === '24h') nightsBy[e.name] = (nightsBy[e.name] || 0) + 1; });
     var monthNights = Object.keys(nightsBy).sort(function (a, c) { return nightsBy[c] - nightsBy[a] || a.localeCompare(c, 'lv'); })
       .map(function (n) { return { name: esc(shortName(n)), person: n, segs: [[nightsBy[n], 'is-main']], total: nightsBy[n], extra: nightsBy[n] === 1 ? 'nakts' : 'naktis' }; });
-    var lead = hero('night', dockIcon('nsToggleBtnParent'), monthNights.reduce(function (n, e) { return n + e.total; }, 0) || '—', 'nakts maiņas<br>šomēnes grafikā',
-      [fact(st && st.nights ? st.nights : '—', 'sadalītas naktis visā vēsturē'), fact(st ? Object.keys(st.parts).length : '—', 'cilvēki nakts vēsturē')]);
+    var nf = function (n, label) { return '<div class="db-nv-fact"><b>' + n + '</b><span>' + label + '</span></div>'; };
+    var lead = '<div class="db-rv-hero db-nv-hero">' + art('nhero')
+      + '<span class="db-rv-emblem">' + badge('night', dockIcon('nsToggleBtnParent'), 'db-card-ic').replace(/<\/span>$/, IC_ACC.night + '</span>') + '</span>'   // the overview tile's own emblem
+      + (function () {   // the month's nights and the usual crew of one night (the most common count), as people say it
+        var crew = { rg: {}, rd: {} }, days = {};
+        b.s.shifts.forEach(function (e) { if ((e.type === 'night' || e.type === '24h') && crew[e.group] && (state.group === 'all' || e.group === state.group)) { crew[e.group][e.day] = (crew[e.group][e.day] || 0) + 1; days[e.day] = 1; } });
+        var usual = function (g) { var c = {}, best = 0, n = 0; Object.keys(crew[g]).forEach(function (d) { c[crew[g][d]] = (c[crew[g][d]] || 0) + 1; }); Object.keys(c).forEach(function (k) { if (c[k] > best) { best = c[k]; n = +k; } }); return n; };
+        var rg = usual('rg'), rd = usual('rd');
+        var parts = [rg ? rg + (rg === 1 ? ' radiogrāfs' : ' radiogrāfi') : '', rd ? rd + (rd === 1 ? ' radiologs' : ' radiologi') : ''].filter(Boolean).join(',<br>');
+        return nf(Object.keys(days).length || '—', 'naktis šomēnes' + (parts ? '<small>naktī parasti<br>' + parts + '</small>' : ''));
+      })() + '<i class="db-rv-sep"></i>'
+      + '<div class="db-nv-fact is-history"><small>apkopota vēsture par</small><b>' + (st && st.nights ? st.nights : '—') + '</b><span>naktīm</span></div>' + '<i class="db-rv-sep"></i>'
+      + (function () { var t = nightsOfThree(b.s.shifts); return nf(t.nights ? t.three + '<small class="db-fact-unit"> ' + nightWord(t.three) + ' no </small>' + t.nights : '—', 'naktī strādāja<br>pa 3').replace('db-nv-fact', 'db-nv-fact is-three'); })() + '</div>';
     var parts = '', beds = '';
     if (st) {
       var people = Object.keys(st.parts).map(function (name) {
@@ -938,7 +962,7 @@
         return '<div class="db-part-row">' + avatar(e.name, g.accent)
           + '<span class="db-part-name"><b>' + esc(shortName(e.name)) + '</b><small>Parasti ' + fav + '. daļa, ' + e.total + ' naktis</small></span>'
           + '<span class="db-part-bars">' + e.p.map(function (v, i) {
-            return '<i class="' + (i + 1 === fav ? 'is-fav' : '') + '" style="--h:' + Math.max(.08, v / max).toFixed(3) + '" title="' + (i + 1) + '. daļa: ' + v + '×"><b>' + v + '</b><em>' + (i + 1) + '.</em></i>';
+            return '<i class="is-p' + (i + 1) + (i + 1 === fav ? ' is-fav' : '') + '" style="--h:' + Math.max(.08, v / max).toFixed(3) + '" title="' + (i + 1) + '. daļa: ' + v + '×"><b>' + v + '</b><em>' + (i + 1) + '.</em></i>';
           }).join('') + '</span></div>';
       }), '</div>', CAP) : empty('Šai grupai nakts sadalījuma vēstures nav.');
       beds = '<div class="db-beds">' + BEDS.map(function (bed) {
@@ -946,7 +970,7 @@
           .filter(function (e) { return e.n; }).sort(function (a, c) { return c.n - a.n; });
         var total = who.reduce(function (n, e) { return n + e.n; }, 0);
         return '<div class="db-bed">' + bedMap(bed[0]) + '<span class="db-bed-name"><b>' + bed[1] + '</b>' + (bed[2] ? '<small>' + bed[2] + '</small>' : '') + '</span><span class="db-bed-total">' + (total || '—') + '<small>' + (total ? ' naktis' : '') + '</small></span>'
-          + '<span class="db-bed-who">' + (who.slice(0, 3).map(function (e) { return '<span>' + esc(shortName(e.name)) + '<b>' + e.n + '</b></span>'; }).join('') || '<span class="db-dim">nav datu</span>') + '</span></div>';
+          + '<span class="db-bed-who">' + (who.slice(0, 4).map(function (e) { return '<span>' + esc(shortName(e.name)) + '<b>' + e.n + '</b></span>'; }).join('') || '<span class="db-dim">nav datu</span>') + '</span></div>';
       }).join('') + '</div>';
     }
     var loading = !st ? empty(nightJob ? 'Ielādē nakts vēsturi…' : 'Nakts vēsture vēl nav ielādēta — tā parādās pēc nakts sadalījuma atvēršanas.') : '';
@@ -1031,7 +1055,37 @@
       + '<div class="db-ft-key"><span class="is-h">Augsts (virs ' + team.high + ')</span><span class="is-c">Kritisks (virs ' + team.crit + ')</span>' + (data.todayIdx >= 0 ? '<span class="is-f">Prognoze</span>' : '') + '<span>' + team.n + ' cilvēku stundas nomodā kopā</span></div></div>';
   }
   // the month's fatigue in three numbers: 'wait' while it is being computed, null without data
-  function fatigueFacts() {
+  // The heaviest day as people mean it: of those who worked that day, how tired they were (their highest score that
+  // day, awake); the day whose crew was the most tired on average. Not everyone tired anywhere that day (that counted
+  // people resting at home and read as if 15 people had worked).
+  function heaviestShiftDay(data, shifts, past, only) {
+    var F = fatigueApi(), high = F.FATIGUE_LEVELS[1].max, byName = {}, best = null;
+    data.names.forEach(function (n) { byName[M.norm(n)] = data.series[n]; });
+    for (var k = only != null ? only : 0; k < (only != null ? only + 1 : past); k++) {
+      var date = data.year + '-' + String(data.mm).padStart(2, '0') + '-' + String(k + 1).padStart(2, '0'), seen = {}, peaks = [];
+      shifts.forEach(function (e) {
+        var key = M.norm(e.name), ser = byName[key];
+        if (e.day !== date || seen[key] || !ser) return;
+        seen[key] = 1;
+        var from = Math.round(k * 24 / ser.stepHours), to = Math.round((k + 1) * 24 / ser.stepHours), peak = 0;
+        for (var i = from; i < to && i < ser.samples.length; i++) { var v = ser.samples[i]; if (v && !v.asleep && v.score > peak) peak = v.score; }
+        peaks.push(peak);
+      });
+      if (!peaks.length) continue;
+      var avg = peaks.reduce(function (a, v) { return a + v; }, 0) / peaks.length;
+      if (!best || avg > best.avg) best = { day: k, avg: avg, workers: peaks.length, tired: peaks.filter(function (v) { return v > high; }).length };
+    }
+    return best;
+  }
+  // The user's measure: on how many nights the radiographers' night was worked by only three (it tires)
+  function nightsOfThree(shifts) {
+    var crew = {};
+    shifts.forEach(function (e) { if (e.group === 'rg' && (e.type === 'night' || e.type === '24h')) crew[e.day] = (crew[e.day] || 0) + 1; });
+    var days = Object.keys(crew);
+    return { nights: days.length, three: days.filter(function (d) { return crew[d] === 3; }).length };
+  }
+  function nightWord(n) { return n % 10 === 1 && n % 100 !== 11 ? 'nakts' : 'naktis'; }
+  function fatigueFacts(s) {
     var F = fatigueApi(), meta = fatigueMeta();
     if (!F || !meta) return null;
     if (fatigueMissing(meta).length) { ensureFatigue(); return 'wait'; }
@@ -1043,7 +1097,10 @@
     var people = data.names.map(function (name) { return F.monthSummary(data.series[name], now); }).filter(function (sum) { return sum && sum.peak; });
     var high = people.reduce(function (a, sum) { return a + sum.highHours; }, 0);
     var hd = lived[heavy] || { total: 0, people: 0 };
-    return { perPerson: people.length ? Math.round(high / people.length) : 0, heavyDay: (heavy + 1) + '.' + data.mm + '.', heavyPeople: hd.people, heavyEach: hd.people ? Math.round(hd.total / hd.people) : 0 };
+    var shifts = s ? s.shifts.filter(function (e) { return state.group === 'all' || e.group === state.group; }) : [], hs = heaviestShiftDay(data, shifts, past);
+    return { heavy: hs && { day: (hs.day + 1) + '.' + data.mm + '.', workers: hs.workers, tired: hs.tired, avg: Math.round(hs.avg) },
+      perPerson: people.length ? Math.round(high / people.length) : 0, critical: people.filter(function (sum) { return F.getPresentation(sum.peak.score).key === 'crit'; }).length, people: people.length,   // the model's own band (Kritisks)
+       heavyDay: (heavy + 1) + '.' + data.mm + '.', heavyPeople: hd.people, heavyEach: hd.people ? Math.round(hd.total / hd.people) : 0 };
   }
   function fatigueView(b) {
     var F = fatigueApi(), meta = fatigueMeta();
@@ -1057,8 +1114,6 @@
     if (!data) return empty('Noguruma modelim šim mēnesim nav datu.');
     var mm = data.mm, now = Date.now(), past = data.todayIdx >= 0 ? data.todayIdx + 1 : data.daysIn;
     var team = teamFatigue(data), lived = team.days.slice(0, past);
-    var heavy = 0;
-    lived.forEach(function (d, i) { if (d.total > lived[heavy].total) heavy = i; });
     var people = data.names.map(function (name) {
       var sum = F.monthSummary(data.series[name], now);
       return { name: name, days: data.fatByDay[name], lived: past, sum: sum };
@@ -1066,10 +1121,11 @@
       .sort(function (a, c) { return c.sum.highHours - a.sum.highHours || c.sum.peak.score - a.sum.peak.score; });
     var teamHigh = people.reduce(function (a, p) { return a + p.sum.highHours; }, 0);
     var perPerson = people.length ? Math.round(teamHigh / people.length) : 0;
-    var hd = lived[heavy], td = data.todayIdx >= 0 ? team.days[data.todayIdx] : null;
     var lead = hero('fatigue', PX.fatigue, perPerson + ' h', 'tik stundas šomēnes katrs<br>bija ļoti noguris (vidēji)', [
-      fact(hd.people, (hd.people === 1 ? 'cilvēks ļoti noguris' : 'cilvēki ļoti noguruši') + '<br>smagākajā dienā, ' + (heavy + 1) + '.' + mm + '.'),
-      fact(td ? td.people : '—', td ? (td.people === 1 ? 'cilvēks ļoti noguris' : 'cilvēki ļoti noguruši') + '<br>šodien' : 'šodien<br>(cits mēnesis)')]);
+      (function () {
+        var t = nightsOfThree(b.s.shifts);
+        return t.nights ? fact(t.three + '<small class="db-fact-unit"> ' + nightWord(t.three) + ' no </small>' + t.nights, 'naktī strādāja pa 3') : '';
+      })()]);
     // one bar per person: hours very tired this month; the highest score in words beside it
     var rows = rank(people.map(function (p) {
       var pk = p.sum.peak;

@@ -3526,7 +3526,7 @@ function filterFullList(btn) {
       const compactTime = hours > 0 ? hours + ' h' : '';
       return '<span class="mk-next-person ' + kind + ' mk-next-person-avatar-card" data-next-worker="' + mkEscAttr(String(w.name || '').trim()) + '" title="' + mkEscAttr(first + ' ' + kindLabel) + '">'
         + '<span class="mk-next-size-proxy" aria-hidden="true">' + emojiHtml + '<b>' + mkEscAttr(first) + '</b>' + hoursHtml + '</span>'
-        + '<span class="mk-next-person-visual"><span class="mk-next-person-copy"><b>' + mkEscAttr(first) + '</b><small>' + timeIcon + mkEscAttr(compactTime) + '</small></span>'
+        + '<span class="mk-next-person-visual"><span class="mk-next-person-copy"><b style="--nl:' + first.length + '">' + mkEscAttr(first) + '</b><small>' + timeIcon + mkEscAttr(compactTime) + '</small></span>'
         + '<span class="mk-next-person-avatar' + avatarClass + '" aria-hidden="true">' + mkEscAttr(avatar) + '</span></span>'
         + '</span>';
     }).join('');

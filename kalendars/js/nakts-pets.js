@@ -20,7 +20,9 @@
   // The rendered rooms (scripts/blender/nakts_rooms.py): floor corners as fractions of the picture.
   var GEO = {
     main: { W: 440, H: 332, back: 0.1046, front: 0.9143, bx: [0.1072, 0.8928], fx: [0.0534, 0.9466], box: 'right' },
-    nmp: { W: 232, H: 332, back: 0.1044, front: 0.9145, bx: [0.1364, 0.8636], fx: [0.0866, 0.9134], box: null }
+    nmp: { W: 232, H: 332, back: 0.1044, front: 0.9145, bx: [0.1364, 0.8636], fx: [0.0866, 0.9134], box: null },
+    // the bed by the chalkboard (nightsplit.js .ns-bedcare-stage, 220 x 170): a little floor round one bed
+    care: { W: 220, H: 170, back: 0.3, front: 0.97, bx: [0.02, 0.98], fx: [0, 1], box: null }
   };
   var Y_MIN = 0.2, Y_MAX = 0.855;      // feet stay on the visible floor (the front wall's top is at 0.858)
   var SIDE_M = 34;                     // a cat is about 70 px long: keep it inside the side walls
@@ -37,6 +39,10 @@
     ],
     nmp: [
       { coat: 'grey', name: 'Pelēkais', likes: { wander: 3, zoom: 1, sit: 4, groom: 4, nap: 4, belly: 2, hop: 3, box: 4, scratch: 2, chase: 3, play: 2 } }
+    ],
+    // the playful one by the chalkboard: up on the bed all the time, the duvet off and back
+    care: [
+      { coat: 'black', name: 'Melnītis', likes: { wander: 0, zoom: 0, sit: 2, groom: 1, nap: 0, belly: 1, hop: 10, box: 0, scratch: 0, chase: 0, play: 5 } }
     ]
   };
   var M = null, loading = null, rooms = {}, raf = 0, lastT = 0, running = false;
@@ -441,7 +447,7 @@
   function measureBeds(room) {
     var shell = room.shell, sr = shell.getBoundingClientRect(), k = sr.width / room.g.W || 1;
     function rel(r) { return { x0: (r.left - sr.left) / k, x1: (r.right - sr.left) / k, y0: (r.top - sr.top) / k, y1: (r.bottom - sr.top) / k }; }
-    room.beds = [].slice.call(shell.querySelectorAll('.ns-room-bed[data-i]')).map(function (el) {
+    room.beds = [].slice.call(shell.querySelectorAll('.ns-room-bed[data-i], .ns-bedcare-bed[data-i]')).map(function (el) {
       var pic = el.querySelector('.ns-room-bed-picture') || el, b = rel(pic.getBoundingClientRect());
       b.el = el; b.w = b.x1 - b.x0; b.h = b.y1 - b.y0; b.cx = (b.x0 + b.x1) / 2;
       b.z = zAt(room.g, b.y1);
@@ -483,18 +489,18 @@
   }
   function Room(kind, shell) {
     var content = shell.querySelector('.ns-room-scene-content'); if (!content) return null;
-    var room = { kind: kind, shell: shell, g: GEO[kind], cats: [], mice: [], beds: [], layer: document.createElement('div'), director: { next: now() + rnd(35, 70), fightAt: now() + rnd(150, 260) } };
+    var room = { kind: kind, shell: shell, g: GEO[kind], cats: [], mice: [], beds: [], layer: document.createElement('div'), director: { next: now() + (kind === 'care' ? rnd(4, 8) : rnd(35, 70)), fightAt: now() + rnd(150, 260) } };
     room.layer.className = 'ns-pets';
     content.appendChild(room.layer);
     measureBeds(room);
     if (M.box && room.g.box) makeBox(room);          // the box is in the main room only
     CAST[kind].forEach(function (c) { room.cats.push(new Cat(room, c)); });
-    room.mice.push(new Mouse(room));
+    if (kind !== 'care') room.mice.push(new Mouse(room));   // no mouse on the bed's little floor
     listen(room);
     return room;
   }
   function reattach(room) {           // the panel was drawn again: same pets, new room
-    var shell = document.querySelector('#nsPanel .ns-room-' + room.kind + ' .ns-room-shell');
+    var shell = document.querySelector(room.kind === 'care' ? '#nsPanel .ns-bedcare-stage' : '#nsPanel .ns-room-' + room.kind + ' .ns-room-shell');
     if (!shell) return false;
     var content = shell.querySelector('.ns-room-scene-content'); if (!content) return false;
     room.shell = shell; content.appendChild(room.layer); listen(room);
@@ -627,7 +633,7 @@
             }, 380);
           });
           cat.jumpDown(function () { cat.busy = false; cat.goTo(freePoint(room), false); }, side);
-          room.director.backAt = now() + rnd(20, 40);
+          room.director.backAt = now() + (room.kind === 'care' ? rnd(8, 16) : rnd(20, 40));
         });
       }, on);
     }).catch(function () { cat.busy = false; if (room.duvet === hold) room.duvet = null; });
@@ -684,7 +690,7 @@
                 var card = bed.el.querySelector('.ns-room-bed-card');
                 if (card) { card.classList.remove('ns-bed-made'); void card.offsetWidth; card.classList.add('ns-bed-made'); }
               }, 520);
-              cat.play('sit', 'front', 2.5, function () { cat.busy = false; cat.jumpDown(null, side); });
+              cat.play('sit', 'front', 2.5, function () { cat.busy = false; cat.jumpDown(room.kind === 'care' ? function () { turnCoat(cat); } : null, side); });
             });
           });
           // as it jumps, the dragged duvet goes up over the bed's side
@@ -700,12 +706,23 @@
     });
     return true;
   }
+  // The cat by the chalkboard takes turns (the user): after each duvet game the black one and the ginger one swap, faded over.
+  var CARE_COATS = { black: 'Melnītis', ginger: 'Rudītis' };
+  function turnCoat(cat) {
+    var coat = cat.cast.coat === 'black' ? 'ginger' : 'black', el = cat.s.el;
+    fade(el, 0, 0.35);
+    setTimeout(function () {
+      cat.cast = { coat: coat, name: CARE_COATS[coat], likes: cat.cast.likes };
+      el.style.backgroundImage = sheetUrl('cat-' + coat); el.setAttribute('aria-label', CARE_COATS[coat]);
+      fade(el, 1, 0.35);
+    }, 380);
+  }
   function direct(room, T) {
     var D = room.director;
     if (room.fx) return;
     if (room.duvet && D.backAt && T > D.backAt) { D.backAt = duvetBack(room) ? 0 : T + 5; return; }
     if (T < D.next) return;
-    D.next = T + rnd(60, 120);
+    D.next = T + (room.kind === 'care' ? rnd(14, 26) : rnd(60, 120));   // the care cat plays with the duvet often
     var ok = false;
     if (T > D.fightAt && room.cats.length > 1) { ok = fight(room); if (ok) D.fightAt = T + rnd(180, 300); }
     if (!ok) duvetOff(room);
@@ -729,8 +746,8 @@
     if (window.__nsOverlayOpen !== true) return;
     if (document.documentElement.classList.contains('mk-mobile-shell')) return;
     load().then(function () {
-      ['main', 'nmp'].forEach(function (kind) {
-        var shell = document.querySelector('#nsPanel .ns-room-' + kind + ' .ns-room-shell');
+      ['main', 'nmp', 'care'].forEach(function (kind) {
+        var shell = document.querySelector(kind === 'care' ? '#nsPanel .ns-bedcare-stage' : '#nsPanel .ns-room-' + kind + ' .ns-room-shell');
         if (!shell) return;
         if (!rooms[kind]) { var r = Room(kind, shell); if (r) rooms[kind] = r; }
         else if (!rooms[kind].layer.isConnected || rooms[kind].shell !== shell) reattach(rooms[kind]);
@@ -761,23 +778,29 @@
     }
     return 12;
   }
+  // The next step: on the shared beat a timer wakes the page only when a drawing is due (it spun a frame callback
+  // 60 times a second to skip most of them); frame by frame only while something moves frame by frame.
+  function next(b) {
+    if (b) setTimeout(function () { raf = requestAnimationFrame(tick); }, Math.max(0, 1000 / b - 2));
+    else raf = requestAnimationFrame(tick);
+  }
   function tick() {
+    raf = 0;
     if (window.__nsOverlayOpen !== true) { running = false; eachPet(function (p) { p.settle(); }); return; }
-    raf = requestAnimationFrame(tick);
-    if (document.hidden) { lastT = now(); return; }
+    if (document.hidden) { lastT = now(); return next(0); }
     var T = now(), dt = Math.min(0.1, T - lastT);
     // Old PCs (lite) and animations turned off (reduced, as work PCs often have it) take
     // 30 steps a second, the screen's own rate otherwise; with reduced the cats stay calm
     // (no running, no rattling beds). A step is a transform and a sprite frame: cheap.
     var lv = level();
-    if (lv !== 'full' && dt < 1 / 30) return;
+    if (lv !== 'full' && dt < 1 / 30) return next(30);
     // No more steps than the sprites have frames. Each pet changes its drawing 4 to 16 times a
     // second in its own rhythm; stepped on every screen frame, some pet changed on almost each one
     // and the whole page was drawn again ~57 times a second. On one shared beat of 12 a second they
     // change together (a walk's own motion runs on the compositor and stays smooth). Every frame
     // only for a jump, a carried duvet, a corner cut step by step or an effect: `beat` is worked
     // out after each step, not on every frame.
-    if (beat && dt < 1 / beat - 0.004) return;
+    if (beat && dt < 1 / beat - 0.004) return next(beat);
     lastT = T;
     var q = T - quietAt > 0.25; if (q) quietAt = T;
     Object.keys(rooms).forEach(function (k) {
@@ -791,6 +814,7 @@
       if (q) quietDreams(room);
     });
     beat = stepRate();
+    next(beat || (lv !== 'full' ? 30 : 0));
   }
 
   window.NaktsPets = {

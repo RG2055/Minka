@@ -201,9 +201,11 @@
     if (statsCss) return statsCss;
     statsCss = new Promise(function (resolve) {
       var l = document.createElement('link');
-      l.rel = 'stylesheet'; l.id = 'mk-stats-m3'; l.href = 'css/page/stats-m3.css?v=20261127s33';
+      l.rel = 'stylesheet'; l.id = 'mk-stats-m3'; l.href = 'css/page/stats-m3.css?v=20261127s90';
       l.onload = resolve; l.onerror = resolve;   // without its styles the statistics still work
       document.head.append(l);
+      // the small night rooms (Gultas) share their sheet with the night panel; the phone page has no night panel to bring it
+      if (!document.querySelector('link[href*="mk-rooms.css"]')) { var r = document.createElement('link'); r.rel = 'stylesheet'; r.href = 'css/page/mk-rooms.css?v=20261127r17'; document.head.append(r); }
     }).then(function () { statsCssDone = true; });
     return statsCss;
   }
@@ -216,7 +218,7 @@
     if (!statsLoading) {
       statsLoading = Promise.all([loadStatsCss(), new Promise(function (resolve, reject) {
         var s = document.createElement('script');
-        s.src = 'js/daybook-stats.js?v=20261127s35';
+        s.src = 'js/daybook-stats.js?v=20261127s90';
         s.onload = resolve;
         s.onerror = function () { s.remove(); statsLoading = null; reject(new Error('daybook-stats')); };
         document.head.append(s);
