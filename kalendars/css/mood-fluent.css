@@ -101,6 +101,20 @@
   100% { transform: translate(-50%, -50%) rotate(0deg) scaleY(1); }
 }
 
+/* Desktop: the liquid is one still frame drawn into a canvas (js/page/mk-liquid.js); the two bars and the slosh are the
+   phone's. */
+.rg-mood-stage .rg-mood-liquid-vessel.is-liq { opacity: 1; }   /* an empty glass draws nothing; has-liquid is the bars' */
+/* the liquid reaches the glass's inner wall: the lens picture's glass is 0.866 of the picture wide, a little less tall,
+   and sits 2 px above the middle */
+.rg-mood-liquid-vessel.is-liq, .mk-liq-front { width: clamp(90px, 47.6cqw, 118px); aspect-ratio: 142 / 137; transform: translate(-50%, calc(-50% - 2px)); }
+.rg-mood-liquid-vessel.is-liq > .rg-mood-liquid { display: none; }
+.rg-mood-liquid-vessel.is-liq > canvas, .mk-liq-front > canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.rg-mood-stage.is-sloshing .rg-mood-liquid-vessel.is-liq { animation: none !important; }
+/* while the Nogurumiņi dance (js/radio-dancers.js, their box is over the vessel) the front half of the liquid is
+   drawn over them: they stand in it */
+.mk-liq-front { position: absolute; left: 50%; top: 50%; z-index: 6; display: none; overflow: hidden; border-radius: 50%; pointer-events: none; }
+.rg-mood-blob-wrap.mk-dancing > .mk-liq-front { display: block; }
+
 .rg-mood-stage.has-liquid .rg-mood-liquid-vessel {
   opacity: 1;
 }

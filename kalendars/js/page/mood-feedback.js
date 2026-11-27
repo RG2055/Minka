@@ -2126,6 +2126,8 @@
     refs.stage.style.setProperty('--rg-fatigue-fill', fatigueFill.toFixed(1) + '%');
     refs.stage.style.setProperty('--rg-fatigue-liquid-rgb', moodFatigueLiquidRgb(fatigueValue));
     refs.stage.classList.toggle('has-liquid', coffeeFill > .4 || fatigueFill > .4);
+    // desktop: the glass's liquid is drawn from the values themselves (js/page/mk-liquid.js); the fills above stay for the phone
+    if (window.MkLiquid) window.MkLiquid.sync(refs.stage, { fatigue: stats.fatigue === null ? null : fatigueValue, cups: coffeeTotal });
     var liquidSignature = coffeeFill.toFixed(1) + ':' + fatigueFill.toFixed(1);
     var previousLiquidSignature = refs.stage.dataset.rgLiquidLevel || '';
     refs.stage.dataset.rgLiquidLevel = liquidSignature;
@@ -2361,6 +2363,7 @@
     var own = ownMoodFor(shiftDayKey());
     if (refs.fluentFace) {
       refs.fluentFace.textContent = (!preview && own && own.emoji) || visual.emoji || moodVisuals._none.emoji;
+      if (window.MkLiquid) window.MkLiquid.sync(refs.stage);   // the face behind the liquid changed
     }
     if (refs.stage) refs.stage.classList.toggle('has-own-mood', !preview && !!(own && own.emoji));
     if (refs.label) {
@@ -2419,6 +2422,7 @@
       live.stage.classList.toggle('is-bored', night);
       live.stage.classList.toggle('is-waiting', !night);
       if (live.fluentFace) live.fluentFace.textContent = night ? '😴' : (moodVisuals._none.emoji || '🙂');
+      if (window.MkLiquid) window.MkLiquid.sync(live.stage);
     };
     var remaining = MOOD_BORED_DELAY - (Date.now() - moodBoredSince);
     if (remaining <= 0) showBored();
