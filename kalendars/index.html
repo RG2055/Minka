@@ -254,7 +254,7 @@ window.__mkLeftRole=window.MINKA_APP==='rad'?{one:'Rezidents',many:'Rezidenti'}:
 <script src="js/card-addons.js?v=20261126fx1" defer></script>
 <script src="js/skin-organize.js?v=20261010hd1" defer></script>
 <script src="js/skin-builder.js?v=20261010ec1" defer></script>
-<link rel="stylesheet" href="css/side-cards-v2.css?v=20261127nx5">
+<link rel="stylesheet" href="css/side-cards-v2.css?v=20261127nx6">
 <link rel="stylesheet" href="css/header-weather.css?v=20260923wm10">
 <link rel="stylesheet" href="css/mood-fluent.css?v=20261127rc1">
 <link rel="stylesheet" href="css/depth-cards.css?v=20260912faces17">
@@ -985,8 +985,9 @@ function _mkToast(msg, type) {
 <script src="js/recovery-model.js?v=20260908recovery1"></script>
 <script src="js/fatigue.js?v=20261126wm52"></script>
 <link rel="stylesheet" href="css/page/mk-rooms.css?v=20261127r17">
+<link rel="stylesheet" href="css/page/rg-fit.css?v=20261127f1">
 <script src="js/nakts-pets.js?v=20261127np5" defer></script>
-<script src="js/nightsplit.js?v=20261127nr24" defer></script>
+<script src="js/nightsplit.js?v=20261127nr26" defer></script>
 <script src="js/monthcal.js?v=20261127mc4" defer></script>
 <script src="js/design_v1.js?v=20261126rg1" defer></script>
 <script src="js/theme.js?v=20261126dg2" defer></script>
@@ -1109,7 +1110,7 @@ document.addEventListener('keydown', (e) => {
 <!-- ï¿½ï¿½ï¿½ï¿½ Night Split Overlay ï¿½ï¿½ï¿½ï¿½ -->
 <div id="nsOverlay">
   <div id="nsOverlay-backdrop" onclick="toggleNsOverlay()"></div>
-  <div id="nsPanel">
+  <div id="nsPanel" class="rg-fit">
     <button id="nsCloseBtn" type="button" aria-label="Aizvērt" title="Aizvērt (Esc)" onclick="toggleNsOverlay()"><svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-424 284-228q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536-480l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480-424Z"/></svg><span>Aizvērt</span></button>
     <div id="nsPanelContent">
       <div style="color:rgba(255,255,255,.3);text-align:center;padding:32px;">Ielādē...</div>
@@ -1117,7 +1118,7 @@ document.addEventListener('keydown', (e) => {
   </div>
 </div>
 
-<script src="js/page/night-overlay.js?v=20261127nd2"></script>
+<script src="js/page/night-overlay.js?v=20261127nd4"></script>
 <!-- /rad night (radiologists, residents, beds); does nothing for the radiographers -->
 <script src="js/rad-night.js?v=20260926rn14"></script>
 

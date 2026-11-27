@@ -1049,7 +1049,7 @@
     pop.setAttribute('role','dialog');
     pop.setAttribute('aria-label','Atzīmēt gultas veļas nomaiņu');
     pop.innerHTML='<form class="ns-bedcare-form">'
-      +'<div class="ns-bedcare-quick-head"><span class="ns-bedcare-icon" aria-hidden="true">▤</span><span><b>Veļas nomaiņa</b><small class="ns-bedcare-last"></small></span><button type="button" class="ns-bedcare-close" aria-label="Aizvērt">×</button></div>'
+      +'<div class="ns-bedcare-quick-head"><span><b>Veļas nomaiņa</b><small class="ns-bedcare-last"></small></span><button type="button" class="ns-bedcare-close" aria-label="Aizvērt">×</button></div>'
       +'<label class="ns-bedcare-date"><span>Kad nomainīji?</span><input id="nsBedCareDate" type="date" required max="'+bedCareInputDate(Date.now())+'" value="'+bedCareInputDate(Date.now())+'"></label>'
       +'<button type="submit" class="ns-bedcare-save">Saglabāt</button>'
       +'<div class="ns-bedcare-note" aria-live="polite"></div>'
@@ -2060,9 +2060,11 @@
       else if(flicker && t<p+.035 && Math.random()<.55){ cell(i,.18+Math.random()*.32,1); S.band.push(i); }
     }
     // the info zone's M3 Shape Dither opens with the same progress past the surface's start (26 % of the card, where the
-    // picture's S edge begins); written only when the whole per cent changes (about once a minute), no restyle a second
+    // picture's S edge begins); written only when the whole per cent changes (about once a minute), no restyle a second,
+    // and not during the opening sweep (flicker false): written there every frame, it restyled the whole card for over a
+    // second and its texts flickered at the first open; the sweep's last frame writes it
     var rv=Math.round(Math.max(0,Math.min(1,(p-.26)/.74))*100);
-    if(S.rv!==rv){ S.rv=rv; if(cv.parentElement) cv.parentElement.style.setProperty('--m3-reveal',rv+'%'); }
+    if(flicker && S.rv!==rv){ S.rv=rv; if(cv.parentElement) cv.parentElement.style.setProperty('--m3-reveal',rv+'%'); }
   }
   function ledCards(scope){
     if(!st || !st.sl) return;
@@ -2367,6 +2369,13 @@
   }
 
   var _nsFlowTimer=0;
+  // the wavy line takes the colour of the part running now (the timeline's own part colours, by place)
+  function flowCurColour(pct){
+    var sl=st&&st.sl; if(!sl||!sl.length) return 'var(--ns-p1)';
+    var tot=sl[sl.length-1].e-sl[0].s, acc=0, i=0;
+    for(; i<sl.length-1; i++){ acc+=sl[i].d/tot*100; if(pct<acc) break; }
+    return 'var(--ns-p'+(i%5+1)+')';
+  }
   function refreshFlowLiveMarker(){
     if(document.hidden || window.__nsOverlayOpen!==true){
       if(_nsFlowTimer){ clearInterval(_nsFlowTimer); _nsFlowTimer=0; }
@@ -2387,6 +2396,8 @@
     }
     // Pagājušais laiks — tumšāks pārklājs no sākuma līdz tagadnei
     if(spent) spent.style.width=live.pct.toFixed(3)+'%';
+    var cur=flowCurColour(live.pct);
+    if(bar.__nsCur!==cur){ bar.__nsCur=cur; bar.style.setProperty('--ns-cur',cur); }
     if(cursor){
       cursor.style.display='block';
       cursor.style.left=live.pct.toFixed(3)+'%';
@@ -3454,7 +3465,7 @@
         +st.sl.map(function(s){ return '<span>'+escHtml(s.es)+'</span>'; }).join('')
         +(live?'<i class="ns-flow-now-chip" aria-hidden="true"></i>':'')
         +'</div>';
-      flowBar='<div class="ns-flow-bar">'
+      flowBar='<div class="ns-flow-bar"'+(live?' style="--ns-cur:'+flowCurColour(live.pct)+'"':'')+'>'
         +_flowSegs
         +(live?'<div class="ns-flow-spent" style="width:'+live.pct.toFixed(3)+'%"></div>':'<div class="ns-flow-spent" style="width:0%"></div>')
         // "Tagad": tieva līnija joslā un viens laika čips zem tās. Kas guļ un

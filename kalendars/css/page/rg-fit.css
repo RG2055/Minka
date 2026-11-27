@@ -1,0 +1,13 @@
+/* RG Engine fit (2026-11-27): a desktop window or modal with a design size keeps one set of proportions on every
+   screen, Windows or macOS, any display scaling. The surface gets the class rg-fit and sets --fit-w and --fit-h (its
+   design size in px, unitless); it may set --fit-max (the largest factor) and --fit-gap (the room kept round it).
+   It gets --k, one factor from both the width and the height it has, and --u, one design pixel; it applies them to its
+   own size (width: calc(var(--fit-w) * var(--u))), its parts may use --u too.
+   Pure CSS: no script, no resize loop, no zoom or scale; vw and dvh follow the browser's own zoom, so that still works.
+   Dividing a length by a length needs Chrome 140+: without it the surface keeps its own older size. */
+@supports (width: calc(1px * (2px / 1px))) {
+  :root:not(.mk-mobile-shell) .rg-fit {
+    --k: min(calc((100vw - var(--fit-gap, 24px)) / (var(--fit-w) * 1px)), calc((100dvh - var(--fit-gap, 24px)) / (var(--fit-h) * 1px)), var(--fit-max, 1));
+    --u: calc(var(--k) * 1px);
+  }
+}

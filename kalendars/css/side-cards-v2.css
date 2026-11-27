@@ -1051,9 +1051,9 @@ html body .mk-next-person-copy b {
   overflow: hidden !important;
   color: #f4f6f9 !important;
   font: 600 12px/14px 'Google Sans', 'Google Sans Text', Inter, system-ui, sans-serif !important;
-  /* a long name in a narrow pill gets smaller instead of cut: the pill's width less its padding, gap and emoji, shared
-     by the name's letters (--nl from calendar.js). Google Sans is not shipped: Windows draws the wider Segoe UI, so
-     .55 em a letter (Jeļizaveta was cut there and not on a Mac); names up to 8 letters stay 12 px */
+  /* a long name in a narrow pill gets smaller instead of cut (Jeļizaveta on the work PC's narrower side column): the
+     pill's width less its padding, gap and emoji, shared by the name's letters (--nl from calendar.js), .55 em a letter
+     with room to spare; names up to 8 letters stay 12 px */
   font-size: clamp(9px, calc((100cqw - 48px) / (var(--nl, 6) * .55)), 12px) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
