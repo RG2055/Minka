@@ -471,8 +471,16 @@ html:root:not(.mk-mobile-shell):not(.mk-none) body #nsOverlay #nsPanel .ns-room-
 html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-stats-box { --ns-rowh: min(calc((100cqh - 112px) / var(--ns-rows, 4)), calc(64 * var(--u, 1px))); }
 /* bed linen: the chalkboard on top, the bed with its date and button as one group at the bottom */
 html:root:not(.mk-mobile-shell):not(.mk-none) body #nsOverlay #nsPanel .ns-room-cat .ns-bedcare-perch { justify-content: flex-end !important; gap: 6px !important; }
-/* the passed part of the timeline: the M3 wavy line in the running part's colour (--ns-cur from nightsplit.js) on the
-   panel's own surface, as tall as the segments under it (14 px against the old 8, so their lower edges showed) */
-html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-flow-bar .ns-flow-spent { top: -4px !important; bottom: auto !important; height: 22px !important; background: #10151d !important; }
+/* the passed part of the timeline: only the M3 wavy line, in the running part's colour (--ns-cur from nightsplit.js) */
+html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-flow-bar .ns-flow-spent { top: -4px !important; bottom: auto !important; height: 22px !important; background: none !important; }
+/* no box under the wave: each segment's passed part is cut away (--p from nightsplit.js, --a its start, --w its share) */
+html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-flow-bar > .ns-flow-seg { clip-path: inset(0 0 0 clamp(0%, calc((var(--p, 0) - var(--a, 0)) / var(--w, 1) * 100%), 100%) round 9999px); }
 html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-flow-bar .ns-flow-spent::after { content: '' !important; position: absolute !important; inset: 0 !important; background: var(--ns-cur, #a8c7fa) !important; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='16' viewBox='0 0 28 16'%3E%3Cpath d='M0 8 Q7 1.5 14 8 T28 8' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") left center / 28px 16px repeat-x !important; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='16' viewBox='0 0 28 16'%3E%3Cpath d='M0 8 Q7 1.5 14 8 T28 8' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") left center / 28px 16px repeat-x !important; }
 html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-flow-bar .ns-flow-cursor { top: -4px !important; height: 22px !important; }
+/* history bed squares: each room's box wraps its squares with the same margin on every side (the squares sat in the
+   box's top left, the room to their right and below them made the counts look off centre), and the squares as big as
+   the row allows (2.6 squares tall with the gap and margin) */
+html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-stat-bed { --bmc: clamp(13px, calc((var(--ns-rowh) - 4px) / 2.6), 24px) !important; }
+html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-stat-bed .ns-bm-room { display: grid !important; grid-template-columns: repeat(2, var(--bmc)) !important; grid-template-rows: none !important; grid-auto-rows: var(--bmc) !important; gap: calc(var(--bmc) * .2) !important; padding: calc(var(--bmc) * .2) !important; width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important; box-sizing: content-box !important; place-content: center !important; border-radius: calc(var(--bmc) * .45) !important; }
+html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-stat-bed .ns-bm-room.ns-bm-nmp { grid-template-columns: var(--bmc) !important; }
+html:root:not(.mk-none) body #nsOverlay #nsPanel .ns-stat-bed .ns-bm-cell { margin: 0 !important; }

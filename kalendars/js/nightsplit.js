@@ -116,7 +116,16 @@
      drag  four frames of it carried in a cat's teeth (a strip, one under another). */
   var BED_BARE='assets/rooms/bed-bare-256.webp';
   var _bedParts=new Map();
-  function ownCopy(url){ return fetch(url).then(function(r){ return r.blob(); }).then(function(b){ return URL.createObjectURL(b); }); }
+  // copied through a picture (img-src allows blob:), not fetch(): the CSP's connect-src 'self' refuses a blob: fetch
+  function ownCopy(url){
+    return new Promise(function(res,rej){
+      var im=new Image();
+      im.onload=function(){ var c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight; c.getContext('2d').drawImage(im,0,0);
+        c.toBlob(function(b){ if(b) res(URL.createObjectURL(b)); else rej(new Error('bed copy')); },'image/png'); };
+      im.onerror=function(){ rej(new Error('bed copy')); };
+      im.src=url;
+    });
+  }
   function sleeperOf(bedEl){
     var sl=bedEl.querySelector('.ns-sleeper'), card=bedEl.querySelector('.ns-room-bed-card')||bedEl, cs=getComputedStyle(card);
     var m=/url\(\s*["']?([^"')]+)["']?\s*\)/.exec(cs.getPropertyValue('--mk-skin-img')||'');
@@ -2398,6 +2407,8 @@
     if(spent) spent.style.width=live.pct.toFixed(3)+'%';
     var cur=flowCurColour(live.pct);
     if(bar.__nsCur!==cur){ bar.__nsCur=cur; bar.style.setProperty('--ns-cur',cur); }
+    // the segments' passed part is cut away in CSS (--p): written when it moves a tenth of a per cent (~25 s a night)
+    var pp=live.pct.toFixed(1); if(bar.__nsP!==pp){ bar.__nsP=pp; bar.style.setProperty('--p',pp); }
     if(cursor){
       cursor.style.display='block';
       cursor.style.left=live.pct.toFixed(3)+'%';
@@ -3456,16 +3467,17 @@
     if(st.sl.length>1){
       var tot=st.sl[st.sl.length-1].e-st.sl[0].s;
       var live=getFlowLiveState(st.sl);
+      var _flowAt=0;
       var _flowSegs=st.sl.map(function(s,i){
         var c=getCol(s.w.name);
-        var pct=(s.d/tot*100).toFixed(2);
-        return '<div class="ns-flow-seg'+(slotRealtime(s).active?' is-active':'')+'" style="--w:'+pct+';--seg:'+timelineColour(c)+'"><div class="ns-flow-fill" style="background:'+timelineColour(c)+'"></div></div>';
+        var pct=(s.d/tot*100).toFixed(2), at=_flowAt.toFixed(2); _flowAt+=s.d/tot*100;
+        return '<div class="ns-flow-seg'+(slotRealtime(s).active?' is-active':'')+'" style="--w:'+pct+';--a:'+at+';--seg:'+timelineColour(c)+'"><div class="ns-flow-fill" style="background:'+timelineColour(c)+'"></div></div>';
       }).join('');
       var _flowLabels='<div class="ns-flow-labels"><span>'+escHtml(st.sl[0].ss)+'</span>'
         +st.sl.map(function(s){ return '<span>'+escHtml(s.es)+'</span>'; }).join('')
         +(live?'<i class="ns-flow-now-chip" aria-hidden="true"></i>':'')
         +'</div>';
-      flowBar='<div class="ns-flow-bar"'+(live?' style="--ns-cur:'+flowCurColour(live.pct)+'"':'')+'>'
+      flowBar='<div class="ns-flow-bar"'+(live?' style="--ns-cur:'+flowCurColour(live.pct)+';--p:'+live.pct.toFixed(1)+'"':'')+'>'
         +_flowSegs
         +(live?'<div class="ns-flow-spent" style="width:'+live.pct.toFixed(3)+'%"></div>':'<div class="ns-flow-spent" style="width:0%"></div>')
         // "Tagad": tieva līnija joslā un viens laika čips zem tās. Kas guļ un

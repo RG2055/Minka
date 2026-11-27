@@ -22,11 +22,11 @@
     main: { W: 440, H: 332, back: 0.1046, front: 0.9143, bx: [0.1072, 0.8928], fx: [0.0534, 0.9466], box: 'right' },
     nmp: { W: 232, H: 332, back: 0.1044, front: 0.9145, bx: [0.1364, 0.8636], fx: [0.0866, 0.9134], box: null },
     // the bed by the chalkboard (nightsplit.js .ns-bedcare-stage, 220 x 170): a little floor round one bed
-    care: { W: 220, H: 170, back: 0.3, front: 0.97, bx: [0.02, 0.98], fx: [0, 1], box: null }
+    care: { W: 220, H: 170, back: 0.3, front: 0.97, bx: [0.16, 0.84], fx: [0.16, 0.84], box: null }   // the floor kept in sight: the cat is drawn to the bed's size
   };
   var Y_MIN = 0.2, Y_MAX = 0.855;      // feet stay on the visible floor (the front wall's top is at 0.858)
   var SIDE_M = 34;                     // a cat is about 70 px long: keep it inside the side walls
-  var CAT_SCALE = 1.0, BOX_SCALE = 0.9;
+  var CAT_SCALE = 1.0, BOX_SCALE = 0.9, BED_W0 = 86.2;   // BED_W0: the bed width the pets were drawn for
   // Frames a second per motion: calm ones slow (no twitching), a run quick.
   var ANIM_FPS = { walk: 12, run: 16, sit: 6, groom: 8, loaf: 5, sleep: 4, belly: 5, jump: 12, pounce: 12, bat: 10, hiss: 8, scratch: 10, tug: 10 };
   // Speeds matching the stride in the pictures (feet do not slide): px a second.
@@ -259,7 +259,7 @@
     if (run && level() === 'reduced') run = false;      // calm: a walk, never a run
     p = clampFloor(this.room.g, p, Math.min(SIDE_M, p.m == null ? SIDE_M : p.m));
     this.path = route(this.room, { x: this.x, y: this.y }, p);
-    this.run = !!run; this.speed = run ? RUN_V : WALK_V; this.anim = run ? 'run' : 'walk'; this.next = then || null; this.until = Infinity;
+    this.run = !!run; this.speed = (run ? RUN_V : WALK_V) * (this.room.pk || 1); this.anim = run ? 'run' : 'walk'; this.next = then || null; this.until = Infinity;
   };
   Cat.prototype.poked = function () {
     var r = Math.random();
@@ -312,7 +312,7 @@
     this.leap(to, 24, function () { self.bed = null; if (then) then(); else self.play('sit', 'side', rnd(1, 3)); });
   };
   Cat.prototype.leap = function (to, height, then) {
-    this.jump = { x0: this.x, y0: this.y, x1: to.x, y1: to.y, h: height, t0: now(), dur: 0.55 }; beat = 0;   // every frame from now
+    this.jump = { x0: this.x, y0: this.y, x1: to.x, y1: to.y, h: height * (this.room.pk || 1), t0: now(), dur: 0.55 }; beat = 0;   // every frame from now
     this.flip = to.x < this.x; this.anim = 'jump'; this.dir = 'side'; this.t = 0; this.path = [];
     this.next = then; this.until = Infinity;
   };
@@ -367,7 +367,7 @@
   };
   // The loop stops (panel closed): the pet is left where it is, not where its leg began.
   Cat.prototype.settle = function () {
-    if (this.s.anim) { stopGlide(this.s); put(this.s, this.room.g, this.x, this.y, this.lift, this.dir === 'side' && this.flip, this.s.z, CAT_SCALE); }
+    if (this.s.anim) { stopGlide(this.s); put(this.s, this.room.g, this.x, this.y, this.lift, this.dir === 'side' && this.flip, this.s.z, CAT_SCALE * (this.room.pk || 1)); }
   };
   Cat.prototype.draw = function (g) {
     if (this.hidden) { if (this.s.anim) stopGlide(this.s); if (this.s.el.style.visibility !== 'hidden') this.s.el.style.visibility = 'hidden'; return; }
@@ -379,8 +379,8 @@
     show(this.s, key, col);
     var z = this.box ? this.box.z : this.bed ? this.bed.z + 2 : (this.jump ? zAt(g, Math.max(this.jump.y0, this.jump.y1)) + 1 : zAt(g, this.y));
     var carried = this.room.carry && this.room.carry.cat === this;
-    if (GLIDE && this.path.length && !this.jump && !carried) glideLeg(this.s, g, this.x, this.y, this.path[0], this.speed, this.dir === 'side' && this.flip, z, CAT_SCALE);
-    else put(this.s, g, this.x, this.y, this.lift, this.dir === 'side' && this.flip, z, CAT_SCALE);
+    if (GLIDE && this.path.length && !this.jump && !carried) glideLeg(this.s, g, this.x, this.y, this.path[0], this.speed, this.dir === 'side' && this.flip, z, CAT_SCALE * (this.room.pk || 1));
+    else put(this.s, g, this.x, this.y, this.lift, this.dir === 'side' && this.flip, z, CAT_SCALE * (this.room.pk || 1));
     // In the box only what is between its sides shows (the front wall covers the rest).
     var fr = this.s.d.frame, sideCut = Math.max(0, fr / 2 - 21), below = Math.max(0, fr * (1 - this.s.d.anchor[1]) - 3);
     var clip = this.box && !this.jump ? 'inset(0 ' + sideCut + 'px ' + below.toFixed(1) + 'px ' + sideCut + 'px)' : '';
@@ -405,7 +405,7 @@
   };
   Mouse.prototype.flee = function () {
     if (this.hidden) return;
-    var self = this; this.anim = 'run'; this.speed = 140;
+    var self = this; this.anim = 'run'; this.speed = 140 * (this.room.pk || 1);
     this.path = route(this.room, { x: this.x, y: this.y }, this.hole(), 12);
     this.onArrive = function () { self.hidden = true; self.until = now() + rnd(10, 22); };
   };
@@ -433,14 +433,14 @@
       // along the walls, now and then across
       var y = Math.random() < 0.5 ? Y_MIN * g.H : rnd(0.5, Y_MAX) * g.H, xs = floorX(g, y, 12);
       var to = { x: Math.random() < 0.6 ? (Math.random() < 0.5 ? xs[0] : xs[1]) : rnd(xs[0], xs[1]), y: y };
-      if (!blocked(this.room, to, 6)) { this.anim = 'run'; this.speed = 80; this.path = route(this.room, { x: this.x, y: this.y }, to, 12); }
+      if (!blocked(this.room, to, 6)) { this.anim = 'run'; this.speed = 80 * (this.room.pk || 1); this.path = route(this.room, { x: this.x, y: this.y }, to, 12); }
       else this.until = T + 1;
     }
     var key = this.anim === 'sit' ? 'sit-front' : 'run-' + this.dir;
     show(this.s, key, Math.floor(this.t * 10) % this.s.d.rows[key].frames);
     var flip = this.anim !== 'sit' && this.dir === 'side' && this.flip;
-    if (GLIDE && this.path.length) glideLeg(this.s, g, this.x, this.y, this.path[0], this.speed, flip, zAt(g, this.y));
-    else put(this.s, g, this.x, this.y, 0, flip, zAt(g, this.y));
+    if (GLIDE && this.path.length) glideLeg(this.s, g, this.x, this.y, this.path[0], this.speed, flip, zAt(g, this.y), this.room.pk);
+    else put(this.s, g, this.x, this.y, 0, flip, zAt(g, this.y), this.room.pk);
   };
 
   // ── a room ──
@@ -455,6 +455,9 @@
       el.style.setProperty('--room-bed-z', String(b.z));   // beds and pets drawn by their feet
       return b;
     }).filter(function (b) { return b.w > 4; });
+    // the pets keep their size to the beds: the pictures were drawn for beds 86 units wide (19.6 % of the main room,
+    // 37.1 % of NMP); the beds grew (22 %, 44 %, and the bed by the chalkboard is 163 wide), the pets did not
+    if (room.beds.length) room.pk = Math.max(0.8, Math.min(2.2, room.beds.reduce(function (a, b) { return a + b.w; }, 0) / room.beds.length / BED_W0));
     room.gridRev = (room.gridRev || 0) + 1;
   }
   function makeBox(room) {
@@ -462,9 +465,9 @@
     var box = { x: x, y: y, z: zAt(g, y), cat: null };
     box.back = Sprite(room, 'box', 'box-back'); box.front = Sprite(room, 'box', 'box-front');
     box.back.el.style.pointerEvents = box.front.el.style.pointerEvents = 'none';
-    put(box.back, g, x, y, 0, false, box.z - 1, BOX_SCALE);
-    put(box.front, g, x, y, 0, false, box.z + 1, BOX_SCALE);
-    box.rect = { x0: x - 22, x1: x + 22, y0: y - 19, y1: y + 6 };
+    put(box.back, g, x, y, 0, false, box.z - 1, BOX_SCALE * (room.pk || 1));
+    put(box.front, g, x, y, 0, false, box.z + 1, BOX_SCALE * (room.pk || 1));
+    var bk = room.pk || 1; box.rect = { x0: x - 22 * bk, x1: x + 22 * bk, y0: y - 19 * bk, y1: y + 6 * bk };
     room.box = box;
     room.gridRev = (room.gridRev || 0) + 1;
   }
@@ -594,7 +597,7 @@
   }
   function carry(room) {                                // the carried duvet follows the cat's mouth
     var C = room.carry; if (!C) return;
-    var cat = C.cat, g = room.g, k = CAT_SCALE * depthScale(g, cat.y), left = cat.flip;
+    var cat = C.cat, g = room.g, k = CAT_SCALE * (room.pk || 1) * depthScale(g, cat.y), left = cat.flip;
     var mx = cat.x + (left ? -MOUTH[0] : MOUTH[0]) * k, my = cat.y + MOUTH[1] * k - (cat.lift || 0);
     var t = 'translate3d(' + (mx - DRAG.pin[0]).toFixed(1) + 'px,' + (my - DRAG.pin[1]).toFixed(1) + 'px,0) scale(' + (left ? -k : k).toFixed(3) + ',' + k.toFixed(3) + ')';
     if (C.t !== t) { C.t = t; C.el.style.transform = t; }
@@ -621,15 +624,20 @@
           var D = room.duvet = { bed: bed, side: side, heap: heap, img: img, orig: img.src, origSet: img.getAttribute('srcset'), origKey: img.__tintKey, parts: parts };
           img.removeAttribute('srcset'); img.src = parts.bare; img.__tintKey = 'pets-bare';
           bed.el.classList.add('ns-duvet-off');
-          D.floor = clampFloor(g, { x: side > 0 ? bed.x1 + HEAP.w * 0.3 : bed.x0 - HEAP.w * 0.3, y: bed.y0 + bed.h * 0.72 }, 40);
+          // the bed by the chalkboard has almost no floor beside it: its duvet lies smaller at the bed's front corner,
+          // all of it in sight (beside the bed it fell past the little stage's edge, unseen)
+          var care = room.kind === 'care', hs = (care ? 0.62 : 1) * (room.pk || 1);
+          D.hs = hs;
+          D.floor = care ? { x: Math.max(HEAP.w * hs / 2, Math.min(g.W - HEAP.w * hs / 2, side > 0 ? bed.x1 - HEAP.w * hs * 0.3 : bed.x0 + HEAP.w * hs * 0.3)), y: Math.min(g.H - HEAP.h * hs / 2, bed.y1 - HEAP.h * hs * 0.25) }
+            : clampFloor(g, { x: side > 0 ? bed.x1 + HEAP.w * hs * 0.3 : bed.x0 - HEAP.w * hs * 0.3, y: bed.y0 + bed.h * 0.72 }, 40);
           var edge = { x: side > 0 ? bed.x1 - 4 : bed.x0 + 4, y: bed.y0 + bed.h * 0.62 };
-          heapAt(heap, edge.x, edge.y, 0.75, 0, bed.z + 3, 0);
+          heapAt(heap, edge.x, edge.y, 0.75 * hs, 0, bed.z + 3, 0);
           requestAnimationFrame(function () {
             fade(flat, 0, 0.25); fade(slide, 1, 0.25);
             setTimeout(function () {
               fade(slide, 0, 0.35); heap.style.opacity = '1';
-              heapAt(heap, D.floor.x, D.floor.y, 1, side * 6, bed.z + 3, 0.6);
-              setTimeout(function () { flat.remove(); slide.remove(); if (room.duvet === D) heap.style.zIndex = zAt(g, D.floor.y) - 1; }, 700);
+              heapAt(heap, D.floor.x, D.floor.y, hs, side * 6, bed.z + 3, 0.6);
+              setTimeout(function () { flat.remove(); slide.remove(); if (room.duvet === D) heap.style.zIndex = care ? bed.z + 3 : zAt(g, D.floor.y) - 1; }, 700);
             }, 380);
           });
           cat.jumpDown(function () { cat.busy = false; cat.goTo(freePoint(room), false); }, side);
@@ -662,6 +670,45 @@
     var grab = clampFloor(g, { x: D.floor.x - side * 22, y: D.floor.y, m: 0 }, 20);
     var at = clampFloor(g, { x: side > 0 ? bed.x1 + 18 : bed.x0 - 18, y: D.floor.y, m: 0 }, 20);
     function gone() { if (room.duvet === D) return false; cat.busy = false; return true; }
+    // up onto the bed beside the hanging duvet, then pulls it up over the sleeper
+    function pullOver(slide) {
+      cat.leapOnto(bed, { x: side > 0 ? bed.x1 - bed.w * 0.2 : bed.x0 + bed.w * 0.2, y: bed.y0 + bed.h * 0.6 }, function () {
+        if (gone()) { slide.remove(); return; }
+        cat.flip = side < 0;                         // on the bed, facing the duvet hanging down, pulling it up
+        cat.play('tug', 'side', 1.0, function () {
+          if (gone()) { slide.remove(); return; }
+          var flat = flatDuvet(room, bed, D.parts.duvet); flat.style.opacity = '0';
+          requestAnimationFrame(function () { fade(flat, 1, 0.45); fade(slide, 0, 0.45); });
+          setTimeout(function () {
+            var dressed = D.img.__dressed; D.img.__dressed = null; D.img.__dressedKey = null;   // its look changed while the duvet was off
+            if (dressed) { D.img.src = dressed.src; D.img.__tintKey = dressed.key; }
+            else { D.img.src = D.orig; if (D.origSet) D.img.setAttribute('srcset', D.origSet); D.img.__tintKey = D.origKey; }
+            bed.el.classList.remove('ns-duvet-off');
+            flat.remove(); slide.remove(); D.heap.remove(); room.duvet = null;
+            var card = bed.el.querySelector('.ns-room-bed-card');
+            if (card) { card.classList.remove('ns-bed-made'); void card.offsetWidth; card.classList.add('ns-bed-made'); }
+          }, 520);
+          cat.play('sit', 'front', 2.5, function () { cat.busy = false; cat.jumpDown(room.kind === 'care' ? function () { turnCoat(cat); } : null, side); });
+        });
+      });
+    }
+    if (room.kind === 'care') {
+      // by the chalkboard: from beside the bed's front corner, where the duvet lies, it takes a corner in its teeth, leaps
+      // up and pulls it over the bed (no walk across a floor that is not there; carried, the duvet was bigger than the bed)
+      var pk = room.pk || 1;
+      grab = { x: Math.max(SIDE_M * 0.5 * pk, Math.min(g.W - SIDE_M * 0.5 * pk, D.floor.x + side * 26 * pk)), y: Math.min(g.H * Y_MAX, D.floor.y + 6 * pk) };
+      cat.goTo(grab, false, function () {
+        if (gone()) return;
+        cat.flip = side < 0;
+        cat.play('tug', 'side', 0.9, function () {
+          if (gone()) return;
+          var slide = slideDuvet(room, bed, D.parts.slide, side);
+          fade(D.heap, 0, 0.3); fade(slide, 1, 0.3);
+          pullOver(slide);
+        });
+      });
+      return true;
+    }
     cat.goTo(grab, false, function () {
       if (gone()) return;
       cat.flip = side > 0;
@@ -674,25 +721,7 @@
           if (gone()) { drag.remove(); if (room.carry && room.carry.el === drag) room.carry = null; return; }
           cat.flip = side > 0;
           var slide = slideDuvet(room, bed, D.parts.slide, side);
-          cat.leapOnto(bed, { x: side > 0 ? bed.x1 - bed.w * 0.2 : bed.x0 + bed.w * 0.2, y: bed.y0 + bed.h * 0.6 }, function () {
-            if (gone()) { slide.remove(); return; }
-            cat.flip = side < 0;                         // on the bed, facing the duvet hanging down, pulling it up
-            cat.play('tug', 'side', 1.0, function () {
-              if (gone()) { slide.remove(); return; }
-              var flat = flatDuvet(room, bed, D.parts.duvet); flat.style.opacity = '0';
-              requestAnimationFrame(function () { fade(flat, 1, 0.45); fade(slide, 0, 0.45); });
-              setTimeout(function () {
-                var dressed = D.img.__dressed; D.img.__dressed = null; D.img.__dressedKey = null;   // its look changed while the duvet was off
-                if (dressed) { D.img.src = dressed.src; D.img.__tintKey = dressed.key; }
-                else { D.img.src = D.orig; if (D.origSet) D.img.setAttribute('srcset', D.origSet); D.img.__tintKey = D.origKey; }
-                bed.el.classList.remove('ns-duvet-off');
-                flat.remove(); slide.remove(); D.heap.remove(); room.duvet = null;
-                var card = bed.el.querySelector('.ns-room-bed-card');
-                if (card) { card.classList.remove('ns-bed-made'); void card.offsetWidth; card.classList.add('ns-bed-made'); }
-              }, 520);
-              cat.play('sit', 'front', 2.5, function () { cat.busy = false; cat.jumpDown(room.kind === 'care' ? function () { turnCoat(cat); } : null, side); });
-            });
-          });
+          pullOver(slide);
           // as it jumps, the dragged duvet goes up over the bed's side
           setTimeout(function () {
             if (room.duvet !== D) { drag.remove(); slide.remove(); return; }
@@ -701,7 +730,7 @@
             setTimeout(function () { drag.remove(); }, 300);
           }, 250);
         });
-        cat.speed = WALK_V * 0.8;
+        cat.speed = WALK_V * 0.8 * (room.pk || 1);
       });
     });
     return true;

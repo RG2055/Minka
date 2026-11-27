@@ -79,7 +79,7 @@
   function loadM3Css(){
     if(_m3Css) return _m3Css;
     _m3Css=new Promise(function(resolve){
-      var l=document.createElement('link'); l.rel='stylesheet'; l.href='css/page/ns-m3.css?v=20261127m3';
+      var l=document.createElement('link'); l.rel='stylesheet'; l.href='css/page/ns-m3.css?v=20261127m4';
       l.onload=resolve; l.onerror=resolve;   // without it the panel still works, in the older look
       var brand=document.querySelector('link[href*="nightsplit-brand.css"]');
       if(brand) brand.after(l); else document.head.append(l);
